@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 type Status = 'operando' | 'advertencia' | 'alarma';
@@ -162,10 +163,37 @@ const CSS = `
   .s-pulse{transform-box:fill-box;transform-origin:center;animation:pulse 1.1s ease-in-out infinite;}
   @keyframes sring{0%,100%{r:8;opacity:.2}50%{r:13;opacity:0}}
   .s-ring{transform-box:fill-box;transform-origin:center;animation:sring 1.1s ease-in-out infinite;}
+  .phase-zone{transition:fill .18s;}
+  .phase-zone:hover{fill:rgba(255,255,255,.04);}
+  .phase-modal-backdrop{position:fixed;inset:0;z-index:9999;background:rgba(5,10,18,.88);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;animation:phaseFadeIn .22s ease-out;}
+  @keyframes phaseFadeIn{from{opacity:0}to{opacity:1}}
+  .phase-modal-panel{width:92vw;height:88vh;background:#0d1117;border:1px solid #30363d;border-radius:14px;overflow:hidden;display:flex;flex-direction:column;animation:phaseSlideUp .22s ease-out;box-shadow:0 24px 80px rgba(0,0,0,.7);}
+  @keyframes phaseSlideUp{from{transform:scale(.96) translateY(12px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+  .phase-modal-header{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid;background:rgba(255,255,255,.02);flex-shrink:0;}
+  .phase-modal-title{font-family:monospace;font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;}
+  .phase-modal-close{background:none;border:none;cursor:pointer;color:#8b949e;font-size:18px;padding:4px 8px;border-radius:6px;transition:color .15s,background .15s;}
+  .phase-modal-close:hover{color:#fff;background:rgba(255,255,255,.08);}
+  .phase-modal-svg-wrap{flex:1;overflow:hidden;display:flex;align-items:center;justify-content:center;padding:16px;}
+  .phase-modal-svg{width:100%;height:100%;}
 `;
+
+const PHASES = [
+  { key: 'preliminar',  label: 'Fase Preliminar',      color: '#00c5e3', vb: '0 26 275 335'    },
+  { key: 'primaria',    label: 'Fase Primaria',          color: '#d29922', vb: '259 26 820 335'  },
+  { key: 'secundaria',  label: 'Fase Secundaria',        color: '#3fb950', vb: '1063 26 737 335' },
+  { key: 'terciaria',   label: 'Fase Terciaria · Reúso', color: '#1f6feb', vb: '0 345 1196 333'  },
+  { key: 'vertimiento', label: 'Fase Vertimiento',       color: '#f85149', vb: '1180 345 620 333'},
+] as const;
+type PhaseKey = typeof PHASES[number]['key'];
 
 export default function SplashScreen() {
   const navigate = useNavigate();
+  const [activePhase, setActivePhase] = useState<PhaseKey | null>(null);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setActivePhase(null); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
   const mYA = 480;  // fila superior TERCIARIA (bottom de equipos)
   const mYB = 615;  // fila inferior TERCIARIA — rechazos (bottom de equipos)
   const tG = 'url(#tankG)', wG = 'url(#waterG)', sG = 'url(#sludgeG)';
@@ -193,29 +221,8 @@ export default function SplashScreen() {
     </>;
   };
 
-  return (
-    <div className="splash-page">
-      <style>{CSS}</style>
-      <div className="splash-bg-grid"/><div className="splash-bg-glow"/>
-      <div className="splash-inner">
-
-        {/* Header */}
-        <div className="splash-hdr">
-          <svg className="s-logo" width="46" height="46" viewBox="0 0 50 50" fill="none">
-            <circle cx="25" cy="25" r="24" stroke="#00c5e3" strokeWidth="1.5"/>
-            <path d="M10 29c4.5-12 10-15 15-15s10.5 3 15 15" stroke="#00c5e3" strokeWidth="2.5" strokeLinecap="round"/>
-            <path d="M25 14v10" stroke="#00c5e3" strokeWidth="2.5" strokeLinecap="round"/>
-            <circle cx="25" cy="30" r="4" fill="#00c5e3"/>
-          </svg>
-          <div className="s-tg">
-            <h1 className="s-title">PTAR <span>PERMODA</span></h1>
-            <p className="s-sub">PLANTA DE TRATAMIENTO DE AGUAS RESIDUALES INDUSTRIALES · SISTEMA DE GESTIÓN INTEGRADO</p>
-          </div>
-        </div>
-
-        {/* Diagram */}
-        <div className="splash-wrap">
-        <svg className="splash-svg" viewBox="0 0 1800 700" preserveAspectRatio="xMidYMid meet">
+  const SvgBody = () => (
+    <>
           <defs>
             <linearGradient id="tankG" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#1a3d54"/><stop offset="100%" stopColor="#0b2233"/>
@@ -1008,6 +1015,48 @@ export default function SplashScreen() {
             ))}
           </g>
 
+          {/* ── Phase click zones ── */}
+          <g className="phase-click-zones">
+            {PHASES.map(ph => {
+              const [vx, vy, vw, vh] = ph.vb.split(' ').map(Number);
+              return (
+                <rect key={ph.key}
+                  x={vx} y={vy} width={vw} height={vh}
+                  fill="transparent"
+                  className="phase-zone"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => setActivePhase(ph.key)}
+                />
+              );
+            })}
+          </g>
+    </>
+  );
+
+  return (
+    <div className="splash-page">
+      <style>{CSS}</style>
+      <div className="splash-bg-grid"/><div className="splash-bg-glow"/>
+      <div className="splash-inner">
+
+        {/* Header */}
+        <div className="splash-hdr">
+          <svg className="s-logo" width="46" height="46" viewBox="0 0 50 50" fill="none">
+            <circle cx="25" cy="25" r="24" stroke="#00c5e3" strokeWidth="1.5"/>
+            <path d="M10 29c4.5-12 10-15 15-15s10.5 3 15 15" stroke="#00c5e3" strokeWidth="2.5" strokeLinecap="round"/>
+            <path d="M25 14v10" stroke="#00c5e3" strokeWidth="2.5" strokeLinecap="round"/>
+            <circle cx="25" cy="30" r="4" fill="#00c5e3"/>
+          </svg>
+          <div className="s-tg">
+            <h1 className="s-title">PTAR <span>PERMODA</span></h1>
+            <p className="s-sub">PLANTA DE TRATAMIENTO DE AGUAS RESIDUALES INDUSTRIALES · SISTEMA DE GESTIÓN INTEGRADO</p>
+          </div>
+        </div>
+
+        {/* Diagram */}
+        <div className="splash-wrap">
+        <svg className="splash-svg" viewBox="0 0 1800 700" preserveAspectRatio="xMidYMid meet">
+          <SvgBody />
         </svg>
         </div>
 
@@ -1017,6 +1066,26 @@ export default function SplashScreen() {
           <p className="s-ver">PTAR PERMODA · Sistema de Gestión v1.0 · {new Date().getFullYear()}</p>
         </div>
       </div>
+
+      {/* Phase Zoom Modal */}
+      {activePhase && (() => {
+        const ph = PHASES.find(p => p.key === activePhase)!;
+        return (
+          <div className="phase-modal-backdrop" onClick={() => setActivePhase(null)}>
+            <div className="phase-modal-panel" onClick={e => e.stopPropagation()}>
+              <div className="phase-modal-header" style={{ borderColor: ph.color }}>
+                <span className="phase-modal-title" style={{ color: ph.color }}>{ph.label}</span>
+                <button className="phase-modal-close" onClick={() => setActivePhase(null)}>✕</button>
+              </div>
+              <div className="phase-modal-svg-wrap">
+                <svg viewBox={ph.vb} preserveAspectRatio="xMidYMid meet" className="splash-svg phase-modal-svg">
+                  <SvgBody />
+                </svg>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
