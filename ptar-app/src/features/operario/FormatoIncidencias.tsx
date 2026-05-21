@@ -382,12 +382,6 @@ export default function FormatoIncidencias() {
                   <span className="param-badge-diario">DIARIO</span>
                   <span className="param-nombre-text">{p.nombre}</span>
                   <span className="param-rango">{p.min} – {p.max} {p.unidad}</span>
-                  {prev?.valor != null && (
-                    <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 'auto', marginRight: 8 }}>
-                      Ant.: <strong>{prev.valor}</strong>
-                      {prev.turno && ` (${prev.turno})`}
-                    </span>
-                  )}
                   <label className="param-noapl-toggle" title="No aplica / No fue posible medir">
                     <input
                       type="checkbox"
@@ -412,6 +406,32 @@ export default function FormatoIncidencias() {
                       onChange={e => setDaily(p.id, 'valor', e.target.value)}
                     />
                     <span className="param-unidad-badge">{p.unidad}</span>
+                    {prev?.valor != null ? (
+                      <div style={{
+                        display: 'flex', flexDirection: 'column', alignItems: 'center',
+                        background: 'var(--bg-secondary)', border: '1px solid var(--border)',
+                        borderRadius: 6, padding: '3px 10px', minWidth: 64, textAlign: 'center',
+                        lineHeight: 1.3,
+                      }}>
+                        <span style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: 0.3 }}>anterior</span>
+                        <strong style={{ fontSize: 14, color: 'var(--text-primary)' }}>{prev.valor}</strong>
+                        {prev.turno && (
+                          <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>{prev.turno}</span>
+                        )}
+                      </div>
+                    ) : loadingPrev ? (
+                      <div style={{
+                        background: 'var(--bg-secondary)', border: '1px solid var(--border)',
+                        borderRadius: 6, padding: '3px 10px', minWidth: 64, textAlign: 'center',
+                        fontSize: 10, color: 'var(--text-muted)',
+                      }}>…</div>
+                    ) : (
+                      <div style={{
+                        background: 'var(--bg-secondary)', border: '1px solid var(--border)',
+                        borderRadius: 6, padding: '3px 10px', minWidth: 64, textAlign: 'center',
+                        fontSize: 10, color: 'var(--text-muted)',
+                      }}>sin dato</div>
+                    )}
                   </div>
                 )}
 
@@ -491,10 +511,27 @@ export default function FormatoIncidencias() {
                     {selectedParam?.unidad ?? '—'}
                   </span>
 
-                  {prev?.valor != null && (
-                    <span style={{ fontSize: 11, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
-                      Ant.: <strong>{prev.valor}</strong>
-                    </span>
+                  {selectedParam && (
+                    prev?.valor != null ? (
+                      <div style={{
+                        display: 'flex', flexDirection: 'column', alignItems: 'center',
+                        background: 'var(--bg-secondary)', border: '1px solid var(--border)',
+                        borderRadius: 6, padding: '3px 10px', minWidth: 64, textAlign: 'center',
+                        lineHeight: 1.3,
+                      }}>
+                        <span style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: 0.3 }}>anterior</span>
+                        <strong style={{ fontSize: 14, color: 'var(--text-primary)' }}>{prev.valor}</strong>
+                        {prev.turno && (
+                          <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>{prev.turno}</span>
+                        )}
+                      </div>
+                    ) : (
+                      <div style={{
+                        background: 'var(--bg-secondary)', border: '1px solid var(--border)',
+                        borderRadius: 6, padding: '3px 10px', minWidth: 64, textAlign: 'center',
+                        fontSize: 10, color: 'var(--text-muted)',
+                      }}>sin dato</div>
+                    )
                   )}
 
                   <button type="button" className="btn-remove-param" onClick={() => removeExtra(extra.uid)}>×</button>
