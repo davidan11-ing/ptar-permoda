@@ -256,6 +256,22 @@ export default function SplashScreen() {
             fill="#f85149" fillOpacity=".015" stroke="#f85149" strokeOpacity=".08" strokeWidth="1"/>
           <text x="1490" y="373" textAnchor="middle"
             fill="#8a2a2a" fontSize="8.5" fontWeight="700" letterSpacing="2" fontFamily="monospace">FASE VERTIMIENTO</text>
+          {/* ── Phase click zones (detrás de los equipos) ── */}
+          <g className="phase-click-zones">
+            {PHASES.map(ph => {
+              const [vx, vy, vw, vh] = ph.vb.split(' ').map(Number);
+              return (
+                <rect key={ph.key}
+                  x={vx} y={vy} width={vw} height={vh}
+                  fill="transparent"
+                  className="phase-zone"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => setActivePhase(ph.key)}
+                />
+              );
+            })}
+          </g>
+
           {/* ── VERTIMIENTO: 3 trenes en x=1190-1790 ── */}
           {/* Tren labels */}
           {[1310, 1490, 1670].map((sx, i) => (
@@ -1015,21 +1031,6 @@ export default function SplashScreen() {
             ))}
           </g>
 
-          {/* ── Phase click zones ── */}
-          <g className="phase-click-zones">
-            {PHASES.map(ph => {
-              const [vx, vy, vw, vh] = ph.vb.split(' ').map(Number);
-              return (
-                <rect key={ph.key}
-                  x={vx} y={vy} width={vw} height={vh}
-                  fill="transparent"
-                  className="phase-zone"
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => setActivePhase(ph.key)}
-                />
-              );
-            })}
-          </g>
     </>
   );
 
