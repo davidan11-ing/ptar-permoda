@@ -22,8 +22,8 @@ const FORMATOS = [
   },
   {
     to: ROUTES.FORMATO_REACTIVOS,
-    title: 'Reactivos GEM',
-    subtitle: 'Niveles físicos de productos GEM por turno. Horómetro, volumen tratado y ppms.',
+    title: 'Consumo Químico',
+    subtitle: 'Registro de reactivos GEM, Osmosis (RO) y PTAP. Horómetro, volumen tratado y ppms.',
     icon: (
       <svg width="36" height="36" viewBox="0 0 40 40" fill="none">
         <circle cx="20" cy="20" r="19" stroke="#3fb950" strokeWidth="1.5"/>
@@ -33,7 +33,7 @@ const FORMATOS = [
         <path d="M17 27v3M23 27v3" stroke="#3fb950" strokeWidth="1.2" strokeLinecap="round"/>
       </svg>
     ),
-    fields: ['Horómetro y horas de operación', 'Nivel inicial → final (L calc)', 'Alerta ingreso de producto', 'Trasiego coagulante a PTAP'],
+    fields: ['GEM · RO · PTAP en un formulario', 'Horómetro y volumen tratado (GEM)', 'Nivel inicial → final (L calc)', 'Alerta automática ingreso de producto'],
     color: '#3fb950',
     num: 'F-02',
   },
@@ -51,23 +51,6 @@ const FORMATOS = [
     fields: ['pH, TDS, Conductividad…', 'Valor turno anterior', 'Validaciones especiales', 'Obs. generales al inicio'],
     color: '#d29922',
     num: 'F-03',
-  },
-  {
-    to: ROUTES.FORMATO_REACTIVOS_RO,
-    title: 'Reactivos RO',
-    subtitle: 'Reactivos del sistema de Ósmosis Inversa. Anti-incrustante, biocida y limpiador.',
-    icon: (
-      <svg width="36" height="36" viewBox="0 0 40 40" fill="none">
-        <circle cx="20" cy="20" r="19" stroke="#1f6feb" strokeWidth="1.5"/>
-        <rect x="10" y="16" width="20" height="10" rx="2" stroke="#1f6feb" strokeWidth="1.5"/>
-        <path d="M14 16v-4M20 16v-4M26 16v-4" stroke="#1f6feb" strokeWidth="1.5" strokeLinecap="round"/>
-        <path d="M13 21h4M23 21h4" stroke="#1f6feb" strokeWidth="1.5" strokeLinecap="round"/>
-        <circle cx="20" cy="21" r="1.5" fill="#1f6feb"/>
-      </svg>
-    ),
-    fields: ['Anti-incrustante, Biocida, Limpiador', 'Caudales RO (C-12, C-13)', 'Nivel inicial → final (L calc)', 'Alerta ingreso de producto'],
-    color: '#1f6feb',
-    num: 'F-04',
   },
   {
     to: ROUTES.FORMATO_CONDICIONES_OP,
@@ -131,7 +114,7 @@ export default function OperarioHome() {
 
       <div className="op-stats-row">
         <div className="op-stat-card">
-          <span className="op-stat-num">5</span>
+          <span className="op-stat-num">4</span>
           <span className="op-stat-label">Formatos disponibles</span>
         </div>
         <div className="op-stat-card">

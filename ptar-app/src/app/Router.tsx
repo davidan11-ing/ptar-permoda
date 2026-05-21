@@ -10,7 +10,6 @@ const OperarioHome       = lazy(() => import('../features/operario/OperarioHome'
 const FormatoCaudales    = lazy(() => import('../features/operario/FormatoCaudales'));
 const FormatoReactivos   = lazy(() => import('../features/operario/FormatoReactivos'));
 const FormatoIncidencias    = lazy(() => import('../features/operario/FormatoIncidencias'));
-const FormatoReactivosRO    = lazy(() => import('../features/operario/FormatoReactivosRO'));
 const FormatoCondicionesOp  = lazy(() => import('../features/operario/FormatoCondicionesOp'));
 const DashboardPage        = lazy(() => import('../features/dashboard/DashboardPage'));
 const CalidadDashboardPage = lazy(() => import('../features/calidad/CalidadDashboardPage'));
@@ -49,11 +48,6 @@ export default function AppRouter() {
             <Route path="/operario/formato/incidencias" element={
               <RoleGuard allowedRoles={['operario']}>
                 <FormatoIncidencias />
-              </RoleGuard>
-            }/>
-            <Route path="/operario/formato/reactivos-ro" element={
-              <RoleGuard allowedRoles={['operario']}>
-                <FormatoReactivosRO />
               </RoleGuard>
             }/>
             <Route path="/operario/formato/condiciones" element={

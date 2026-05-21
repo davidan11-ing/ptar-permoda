@@ -30,8 +30,6 @@ interface ExtraRow {
 
 interface FormState {
   unidad_tratamiento: string;
-  novedad_quimico: boolean;
-  novedad_procesos: boolean;
   observaciones_generales: string;
   daily: Record<DiarioId, ParamInput>;
   extras: ExtraRow[];
@@ -100,8 +98,6 @@ export default function FormatoIncidencias() {
 
   const [form, setForm]           = useState<FormState>({
     unidad_tratamiento: '',
-    novedad_quimico: false,
-    novedad_procesos: false,
     observaciones_generales: '',
     daily: INITIAL_DAILY,
     extras: [],
@@ -215,11 +211,7 @@ export default function FormatoIncidencias() {
     if (!validate()) return;
     setSaving(true); setSaveError(null);
 
-    const obsArr: string[] = [];
-    if (form.novedad_quimico) obsArr.push('[Novedad consumo químico]');
-    if (form.novedad_procesos) obsArr.push('[Novedad procesos de producción]');
-    if (form.observaciones_generales.trim()) obsArr.push(form.observaciones_generales.trim());
-    const obsGenerales = obsArr.join(' | ') || undefined;
+    const obsGenerales = form.observaciones_generales.trim() || undefined;
 
     const shared = {
       turno,
@@ -322,30 +314,10 @@ export default function FormatoIncidencias() {
           </div>
         </div>
 
-        {/* ── Novedades y Observaciones Generales ──────────────────────── */}
-        <div className="form-section-title">Novedades del Turno</div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 12 }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 14 }}>
-            <input
-              type="checkbox"
-              checked={form.novedad_quimico}
-              onChange={e => setForm(prev => ({ ...prev, novedad_quimico: e.target.checked }))}
-              style={{ width: 16, height: 16 }}
-            />
-            <span>Novedad en consumo químico</span>
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 14 }}>
-            <input
-              type="checkbox"
-              checked={form.novedad_procesos}
-              onChange={e => setForm(prev => ({ ...prev, novedad_procesos: e.target.checked }))}
-              style={{ width: 16, height: 16 }}
-            />
-            <span>Novedad en procesos de producción</span>
-          </label>
-        </div>
+        {/* ── Observaciones Generales ───────────────────────────────────── */}
+        <div className="form-section-title">Observaciones del Turno</div>
         <div className="form-group">
-          <label className="form-label">Observaciones Generales del Turno</label>
+          <label className="form-label">Observaciones Generales (opcional)</label>
           <textarea
             className="form-textarea"
             rows={3}

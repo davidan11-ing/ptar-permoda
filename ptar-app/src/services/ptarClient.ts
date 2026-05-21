@@ -116,6 +116,17 @@ export async function getUltimoHorometro(): Promise<UltimoHorometro> {
   return request<UltimoHorometro>('/api/reactivos/ultimo-horometro');
 }
 
+export interface UltimoNivel {
+  nivel_final: number | null;
+  fecha: string | null;
+  turno: string | null;
+}
+
+export async function getUltimoNivel(quimico_id: string): Promise<UltimoNivel> {
+  const q = new URLSearchParams({ quimico_id });
+  return request<UltimoNivel>(`/api/reactivos/ultimo-nivel?${q}`);
+}
+
 // ─── Calidad ──────────────────────────────────────────────────────────────────
 
 export async function createCalidadBatch(

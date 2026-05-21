@@ -22,10 +22,16 @@ QUIMICOS_MAP = {
     'Q-03': ('Decolorante',       'GEM', 'consumo_decolorante_l',   'kg_decolorante',          'ppm_decolorante',    'costo_op_decolorante','final_decolorante_l'),
     'Q-04': ('Polímero Aniónico', 'GEM', 'consumo_pol_anionico_l',  'consumo_pol_anionico_kg', 'ppm_pol_anionico',   'costo_op_anionico',   'final_pol_anionico_kg'),
     'Q-05': ('Polímero Catiónico','GEM', 'consumo_pol_cationico_l', 'consumo_pol_cationico_kg','ppm_pol_cationico',  'costo_op_cationico',  'final_pol_cationico_kg'),
-    # ── Sistema RO (placeholder — columnas por confirmar) ────────────────────
+    # ── Sistema RO ────────────────────────────────────────────────────────────
     'Q-06': ('Anti-incrustante',       'RO', 'consumo_antiincrustante_l', 'kg_antiincrustante', 'ppm_antiincrustante', 'costo_op_antiincrustante', 'final_antiincrustante_l'),
     'Q-07': ('Biocida / Desinfectante','RO', 'consumo_biocida_l',         'kg_biocida',         'ppm_biocida',         'costo_op_biocida',         'final_biocida_l'),
     'Q-08': ('Limpiador Químico',      'RO', 'consumo_limpiador_l',       'kg_limpiador',       'ppm_limpiador',       'costo_op_limpiador',       'final_limpiador_l'),
+    # ── Sistema PTAP ──────────────────────────────────────────────────────────
+    'Q-09': ('Polímero Aniónico PTAP', 'PTAP', 'consumo_pol_anionico_ptap_l', 'kg_pol_anionico_ptap', 'ppm_pol_anionico_ptap', 'costo_op_pol_anionico_ptap', 'final_pol_anionico_ptap_l'),
+    'Q-10': ('Coagulante PTAP',        'PTAP', 'consumo_coagulante_ptap_l',   'kg_coagulante_ptap',   'ppm_coagulante_ptap',   'costo_op_coagulante_ptap',   'final_coagulante_ptap_l'),
+    'Q-11': ('Ácido PTAP',             'PTAP', 'consumo_acido_ptap_l',        'kg_acido_ptap',        'ppm_acido_ptap',        'costo_op_acido_ptap',        'final_acido_ptap_l'),
+    'Q-12': ('Soda',                   'PTAP', 'consumo_soda_l',              'kg_soda',              'ppm_soda',              'costo_op_soda',              'final_soda_l'),
+    'Q-13': ('Peróxido',               'PTAP', 'consumo_peroxido_l',          'kg_peroxido',          'ppm_peroxido',          'costo_op_peroxido',          'final_peroxido_l'),
 }
 
 
@@ -139,6 +145,51 @@ class EstadisticasDia(BaseModel):
     costo_max: float | None
     costo_avg: float | None
     costo_total: float | None
+
+
+# ── Mapa: sistema → tabla de almacenamiento ───────────────────────────────────
+
+SISTEMA_TABLA = {
+    'GEM':  'operacion_gem_turno',
+    'RO':   'operacion_ro_turno',
+    'PTAP': 'operacion_ptap_turno',
+}
+
+
+# ── GET /ultimo-nivel — último nivel final registrado para un químico ─────────
+
+@router.get("/ultimo-nivel")
+async def get_ultimo_nivel(
+    quimico_id: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Devuelve el último nivel_final registrado para un químico específico.
+    Usado para pre-cargar el nivel_inicial del siguiente turno.
+    """
+    quimico_info = QUIMICOS_MAP.get(quimico_id)
+    if quimico_info is None:
+        return {"nivel_final": None, "fecha": None, "turno": None}
+
+    nombre, sistema, col_l, col_kg, col_ppm, col_costo, col_final = quimico_info
+    tabla = SISTEMA_TABLA.get(sistema)
+    if tabla is None:
+        return {"nivel_final": None, "fecha": None, "turno": None}
+
+    row = (await db.execute(text(f"""
+        SELECT {col_final} AS nivel_final,
+               DATE_FORMAT(fecha, '%Y-%m-%d') AS fecha,
+               CASE turno WHEN 1 THEN 'mañana' WHEN 2 THEN 'tarde' WHEN 3 THEN 'noche' ELSE NULL END AS turno
+        FROM {tabla}
+        WHERE {col_final} IS NOT NULL
+        ORDER BY fecha DESC, turno DESC
+        LIMIT 1
+    """))).mappings().first()
+
+    if not row:
+        return {"nivel_final": None, "fecha": None, "turno": None}
+
+    return dict(row)
 
 
 # ── GET /ultimo-horometro — último horómetro registrado ─────────────────────
@@ -273,24 +324,29 @@ async def create_reactivos_batch(registros: list[RegistroReactivoIn], db: AsyncS
 
     # Ahora insertar/actualizar por (fecha, turno, sistema)
     for (fecha, turno_int, sistema), data in grouped.items():
-        table_name = 'operacion_gem_turno' if sistema == 'GEM' else f'operacion_ro_turno'
+        table_name = SISTEMA_TABLA.get(sistema, 'operacion_gem_turno')
 
         # Construir dinámicamente las columnas a insertar
         horas = data['horas_operacion']
         caudal_m3h = round(data['caudal_tratado_gem'] / horas, 2) if horas and horas > 0 else None
 
         equipo = data.get('equipo')
-        cols = ['fecha', 'turno', 'dia_mes', 'horometro_inicial', 'caudal_total_tratado_gem_m3', 'caudal_tratamiento_m3h', 'usuario']
-        vals = [':fecha', ':turno', 'DAY(:fecha)', ':horometro_inicial', ':caudal_tratado_gem', ':caudal_tratamiento_m3h', ':usuario']
-        params = {
-            'fecha': fecha,
-            'turno': turno_int,
-            'horometro_inicial': data['horometro_inicial'],
-            'caudal_tratado_gem': data['caudal_tratado_gem'],
-            'caudal_tratamiento_m3h': caudal_m3h,
-            'usuario': data['usuario']
-        }
+        # Columnas base comunes a todos los sistemas
+        cols   = ['fecha', 'turno', 'dia_mes', 'usuario']
+        vals   = [':fecha', ':turno', 'DAY(:fecha)', ':usuario']
+        params = {'fecha': fecha, 'turno': turno_int, 'usuario': data['usuario']}
         update_parts = []
+
+        # Horómetro y caudal solo para GEM
+        if sistema == 'GEM' and data.get('horometro_inicial'):
+            cols += ['horometro_inicial', 'caudal_total_tratado_gem_m3', 'caudal_tratamiento_m3h']
+            vals += [':horometro_inicial', ':caudal_tratado_gem', ':caudal_tratamiento_m3h']
+            params['horometro_inicial']     = data['horometro_inicial']
+            params['caudal_tratado_gem']    = data['caudal_tratado_gem']
+            params['caudal_tratamiento_m3h'] = caudal_m3h
+            update_parts += ['horometro_inicial = :horometro_inicial',
+                              'caudal_total_tratado_gem_m3 = :caudal_tratado_gem',
+                              'caudal_tratamiento_m3h = :caudal_tratamiento_m3h']
 
         if equipo is not None:
             cols.append('equipo')
