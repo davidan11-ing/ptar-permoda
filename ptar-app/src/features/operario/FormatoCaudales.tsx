@@ -21,12 +21,13 @@ import { ContadorCard } from './components/ContadorCard';
 const itemSchema = z.object({
   id_contador: z.string().min(1, 'Obligatorio'),
   lectura_actual: z.string().optional(),
-  observaciones: z.string().optional(),
+  observaciones: z.string().optional(), // solo para decrementos
 });
 
 const formSchema = z.object({
   daily: z.array(itemSchema),
   extras: z.array(itemSchema),
+  observaciones_generales: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -54,11 +55,12 @@ export default function FormatoCaudales() {
   const activeFecha = manualMode ? manualFecha : today;
 
   // Configuración de react-hook-form
-  const { control, handleSubmit, watch } = useForm<FormValues>({
+  const { control, handleSubmit, watch, register } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       daily: DIARIOS_IDS.map(id => ({ id_contador: id, lectura_actual: '', observaciones: '' })),
       extras: [],
+      observaciones_generales: '',
     }
   });
 
@@ -130,6 +132,8 @@ export default function FormatoCaudales() {
     const fechaPrefix = manualMode && activeFecha !== today
       ? `[Fecha manual: ${activeFecha}] ` : '';
 
+    const obsGenerales = (data.observaciones_generales ?? '').trim();
+
     const buildRow = (row: z.infer<typeof itemSchema>): Omit<RegistroContador, 'id' | 'created_at' | 'delta_m3'> | null => {
       if (!row.id_contador || !row.lectura_actual) return null;
       const c = CONTADORES_MAP[row.id_contador as ContadorId];
@@ -137,13 +141,14 @@ export default function FormatoCaudales() {
       return {
         turno: activeTurno,
         usuario: currentUser?.nombre ?? 'desconocido',
+        equipo: currentUser?.equipo ? JSON.stringify(currentUser.equipo) : undefined,
         id_contador: c.id,
         nombre_contador: c.nombre,
         ubicacion: c.ubicacion,
         tipo_agua: c.tipo_agua,
         lectura_anterior_m3: getPrev(row.id_contador),
         lectura_actual_m3: parseFloat(row.lectura_actual),
-        observaciones: obs || undefined,
+        observaciones: [obs, obsGenerales].filter(Boolean).join(' | ') || undefined,
       };
     };
 
@@ -350,6 +355,18 @@ export default function FormatoCaudales() {
               </span>
             </button>
           )}
+        </div>
+
+        {/* ── Observaciones Generales ───────────────────────────────────── */}
+        <div className="form-section-title">Observaciones Generales</div>
+        <div className="form-group">
+          <label className="form-label">Observaciones del turno (opcional)</label>
+          <textarea
+            className="form-textarea"
+            rows={3}
+            placeholder="Novedades del turno, anomalías generales, condiciones especiales..."
+            {...register('observaciones_generales')}
+          />
         </div>
 
         {/* ── Acciones ──────────────────────────────────────────────────── */}

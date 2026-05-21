@@ -22,6 +22,10 @@ QUIMICOS_MAP = {
     'Q-03': ('Decolorante',       'GEM', 'consumo_decolorante_l',   'kg_decolorante',          'ppm_decolorante',    'costo_op_decolorante','final_decolorante_l'),
     'Q-04': ('Polímero Aniónico', 'GEM', 'consumo_pol_anionico_l',  'consumo_pol_anionico_kg', 'ppm_pol_anionico',   'costo_op_anionico',   'final_pol_anionico_kg'),
     'Q-05': ('Polímero Catiónico','GEM', 'consumo_pol_cationico_l', 'consumo_pol_cationico_kg','ppm_pol_cationico',  'costo_op_cationico',  'final_pol_cationico_kg'),
+    # ── Sistema RO (placeholder — columnas por confirmar) ────────────────────
+    'Q-06': ('Anti-incrustante',       'RO', 'consumo_antiincrustante_l', 'kg_antiincrustante', 'ppm_antiincrustante', 'costo_op_antiincrustante', 'final_antiincrustante_l'),
+    'Q-07': ('Biocida / Desinfectante','RO', 'consumo_biocida_l',         'kg_biocida',         'ppm_biocida',         'costo_op_biocida',         'final_biocida_l'),
+    'Q-08': ('Limpiador Químico',      'RO', 'consumo_limpiador_l',       'kg_limpiador',       'ppm_limpiador',       'costo_op_limpiador',       'final_limpiador_l'),
 }
 
 
@@ -32,6 +36,7 @@ class RegistroReactivoIn(BaseModel):
     fecha: Optional[date] = None
     turno: str  # 'mañana'|'tarde'|'noche'
     usuario: str
+    equipo: Optional[str] = None               # JSON array de nombres del equipo en turno
     id_quimico: str  # Q-01, Q-02, etc.
     nombre_quimico: str
     unidad: str  # L o kg
@@ -44,6 +49,8 @@ class RegistroReactivoIn(BaseModel):
     caudal_tratado_gem: float
     horas_operacion: float
     observaciones: Optional[str] = None
+    ingreso_coagulante_l: Optional[float] = None         # solo Q-02: ingreso recibido
+    trasegado_coagulante_ptap_l: Optional[float] = None  # solo Q-02: trasiego a PTAP
 
     @field_validator('turno')
     @classmethod
@@ -134,6 +141,27 @@ class EstadisticasDia(BaseModel):
     costo_total: float | None
 
 
+# ── GET /ultimo-horometro — último horómetro registrado ─────────────────────
+
+@router.get("/ultimo-horometro")
+async def get_ultimo_horometro(db: AsyncSession = Depends(get_db)):
+    """Devuelve el último horómetro registrado en operacion_gem_turno."""
+    row = (await db.execute(text("""
+        SELECT horometro_inicial AS horometro,
+               DATE_FORMAT(fecha, '%Y-%m-%d') AS fecha,
+               CASE turno WHEN 1 THEN 'mañana' WHEN 2 THEN 'tarde' WHEN 3 THEN 'noche' ELSE NULL END AS turno
+        FROM operacion_gem_turno
+        WHERE horometro_inicial IS NOT NULL AND horometro_inicial > 0
+        ORDER BY fecha DESC, turno DESC
+        LIMIT 1
+    """))).mappings().first()
+
+    if not row:
+        return {"horometro": None, "fecha": None, "turno": None}
+
+    return dict(row)
+
+
 # ── GET / — detalle diario por producto (v_consumo_quimico_diario) ────────────
 
 @router.get("/", response_model=list[ConsumoQuimicoDia])
@@ -222,6 +250,7 @@ async def create_reactivos_batch(registros: list[RegistroReactivoIn], db: AsyncS
                 'fecha': fecha,
                 'turno': turno_int,
                 'usuario': reg.usuario,
+                'equipo': reg.equipo,
                 'horometro_inicial': reg.horometro_inicial,
                 'caudal_tratado_gem': reg.caudal_tratado_gem,
                 'horas_operacion': reg.horas_operacion,
@@ -235,6 +264,13 @@ async def create_reactivos_batch(registros: list[RegistroReactivoIn], db: AsyncS
         grouped[key]['columns'][col_costo] = reg.kg_consumidos * reg.precio_kg
         grouped[key]['columns'][col_final] = reg.nivel_final  # nivel de tanque al final del turno
 
+        # Campos adicionales para Q-02 (Coagulante)
+        if reg.id_quimico == 'Q-02':
+            if reg.ingreso_coagulante_l is not None:
+                grouped[key]['columns']['ingreso_coagulante_l'] = reg.ingreso_coagulante_l
+            if reg.trasegado_coagulante_ptap_l is not None:
+                grouped[key]['columns']['trasegado_coagulante_ptap_l'] = reg.trasegado_coagulante_ptap_l
+
     # Ahora insertar/actualizar por (fecha, turno, sistema)
     for (fecha, turno_int, sistema), data in grouped.items():
         table_name = 'operacion_gem_turno' if sistema == 'GEM' else f'operacion_ro_turno'
@@ -243,6 +279,7 @@ async def create_reactivos_batch(registros: list[RegistroReactivoIn], db: AsyncS
         horas = data['horas_operacion']
         caudal_m3h = round(data['caudal_tratado_gem'] / horas, 2) if horas and horas > 0 else None
 
+        equipo = data.get('equipo')
         cols = ['fecha', 'turno', 'dia_mes', 'horometro_inicial', 'caudal_total_tratado_gem_m3', 'caudal_tratamiento_m3h', 'usuario']
         vals = [':fecha', ':turno', 'DAY(:fecha)', ':horometro_inicial', ':caudal_tratado_gem', ':caudal_tratamiento_m3h', ':usuario']
         params = {
@@ -254,6 +291,12 @@ async def create_reactivos_batch(registros: list[RegistroReactivoIn], db: AsyncS
             'usuario': data['usuario']
         }
         update_parts = []
+
+        if equipo is not None:
+            cols.append('equipo')
+            vals.append(':equipo')
+            params['equipo'] = equipo
+            update_parts.append('equipo = :equipo')
 
         for col_name, value in data['columns'].items():
             if value is not None:

@@ -1,15 +1,16 @@
 export const PARAMS_DIARIOS = [
-  { id: 'Temperatura',      nombre: 'Temperatura',                    unidad: '°C',         min: 0,    max: 50    },
-  { id: 'pH',               nombre: 'pH',                             unidad: 'Unidades pH', min: 0,    max: 14    },
-  { id: 'TDS',              nombre: 'TDS',                            unidad: 'mg/L',        min: 0,    max: 5000  },
-  { id: 'SST',              nombre: 'SST',                            unidad: 'mg/L',        min: 0,    max: 1000  },
-  { id: 'SolidosSediment',  nombre: 'Solidos Sedimentables',          unidad: 'mg/L',        min: 0,    max: 500   },
-  { id: 'Conductividad',    nombre: 'Conductividad',                  unidad: 'µS/cm',       min: 0,    max: 10000 },
-  { id: 'Color',            nombre: 'Color',                          unidad: 'UPTCO',       min: 0,    max: 1500  },
-  { id: 'Turbidez',         nombre: 'Turbidez',                       unidad: 'NTU',         min: 0,    max: 1000  },
+  { id: 'Temperatura',      nombre: 'Temperatura',                    unidad: '°C',         min: 15,   max: 60,   decimales: 1 },
+  { id: 'pH',               nombre: 'pH',                             unidad: 'Unidades pH', min: 0,    max: 14,   decimales: 2 },
+  { id: 'TDS',              nombre: 'TDS',                            unidad: 'mg/L',        min: 0,    max: 5000, decimales: 0 },
+  { id: 'SST',              nombre: 'SST',                            unidad: 'mg/L',        min: 0,    max: 1000, decimales: 0 },
+  { id: 'SolidosSediment',  nombre: 'Solidos Sedimentables',          unidad: 'mg/L',        min: 0,    max: 500,  decimales: 0 },
+  { id: 'Conductividad',    nombre: 'Conductividad',                  unidad: 'µS/cm',       min: 0,    max: 10000,decimales: 0 },
+  { id: 'Color',            nombre: 'Color',                          unidad: 'UPTCO',       min: 0,    max: 1500, decimales: 0 },
 ] as const;
+// Turbidez movida a PARAMS_OCASIONALES (no se mide rutinariamente)
 
 export const PARAMS_OCASIONALES = [
+  { id: 'Turbidez',        nombre: 'Turbidez',               unidad: 'NTU',         min: 0,    max: 1000  },
   { id: 'DQO',             nombre: 'DQO',                    unidad: 'mg/L',        min: 0,    max: 5000  },
   { id: 'Hierro',          nombre: 'Hierro',                 unidad: 'mg/L',        min: 0,    max: 50    },
   { id: 'SST_Gravimetrico',nombre: 'SST Gravimetrico',       unidad: 'mg/L',        min: 0,    max: 1000  },

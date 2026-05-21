@@ -5,6 +5,7 @@ export interface AppUser {
   nombre: string;
   roles: Role[];
   activeRole: Role;
+  equipo?: string[]; // Equipo de turno (incluye al propio operario + compañeros marcados)
 }
 
 export interface FormatoBase {

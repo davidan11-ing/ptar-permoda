@@ -21,10 +21,10 @@ class RegistroCalidadIn(BaseModel):
     fecha: Optional[date] = None
     turno: str  # 'mañana'|'tarde'|'noche'
     usuario: str
+    equipo: Optional[str] = None  # JSON array de nombres del equipo en turno
     unidad_tratamiento: str  # Nombre descriptivo (ej: "PULMON", "GEM_SALIDA")
     parametro: str  # Nombre del parámetro (ej: "DQO", "pH")
     valor: Optional[float] = None
-    metodo: Optional[str] = None
     no_aplica: bool = False
     observaciones: Optional[str] = None
 
@@ -215,13 +215,13 @@ async def create_calidad_batch(registros: list[RegistroCalidadIn], db: AsyncSess
         # UPSERT en medicion_calidad
         sql = text("""
             INSERT INTO medicion_calidad
-            (fecha, turno, parametro_id, unidad_id, valor, observacion, usuario, metodo, no_aplica)
-            VALUES (:fecha, :turno, :param_id, :unit_id, :valor, :obs, :usuario, :metodo, :no_aplica)
+            (fecha, turno, parametro_id, unidad_id, valor, observacion, usuario, equipo, no_aplica)
+            VALUES (:fecha, :turno, :param_id, :unit_id, :valor, :obs, :usuario, :equipo, :no_aplica)
             ON DUPLICATE KEY UPDATE
                 valor = :valor,
                 observacion = :obs,
                 usuario = :usuario,
-                metodo = :metodo,
+                equipo = :equipo,
                 no_aplica = :no_aplica,
                 updated_at = CURRENT_TIMESTAMP
         """)
@@ -234,7 +234,7 @@ async def create_calidad_batch(registros: list[RegistroCalidadIn], db: AsyncSess
             'valor': reg.valor if not reg.no_aplica else None,
             'obs': reg.observaciones,
             'usuario': reg.usuario,
-            'metodo': reg.metodo,
+            'equipo': reg.equipo,
             'no_aplica': reg.no_aplica
         })
 
@@ -246,6 +246,39 @@ async def create_calidad_batch(registros: list[RegistroCalidadIn], db: AsyncSess
 
     await db.commit()
     return CalidadBatchResponse(inserted=inserted, updated=updated, total=inserted + updated)
+
+
+# ── GET /ultimo-valor — valor del turno anterior ────────────────────────────
+
+@router.get("/ultimo-valor")
+async def get_ultimo_valor(
+    unidad_tratamiento: str = Query(..., description="Nombre de la unidad, ej: GEM_SALIDA"),
+    parametro: str = Query(..., description="Nombre del parámetro, ej: pH"),
+    db: AsyncSession = Depends(get_db),
+):
+    """Devuelve el último valor registrado para una unidad+parámetro específico."""
+    row = (await db.execute(text("""
+        SELECT mc.valor,
+               DATE_FORMAT(mc.fecha, '%Y-%m-%d') AS fecha,
+               CASE mc.turno WHEN 1 THEN 'mañana' WHEN 2 THEN 'tarde' WHEN 3 THEN 'noche' ELSE NULL END AS turno
+        FROM medicion_calidad mc
+        JOIN parametro_calidad pc ON mc.parametro_id = pc.id
+        JOIN unidad_tratamiento ut ON mc.unidad_id = ut.id
+        WHERE UPPER(pc.nombre) LIKE UPPER(:parametro)
+          AND UPPER(ut.nombre) LIKE UPPER(:unidad)
+          AND mc.valor IS NOT NULL
+          AND mc.no_aplica = 0
+        ORDER BY mc.fecha DESC, mc.turno DESC
+        LIMIT 1
+    """), {
+        'parametro': f'%{parametro}%',
+        'unidad': f'%{unidad_tratamiento}%',
+    })).mappings().first()
+
+    if not row:
+        return {"valor": None, "fecha": None, "turno": None}
+
+    return dict(row)
 
 
 # ── GET /parametros — catálogo de parámetros con datos ──────────────────────

@@ -1,13 +1,13 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../state/AuthContext';
 import { ROUTES } from '../../lib/routes';
-import { createCalidadBatch } from '../../services/ptarClient';
-import type { RegistroCalidad } from '../../services/ptarClient';
+import { createCalidadBatch, getUltimoValorCalidad } from '../../services/ptarClient';
+import type { RegistroCalidad, UltimoValorCalidad } from '../../services/ptarClient';
 
-import { 
-  PARAMS_DIARIOS, PARAMS_OCASIONALES, 
-  UNIDADES_TRATAMIENTO, METODOS 
+import {
+  PARAMS_DIARIOS, PARAMS_OCASIONALES,
+  UNIDADES_TRATAMIENTO,
 } from '../../lib/constants/incidencias';
 import type { DiarioId, OcasionalId } from '../../lib/constants/incidencias';
 import { TURNO_LABELS, getTurno } from '../../lib/utils/time';
@@ -16,30 +16,31 @@ import { TURNO_LABELS, getTurno } from '../../lib/utils/time';
 
 interface ParamInput {
   valor: string;
-  metodo: string;       // default: 'Sensor / Equipo en línea'
   no_aplica: boolean;
-  observaciones: string;
+  observaciones: string; // solo para N/A
 }
 
 interface ExtraRow {
   uid: string;
   id_param: OcasionalId | '';
   valor: string;
-  metodo: string;
   no_aplica: boolean;
   observaciones: string;
 }
 
 interface FormState {
   unidad_tratamiento: string;
+  novedad_quimico: boolean;
+  novedad_procesos: boolean;
+  observaciones_generales: string;
   daily: Record<DiarioId, ParamInput>;
   extras: ExtraRow[];
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-const makeParamInput = (defaultMetodo = 'Sensor / Equipo en línea'): ParamInput => ({
-  valor: '', metodo: defaultMetodo, no_aplica: false, observaciones: '',
+const makeParamInput = (): ParamInput => ({
+  valor: '', no_aplica: false, observaciones: '',
 });
 
 const INITIAL_DAILY = Object.fromEntries(
@@ -49,6 +50,48 @@ const INITIAL_DAILY = Object.fromEntries(
 let uidCounter = 0;
 const newUid = () => `extra-${++uidCounter}`;
 
+const stepForDecimals = (d: number) => d === 0 ? '1' : d === 1 ? '0.1' : '0.01';
+
+// ─── Validaciones especiales ─────────────────────────────────────────────────
+
+function getParamWarning(
+  paramId: string,
+  valor: string,
+  daily: Record<DiarioId, ParamInput>
+): { level: 'warn' | 'error'; msg: string } | null {
+  if (!valor) return null;
+  const v = parseFloat(valor);
+  if (isNaN(v)) return null;
+
+  if (paramId === 'pH') {
+    if (v > 14) return { level: 'error', msg: 'pH no puede superar 14' };
+    if (v > 11) return { level: 'warn', msg: `pH > 11 — valor alto, verifica la medición` };
+  }
+  if (paramId === 'Temperatura') {
+    if (v < 15) return { level: 'error', msg: 'Temperatura por debajo del mínimo permitido (15 °C)' };
+    if (v > 60) return { level: 'error', msg: 'Temperatura por encima del máximo permitido (60 °C)' };
+  }
+  if (paramId === 'TDS') {
+    const condVal = daily['Conductividad' as DiarioId]?.valor;
+    if (condVal) {
+      const cond = parseFloat(condVal);
+      if (!isNaN(cond) && v > cond) {
+        return { level: 'error', msg: `TDS (${v}) no puede superar Conductividad (${cond})` };
+      }
+    }
+  }
+  if (paramId === 'Conductividad') {
+    const tdsVal = daily['TDS' as DiarioId]?.valor;
+    if (tdsVal) {
+      const tds = parseFloat(tdsVal);
+      if (!isNaN(tds) && tds > v) {
+        return { level: 'error', msg: `TDS (${tds}) supera Conductividad (${v}) — revisa ambos valores` };
+      }
+    }
+  }
+  return null;
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function FormatoIncidencias() {
@@ -57,6 +100,9 @@ export default function FormatoIncidencias() {
 
   const [form, setForm]           = useState<FormState>({
     unidad_tratamiento: '',
+    novedad_quimico: false,
+    novedad_procesos: false,
+    observaciones_generales: '',
     daily: INITIAL_DAILY,
     extras: [],
   });
@@ -66,25 +112,51 @@ export default function FormatoIncidencias() {
   const [submitErrors, setSubmitErrors] = useState<Record<string, boolean>>({});
   const savedCountRef = useRef(0);
 
+  // Valores turno anterior
+  const [prevValues, setPrevValues] = useState<Record<string, UltimoValorCalidad>>({});
+  const [loadingPrev, setLoadingPrev] = useState(false);
+
   const now   = new Date();
   const turno = getTurno();
 
+  // Fetch turno anterior cuando cambia la unidad
+  useEffect(() => {
+    if (!form.unidad_tratamiento) { setPrevValues({}); return; }
+    setLoadingPrev(true);
+    const allParams = [...PARAMS_DIARIOS, ...PARAMS_OCASIONALES];
+    Promise.allSettled(
+      allParams.map(p =>
+        getUltimoValorCalidad(form.unidad_tratamiento, p.nombre)
+          .then(res => [p.nombre, res] as [string, UltimoValorCalidad])
+      )
+    ).then(results => {
+      const map: Record<string, UltimoValorCalidad> = {};
+      results.forEach(r => {
+        if (r.status === 'fulfilled') map[r.value[0]] = r.value[1];
+      });
+      setPrevValues(map);
+    }).finally(() => setLoadingPrev(false));
+  }, [form.unidad_tratamiento]);
+
   // ─── Derived values ────────────────────────────────────────────────────────
 
-  // Active daily: filled OR marked no_aplica
-  const activeDailyIds = (PARAMS_DIARIOS as unknown as typeof PARAMS_DIARIOS)
+  const activeDailyIds = PARAMS_DIARIOS
     .filter(p => form.daily[p.id].valor !== '' || form.daily[p.id].no_aplica)
     .map(p => p.id);
 
-  // Active extras: has a param selected AND (valor filled OR no_aplica)
   const activeExtras = form.extras.filter(
     e => e.id_param !== '' && (e.valor !== '' || e.no_aplica)
   );
 
-  const totalActive = activeDailyIds.length + activeExtras.length;
-  const canSubmit   = form.unidad_tratamiento !== '' && totalActive > 0;
+  // Errores de validación especial que bloquean envío
+  const specialErrors = PARAMS_DIARIOS
+    .filter(p => form.daily[p.id].valor !== '')
+    .map(p => getParamWarning(p.id, form.daily[p.id].valor, form.daily))
+    .filter(w => w?.level === 'error');
 
-  // Occasional params not yet added in extras
+  const totalActive = activeDailyIds.length + activeExtras.length;
+  const canSubmit   = form.unidad_tratamiento !== '' && totalActive > 0 && specialErrors.length === 0;
+
   const addedExtraIds = new Set(form.extras.map(e => e.id_param).filter(Boolean));
   const availableOcasionales = PARAMS_OCASIONALES.filter(p => !addedExtraIds.has(p.id));
 
@@ -112,7 +184,7 @@ export default function FormatoIncidencias() {
       ...prev,
       extras: [...prev.extras, {
         uid: newUid(), id_param: '', valor: '',
-        metodo: 'Laboratorio externo', no_aplica: false, observaciones: '',
+        no_aplica: false, observaciones: '',
       }],
     }));
   };
@@ -125,12 +197,10 @@ export default function FormatoIncidencias() {
 
   const validate = (): boolean => {
     const errors: Record<string, boolean> = {};
-    // Daily: if no_aplica without observaciones → flag
     PARAMS_DIARIOS.forEach(p => {
       const inp = form.daily[p.id];
       if (inp.no_aplica && !inp.observaciones.trim()) errors[p.id] = true;
     });
-    // Extras: if no_aplica without observaciones → flag
     form.extras.forEach(e => {
       if (e.no_aplica && !e.observaciones.trim()) errors[e.uid] = true;
     });
@@ -145,13 +215,19 @@ export default function FormatoIncidencias() {
     if (!validate()) return;
     setSaving(true); setSaveError(null);
 
+    const obsArr: string[] = [];
+    if (form.novedad_quimico) obsArr.push('[Novedad consumo químico]');
+    if (form.novedad_procesos) obsArr.push('[Novedad procesos de producción]');
+    if (form.observaciones_generales.trim()) obsArr.push(form.observaciones_generales.trim());
+    const obsGenerales = obsArr.join(' | ') || undefined;
+
     const shared = {
       turno,
-      usuario:             currentUser?.nombre ?? 'desconocido',
-      unidad_tratamiento:  form.unidad_tratamiento,
+      usuario:            currentUser?.nombre ?? 'desconocido',
+      equipo:             currentUser?.equipo ? JSON.stringify(currentUser.equipo) : undefined,
+      unidad_tratamiento: form.unidad_tratamiento,
     };
 
-    // Daily rows
     const dailyRows: Omit<RegistroCalidad, 'id' | 'created_at'>[] =
       activeDailyIds.map(id => {
         const p = PARAMS_DIARIOS.find(x => x.id === id)!;
@@ -161,14 +237,12 @@ export default function FormatoIncidencias() {
           ...shared,
           parametro:    p.nombre,
           unidad_medida: p.unidad,
-          valor:        numVal && !isNaN(numVal) ? numVal : undefined,
-          metodo:       inp.no_aplica ? undefined : (inp.metodo || undefined),
+          valor:        numVal !== undefined && !isNaN(numVal) ? numVal : undefined,
           no_aplica:    inp.no_aplica,
-          observaciones: inp.observaciones.trim() || undefined,
+          observaciones: [inp.observaciones.trim(), obsGenerales].filter(Boolean).join(' | ') || undefined,
         };
       });
 
-    // Extra rows
     const extraRows: Omit<RegistroCalidad, 'id' | 'created_at'>[] =
       activeExtras.map(e => {
         const p = PARAMS_OCASIONALES.find(x => x.id === e.id_param)!;
@@ -177,10 +251,9 @@ export default function FormatoIncidencias() {
           ...shared,
           parametro:    p.nombre,
           unidad_medida: p.unidad,
-          valor:        numVal && !isNaN(numVal) ? numVal : undefined,
-          metodo:       e.no_aplica ? undefined : (e.metodo || undefined),
+          valor:        numVal !== undefined && !isNaN(numVal) ? numVal : undefined,
           no_aplica:    e.no_aplica,
-          observaciones: e.observaciones.trim() || undefined,
+          observaciones: [e.observaciones.trim(), obsGenerales].filter(Boolean).join(' | ') || undefined,
         };
       });
 
@@ -198,11 +271,6 @@ export default function FormatoIncidencias() {
     setTimeout(() => navigate(ROUTES.OPERARIO_HOME), 2000);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    doSave();
-  };
-
   // ─── Success screen ────────────────────────────────────────────────────────
 
   if (submitted) {
@@ -216,15 +284,14 @@ export default function FormatoIncidencias() {
     );
   }
 
-  // ─── Render helpers ────────────────────────────────────────────────────────
+  // ─── Render ────────────────────────────────────────────────────────────────
 
   const submitLabel = (() => {
     if (saving) return 'Guardando...';
     if (totalActive === 0) return 'Completa al menos una medición';
+    if (specialErrors.length > 0) return `Corrige los errores de validación (${specialErrors.length})`;
     return `Enviar ${totalActive} Medición${totalActive !== 1 ? 'es' : ''}`;
   })();
-
-  // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
     <div className="formato-page">
@@ -236,7 +303,7 @@ export default function FormatoIncidencias() {
         <p className="formato-meta">Operario: <strong>{currentUser?.nombre}</strong></p>
       </div>
 
-      <form className="formato-form" onSubmit={handleSubmit}>
+      <form className="formato-form" onSubmit={e => { e.preventDefault(); doSave(); }}>
 
         {/* ── Contexto ──────────────────────────────────────────────────── */}
         <div className="form-section-title">Contexto</div>
@@ -253,6 +320,39 @@ export default function FormatoIncidencias() {
             <label className="form-label">Operario</label>
             <div className="form-readonly">{currentUser?.nombre}</div>
           </div>
+        </div>
+
+        {/* ── Novedades y Observaciones Generales ──────────────────────── */}
+        <div className="form-section-title">Novedades del Turno</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 12 }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 14 }}>
+            <input
+              type="checkbox"
+              checked={form.novedad_quimico}
+              onChange={e => setForm(prev => ({ ...prev, novedad_quimico: e.target.checked }))}
+              style={{ width: 16, height: 16 }}
+            />
+            <span>Novedad en consumo químico</span>
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 14 }}>
+            <input
+              type="checkbox"
+              checked={form.novedad_procesos}
+              onChange={e => setForm(prev => ({ ...prev, novedad_procesos: e.target.checked }))}
+              style={{ width: 16, height: 16 }}
+            />
+            <span>Novedad en procesos de producción</span>
+          </label>
+        </div>
+        <div className="form-group">
+          <label className="form-label">Observaciones Generales del Turno</label>
+          <textarea
+            className="form-textarea"
+            rows={3}
+            placeholder="Describe novedades, anomalías o condiciones especiales del turno..."
+            value={form.observaciones_generales}
+            onChange={e => setForm(prev => ({ ...prev, observaciones_generales: e.target.value }))}
+          />
         </div>
 
         {/* ── Unidad de Tratamiento ─────────────────────────────────────── */}
@@ -272,6 +372,11 @@ export default function FormatoIncidencias() {
             <option value="">Selecciona la unidad de tratamiento...</option>
             {UNIDADES_TRATAMIENTO.map(u => <option key={u} value={u}>{u}</option>)}
           </select>
+          {loadingPrev && (
+            <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
+              Cargando valores turno anterior…
+            </span>
+          )}
         </div>
 
         {/* ── Parámetros Diarios ────────────────────────────────────────── */}
@@ -286,11 +391,18 @@ export default function FormatoIncidencias() {
           {PARAMS_DIARIOS.map(p => {
             const inp      = form.daily[p.id];
             const valorNum = parseFloat(inp.valor);
-            const fuera    = inp.valor !== '' && !inp.no_aplica && (valorNum < p.min || valorNum > p.max);
+            const fueraRango = inp.valor !== '' && !inp.no_aplica && (valorNum < p.min || valorNum > p.max);
+            const warning  = inp.valor !== '' && !inp.no_aplica
+              ? getParamWarning(p.id, inp.valor, form.daily)
+              : null;
             const active   = inp.valor !== '' || inp.no_aplica;
             const hasErr   = submitErrors[p.id];
+            const prev     = prevValues[p.nombre];
+            const step     = stepForDecimals((p as { decimales?: number }).decimales ?? 2);
 
-            const rowClass = `param-row${inp.no_aplica ? ' is-noapl' : active ? ' has-value' : ''}${fuera || hasErr ? ' has-error' : ''}`;
+            const rowClass = `param-row${inp.no_aplica ? ' is-noapl' : active ? ' has-value' : ''}${
+              (fueraRango || warning?.level === 'error' || hasErr) ? ' has-error' : warning?.level === 'warn' ? ' has-warn' : ''
+            }`;
 
             return (
               <div key={p.id} className={rowClass}>
@@ -298,6 +410,12 @@ export default function FormatoIncidencias() {
                   <span className="param-badge-diario">DIARIO</span>
                   <span className="param-nombre-text">{p.nombre}</span>
                   <span className="param-rango">{p.min} – {p.max} {p.unidad}</span>
+                  {prev?.valor != null && (
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 'auto', marginRight: 8 }}>
+                      Ant.: <strong>{prev.valor}</strong>
+                      {prev.turno && ` (${prev.turno})`}
+                    </span>
+                  )}
                   <label className="param-noapl-toggle" title="No aplica / No fue posible medir">
                     <input
                       type="checkbox"
@@ -314,25 +432,24 @@ export default function FormatoIncidencias() {
                 {!inp.no_aplica && (
                   <div className="param-row-inputs">
                     <input
-                      type="number" step="0.01"
-                      className={`form-input${fuera ? ' input-warning' : ''}`}
+                      type="number"
+                      step={step}
+                      className={`form-input${fueraRango || warning?.level === 'error' ? ' input-warning' : ''}`}
                       placeholder="Valor medido"
                       value={inp.valor}
                       onChange={e => setDaily(p.id, 'valor', e.target.value)}
                     />
                     <span className="param-unidad-badge">{p.unidad}</span>
-                    <select
-                      className="form-input"
-                      value={inp.metodo}
-                      onChange={e => setDaily(p.id, 'metodo', e.target.value)}
-                    >
-                      <option value="">Método...</option>
-                      {METODOS.map(m => <option key={m} value={m}>{m}</option>)}
-                    </select>
                   </div>
                 )}
 
-                {fuera && (
+                {warning && (
+                  <span className={warning.level === 'error' ? 'field-error' : 'field-warning'}>
+                    {warning.level === 'warn' ? '⚠ ' : ''}{warning.msg}
+                  </span>
+                )}
+
+                {fueraRango && !warning && (
                   <span className="field-warning">
                     Fuera del rango técnico ({p.min} – {p.max} {p.unidad})
                   </span>
@@ -370,11 +487,12 @@ export default function FormatoIncidencias() {
             const fuera         = selectedParam && extra.valor !== '' && !extra.no_aplica
               && (valorNum < selectedParam.min || valorNum > selectedParam.max);
             const hasErr        = submitErrors[extra.uid];
+            const prev          = selectedParam ? prevValues[selectedParam.nombre] : undefined;
+            const step          = stepForDecimals((selectedParam as { decimales?: number } | undefined)?.decimales ?? 2);
 
             return (
               <div key={extra.uid} className="extra-row">
                 <div className="extra-row-fields">
-                  {/* Param selector */}
                   <select
                     className="form-input"
                     value={extra.id_param}
@@ -387,9 +505,9 @@ export default function FormatoIncidencias() {
                     }
                   </select>
 
-                  {/* Valor */}
                   <input
-                    type="number" step="0.01"
+                    type="number"
+                    step={step}
                     className={`form-input${fuera ? ' input-warning' : ''}`}
                     placeholder="Valor"
                     value={extra.valor}
@@ -397,27 +515,19 @@ export default function FormatoIncidencias() {
                     onChange={e => setExtra(extra.uid, 'valor', e.target.value)}
                   />
 
-                  {/* Unidad badge */}
                   <span className="param-unidad-badge" style={{ minWidth: 60 }}>
                     {selectedParam?.unidad ?? '—'}
                   </span>
 
-                  {/* Método */}
-                  <select
-                    className="form-input"
-                    value={extra.metodo}
-                    disabled={!extra.id_param || extra.no_aplica}
-                    onChange={e => setExtra(extra.uid, 'metodo', e.target.value)}
-                  >
-                    <option value="">Método...</option>
-                    {METODOS.map(m => <option key={m} value={m}>{m}</option>)}
-                  </select>
+                  {prev?.valor != null && (
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                      Ant.: <strong>{prev.valor}</strong>
+                    </span>
+                  )}
 
-                  {/* Remove */}
                   <button type="button" className="btn-remove-param" onClick={() => removeExtra(extra.uid)}>×</button>
                 </div>
 
-                {/* N/A + observaciones */}
                 <label className="checkbox-label" style={{ fontSize: 13 }}>
                   <input
                     type="checkbox"

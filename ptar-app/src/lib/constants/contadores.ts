@@ -34,12 +34,15 @@ export const CONTADORES = [
   { id: 'C-33', nombre: 'Entrada Agua Potable Puerta 7 — Acueducto',               ubicacion: 'Puerta 7',                tipo_agua: 'Potable'       },
   { id: 'C-34', nombre: 'Entrada Agua Potable ½" Lavandería — Acueducto',          ubicacion: 'Lavandería — Acueducto',  tipo_agua: 'Potable'       },
   { id: 'C-35', nombre: 'Entrada Agua Potable Zona de Lodos ½" (Lava Ojos)',       ubicacion: 'Zona de Lodos',           tipo_agua: 'Potable'       },
+  { id: 'C-36', nombre: 'GEM PRUEBA',                                               ubicacion: 'GEM',                     tipo_agua: 'Tratada'       },
 ] as const;
 
 export type ContadorId = typeof CONTADORES[number]['id'];
 
+// Orden fijo de los 20 contadores principales (aparecen siempre en este orden)
 export const DIARIOS_IDS: ContadorId[] = [
-  'C-11', 'C-10', 'C-12', 'C-13', 'C-14', 'C-15', 'C-17', 'C-19', 'C-20', 'C-21', 'C-22', 'C-23',
+  'C-01', 'C-02', 'C-03', 'C-08', 'C-09', 'C-10', 'C-11', 'C-12', 'C-13',
+  'C-16', 'C-17', 'C-36', 'C-19', 'C-20', 'C-21', 'C-22', 'C-23', 'C-26', 'C-27', 'C-28',
 ];
 
 export const CONTADORES_MAP = Object.fromEntries(CONTADORES.map(c => [c.id, c])) as Record<ContadorId, typeof CONTADORES[number]>;

@@ -9,11 +9,21 @@ const MOCK_USERS: AppUser[] = [
   { id: 'multi1', nombre: 'Director PTAR', roles: ['encargado', 'administrador'], activeRole: 'encargado' },
 ];
 
+// Lista de operarios disponibles para el checklist de equipo en turno
+export const OPERARIOS_LISTA = [
+  'Carlos Mendoza',
+  'Ana Suárez',
+  'Operario 3',
+  'Operario 4',
+  'Operario 5',
+  'Operario 6',
+];
+
 const SESSION_KEY = 'ptar_session';
 
 interface AuthContextValue {
   currentUser: AppUser | null;
-  login: (userId: string) => boolean;
+  login: (userId: string, equipo?: string[]) => boolean;
   selectRole: (role: Role) => void;
   logout: () => void;
 }
@@ -33,10 +43,14 @@ function loadSession(): AppUser | null {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<AppUser | null>(loadSession);
 
-  const login = useCallback((userId: string): boolean => {
+  const login = useCallback((userId: string, equipo?: string[]): boolean => {
     const user = MOCK_USERS.find(u => u.id === userId);
     if (!user) return false;
-    const session = { ...user, activeRole: user.roles[0] };
+    const session: AppUser = {
+      ...user,
+      activeRole: user.roles[0],
+      equipo: equipo ?? [user.nombre],
+    };
     localStorage.setItem(SESSION_KEY, JSON.stringify(session));
     setCurrentUser(session);
     return true;

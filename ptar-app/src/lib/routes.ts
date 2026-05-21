@@ -5,6 +5,8 @@ export const ROUTES = {
   FORMATO_CAUDALES: '/operario/formato/caudales',
   FORMATO_REACTIVOS: '/operario/formato/reactivos',
   FORMATO_INCIDENCIAS: '/operario/formato/incidencias',
+  FORMATO_REACTIVOS_RO: '/operario/formato/reactivos-ro',
+  FORMATO_CONDICIONES_OP: '/operario/formato/condiciones',
   // Encargado
   ENCARGADO_DASHBOARD: '/encargado/dashboard',
   ENCARGADO_CALIDAD:   '/encargado/calidad',

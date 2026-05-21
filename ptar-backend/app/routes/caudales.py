@@ -23,6 +23,7 @@ CONTADOR_MAPPING = {
     'C-21': 'mbr2',
     'C-22': 'ingreso_uf_ptap',
     'C-23': 'salida_uf_ptap',
+    'C-36': 'gem_prueba',
     # ── Contadores adicionales (acueducto, producción, auxiliares) ───────────
     'C-01': 'entrada_ap_principal_6in',
     'C-02': 'entrada_ap_fria_lavanderia_4in',
@@ -57,6 +58,7 @@ class LecturaContadorIn(BaseModel):
     fecha: Optional[date] = None
     turno: str  # 'mañana'|'tarde'|'noche'
     usuario: str
+    equipo: Optional[str] = None  # JSON array de nombres del equipo en turno
     id_contador: str  # C-12, C-13, etc.
     nombre_contador: str
     ubicacion: str
@@ -214,7 +216,7 @@ async def create_caudales_batch(registros: list[LecturaContadorIn], db: AsyncSes
         # Agrupar
         key = (fecha, turno_int)
         if key not in grouped:
-            grouped[key] = {'usuario': reg.usuario, 'cols': {}}
+            grouped[key] = {'usuario': reg.usuario, 'equipo': reg.equipo, 'cols': {}}
 
         grouped[key]['cols'][col_name] = reg.lectura_actual_m3
 
@@ -222,6 +224,7 @@ async def create_caudales_batch(registros: list[LecturaContadorIn], db: AsyncSes
     for (fecha, turno_int), group_data in grouped.items():
         col_values = group_data['cols']
         usuario    = group_data['usuario']
+        equipo     = group_data.get('equipo')
 
         # Construir dinámicamente las columnas a insertar
         hora_lectura = TURNO_HORA_MAP.get(turno_int, "12:00:00")
@@ -229,6 +232,12 @@ async def create_caudales_batch(registros: list[LecturaContadorIn], db: AsyncSes
         vals = [':fecha', ':turno', f"'{hora_lectura}'", ':usuario']
         params = {'fecha': fecha, 'turno': turno_int, 'usuario': usuario}
         update_parts = ['usuario = :usuario']
+
+        if equipo is not None:
+            cols.append('equipo')
+            vals.append(':equipo')
+            params['equipo'] = equipo
+            update_parts.append('equipo = :equipo')
 
         for col_name, value in col_values.items():
             cols.append(col_name)

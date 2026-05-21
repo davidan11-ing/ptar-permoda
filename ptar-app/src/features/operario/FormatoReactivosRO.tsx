@@ -1,33 +1,31 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../state/AuthContext';
 import { ROUTES } from '../../lib/routes';
-import { createReactivosBatch, getUltimoHorometro } from '../../services/ptarClient';
-import type { RegistroCosto, UltimoHorometro } from '../../services/ptarClient';
+import { createReactivosBatch } from '../../services/ptarClient';
+import type { RegistroCosto } from '../../services/ptarClient';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
 
-import { QUIMICOS_GEM } from '../../lib/constants/quimicos';
+import { QUIMICOS_RO } from '../../lib/constants/quimicos';
 import { TURNO_LABELS, BITACORA_TURNO, getTurno } from '../../lib/utils/time';
 
-// ─── Constante: volumen por hora ────────────────────────────────────────────
-const M3_POR_HORA = 80;
+// ─── Constante: volumen por hora RO ─────────────────────────────────────────
+const M3_POR_HORA_RO = 80; // placeholder — ajustar con dato real
 
 // ─── Validación Zod ──────────────────────────────────────────────────────────
 const productSchema = z.object({
-  nivel_final:    z.string().optional(),
-  ingreso_l:      z.string().optional(), // si nivel_final > nivel_inicial
-  trasiego_check: z.boolean().optional(), // solo Q-02
-  trasiego_l:     z.string().optional(), // solo Q-02
+  nivel_final: z.string().optional(),
+  ingreso_l:   z.string().optional(),
 });
 
 const formSchema = z.object({
-  horometro_actual:        z.string().min(1, 'Ingresa el horómetro actual'),
-  volumen_override:        z.string().optional(),
-  volumen_manual:          z.boolean(),
-  products:                z.record(z.string(), productSchema),
+  horas_operacion:  z.string().optional(),
+  caudal_entrada:   z.string().optional(), // C-12 Entrada RO #1
+  caudal_salida:    z.string().optional(), // C-13 Salida RO #1
+  products:         z.record(z.string(), productSchema),
   observaciones_generales: z.string().optional(),
 });
 
@@ -35,37 +33,32 @@ type FormValues = z.infer<typeof formSchema>;
 
 // ─── Cálculos por producto ───────────────────────────────────────────────────
 interface ProductComputed {
-  active:        boolean;
-  consumoL:      number | null; // nivel_inicial - nivel_final (puede ser negativo si ingresó)
-  consumoReal:   number | null; // consumoL - trasiegoL (para Q-02)
-  kgConsumidos:  number | null; // usando consumoReal
-  ppm:           number | null; // kg / m3 * 1000
-  costoOp:       number | null;
+  active:         boolean;
+  consumoL:       number | null;
+  kgConsumidos:   number | null;
+  ppm:            number | null;
+  costoOp:        number | null;
   fueraCapacidad: boolean;
-  esIngreso:     boolean;       // nivel_final > nivel_inicial
+  esIngreso:      boolean;
 }
 
 const NULL_COMPUTED: ProductComputed = {
-  active: false, consumoL: null, consumoReal: null,
-  kgConsumidos: null, ppm: null, costoOp: null,
-  fueraCapacidad: false, esIngreso: false,
+  active: false, consumoL: null, kgConsumidos: null,
+  ppm: null, costoOp: null, fueraCapacidad: false, esIngreso: false,
 };
 
 function computeProduct(
-  q: typeof QUIMICOS_GEM[number],
+  q: typeof QUIMICOS_RO[number],
   nivelFinal: string | undefined,
-  trasiegoL: number,
   volM3: number,
 ): ProductComputed {
   if (!nivelFinal || nivelFinal === '') return NULL_COMPUTED;
   const nf = parseFloat(nivelFinal);
   const consumoL = q.nivel_inicial - nf;
-  const consumoReal = consumoL - trasiegoL; // para Q-02; para otros trasiegoL=0
-  const kg = q.unidad === 'L' ? consumoReal * q.densidad : consumoReal;
+  const kg = q.unidad === 'L' ? consumoL * q.densidad : consumoL;
   return {
     active: true,
     consumoL,
-    consumoReal,
     kgConsumidos: kg,
     ppm: volM3 > 0 ? (kg / volM3) * 1000 : null,
     costoOp: kg * q.precio_kg,
@@ -75,16 +68,12 @@ function computeProduct(
 }
 
 // ─── Componente Principal ────────────────────────────────────────────────────
-export default function FormatoReactivos() {
+export default function FormatoReactivosRO() {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
   const [saving, setSaving] = useState(false);
-  const [confirmCero, setConfirmCero] = useState(false);
-  const [ultimoHoro, setUltimoHoro] = useState<UltimoHorometro | null>(null);
-  const [loadingHoro, setLoadingHoro] = useState(true);
 
-  // ── Modo manual de fecha / turno ──────────────────────────────────────────
   const [autoTurno]   = useState<'mañana' | 'tarde' | 'noche'>(getTurno);
   const [manualMode,  setManualMode]  = useState(false);
   const [manualFecha, setManualFecha] = useState(() => new Date().toISOString().slice(0, 10));
@@ -95,60 +84,44 @@ export default function FormatoReactivos() {
   const activeTurno = manualMode ? manualTurno : autoTurno;
   const activeFecha = manualMode ? manualFecha : today;
 
-  // ── Fetch último horómetro ─────────────────────────────────────────────────
-  useEffect(() => {
-    getUltimoHorometro()
-      .then(data => setUltimoHoro(data))
-      .catch(() => setUltimoHoro(null))
-      .finally(() => setLoadingHoro(false));
-  }, []);
-
   const defaultProducts = Object.fromEntries(
-    QUIMICOS_GEM.map(q => [q.id, {
-      nivel_final: '', ingreso_l: '', trasiego_check: false, trasiego_l: '',
-    }])
+    QUIMICOS_RO.map(q => [q.id, { nivel_final: '', ingreso_l: '' }])
   );
 
-  const { control, handleSubmit, watch, register, formState: { errors } } = useForm<FormValues>({
+  const { control, handleSubmit, watch, register } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      horometro_actual: '',
-      volumen_override: '',
-      volumen_manual: false,
+      horas_operacion: '',
+      caudal_entrada: '',
+      caudal_salida: '',
       products: defaultProducts,
       observaciones_generales: '',
     }
   });
 
-  const watchHoro     = watch('horometro_actual');
-  const watchVolOvr   = watch('volumen_override');
-  const watchVolMan   = watch('volumen_manual');
+  const watchHoras    = watch('horas_operacion');
+  const watchEntrada  = watch('caudal_entrada');
+  const watchSalida   = watch('caudal_salida');
   const watchProducts = watch('products');
 
-  // ── Cálculos derivados ────────────────────────────────────────────────────
-  const horoActual = parseFloat(watchHoro) || 0;
-  const horoUltimo = ultimoHoro?.horometro ?? 0;
-  const horasOp    = horoActual > 0 && horoUltimo > 0
-    ? Math.max(0, horoActual - horoUltimo) : null;
-  const volCalculado = horasOp !== null ? horasOp * M3_POR_HORA : null;
-  const volFinal    = watchVolMan && watchVolOvr
-    ? (parseFloat(watchVolOvr) || 0)
-    : (volCalculado ?? 0);
+  // Volumen tratado RO
+  const horasOp   = parseFloat(watchHoras || '') || 0;
+  const volFinal  = horasOp > 0 ? horasOp * M3_POR_HORA_RO : 0;
+
+  // Caudal neto (recuperación RO)
+  const caudalEntrada = parseFloat(watchEntrada || '') || null;
+  const caudalSalida  = parseFloat(watchSalida || '') || null;
+  const recuperacion  = caudalEntrada && caudalSalida && caudalEntrada > 0
+    ? ((caudalSalida / caudalEntrada) * 100).toFixed(1) : null;
 
   const computed = useMemo(
     () => Object.fromEntries(
-      QUIMICOS_GEM.map(q => {
-        const p = watchProducts[q.id];
-        const trasL = q.id === 'Q-02' && p?.trasiego_check && p?.trasiego_l
-          ? (parseFloat(p.trasiego_l) || 0) : 0;
-        return [q.id, computeProduct(q, p?.nivel_final, trasL, volFinal)];
-      })
+      QUIMICOS_RO.map(q => [q.id, computeProduct(q, watchProducts[q.id]?.nivel_final, volFinal)])
     ),
     [watchProducts, volFinal],
   );
 
-  const activeProducts = QUIMICOS_GEM.filter(q => computed[q.id].active);
-  const zeroProducts   = activeProducts.filter(q => computed[q.id].consumoReal === 0);
+  const activeProducts = QUIMICOS_RO.filter(q => computed[q.id].active);
   const ingresoRequired = activeProducts.filter(q => computed[q.id].esIngreso);
   const missingIngreso  = ingresoRequired.filter(q =>
     !watchProducts[q.id]?.ingreso_l || watchProducts[q.id]?.ingreso_l === ''
@@ -156,19 +129,18 @@ export default function FormatoReactivos() {
   const hasCapacityErrors = activeProducts.some(q => computed[q.id].fueraCapacidad);
   const canSubmit = activeProducts.length > 0 && !hasCapacityErrors && missingIngreso.length === 0;
 
-  // ── Guardado ───────────────────────────────────────────────────────────────
+  // ─── Guardado ─────────────────────────────────────────────────────────────
   const doSave = async (data: FormValues) => {
     if (activeProducts.length === 0) return;
-    if (zeroProducts.length > 0 && !confirmCero) {
-      setConfirmCero(true);
-      return;
-    }
-
     setSaving(true);
 
     const fechaPrefix = manualMode && activeFecha !== today
       ? `[Fecha manual: ${activeFecha}] ` : '';
     const obsGen = (data.observaciones_generales ?? '').trim();
+
+    const caudalesInfo = caudalEntrada && caudalSalida
+      ? `C-12: ${caudalEntrada}m³, C-13: ${caudalSalida}m³${recuperacion ? `, Rec: ${recuperacion}%` : ''}`
+      : '';
 
     const rows: Omit<RegistroCosto, 'id' | 'created_at' | 'consumo' | 'ppm' | 'costo_operativo'>[] =
       activeProducts.map(q => {
@@ -177,11 +149,8 @@ export default function FormatoReactivos() {
         const obsArr: string[] = [];
         if (fechaPrefix) obsArr.push(fechaPrefix.trim());
         if (c.esIngreso && p.ingreso_l) obsArr.push(`Ingreso recibido: ${p.ingreso_l} ${q.unidad}`);
+        if (caudalesInfo) obsArr.push(caudalesInfo);
         if (obsGen) obsArr.push(obsGen);
-
-        const trasiegoL = q.id === 'Q-02' && p.trasiego_check && p.trasiego_l
-          ? parseFloat(p.trasiego_l) || 0 : 0;
-        const ingresoL = c.esIngreso && p.ingreso_l ? parseFloat(p.ingreso_l) || 0 : 0;
 
         return {
           turno:              activeTurno,
@@ -195,12 +164,10 @@ export default function FormatoReactivos() {
           nivel_final:        parseFloat(p.nivel_final!),
           kg_consumidos:      parseFloat((c.kgConsumidos ?? 0).toFixed(4)),
           precio_kg:          q.precio_kg,
-          horometro_inicial:  horoActual,
+          horometro_inicial:  0,
           caudal_tratado_gem: volFinal,
-          horas_operacion:    horasOp ?? 0,
+          horas_operacion:    horasOp,
           observaciones:      obsArr.join(' | ') || undefined,
-          ingreso_coagulante_l:         q.id === 'Q-02' ? ingresoL || undefined : undefined,
-          trasegado_coagulante_ptap_l:  q.id === 'Q-02' && trasiegoL > 0 ? trasiegoL : undefined,
         };
       });
 
@@ -224,13 +191,12 @@ export default function FormatoReactivos() {
     return `Enviar ${n} Registro${n !== 1 ? 's' : ''}`;
   })();
 
-  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="formato-page">
-      <div className="formato-header" style={{ borderColor: '#3fb950' }}>
+      <div className="formato-header" style={{ borderColor: '#1f6feb' }}>
         <h1 className="formato-title">
-          <span className="formato-num" style={{ background: '#3fb950' }}>F-02</span>
-          Reactivos GEM
+          <span className="formato-num" style={{ background: '#1f6feb' }}>F-04</span>
+          Reactivos RO
         </h1>
         <p className="formato-meta">Operario: <strong>{currentUser?.nombre}</strong></p>
       </div>
@@ -283,112 +249,71 @@ export default function FormatoReactivos() {
           </div>
         )}
 
-        {/* ── Horómetro ────────────────────────────────────────────────── */}
-        <div className="form-section-title">Horómetro y Volumen Tratado</div>
-
-        <div className="form-row-2">
+        {/* ── Caudales RO ──────────────────────────────────────────────── */}
+        <div className="form-section-title">Caudales Sistema RO</div>
+        <div className="form-row-3">
           <div className="form-group">
-            <label className="form-label">
-              Horómetro Actual (horas) *
-            </label>
-            <Controller
-              name="horometro_actual"
-              control={control}
-              render={({ field }) => (
-                <input
-                  {...field}
-                  type="number" step="0.001" min="0"
-                  className={`form-input${errors.horometro_actual ? ' input-error' : ''}`}
-                  placeholder="Ej: 17622.350"
-                />
-              )}
+            <label className="form-label">C-12 Entrada RO #1 (m³)</label>
+            <input
+              type="number" step="1" min="0"
+              className="form-input"
+              placeholder="Lectura m³"
+              {...register('caudal_entrada')}
             />
-            {errors.horometro_actual && <span className="field-error">{errors.horometro_actual.message}</span>}
-            {loadingHoro ? (
-              <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
-                Cargando último registro…
-              </span>
-            ) : ultimoHoro?.horometro != null ? (
-              <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
-                Último: <strong>{ultimoHoro.horometro.toLocaleString('es-CO', { minimumFractionDigits: 3 })} h</strong>
-                {ultimoHoro.fecha && ` — ${ultimoHoro.fecha.slice(5).replace('-', '/')}`}
-                {ultimoHoro.turno && ` turno ${ultimoHoro.turno}`}
-              </span>
-            ) : (
-              <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
-                Sin registro anterior
-              </span>
-            )}
           </div>
-
           <div className="form-group">
-            <label className="form-label">Horas de Operación (calculado)</label>
-            <div className={`form-readonly${horasOp !== null ? (horasOp > 0 ? ' value-ok' : ' value-alert') : ''}`}>
-              {horasOp !== null ? `${horasOp.toFixed(3)} h` : '—'}
+            <label className="form-label">C-13 Salida RO #1 (m³)</label>
+            <input
+              type="number" step="1" min="0"
+              className="form-input"
+              placeholder="Lectura m³"
+              {...register('caudal_salida')}
+            />
+          </div>
+          <div className="form-group">
+            <label className="form-label">% Recuperación (calc.)</label>
+            <div className={`form-readonly${recuperacion ? ' value-ok' : ''}`}>
+              {recuperacion ? `${recuperacion}%` : '—'}
             </div>
-            {horasOp !== null && horasOp <= 0 && (
-              <span className="field-error">Horómetro actual debe ser mayor al anterior.</span>
-            )}
           </div>
         </div>
 
         <div className="form-row-2">
           <div className="form-group">
-            <label className="form-label">
-              Volumen Tratado GEM (m³)
-              {!watchVolMan && (
-                <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 6 }}>
-                  calculado ({M3_POR_HORA} m³/h)
-                </span>
-              )}
-            </label>
-            {watchVolMan ? (
-              <input
-                type="number" step="1" min="0"
-                className="form-input"
-                placeholder="m³ manual"
-                {...register('volumen_override')}
-              />
-            ) : (
-              <div className={`form-readonly${volCalculado !== null && volCalculado > 0 ? ' value-ok' : ''}`}>
-                {volCalculado !== null ? `${volCalculado.toFixed(0)} m³` : '—'}
-              </div>
-            )}
+            <label className="form-label">Horas de operación RO</label>
+            <input
+              type="number" step="0.5" min="0" max="8"
+              className="form-input"
+              placeholder="0 — 8 horas"
+              {...register('horas_operacion')}
+            />
           </div>
-          <div className="form-group" style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: 2 }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13 }}>
-              <Controller
-                name="volumen_manual"
-                control={control}
-                render={({ field }) => (
-                  <input type="checkbox" {...field} value="" checked={field.value}
-                    onChange={e => field.onChange(e.target.checked)} />
-                )}
-              />
-              Ingresar volumen manualmente
-            </label>
+          <div className="form-group">
+            <label className="form-label">Volumen tratado RO (calc. {M3_POR_HORA_RO} m³/h)</label>
+            <div className={`form-readonly${volFinal > 0 ? ' value-ok' : ''}`}>
+              {volFinal > 0 ? `${volFinal.toFixed(0)} m³` : '—'}
+            </div>
           </div>
         </div>
 
-        {/* ── Productos GEM ─────────────────────────────────────────────── */}
+        {/* ── Productos RO ─────────────────────────────────────────────── */}
         <div className="form-section-title">
-          Productos Químicos GEM
+          Productos Químicos RO
           <span style={{ color: '#484f58', fontWeight: 400, marginLeft: 8 }}>
             — completa el nivel final de los que apliquen
           </span>
         </div>
 
         <div className="reactivos-list">
-          {QUIMICOS_GEM.map(q => {
+          {QUIMICOS_RO.map(q => {
             const c = computed[q.id];
             const p = watchProducts[q.id] ?? {};
             const cardClass = `reactivo-card${c.fueraCapacidad ? ' has-error' : c.active ? ' has-value' : ''}`;
-            const isQ02 = q.id === 'Q-02';
 
             return (
               <div key={q.id} className={cardClass}>
                 <div className="reactivo-card-header">
-                  <span className="reactivo-badge">{q.id}</span>
+                  <span className="reactivo-badge" style={{ background: '#1f6feb' }}>{q.id}</span>
                   <span className="reactivo-nombre">{q.nombre}</span>
                   <span className="reactivo-meta">
                     {q.unidad} · ρ {q.densidad} kg/{q.unidad} · Cap. {q.capacidad.toLocaleString('es-CO')}
@@ -399,7 +324,9 @@ export default function FormatoReactivos() {
                   <div className="form-group">
                     <label className="form-label">Nivel Inicial ({q.unidad})</label>
                     <div className="form-readonly">
-                      {q.nivel_inicial.toLocaleString('es-CO', { minimumFractionDigits: 1 })}
+                      {q.nivel_inicial > 0
+                        ? q.nivel_inicial.toLocaleString('es-CO', { minimumFractionDigits: 1 })
+                        : <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>Pendiente confirmar</span>}
                     </div>
                   </div>
                   <div className="form-group">
@@ -413,7 +340,6 @@ export default function FormatoReactivos() {
                           type="number" step="0.1" min="0"
                           className={`form-input${c.fueraCapacidad ? ' input-error' : ''}`}
                           placeholder={`0 — ${q.capacidad}`}
-                          onChange={e => { if (confirmCero) setConfirmCero(false); field.onChange(e); }}
                         />
                       )}
                     />
@@ -429,7 +355,7 @@ export default function FormatoReactivos() {
                   </div>
                 </div>
 
-                {/* Alerta: final > inicial → ingreso obligatorio */}
+                {/* Alerta: ingreso de producto */}
                 {c.esIngreso && (
                   <div className="form-alert form-alert-warn" style={{ padding: '10px 12px', marginTop: 4 }}>
                     <strong>Nivel final mayor al inicial — se realizó ingreso de producto.</strong>
@@ -454,43 +380,8 @@ export default function FormatoReactivos() {
                   </div>
                 )}
 
-                {/* Trasiego a PTAP — solo Q-02 Coagulante */}
-                {isQ02 && c.active && (
-                  <div style={{ marginTop: 8, padding: '8px 10px', background: 'var(--bg-secondary)', borderRadius: 6, border: '1px solid var(--border)' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13 }}>
-                      <Controller
-                        name={`products.${q.id}.trasiego_check`}
-                        control={control}
-                        render={({ field }) => (
-                          <input type="checkbox" checked={!!field.value}
-                            onChange={e => field.onChange(e.target.checked)} />
-                        )}
-                      />
-                      ¿Se trasegó coagulante a PTAP en este turno?
-                    </label>
-                    {p.trasiego_check && (
-                      <div className="form-group" style={{ marginTop: 8, marginBottom: 0 }}>
-                        <label className="form-label">Cantidad trasegada ({q.unidad})</label>
-                        <Controller
-                          name={`products.${q.id}.trasiego_l`}
-                          control={control}
-                          render={({ field }) => (
-                            <input {...field} type="number" step="0.1" min="0"
-                              className="form-input" placeholder="L trasegados a PTAP" />
-                          )}
-                        />
-                        {p.trasiego_l && parseFloat(p.trasiego_l) > 0 && (
-                          <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3, display: 'block' }}>
-                            Consumo real para ppms: {(c.consumoReal ?? 0).toFixed(1)} {q.unidad}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-
                 {!c.active && (
-                  <span className="param-hint">↑ Ingresa el nivel final para ver Kg, PPM y Costo automáticamente</span>
+                  <span className="param-hint">↑ Ingresa el nivel final para ver cálculos automáticos</span>
                 )}
 
                 {c.active && (
@@ -510,9 +401,9 @@ export default function FormatoReactivos() {
                     <div className="reactivo-computed-item">
                       <span className="reactivo-computed-label">Costo Operativo</span>
                       <span className="reactivo-computed-value value-ok">
-                        {(c.costoOp ?? 0).toLocaleString('es-CO', {
-                          style: 'currency', currency: 'COP', maximumFractionDigits: 0,
-                        })}
+                        {q.precio_kg > 0
+                          ? (c.costoOp ?? 0).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })
+                          : <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>Precio pendiente</span>}
                       </span>
                     </div>
                   </div>
@@ -522,55 +413,29 @@ export default function FormatoReactivos() {
           })}
         </div>
 
-        {/* ── Observaciones generales ───────────────────────────────────── */}
+        {/* ── Observaciones Generales ───────────────────────────────────── */}
         <div className="form-section-title">Observaciones Generales</div>
         <div className="form-group">
           <label className="form-label">Observaciones del turno (opcional)</label>
           <textarea
             className="form-textarea"
             rows={3}
-            placeholder="Novedades del turno, anomalías, condiciones especiales..."
+            placeholder="Novedades del turno, anomalías en el sistema RO, condiciones especiales..."
             {...register('observaciones_generales')}
           />
         </div>
 
-        {/* ── Confirmación consumo cero ─────────────────────────────────── */}
-        {confirmCero && (
-          <div className="form-alert form-alert-warn">
-            <strong>Consumo cero en:</strong>
-            <ul style={{ marginTop: 8, paddingLeft: 18 }}>
-              {zeroProducts.map(q => (
-                <li key={q.id}>{q.id} — {q.nombre}</li>
-              ))}
-            </ul>
-            <p style={{ marginTop: 8 }}>
-              ¿Confirmas que no hubo consumo de {zeroProducts.length === 1 ? 'este producto' : 'estos productos'} en este turno?
-            </p>
-            <div className="form-alert-actions">
-              <button type="button" className="btn-secondary btn-sm" onClick={() => setConfirmCero(false)}>
-                Corregir
-              </button>
-              <button type="button" className="btn-primary btn-sm" style={{ background: '#3fb950' }}
-                onClick={handleSubmit(doSave)} disabled={saving}>
-                {saving ? 'Guardando...' : 'Confirmar y Enviar'}
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* ── Acciones ──────────────────────────────────────────────────── */}
-        {!confirmCero && (
-          <div className="form-actions">
-            <button type="button" className="btn-secondary"
-              onClick={() => navigate(ROUTES.OPERARIO_HOME)} disabled={saving}>
-              Cancelar
-            </button>
-            <button type="submit" className="btn-primary" style={{ background: '#3fb950' }}
-              disabled={saving || !canSubmit}>
-              {submitLabel}
-            </button>
-          </div>
-        )}
+        <div className="form-actions">
+          <button type="button" className="btn-secondary"
+            onClick={() => navigate(ROUTES.OPERARIO_HOME)} disabled={saving}>
+            Cancelar
+          </button>
+          <button type="submit" className="btn-primary" style={{ background: '#1f6feb' }}
+            disabled={saving || !canSubmit}>
+            {submitLabel}
+          </button>
+        </div>
 
       </form>
     </div>

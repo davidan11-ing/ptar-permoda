@@ -25,6 +25,7 @@ export interface RegistroContador {
   created_at?: string;
   turno: 'mañana' | 'tarde' | 'noche';
   usuario: string;
+  equipo?: string;           // JSON array de nombres del equipo en turno
   id_contador: string;
   nombre_contador: string;
   ubicacion: string;
@@ -40,6 +41,7 @@ export interface RegistroCosto {
   created_at?: string;
   turno: 'mañana' | 'tarde' | 'noche';
   usuario: string;
+  equipo?: string;           // JSON array de nombres del equipo en turno
   id_quimico: string;
   nombre_quimico: string;
   unidad: string;
@@ -55,6 +57,8 @@ export interface RegistroCosto {
   caudal_tratado_gem: number;
   horas_operacion: number;
   observaciones?: string;
+  ingreso_coagulante_l?: number;
+  trasegado_coagulante_ptap_l?: number;
 }
 
 export interface RegistroCalidad {
@@ -63,11 +67,11 @@ export interface RegistroCalidad {
   fecha?: string;
   turno: 'mañana' | 'tarde' | 'noche';
   usuario: string;
+  equipo?: string;           // JSON array de nombres del equipo en turno
   unidad_tratamiento: string;
   parametro: string;
   unidad_medida: string;
   valor?: number;
-  metodo?: string;
   no_aplica: boolean;
   observaciones?: string;
 }
@@ -102,6 +106,16 @@ export async function getReactivosRecientes(since: string, limit = 60): Promise<
   return request<RegistroCosto[]>(`/api/reactivos/?${params}`);
 }
 
+export interface UltimoHorometro {
+  horometro: number | null;
+  fecha: string | null;
+  turno: string | null;
+}
+
+export async function getUltimoHorometro(): Promise<UltimoHorometro> {
+  return request<UltimoHorometro>('/api/reactivos/ultimo-horometro');
+}
+
 // ─── Calidad ──────────────────────────────────────────────────────────────────
 
 export async function createCalidadBatch(
@@ -112,6 +126,20 @@ export async function createCalidadBatch(
 
 export async function getCalidadParametros(): Promise<{ id: number; nombre: string; unidad_medida: string }[]> {
   return request<{ id: number; nombre: string; unidad_medida: string }[]>('/api/calidad/parametros');
+}
+
+export interface UltimoValorCalidad {
+  valor: number | null;
+  fecha: string | null;
+  turno: string | null;
+}
+
+export async function getUltimoValorCalidad(
+  unidad_tratamiento: string,
+  parametro: string
+): Promise<UltimoValorCalidad> {
+  const q = new URLSearchParams({ unidad_tratamiento, parametro });
+  return request<UltimoValorCalidad>(`/api/calidad/ultimo-valor?${q}`);
 }
 
 const TURNO_STR_TO_INT: Record<string, string> = {

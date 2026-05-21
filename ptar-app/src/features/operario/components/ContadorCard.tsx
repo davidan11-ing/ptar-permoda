@@ -55,7 +55,7 @@ export function ContadorCard({
         <div className="form-group" style={{ margin: 0 }}>
           <label className="form-label" style={{ fontSize: 11, marginBottom: 4 }}>Lect. actual (m³)</label>
           <input
-            type="number" step="0.1" min="0"
+            type="number" step="1" min="0"
             className={`form-input${isDecr ? ' input-warning' : ''}`}
             placeholder="m³"
             value={lectura}
@@ -66,7 +66,7 @@ export function ContadorCard({
         <div className="form-group" style={{ margin: 0 }}>
           <label className="form-label" style={{ fontSize: 11, marginBottom: 4 }}>Delta (m³)</label>
           <div className={`form-readonly${delta === null ? '' : delta < 0 ? ' value-alert' : ' value-ok'}`}>
-            {delta !== null ? `${delta >= 0 ? '+' : ''}${delta.toFixed(1)}` : '—'}
+            {delta !== null ? `${delta >= 0 ? '+' : ''}${delta.toFixed(0)}` : '—'}
           </div>
         </div>
       </div>
@@ -85,17 +85,6 @@ export function ContadorCard({
           />
           {hasErr && <span className="field-error">La observación es obligatoria cuando hay decremento.</span>}
         </>
-      )}
-
-      {!isDecr && active && (
-        <textarea
-          className="form-textarea"
-          rows={1}
-          placeholder="Observaciones opcionales..."
-          value={obs}
-          onChange={e => onObs(e.target.value)}
-          style={{ fontSize: 12 }}
-        />
       )}
     </div>
   );
