@@ -1,0 +1,30 @@
+# ── Credenciales — NUNCA subir ────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+
+# ── Python ────────────────────────────────────────────────────────────────────
+.venv/
+.venv314/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.pytest_cache/
+
+# ── Node / Frontend ───────────────────────────────────────────────────────────
+node_modules/
+ptar-app/dist/
+ptar-app/.vercel/
+
+# ── Claude Code (configuración local) ────────────────────────────────────────
+.claude/
+.mcp.json
+
+# ── Archivos temporales y binarios ────────────────────────────────────────────
+*.zip
+*.log
+Thumbs.db
+.DS_Store
+dist/

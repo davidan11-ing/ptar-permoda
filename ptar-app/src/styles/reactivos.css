@@ -1,0 +1,14 @@
+.reactivos-list { display: flex; flex-direction: column; gap: 12px; }
+.reactivo-card { background: #0d1117; border: 1px solid #30363d; border-left: 3px solid #30363d; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 12px; transition: border-color .15s, border-left-color .15s; }
+.reactivo-card.has-value { border-left-color: #3fb950; border-color: #3fb95030; }
+.reactivo-card.has-error  { border-left-color: #f85149; border-color: #f8514930; }
+.reactivo-card-header { display: flex; align-items: center; gap: 10px; }
+.reactivo-badge { font-size: 11px; font-weight: 700; color: #fff; background: #3fb950; padding: 2px 8px; border-radius: 20px; flex-shrink: 0; letter-spacing: .05em; }
+.reactivo-nombre { font-size: 14px; font-weight: 600; color: #e6edf3; }
+.reactivo-meta { font-size: 12px; color: #484f58; margin-left: auto; }
+.reactivo-computed { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; padding-top: 10px; border-top: 1px solid #21262d; }
+.reactivo-computed-item { display: flex; flex-direction: column; gap: 2px; }
+.reactivo-computed-label { font-size: 11px; color: #8b949e; }
+.reactivo-computed-value { font-size: 13px; font-weight: 600; }
+@media (max-width: 600px) { .reactivo-computed { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 380px) { .reactivo-computed { grid-template-columns: 1fr; } }

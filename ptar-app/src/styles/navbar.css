@@ -1,0 +1,40 @@
+.navbar {
+  display: flex; align-items: center; gap: 16px;
+  height: 56px; padding: 0 20px;
+  background: #161b22;
+  border-bottom: 1px solid #30363d;
+  position: sticky; top: 0; z-index: 100;
+  flex-shrink: 0;
+}
+.navbar-brand { display: flex; align-items: center; gap: 10px; }
+.navbar-logo { display: flex; align-items: center; }
+.navbar-title { font-size: 16px; font-weight: 700; color: #e6edf3; letter-spacing: 0.05em; }
+.navbar-subtitle { font-size: 11px; font-weight: 400; color: #8b949e; margin-left: 6px; }
+.navbar-nav { display: flex; gap: 4px; margin-left: 16px; flex: 1; }
+.nav-link {
+  padding: 6px 12px; border-radius: 6px; font-size: 13px; color: #8b949e;
+  transition: all 0.15s;
+}
+.nav-link:hover { background: #21262d; color: #e6edf3; }
+.nav-link.active { background: #1f3349; color: #00c5e3; }
+.navbar-user { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+.role-switcher { display: flex; gap: 4px; }
+.role-btn {
+  padding: 4px 10px; border-radius: 4px; font-size: 12px;
+  background: #21262d; border: 1px solid #30363d; color: #8b949e;
+  transition: all 0.15s;
+}
+.role-btn.active, .role-btn:hover { background: #1f3349; border-color: #00c5e3; color: #00c5e3; }
+.role-badge {
+  padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; letter-spacing: 0.05em;
+}
+.badge-operario  { background: #0c2d3a; color: #00c5e3; border: 1px solid #00c5e320; }
+.badge-encargado { background: #0d2d1a; color: #3fb950; border: 1px solid #3fb95020; }
+.badge-admin     { background: #1e2040; color: #1f6feb; border: 1px solid #1f6feb20; }
+.user-name { font-size: 13px; color: #8b949e; }
+.logout-btn {
+  padding: 5px 12px; border-radius: 6px; font-size: 12px;
+  background: transparent; border: 1px solid #30363d; color: #8b949e;
+  transition: all 0.15s;
+}
+.logout-btn:hover { border-color: #f85149; color: #f85149; }

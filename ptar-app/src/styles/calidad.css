@@ -1,0 +1,232 @@
+.cal-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.cal-header { margin-bottom: 4px; }
+.cal-title {
+  font-size: 22px; font-weight: 700; color: #e6edf3; margin: 0 0 4px;
+}
+.cal-subtitle { font-size: 13px; color: #8b949e; margin: 0; }
+
+.nav-link.active { color: #00c5e3; border-bottom: 2px solid #00c5e3; padding-bottom: 1px; }
+
+.cal-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 10px;
+  padding: 16px 20px;
+}
+.cal-filter-group { display: flex; flex-direction: column; gap: 5px; }
+.cal-filter-label { font-size: 11px; font-weight: 600; color: #8b949e; text-transform: uppercase; letter-spacing: 0.06em; }
+.cal-filter-select, .cal-filter-input {
+  padding: 7px 10px; border-radius: 6px;
+  background: #0d1117; border: 1px solid #30363d;
+  color: #e6edf3; font-size: 13px; outline: none;
+  transition: border-color 0.15s;
+  min-width: 160px;
+}
+.cal-filter-select:focus, .cal-filter-input:focus {
+  border-color: #00c5e3; box-shadow: 0 0 0 3px #00c5e310;
+}
+.cal-filter-select-sm { min-width: 0; font-size: 12px; padding: 5px 8px; }
+
+.cal-loading {
+  display: flex; align-items: center; gap: 12px;
+  color: #8b949e; font-size: 14px; padding: 32px 0;
+}
+.cal-error {
+  background: color-mix(in srgb, #f85149 8%, #0d1117);
+  border: 1px solid #f8514940; border-radius: 8px;
+  color: #f85149; font-size: 13px; padding: 14px 18px;
+}
+.cal-empty { color: #484f58; font-size: 13px; padding: 32px 0; text-align: center; }
+
+.cal-section { display: flex; flex-direction: column; gap: 10px; }
+.cal-section-header {
+  display: flex; align-items: baseline;
+  justify-content: space-between; flex-wrap: wrap; gap: 8px;
+}
+.cal-section-title {
+  font-size: 14px; font-weight: 700; color: #e6edf3; margin: 0;
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+.cal-section-meta { font-size: 12px; color: #484f58; }
+
+.cal-row-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+@media (max-width: 900px) { .cal-row-2col { grid-template-columns: 1fr; } }
+
+.cal-turno-selector { display: flex; align-items: center; gap: 8px; }
+
+.cal-eficiencia { display: flex; flex-direction: column; gap: 20px; }
+.cal-ef-row { display: flex; flex-direction: column; gap: 6px; }
+.cal-ef-label { display: flex; flex-direction: column; gap: 2px; }
+.cal-ef-etapa { font-size: 13px; font-weight: 600; color: #e6edf3; }
+.cal-ef-route { font-size: 11px; color: #484f58; }
+.cal-ef-bar-wrap {
+  display: flex; align-items: center; gap: 10px;
+  background: #0d1117; border-radius: 4px; padding: 4px 8px; min-height: 28px;
+}
+.cal-ef-bar {
+  height: 16px; border-radius: 3px; min-width: 4px;
+  transition: width 0.4s ease;
+}
+.cal-ef-pct { font-size: 13px; font-weight: 700; white-space: nowrap; }
+
+.cal-tabla-wrap { overflow-x: auto; border-radius: 10px; }
+.cal-tabla {
+  width: 100%; border-collapse: collapse; font-size: 12px;
+}
+.cal-tabla th {
+  background: #0d1117; color: #8b949e; font-weight: 600;
+  text-align: left; padding: 10px 14px; border-bottom: 1px solid #30363d;
+  white-space: nowrap;
+}
+.cal-tabla td {
+  padding: 9px 14px; border-bottom: 1px solid #21262d; color: #c9d1d9;
+  vertical-align: middle;
+}
+.cal-tabla tr:last-child td { border-bottom: none; }
+.cal-tabla tr:hover td { background: #161b22; }
+.cal-tabla-dot {
+  display: inline-block; width: 8px; height: 8px;
+  border-radius: 50%; margin-right: 8px; flex-shrink: 0;
+  vertical-align: middle;
+}
+.cal-tabla-num { text-align: right; font-variant-numeric: tabular-nums; }
+.cal-tabla-avg { color: #e6edf3; font-weight: 600; }
+
+.params-list { display: flex; flex-direction: column; gap: 10px; }
+.param-row { background: #0d1117; border: 1px solid #30363d; border-left: 3px solid #30363d; border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 10px; transition: border-color .15s, border-left-color .15s; }
+.param-row.has-value  { border-left-color: #d29922; border-color: #d2992230; }
+.param-row.has-error  { border-left-color: #f85149; border-color: #f8514930; }
+.param-row.is-noapl   { border-left-color: #484f58; border-color: #30363d; opacity: 0.8; }
+.param-row-header     { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.param-badge-diario   { font-size: 10px; font-weight: 700; color: #d29922; background: #2d250d; padding: 2px 8px; border-radius: 20px; flex-shrink: 0; }
+.param-badge-extra    { font-size: 10px; font-weight: 700; color: #bc8cff; background: #251e2d; padding: 2px 8px; border-radius: 20px; flex-shrink: 0; }
+.param-nombre-text    { font-size: 13px; font-weight: 600; color: #e6edf3; }
+.param-rango          { font-size: 11px; color: #484f58; margin-left: auto; flex-shrink: 0; }
+.param-noapl-toggle   { display: flex; align-items: center; gap: 5px; font-size: 12px; color: #8b949e; cursor: pointer; margin-left: 4px; }
+.param-row-inputs     { display: grid; grid-template-columns: 1fr auto 1.4fr; gap: 8px; align-items: start; }
+.param-unidad-badge   { display: flex; align-items: center; justify-content: center; height: 40px; padding: 0 10px; background: #161b22; border: 1px solid #30363d; border-radius: 6px; font-size: 12px; color: #8b949e; white-space: nowrap; }
+.extras-section       { display: flex; flex-direction: column; gap: 10px; }
+.btn-add-param        { width: 100%; padding: 10px 16px; background: #161b22; border: 1px dashed #30363d; border-radius: 8px; color: #8b949e; font-size: 13px; cursor: pointer; transition: all .15s; text-align: center; }
+.btn-add-param:hover  { border-color: #d29922; color: #d29922; background: #2d250d20; }
+.extra-row            { background: #0d1117; border: 1px solid #30363d; border-left: 3px solid #bc8cff30; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.extra-row-fields     { display: grid; grid-template-columns: 1.5fr 1fr auto 1.4fr auto; gap: 8px; align-items: start; }
+.btn-remove-param     { height: 40px; padding: 0 12px; background: #21262d; border: 1px solid #30363d; border-radius: 6px; color: #8b949e; cursor: pointer; font-size: 18px; line-height: 1; transition: all .15s; flex-shrink: 0; }
+.btn-remove-param:hover { background: #2d1515; border-color: #f8514940; color: #f85149; }
+.param-hint { font-size: 11px; color: #484f58; font-style: italic; }
+@media (max-width: 600px) {
+  .param-row-inputs { grid-template-columns: 1fr auto; }
+  .extra-row-fields { grid-template-columns: 1fr 1fr auto; }
+}
+
+.badge-agua {
+  display: inline-flex; align-items: center; padding: 3px 10px;
+  border-radius: 20px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
+}
+.badge-agua-potable        { background: #0c2d3a; color: #00c5e3; border: 1px solid #00c5e330; }
+.badge-agua-reuso          { background: #0d2d1a; color: #3fb950; border: 1px solid #3fb95030; }
+.badge-agua-rechazo        { background: #2d1515; color: #f85149; border: 1px solid #f8514930; }
+.badge-agua-ro             { background: #1e2040; color: #1f6feb; border: 1px solid #1f6feb30; }
+.badge-agua-tratada        { background: #1e2d1e; color: #56d364; border: 1px solid #56d36430; }
+.badge-agua-industrial     { background: #2d2510; color: #e3b341; border: 1px solid #e3b34130; }
+.badge-agua-residual       { background: #2d1f0a; color: #f0883e; border: 1px solid #f0883e30; }
+.badge-agua-pretratamiento { background: #251e2d; color: #bc8cff; border: 1px solid #bc8cff30; }
+
+.manual-toggle-row { display: flex; align-items: center; justify-content: flex-end; margin-top: -4px; }
+
+/* ── KPI Compliance Panel ─────────────────────────────────────────────────── */
+.cal-kpi-section { display: flex; flex-direction: column; gap: 12px; }
+
+.cal-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+@media (max-width: 900px) { .cal-kpi-row { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) { .cal-kpi-row { grid-template-columns: 1fr 1fr; } }
+
+.cal-kpi-card {
+  position: relative;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 10px;
+  padding: 16px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  transition: border-color 0.2s;
+  min-height: 110px;
+}
+.cal-kpi-card:hover { border-color: #444d57; }
+.cal-kpi-skeleton {
+  background: linear-gradient(90deg, #161b22 25%, #21262d 50%, #161b22 75%);
+  background-size: 200% 100%;
+  animation: cal-shimmer 1.4s infinite;
+  min-height: 110px;
+}
+@keyframes cal-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+.cal-kpi-status-dot {
+  position: absolute;
+  top: 12px; right: 12px;
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.cal-kpi-param {
+  font-size: 11px; font-weight: 700; color: #8b949e;
+  text-transform: uppercase; letter-spacing: 0.07em;
+}
+.cal-kpi-valor {
+  font-size: 22px; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.cal-kpi-pct {
+  font-size: 15px; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.cal-kpi-pct-label {
+  font-size: 10px; color: #484f58; text-transform: uppercase; letter-spacing: 0.05em;
+  margin-top: -2px;
+}
+.cal-kpi-limite {
+  font-size: 10px; color: #484f58;
+  margin-top: auto; padding-top: 6px;
+  line-height: 1.3;
+}
+
+/* ── Remoción row ─────────────────────────────────────────────────────────── */
+.cal-remocion-row {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  background: #161b22; border: 1px solid #30363d; border-radius: 8px;
+  padding: 10px 14px;
+}
+.cal-remocion-titulo {
+  font-size: 11px; font-weight: 600; color: #484f58;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  margin-right: 4px; flex-shrink: 0;
+}
+.cal-remocion-chip {
+  display: flex; align-items: center; gap: 5px;
+  background: #0d1117; border: 1px solid #30363d; border-radius: 20px;
+  padding: 3px 10px;
+}
+.cal-remocion-param { font-size: 11px; color: #8b949e; font-weight: 600; }
+.cal-remocion-pct   { font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
