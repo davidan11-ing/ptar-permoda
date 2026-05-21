@@ -560,81 +560,6 @@ export default function FormatoReactivos() {
           </div>
         )}
 
-        {/* ── Horómetro y Volumen GEM ───────────────────────────────────── */}
-        <div className="form-section-title">Horómetro y Volumen Tratado GEM</div>
-
-        <div className="form-row-2">
-          <div className="form-group">
-            <label className="form-label">Horómetro Actual (horas) *</label>
-            <Controller
-              name="horometro_actual"
-              control={control}
-              render={({ field }) => (
-                <input
-                  {...field}
-                  type="number" step="0.001" min="0"
-                  className={`form-input${errors.horometro_actual ? ' input-error' : ''}`}
-                  placeholder="Ej: 17622.350"
-                />
-              )}
-            />
-            {errors.horometro_actual && (
-              <span className="field-error">{errors.horometro_actual.message}</span>
-            )}
-            {loadingHoro ? (
-              <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
-                Cargando último registro…
-              </span>
-            ) : ultimoHoro?.horometro != null ? (
-              <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
-                Último: <strong>{Math.round(ultimoHoro.horometro).toLocaleString('es-CO')} h</strong>
-                {ultimoHoro.fecha && ` — ${ultimoHoro.fecha.slice(5).replace('-', '/')}`}
-                {ultimoHoro.turno && ` turno ${ultimoHoro.turno}`}
-              </span>
-            ) : (
-              <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
-                Sin registro anterior
-              </span>
-            )}
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Horas de Operación (calculado)</label>
-            <div className={`form-readonly${horasOp !== null ? (horasOp > 0 ? ' value-ok' : ' value-alert') : ''}`}>
-              {horasOp !== null ? `${horasOp.toFixed(3)} h` : '—'}
-            </div>
-            {horasOp !== null && horasOp <= 0 && (
-              <span className="field-error">Horómetro actual debe ser mayor al anterior.</span>
-            )}
-          </div>
-        </div>
-
-        <div className="form-row-2">
-          <div className="form-group">
-            <label className="form-label">Caudal de Tratamiento (m³/h)</label>
-            <input
-              type="number" step="1" min="0"
-              className="form-input"
-              placeholder="80"
-              {...register('caudal_mh')}
-            />
-            <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3, display: 'block' }}>
-              Por defecto: 80 m³/h
-            </span>
-          </div>
-          <div className="form-group">
-            <label className="form-label">Volumen Tratado GEM (m³)</label>
-            <div className={`form-readonly${volGEM > 0 ? ' value-ok' : ''}`}>
-              {horasOp !== null ? `${volGEM.toFixed(0)} m³` : '—'}
-            </div>
-            {horasOp !== null && (
-              <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3, display: 'block' }}>
-                = {horasOp.toFixed(3)} h × {caudal} m³/h
-              </span>
-            )}
-          </div>
-        </div>
-
         {/* ══ ACORDEÓN 1: QUÍMICA GEM ══════════════════════════════════════ */}
         <AccordionSection
           title="Química GEM"
@@ -642,6 +567,85 @@ export default function FormatoReactivos() {
           count={QUIMICOS_GEM.length}
           defaultOpen={true}
         >
+          {/* Horómetro y Volumen — exclusivo GEM */}
+          <div style={{
+            background: '#3fb95010', border: '1px solid #3fb95033',
+            borderRadius: 8, padding: '12px', marginBottom: 14,
+          }}>
+            <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 10, color: '#3fb950' }}>
+              Horómetro y Volumen Tratado
+            </div>
+            <div className="form-row-2">
+              <div className="form-group">
+                <label className="form-label">Horómetro Actual (horas) *</label>
+                <Controller
+                  name="horometro_actual"
+                  control={control}
+                  render={({ field }) => (
+                    <input
+                      {...field}
+                      type="number" step="0.001" min="0"
+                      className={`form-input${errors.horometro_actual ? ' input-error' : ''}`}
+                      placeholder="Ej: 17622.350"
+                    />
+                  )}
+                />
+                {errors.horometro_actual && (
+                  <span className="field-error">{errors.horometro_actual.message}</span>
+                )}
+                {loadingHoro ? (
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
+                    Cargando último registro…
+                  </span>
+                ) : ultimoHoro?.horometro != null ? (
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
+                    Último: <strong>{Math.round(ultimoHoro.horometro).toLocaleString('es-CO')} h</strong>
+                    {ultimoHoro.fecha && ` — ${ultimoHoro.fecha.slice(5).replace('-', '/')}`}
+                    {ultimoHoro.turno && ` turno ${ultimoHoro.turno}`}
+                  </span>
+                ) : (
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
+                    Sin registro anterior
+                  </span>
+                )}
+              </div>
+              <div className="form-group">
+                <label className="form-label">Horas de Operación (calculado)</label>
+                <div className={`form-readonly${horasOp !== null ? (horasOp > 0 ? ' value-ok' : ' value-alert') : ''}`}>
+                  {horasOp !== null ? `${horasOp.toFixed(3)} h` : '—'}
+                </div>
+                {horasOp !== null && horasOp <= 0 && (
+                  <span className="field-error">Horómetro actual debe ser mayor al anterior.</span>
+                )}
+              </div>
+            </div>
+            <div className="form-row-2">
+              <div className="form-group">
+                <label className="form-label">Caudal de Tratamiento (m³/h)</label>
+                <input
+                  type="number" step="1" min="0"
+                  className="form-input"
+                  placeholder="80"
+                  {...register('caudal_mh')}
+                />
+                <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3, display: 'block' }}>
+                  Por defecto: 80 m³/h
+                </span>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Volumen Tratado GEM (m³)</label>
+                <div className={`form-readonly${volGEM > 0 ? ' value-ok' : ''}`}>
+                  {horasOp !== null ? `${volGEM.toFixed(0)} m³` : '—'}
+                </div>
+                {horasOp !== null && (
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3, display: 'block' }}>
+                    = {horasOp.toFixed(3)} h × {caudal} m³/h
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
           <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>
             Completa el nivel final de los productos que apliquen en este turno.
           </p>
