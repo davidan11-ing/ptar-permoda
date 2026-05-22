@@ -166,11 +166,22 @@ const CSS = `
   .phase-zone{transition:fill .18s;}
   .phase-zone:hover{fill:rgba(255,255,255,.04);}
   .phase-modal-backdrop{position:fixed;inset:0;z-index:9999;background:rgba(5,10,18,.88);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;animation:phaseFadeIn .22s ease-out;}
+  .phase-modal-backdrop.phase-modal-closing-bg{animation:phaseFadeOut .2s ease-in forwards;}
   @keyframes phaseFadeIn{from{opacity:0}to{opacity:1}}
-  .phase-modal-panel{width:92vw;height:88vh;background:#0d1117;border:1px solid #30363d;border-radius:14px;overflow:hidden;display:flex;flex-direction:column;animation:phaseSlideUp .22s ease-out;box-shadow:0 24px 80px rgba(0,0,0,.7);}
+  @keyframes phaseFadeOut{from{opacity:1}to{opacity:0}}
+  .phase-modal-panel{width:92vw;height:88vh;background:#0d1117;border:1px solid transparent;border-radius:14px;overflow:hidden;display:flex;flex-direction:column;animation:phaseSlideUp .22s ease-out;box-shadow:0 24px 80px rgba(0,0,0,.7);}
+  .phase-modal-panel.phase-modal-closing{animation:phaseSlideDown .2s ease-in forwards;}
   @keyframes phaseSlideUp{from{transform:scale(.96) translateY(12px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
-  .phase-modal-header{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid;background:rgba(255,255,255,.02);flex-shrink:0;}
+  @keyframes phaseSlideDown{from{transform:scale(1) translateY(0);opacity:1}to{transform:scale(.96) translateY(12px);opacity:0}}
+  .phase-modal-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid;background:rgba(255,255,255,.02);flex-shrink:0;gap:12px;}
+  .phase-modal-nav{display:flex;gap:2px;flex-shrink:0;}
+  .phase-nav-btn{background:none;border:none;cursor:pointer;color:#8b949e;font-size:22px;line-height:1;padding:2px 10px;border-radius:6px;transition:color .15s,background .15s;}
+  .phase-nav-btn:hover{color:#fff;background:rgba(255,255,255,.08);}
+  .phase-modal-title-group{display:flex;align-items:center;gap:10px;flex:1;justify-content:center;}
+  .phase-modal-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;display:inline-block;}
   .phase-modal-title{font-family:monospace;font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;}
+  .phase-modal-meta{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+  .phase-modal-index{font-family:monospace;font-size:11px;color:#4a5568;letter-spacing:1px;}
   .phase-modal-close{background:none;border:none;cursor:pointer;color:#8b949e;font-size:18px;padding:4px 8px;border-radius:6px;transition:color .15s,background .15s;}
   .phase-modal-close:hover{color:#fff;background:rgba(255,255,255,.08);}
   .phase-modal-svg-wrap{flex:1;overflow:hidden;display:flex;align-items:center;justify-content:center;padding:16px;}
@@ -189,8 +200,28 @@ type PhaseKey = typeof PHASES[number]['key'];
 export default function SplashScreen() {
   const navigate = useNavigate();
   const [activePhase, setActivePhase] = useState<PhaseKey | null>(null);
+  const [closing, setClosing] = useState(false);
+
+  const closeModal = () => {
+    setClosing(true);
+    setTimeout(() => { setActivePhase(null); setClosing(false); }, 200);
+  };
+
+  const PHASE_KEYS = PHASES.map(p => p.key);
+  const goPhase = (dir: 1 | -1) => {
+    setActivePhase(prev => {
+      if (!prev) return prev;
+      const idx = PHASE_KEYS.indexOf(prev);
+      return PHASE_KEYS[(idx + dir + PHASE_KEYS.length) % PHASE_KEYS.length];
+    });
+  };
+
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setActivePhase(null); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape')     closeModal();
+      if (e.key === 'ArrowRight') goPhase(1);
+      if (e.key === 'ArrowLeft')  goPhase(-1);
+    };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
@@ -1071,16 +1102,49 @@ export default function SplashScreen() {
       {/* Phase Zoom Modal */}
       {activePhase && (() => {
         const ph = PHASES.find(p => p.key === activePhase)!;
+        const phaseIdx = PHASES.findIndex(p => p.key === activePhase);
+        const [vx, vy, vw, vh] = ph.vb.split(' ').map(Number);
         return (
-          <div className="phase-modal-backdrop" onClick={() => setActivePhase(null)}>
-            <div className="phase-modal-panel" onClick={e => e.stopPropagation()}>
-              <div className="phase-modal-header" style={{ borderColor: ph.color }}>
-                <span className="phase-modal-title" style={{ color: ph.color }}>{ph.label}</span>
-                <button className="phase-modal-close" onClick={() => setActivePhase(null)}>✕</button>
+          <div
+            className={`phase-modal-backdrop${closing ? ' phase-modal-closing-bg' : ''}`}
+            onClick={closeModal}
+          >
+            <div
+              className={`phase-modal-panel${closing ? ' phase-modal-closing' : ''}`}
+              onClick={e => e.stopPropagation()}
+              style={{
+                borderColor: `${ph.color}55`,
+                boxShadow: `0 0 40px ${ph.color}18, 0 24px 80px rgba(0,0,0,.8)`,
+              }}
+            >
+              {/* Header */}
+              <div className="phase-modal-header" style={{ borderColor: `${ph.color}40` }}>
+                <div className="phase-modal-nav">
+                  <button className="phase-nav-btn" onClick={() => goPhase(-1)}>‹</button>
+                  <button className="phase-nav-btn" onClick={() => goPhase(1)}>›</button>
+                </div>
+                <div className="phase-modal-title-group">
+                  <span className="phase-modal-dot" style={{ background: ph.color }} />
+                  <span className="phase-modal-title" style={{ color: ph.color }}>{ph.label}</span>
+                </div>
+                <div className="phase-modal-meta">
+                  <span className="phase-modal-index">
+                    {String(phaseIdx + 1).padStart(2, '0')} / {String(PHASES.length).padStart(2, '0')}
+                  </span>
+                  <button className="phase-modal-close" onClick={closeModal}>✕</button>
+                </div>
               </div>
+              {/* SVG zoomed + clipped */}
               <div className="phase-modal-svg-wrap">
                 <svg viewBox={ph.vb} preserveAspectRatio="xMidYMid meet" className="splash-svg phase-modal-svg">
-                  <SvgBody />
+                  <defs>
+                    <clipPath id={`clip-${ph.key}`}>
+                      <rect x={vx} y={vy} width={vw} height={vh} />
+                    </clipPath>
+                  </defs>
+                  <g clipPath={`url(#clip-${ph.key})`}>
+                    <SvgBody />
+                  </g>
                 </svg>
               </div>
             </div>
