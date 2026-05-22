@@ -10,7 +10,7 @@ import {
 } from './mockData';
 import { getReportePdfUrl, getReporteDashboardHtmlUrl, getCalidadParametros } from '../../services/ptarClient';
 import { useAuth } from '../../state/AuthContext';
-import { useCalidadData }    from '../calidad/hooks/useCalidadData';
+import { useCalidadData, PROCESO_ORDEN } from '../calidad/hooks/useCalidadData';
 import { useDispersionData } from '../calidad/hooks/useDispersionData';
 import { useMbrEficiencia }  from '../calidad/hooks/useMbrEficiencia';
 import { useGemEficiencia }  from '../calidad/hooks/useGemEficiencia';
@@ -43,14 +43,17 @@ export default function DashboardPage({ canEdit }: Props) {
   const [realMetrics, setRealMetrics] = useState<DailyMetrics[]>([]);
 
   // ── Estado sección calidad ────────────────────────────────────
-  const [calParametros, setCalParametros] = useState<string[]>([]);
-  const [calUnidadMap,  setCalUnidadMap]  = useState<Record<string, string>>({});
-  const [calParametro,  setCalParametro]  = useState('');
-  const calFechaInicio = useMemo(
-    () => new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
-    []
+  const [calParametros,      setCalParametros]      = useState<string[]>([]);
+  const [calUnidadMap,       setCalUnidadMap]        = useState<Record<string, string>>({});
+  const [calParametro,       setCalParametro]        = useState('');
+  const [calUnidadPrincipal, setCalUnidadPrincipal]  = useState('');
+  const [calTurno,           setCalTurno]            = useState('');
+  const [calFechaInicio,     setCalFechaInicio]      = useState(
+    () => new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
   );
-  const calFechaFin = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const [calFechaFin,        setCalFechaFin]         = useState(
+    () => new Date().toISOString().slice(0, 10)
+  );
 
   // ── Fetch real data from v_consumo_quimico_diario via FastAPI ─────────
   // Response shape: { fecha: string; caudal_m3_dia: number | null; ... }[]
@@ -161,7 +164,7 @@ export default function DashboardPage({ canEdit }: Props) {
     parametro: calParametro,
     fechaInicio: calFechaInicio,
     fechaFin: calFechaFin,
-    turno: undefined,
+    turno: calTurno || undefined,
     unidadTurno: undefined,
   });
 
@@ -171,13 +174,18 @@ export default function DashboardPage({ canEdit }: Props) {
 
   const calUnidadMedida = calUnidadMap[calParametro] ?? 'u';
 
-  const calValoresFlat = useMemo(
-    () => calRawRows.map(r => r.valor).filter((v): v is number => v != null && !isNaN(v)),
-    [calRawRows]
+  // ── Derivados filtrados por unidad ───────────────────────────
+  const calFilteredRawRows = useMemo(
+    () => calUnidadPrincipal
+      ? calRawRows.filter(r => r.unidad_tratamiento === calUnidadPrincipal)
+      : calRawRows,
+    [calRawRows, calUnidadPrincipal]
   );
 
-  // Suppress unused warning for calUnidades (used implicitly by child components)
-  void calUnidades;
+  const calValoresFlat = useMemo(
+    () => calFilteredRawRows.map(r => r.valor).filter((v): v is number => v != null && !isNaN(v)),
+    [calFilteredRawRows]
+  );
 
   return (
     <div className="dashboard">
@@ -377,45 +385,72 @@ export default function DashboardPage({ canEdit }: Props) {
         <span>CALIDAD DEL AGUA</span>
       </div>
 
-      {/* Selector de parámetro */}
+      {/* Filtros de calidad */}
       <div className="cal-filters" style={{ marginBottom: 16 }}>
         <div className="cal-filter-group">
+          <label className="cal-filter-label">Unidad</label>
+          <select className="cal-filter-select" value={calUnidadPrincipal}
+            onChange={e => setCalUnidadPrincipal(e.target.value)}>
+            <option value="">Todas las unidades</option>
+            {PROCESO_ORDEN.filter(u => calUnidades.includes(u)).map(u => (
+              <option key={u} value={u}>{u}</option>
+            ))}
+          </select>
+        </div>
+        <div className="cal-filter-group">
           <label className="cal-filter-label">Parámetro</label>
-          <select
-            className="cal-filter-select"
-            value={calParametro}
-            onChange={e => setCalParametro(e.target.value)}
-          >
+          <select className="cal-filter-select" value={calParametro}
+            onChange={e => setCalParametro(e.target.value)}>
             {calParametros.map(p => <option key={p} value={p}>{p}</option>)}
           </select>
         </div>
-        <span style={{ color: '#8b949e', fontSize: 12, alignSelf: 'flex-end', paddingBottom: 6 }}>
-          Últimos 60 días · {calUnidadMedida}
-        </span>
+        <div className="cal-filter-group">
+          <label className="cal-filter-label">Turno</label>
+          <select className="cal-filter-select" value={calTurno}
+            onChange={e => setCalTurno(e.target.value)}>
+            <option value="">Todos</option>
+            <option value="noche">Noche</option>
+            <option value="mañana">Mañana</option>
+            <option value="tarde">Tarde</option>
+          </select>
+        </div>
+        <div className="cal-filter-group">
+          <label className="cal-filter-label">Fecha inicio</label>
+          <input type="date" className="cal-filter-input" value={calFechaInicio}
+            onChange={e => setCalFechaInicio(e.target.value)} />
+        </div>
+        <div className="cal-filter-group">
+          <label className="cal-filter-label">Fecha fin</label>
+          <input type="date" className="cal-filter-input" value={calFechaFin}
+            onChange={e => setCalFechaFin(e.target.value)} />
+        </div>
       </div>
 
       {/* Seguimiento Diario por Turno */}
       <section className="dash-section">
-        <div className="section-title">Seguimiento Diario por Turno — {calParametro}</div>
+        <div className="section-title">
+          Seguimiento Diario por Turno — {calParametro}
+          {calUnidadPrincipal && <span style={{ color: '#8b949e', fontWeight: 400, marginLeft: 8 }}>· {calUnidadPrincipal}</span>}
+        </div>
         <div className="dash-row-2col">
           <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
             <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
               Promedio por turno y fecha (todas las unidades)
             </div>
-            <SegDiarioChart data={calRawRows} unidad_medida={calUnidadMedida} />
+            <SegDiarioChart data={calFilteredRawRows} unidad_medida={calUnidadMedida} />
           </div>
           <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
             <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
               Dispersión agregada (mín/prom/máx) — todas las unidades
             </div>
-            <DispersionChart data={calDispersion} unidadFiltrada="ALL" unidad_medida={calUnidadMedida} />
+            <DispersionChart data={calDispersion} unidadFiltrada={calUnidadPrincipal || 'ALL'} unidad_medida={calUnidadMedida} />
           </div>
         </div>
       </section>
 
       {/* Multiparámetro por grupos */}
       <SeccionMultiparametro
-        rawData={calRawRows}
+        rawData={calFilteredRawRows}
         dispersionData={calDispersion}
         unidad_medida={calUnidadMedida}
       />
@@ -441,6 +476,7 @@ export default function DashboardPage({ canEdit }: Props) {
               Percentiles (P10 – P90)
             </div>
             <PercentilChart values={calValoresFlat} unidad_medida={calUnidadMedida} />
+
           </div>
         </div>
       </section>

@@ -1,54 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-type Status = 'operando' | 'advertencia' | 'alarma';
-interface EqDef { id: string; label: string; status: Status; params: [string, string][]; }
-
-const EQ: Record<string, EqDef> = {
-  /* FASE PRELIMINAR */
-  rotativa:    { id:'rot',     label:'Descarga Rotativa',           status:'operando',    params:[['Caudal','5.2 m³/h'],['SST','640 mg/L'],['pH','7.9']] },
-  funza:       { id:'funza',   label:'Descarga Ext. Funza',         status:'advertencia', params:[['Caudal','6.0 m³/h'],['DQO','1800 mg/L'],['Color','alto']] },
-  tintoreria:  { id:'tintor',  label:'Descarga Tintorería',         status:'operando',    params:[['Caudal','12.4 m³/h'],['pH','9.8'],['Temp.','42 °C']] },
-  lavanderia:  { id:'lavand',  label:'Descarga Lavandería',         status:'operando',    params:[['Caudal','8.6 m³/h'],['Turb.','380 NTU'],['Temp.','38 °C']] },
-  tk2m3:       { id:'tk2m3',   label:'TK Recepción 2 m³',          status:'operando',    params:[['Fuentes','Rotativa + Funza'],['Caudal E.','11 m³/h'],['Vol.','2 m³']] },
-  tk30m3:      { id:'tk30m3',  label:'TK Recepción 30 m³',         status:'operando',    params:[['Fuentes','Tintorería + Lavand.'],['Caudal E.','25 m³/h'],['Vol.','30 m³']] },
-  tk15m3:      { id:'tk15m3',  label:'TK Buffer Lav. Remota 15 m³',status:'operando',    params:[['Fuente','Lavandería (ramal E)'],['Caudal E.','3.8 m³/h'],['Vol.','15 m³']] },
-  tk60m3:      { id:'tk60m3',  label:'TK Pulmón 60 m³',            status:'operando',    params:[['Nivel','72 %'],['Entrada G+H','≈ 40 m³/h'],['T. retención','1.5 h']] },
-  /* FASE PRIMARIA */
-  cribRot:     { id:'cribRot', label:'Criba Rotativa',              status:'operando',    params:[['Apertura','2 mm'],['Velocidad','4 rpm'],['Captura','35 kg/d']] },
-  vibrat1:     { id:'vib1',    label:'Criba Vibratoria 1 (M1)',     status:'operando',    params:[['Apertura','0.5 mm'],['Frecuencia','50 Hz'],['Potencia','2.2 kW']] },
-  vibrat2:     { id:'vib2',    label:'Criba Vibratoria 2 (M2)',     status:'operando',    params:[['Apertura','0.25 mm'],['Frecuencia','50 Hz'],['Potencia','2.2 kW']] },
-  tkPulmon:    { id:'tkPulm',  label:'TK Pulmón',                   status:'operando',    params:[['Nivel','65 %'],['Entradas','N1+N2 cribas'],['Salidas','O → Torre, R → Cárcamo']] },
-  torre:       { id:'torre',   label:'Torre de Enfriamiento',       status:'operando',    params:[['T entrada','44 °C'],['T salida','28 °C'],['P','Pérd. vapor']] },
-  carcamo:     { id:'carc',    label:'Cárcamo',                     status:'operando',    params:[['Función','Colecta efluente'],['AK1','→ Fase Secundaria'],['Rebose','→ vertimiento']] },
-  homogen:     { id:'homog',   label:'TK Homogeneizador 800 m³',   status:'operando',    params:[['Volumen','≈ 800 m³'],['pH ajust.','7.2'],['Entradas','Q + Ozono + Lixiviado']] },
-  eqGem:       { id:'gem',     label:'Equipo GEM',                  status:'operando',    params:[['Tipo','Reactor fisicoquímico'],['Reactivos','5 dosificaciones'],['Salida','U → Swingmill']] },
-  swingmill:   { id:'swing',   label:'Swingmill',                   status:'operando',    params:[['Función','Espesado de lodos'],['Salida W','Lodo deshidratado'],['Caudal','5 m³/h']] },
-  /* FASE SECUNDARIA (placeholder — por actualizar) */
-  tkPermeado:  { id:'tkPerm',  label:'TK Permeado',                 status:'operando',    params:[['Nivel','68 %'],['Entrada','AK1 desde Cárcamo'],['Rebose','AK1 → desborde']] },
-  mbrT:        { id:'mbrT',    label:'MBR T (Superior)',            status:'operando',    params:[['Flux','18 L/m²/h'],['TMP','-0.22 bar'],['Estado','en servicio']] },
-  mbrK:        { id:'mbrK',    label:'MBR K (Inferior)',            status:'advertencia', params:[['Flux','15 L/m²/h'],['TMP','-0.38 bar'],['CIP','próximo']] },
-  mbbr:        { id:'mbbr',    label:'Reactor MBBR',                status:'operando',    params:[['Llenado','65 %'],['MLSS','4 800 mg/L'],['OD','2.4 mg/L']] },
-  anoxic:      { id:'anox',    label:'Reactor Anóxico',             status:'operando',    params:[['OD','< 0.2 mg/L'],['NO₃⁻','8.4 mg/L'],['T. retención','4 h']] },
-  /* FASE VERTIMIENTO */
-  tkVert:   { id:'tkVert',   label:'TK Permeado Vertimiento', status:'operando',    params:[['Función','Almacenamiento efluente tratado'],['Vol.','10 m³'],['DBO salida','< 5 mg/L']] },
-  filtVert: { id:'filtVert', label:'Filtro Carbón Activado',  status:'operando',    params:[['Medio','Carbón granular GAC'],['Carga hidráulica','4 m/h'],['Turb. salida','< 1 NTU']] },
-  /* FASE TERCIARIA */
-  filtro5:     { id:'filt5',   label:'Filtros Cartucho 5 µm',      status:'operando',    params:[['ΔP','0.22 bar'],['Flujo','42 m³/h'],['Reemplazo','en 12 d']] },
-  ro1e1:       { id:'ro1e1',   label:'Ósmosis Inversa RO1 – E1',   status:'operando',    params:[['Recuperación','58 %'],['TDS perm.','18 mg/L'],['Sales rej.','98.5 %']] },
-  ro1e2:       { id:'ro1e2',   label:'Ósmosis Inversa RO1 – E2',   status:'operando',    params:[['Recuperación','62 %'],['TDS perm.','12 mg/L'],['Permeado AI','→ TK Recir.']] },
-  ro2:         { id:'ro2',     label:'Ósmosis Inversa RO2',         status:'alarma',      params:[['TMP','↑ 0.65 bar'],['Fouling','detectable'],['CIP','programado']] },
-  filtrosII:   { id:'filtII',  label:'Filtros Intercambio Iónico', status:'operando',    params:[['Entrada','AE desde Sec.'],['Resinas','en servicio'],['Salida AF','→ RO1']] },
-  tkRecir:     { id:'tkRecir', label:'TK Recirculación',           status:'operando',    params:[['Vol.','30 m³'],['Fuentes','RO1 E2 + AQ/AR/AS'],['Salida','→ Producción']] },
-  tkRechazo:   { id:'tkRech',  label:'TK Rechazo RO1',            status:'advertencia', params:[['Entrada AJ','Rechazo RO1 E2'],['AK','→ Filtro → RO2'],['Desborde','→ Caja Vert.']] },
-  tkRechazoRO2:{ id:'tkRech2', label:'TK Rechazo RO2',            status:'advertencia', params:[['Entrada','Rechazo RO2'],['Salida','→ Caja Vertimiento'],['Caudal','6 m³/h']] },
-  cajaVert:    { id:'cajaV',   label:'Caja Vertimiento Terc.',     status:'operando',    params:[['Destino','Fase Vertimiento'],['Pipe AT','→ VERT.'],['Caudal','8 m³/h']] },
-  produccion:  { id:'prod',    label:'Producción REÚSO',           status:'operando',    params:[['Flujo','22 m³/h'],['Calidad','Textil ✓'],['Ahorro','$53k/mes']] },
-};
-
-const SC: Record<Status,string> = { operando:'#3fb950', advertencia:'#d29922', alarma:'#f85149' };
-const SB: Record<Status,string> = { operando:'#0d2d1a', advertencia:'#2d1f08', alarma:'#2d0a0a' };
-const SL: Record<Status,string> = { operando:'● EN OPERACIÓN', advertencia:'▲ ADVERTENCIA', alarma:'✖ ALARMA' };
+import type { EqDef } from './equipment';
+import { EQ, SC, SB, SL } from './equipment';
+import { PhaseModal } from './PhaseModal';
 
 function TT({ eq, anchor='center' }: { eq:EqDef; anchor?:'center'|'left'|'right' }) {
   const c=SC[eq.status], bg=SB[eq.status], W=158, H=92;
@@ -89,104 +43,7 @@ function PL({ x, y, label, color='#2a6a7a' }: { x:number; y:number; label:string
   return <text x={x} y={y} textAnchor="middle" fill={color} fontSize="7" fontStyle="italic" fontFamily="monospace">{label}</text>;
 }
 
-const CSS = `
-  .splash-page{min-height:100vh;background:#060d14;display:flex;flex-direction:column;
-    align-items:center;justify-content:center;overflow:hidden;position:relative;padding:10px 14px;}
-  .splash-bg-grid{position:absolute;inset:0;
-    background-image:linear-gradient(rgba(0,197,227,.02) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(0,197,227,.02) 1px,transparent 1px);
-    background-size:44px 44px;pointer-events:none;}
-  .splash-bg-glow{position:absolute;width:800px;height:500px;border-radius:50%;
-    background:radial-gradient(ellipse,rgba(0,120,212,.07) 0%,transparent 70%);
-    top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;}
-  .splash-inner{position:relative;width:100%;max-width:1560px;display:flex;
-    flex-direction:column;align-items:center;gap:12px;}
-  .splash-hdr{display:flex;align-items:center;gap:10px;animation:fdDown .8s ease both;}
-  .s-logo{filter:drop-shadow(0 0 8px #00c5e3aa);}
-  .s-tg{display:flex;flex-direction:column;}
-  .s-title{font-size:clamp(11px,1.4vw,18px);font-weight:800;letter-spacing:.14em;color:#e6edf3;line-height:1;}
-  .s-title span{color:#00c5e3;}
-  .s-sub{font-size:clamp(6px,.65vw,8px);color:#8b949e;margin-top:2px;letter-spacing:.04em;}
-  .splash-wrap{width:100%;background:rgba(18,24,32,.9);border:1px solid #1a2d3d;border-radius:12px;
-    overflow:hidden;box-shadow:0 0 50px rgba(0,197,227,.05),0 14px 48px rgba(0,0,0,.6);
-    animation:fdUp .9s .2s ease both;}
-  .splash-svg{width:100%;display:block;}
-  .splash-foot{display:flex;flex-direction:column;align-items:center;gap:10px;animation:fdUp .8s .5s ease both;}
-  .s-btn{padding:11px 44px;border-radius:8px;font-size:14px;font-weight:700;letter-spacing:.06em;
-    background:linear-gradient(135deg,#00c5e3,#0078d4);color:white;border:none;cursor:pointer;
-    box-shadow:0 4px 18px rgba(0,197,227,.35);transition:all .2s;}
-  .s-btn:hover{transform:translateY(-2px);box-shadow:0 8px 26px rgba(0,197,227,.5);}
-  .s-ver{font-size:10px;color:#484f58;letter-spacing:.05em;}
-  @keyframes fdDown{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:translateY(0)}}
-  @keyframes fdUp  {from{opacity:0;transform:translateY(16px) }to{opacity:1;transform:translateY(0)}}
-  .eq-g{animation:eqIn .6s ease both;}
-  @keyframes eqIn{from{opacity:0}to{opacity:1}}
-  .d1{animation-delay:.04s}.d2{animation-delay:.08s}.d3{animation-delay:.12s}.d4{animation-delay:.16s}
-  .d5{animation-delay:.20s}.d6{animation-delay:.24s}.d7{animation-delay:.28s}.d8{animation-delay:.32s}
-  .d9{animation-delay:.36s}.d10{animation-delay:.40s}.d11{animation-delay:.44s}.d12{animation-delay:.48s}
-  .d13{animation-delay:.52s}.d14{animation-delay:.56s}.d15{animation-delay:.60s}.d16{animation-delay:.64s}
-  .d17{animation-delay:.68s}.d18{animation-delay:.72s}.d19{animation-delay:.76s}.d20{animation-delay:.80s}
-  .eq-tt{opacity:0;pointer-events:none;transition:opacity .15s;}
-  .eq-h{cursor:pointer;}
-  .eq-h:hover .eq-tt{opacity:1;}
-  .eq-h:hover .eq-b{stroke:#00c5e3 !important;stroke-width:2 !important;}
-  .eq-h:hover .eq-bc{stroke:#00c5e3 !important;stroke-width:2 !important;}
-  @keyframes flowR{from{stroke-dashoffset:28}to{stroke-dashoffset:0}}
-  @keyframes flowL{from{stroke-dashoffset:-28}to{stroke-dashoffset:0}}
-  .p-raw   {stroke-dasharray:9 7;animation:flowR .8s linear infinite;}
-  .p-bio   {stroke-dasharray:9 7;animation:flowR .65s linear infinite;}
-  .p-clean {stroke-dasharray:9 7;animation:flowR .5s linear infinite;}
-  .p-sludge{stroke-dasharray:7 5;animation:flowR 1.4s linear infinite;}
-  .p-recirc{stroke-dasharray:6 6;animation:flowL 1.5s linear infinite;}
-  .p-reject{stroke-dasharray:5 5;animation:flowR 1.8s linear infinite;}
-  @keyframes spinDrum{to{transform:rotate(360deg)}}
-  .rot-drum{transform-box:fill-box;transform-origin:center;animation:spinDrum 3s linear infinite;}
-  @keyframes vib{0%,100%{transform:translateX(0)}30%{transform:translateX(-2px)}70%{transform:translateX(2px)}}
-  .vibrato{transform-box:fill-box;transform-origin:center;animation:vib .18s linear infinite;}
-  @keyframes mix{to{transform:rotate(360deg)}}
-  .mixer{transform-box:fill-box;transform-origin:center;animation:mix 2.4s linear infinite;}
-  @keyframes bub1{0%{transform:translate(0,0);opacity:.9}100%{transform:translate(3px,-50px);opacity:0}}
-  @keyframes bub2{0%{transform:translate(0,0);opacity:.8}100%{transform:translate(-3px,-55px);opacity:0}}
-  .b1{transform-box:fill-box;transform-origin:center;animation:bub1 1.8s ease-in infinite;}
-  .b2{transform-box:fill-box;transform-origin:center;animation:bub2 2.2s ease-in .5s infinite;}
-  .b3{transform-box:fill-box;transform-origin:center;animation:bub1 1.6s ease-in 1s infinite;}
-  .b4{transform-box:fill-box;transform-origin:center;animation:bub2 2.0s ease-in 1.4s infinite;}
-  @keyframes tDrop{0%{opacity:0;transform:translateY(-6px)}50%{opacity:.7}100%{opacity:0;transform:translateY(18px)}}
-  .t-drop {animation:tDrop 1.6s ease-in infinite;}
-  .t-drop2{animation:tDrop 1.6s ease-in .55s infinite;}
-  .t-drop3{animation:tDrop 1.6s ease-in 1.1s infinite;}
-  @keyframes memp{0%,100%{opacity:.45}50%{opacity:.95}}
-  .mem{animation:memp 1.7s ease-in-out infinite;}
-  @keyframes uvg{0%,100%{opacity:.35}50%{opacity:.95}}
-  .uv-l{animation:uvg 1.3s ease-in-out infinite;}
-  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.15}}
-  .s-pulse{transform-box:fill-box;transform-origin:center;animation:pulse 1.1s ease-in-out infinite;}
-  @keyframes sring{0%,100%{r:8;opacity:.2}50%{r:13;opacity:0}}
-  .s-ring{transform-box:fill-box;transform-origin:center;animation:sring 1.1s ease-in-out infinite;}
-  .phase-zone{transition:fill .18s;}
-  .phase-zone:hover{fill:rgba(255,255,255,.04);}
-  .phase-modal-backdrop{position:fixed;inset:0;z-index:9999;background:rgba(5,10,18,.88);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;animation:phaseFadeIn .22s ease-out;}
-  .phase-modal-backdrop.phase-modal-closing-bg{animation:phaseFadeOut .2s ease-in forwards;}
-  @keyframes phaseFadeIn{from{opacity:0}to{opacity:1}}
-  @keyframes phaseFadeOut{from{opacity:1}to{opacity:0}}
-  .phase-modal-panel{width:92vw;height:88vh;background:#0d1117;border:1px solid transparent;border-radius:14px;overflow:hidden;display:flex;flex-direction:column;animation:phaseSlideUp .22s ease-out;box-shadow:0 24px 80px rgba(0,0,0,.7);}
-  .phase-modal-panel.phase-modal-closing{animation:phaseSlideDown .2s ease-in forwards;}
-  @keyframes phaseSlideUp{from{transform:scale(.96) translateY(12px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
-  @keyframes phaseSlideDown{from{transform:scale(1) translateY(0);opacity:1}to{transform:scale(.96) translateY(12px);opacity:0}}
-  .phase-modal-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid;background:rgba(255,255,255,.02);flex-shrink:0;gap:12px;}
-  .phase-modal-nav{display:flex;gap:2px;flex-shrink:0;}
-  .phase-nav-btn{background:none;border:none;cursor:pointer;color:#8b949e;font-size:22px;line-height:1;padding:2px 10px;border-radius:6px;transition:color .15s,background .15s;}
-  .phase-nav-btn:hover{color:#fff;background:rgba(255,255,255,.08);}
-  .phase-modal-title-group{display:flex;align-items:center;gap:10px;flex:1;justify-content:center;}
-  .phase-modal-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;display:inline-block;}
-  .phase-modal-title{font-family:monospace;font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;}
-  .phase-modal-meta{display:flex;align-items:center;gap:10px;flex-shrink:0;}
-  .phase-modal-index{font-family:monospace;font-size:11px;color:#4a5568;letter-spacing:1px;}
-  .phase-modal-close{background:none;border:none;cursor:pointer;color:#8b949e;font-size:18px;padding:4px 8px;border-radius:6px;transition:color .15s,background .15s;}
-  .phase-modal-close:hover{color:#fff;background:rgba(255,255,255,.08);}
-  .phase-modal-svg-wrap{flex:1;overflow:hidden;display:flex;align-items:center;justify-content:center;padding:16px;}
-  .phase-modal-svg{width:100%;height:100%;}
-`;
+
 
 const PHASES = [
   { key: 'preliminar',  label: 'Fase Preliminar',      color: '#00c5e3', vb: '0 26 275 335'    },
@@ -197,14 +54,43 @@ const PHASES = [
 ] as const;
 type PhaseKey = typeof PHASES[number]['key'];
 
+const mYA = 480;
+const mYB = 615;
+const tG = 'url(#tankG)', wG = 'url(#waterG)', sG = 'url(#sludgeG)';
+
+const Tk = ({ w, h, fill = wG, border = '#2a5a70', wp = 0.63 }:
+  { w: number; h: number; fill?: string; border?: string; wp?: number }) => {
+  const wh = Math.round(h * wp);
+  return <>
+    <rect x={-w / 2} y={-h} width={w} height={h} rx="3" fill={tG} stroke={border} strokeWidth="1.5" className="eq-b" />
+    <rect x={-w / 2 + 2} y={-wh} width={w - 4} height={wh - 2} fill={fill} opacity=".55" />
+    <path d={`M${-w / 2 + 2},${-wh} Q0,${-wh - 3} ${w / 2 - 2},${-wh} L${w / 2 - 2},${-wh + 4} Q0,${-wh + 1} ${-w / 2 + 2},${-wh + 4}Z`}
+      fill="#00c5e3" opacity=".35" />
+  </>;
+};
+
+const Dh = ({ w, h, pct = 0.63 }: { w: number; h: number; pct?: number }) => {
+  const ly = -Math.round(h * pct);
+  return <>
+    <line x1={w / 2} y1={ly} x2={w / 2 + 8} y2={ly} stroke="#3fb950" strokeWidth="1" strokeDasharray="4 3" opacity=".8" />
+    <line x1={w / 2 + 8} y1={-h} x2={w / 2 + 8} y2={ly} stroke="#3fb950" strokeWidth="1" opacity=".6" />
+    <polygon points={`${w / 2 + 4},${ly + 4} ${w / 2 + 8},${ly - 2} ${w / 2 + 12},${ly + 4}`} fill="#3fb950" opacity=".7" />
+    <text x={w / 2 + 14} y={ly + 3} fill="#3fb950" fontSize="6.5" fontFamily="monospace">Δh</text>
+  </>;
+};
+
 export default function SplashScreen() {
   const navigate = useNavigate();
   const [activePhase, setActivePhase] = useState<PhaseKey | null>(null);
   const [closing, setClosing] = useState(false);
+  const [highlightPhase, setHighlightPhase] = useState<PhaseKey | null>(null);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const modalOpen = activePhase != null;
 
   const closeModal = () => {
+    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
     setClosing(true);
-    setTimeout(() => { setActivePhase(null); setClosing(false); }, 200);
+    closeTimerRef.current = setTimeout(() => { setActivePhase(null); setClosing(false); }, 200);
   };
 
   const PHASE_KEYS = PHASES.map(p => p.key);
@@ -216,7 +102,14 @@ export default function SplashScreen() {
     });
   };
 
+  const openPhase = (key: PhaseKey) => {
+    if (closing) return;
+    setHighlightPhase(key);
+    setTimeout(() => { setHighlightPhase(null); setActivePhase(key); }, 150);
+  };
+
   useEffect(() => {
+    if (!modalOpen) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape')     closeModal();
       if (e.key === 'ArrowRight') goPhase(1);
@@ -224,35 +117,9 @@ export default function SplashScreen() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, []);
-  const mYA = 480;  // fila superior TERCIARIA (bottom de equipos)
-  const mYB = 615;  // fila inferior TERCIARIA — rechazos (bottom de equipos)
-  const tG = 'url(#tankG)', wG = 'url(#waterG)', sG = 'url(#sludgeG)';
+  }, [modalOpen]);
 
-  /* reusable tank body */
-  const Tk = ({ w, h, fill=wG, border='#2a5a70', wp=0.63 }:
-    { w:number; h:number; fill?:string; border?:string; wp?:number }) => {
-    const wh = Math.round(h*wp);
-    return <>
-      <rect x={-w/2} y={-h} width={w} height={h} rx="3" fill={tG} stroke={border} strokeWidth="1.5" className="eq-b"/>
-      <rect x={-w/2+2} y={-wh} width={w-4} height={wh-2} fill={fill} opacity=".55"/>
-      <path d={`M${-w/2+2},${-wh} Q0,${-wh-3} ${w/2-2},${-wh} L${w/2-2},${-wh+4} Q0,${-wh+1} ${-w/2+2},${-wh+4}Z`}
-        fill="#00c5e3" opacity=".35"/>
-    </>;
-  };
-
-  /* Δh indicator (right-side of tank, relative coords, tank height h) */
-  const Dh = ({ w, h, pct=0.63 }: { w:number; h:number; pct?:number }) => {
-    const ly = -Math.round(h*pct);
-    return <>
-      <line x1={w/2} y1={ly} x2={w/2+8} y2={ly} stroke="#3fb950" strokeWidth="1" strokeDasharray="4 3" opacity=".8"/>
-      <line x1={w/2+8} y1={-h} x2={w/2+8} y2={ly} stroke="#3fb950" strokeWidth="1" opacity=".6"/>
-      <polygon points={`${w/2+4},${ly+4} ${w/2+8},${ly-2} ${w/2+12},${ly+4}`} fill="#3fb950" opacity=".7"/>
-      <text x={w/2+14} y={ly+3} fill="#3fb950" fontSize="6.5" fontFamily="monospace">Δh</text>
-    </>;
-  };
-
-  const SvgBody = () => (
+  const svgBody = useMemo(() => (
     <>
           <defs>
             <linearGradient id="tankG" x1="0" y1="0" x2="0" y2="1">
@@ -295,9 +162,11 @@ export default function SplashScreen() {
                 <rect key={ph.key}
                   x={vx} y={vy} width={vw} height={vh}
                   fill="transparent"
-                  className="phase-zone"
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => setActivePhase(ph.key)}
+                  className={`phase-zone${highlightPhase === ph.key ? ' phase-highlight' : ''}`}
+                  tabIndex={0} role="button"
+                  aria-label={`Ampliar ${ph.label}`}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') openPhase(ph.key); }}
+                  onClick={() => openPhase(ph.key)}
                 />
               );
             })}
@@ -1063,11 +932,11 @@ export default function SplashScreen() {
           </g>
 
     </>
-  );
+  ), []);
 
   return (
     <div className="splash-page">
-      <style>{CSS}</style>
+
       <div className="splash-bg-grid"/><div className="splash-bg-glow"/>
       <div className="splash-inner">
 
@@ -1087,8 +956,8 @@ export default function SplashScreen() {
 
         {/* Diagram */}
         <div className="splash-wrap">
-        <svg className="splash-svg" viewBox="0 0 1800 700" preserveAspectRatio="xMidYMid meet">
-          <SvgBody />
+        <svg className="splash-svg" viewBox="0 0 1800 700" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Diagrama del proceso PTAR PERMODA">
+          {svgBody}
         </svg>
         </div>
 
@@ -1100,57 +969,17 @@ export default function SplashScreen() {
       </div>
 
       {/* Phase Zoom Modal */}
-      {activePhase && (() => {
-        const ph = PHASES.find(p => p.key === activePhase)!;
-        const phaseIdx = PHASES.findIndex(p => p.key === activePhase);
-        const [vx, vy, vw, vh] = ph.vb.split(' ').map(Number);
-        return (
-          <div
-            className={`phase-modal-backdrop${closing ? ' phase-modal-closing-bg' : ''}`}
-            onClick={closeModal}
-          >
-            <div
-              className={`phase-modal-panel${closing ? ' phase-modal-closing' : ''}`}
-              onClick={e => e.stopPropagation()}
-              style={{
-                borderColor: `${ph.color}55`,
-                boxShadow: `0 0 40px ${ph.color}18, 0 24px 80px rgba(0,0,0,.8)`,
-              }}
-            >
-              {/* Header */}
-              <div className="phase-modal-header" style={{ borderColor: `${ph.color}40` }}>
-                <div className="phase-modal-nav">
-                  <button className="phase-nav-btn" onClick={() => goPhase(-1)}>‹</button>
-                  <button className="phase-nav-btn" onClick={() => goPhase(1)}>›</button>
-                </div>
-                <div className="phase-modal-title-group">
-                  <span className="phase-modal-dot" style={{ background: ph.color }} />
-                  <span className="phase-modal-title" style={{ color: ph.color }}>{ph.label}</span>
-                </div>
-                <div className="phase-modal-meta">
-                  <span className="phase-modal-index">
-                    {String(phaseIdx + 1).padStart(2, '0')} / {String(PHASES.length).padStart(2, '0')}
-                  </span>
-                  <button className="phase-modal-close" onClick={closeModal}>✕</button>
-                </div>
-              </div>
-              {/* SVG zoomed + clipped */}
-              <div className="phase-modal-svg-wrap">
-                <svg viewBox={ph.vb} preserveAspectRatio="xMidYMid meet" className="splash-svg phase-modal-svg">
-                  <defs>
-                    <clipPath id={`clip-${ph.key}`}>
-                      <rect x={vx} y={vy} width={vw} height={vh} />
-                    </clipPath>
-                  </defs>
-                  <g clipPath={`url(#clip-${ph.key})`}>
-                    <SvgBody />
-                  </g>
-                </svg>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
+      {activePhase && (
+        <PhaseModal
+          phase={PHASES.find(p => p.key === activePhase)!}
+          phaseIdx={PHASES.findIndex(p => p.key === activePhase)}
+          totalPhases={PHASES.length}
+          closing={closing}
+          onClose={closeModal}
+          onNavigate={goPhase}
+          svgBody={svgBody}
+        />
+      )}
     </div>
   );
 }

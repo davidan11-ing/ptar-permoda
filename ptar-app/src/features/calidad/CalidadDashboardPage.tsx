@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { getCalidadParametros, getReporteCalidadHtmlUrl } from '../../services/ptarClient';
 import { useCalidadData, PROCESO_ORDEN } from './hooks/useCalidadData';
 import { useCalidadKpis }   from './hooks/useCalidadKpis';
@@ -34,8 +34,9 @@ export default function CalidadDashboardPage() {
   const [parametro,    setParametro]    = useState('');
   const [fechaInicio,  setFechaInicio]  = useState(inicio);
   const [fechaFin,     setFechaFin]     = useState(fin);
-  const [turno,        setTurno]        = useState('');
-  const [unidadTurno,  setUnidadTurno]  = useState<string | undefined>(undefined);
+  const [turno,           setTurno]           = useState('');
+  const [unidadTurno,     setUnidadTurno]     = useState<string | undefined>(undefined);
+  const [unidadPrincipal, setUnidadPrincipal] = useState('');
 
   // ── Cargar parámetros y sus unidades desde la BD ─────────────
   useEffect(() => {
@@ -81,6 +82,18 @@ export default function CalidadDashboardPage() {
   // Selector de unidad para TurnoChart
   const unidadTurnoFinal = unidadTurno ?? unidades[0] ?? '';
 
+  // ── Derivados filtrados por unidadPrincipal ──────────────
+  const filteredSummary = useMemo(
+    () => unidadPrincipal ? summary.filter(s => s.unidad === unidadPrincipal) : summary,
+    [summary, unidadPrincipal]
+  );
+  const filteredUnidades = useMemo(
+    () => unidadPrincipal
+      ? (unidades.includes(unidadPrincipal) ? [unidadPrincipal] : [])
+      : unidades,
+    [unidades, unidadPrincipal]
+  );
+
   return (
     <div className="cal-page">
       {/* ── Encabezado ── */}
@@ -112,6 +125,20 @@ export default function CalidadDashboardPage() {
 
       {/* ── Panel de filtros ── */}
       <div className="cal-filters">
+        <div className="cal-filter-group">
+          <label className="cal-filter-label">Unidad</label>
+          <select
+            className="cal-filter-select"
+            value={unidadPrincipal}
+            onChange={e => setUnidadPrincipal(e.target.value)}
+          >
+            <option value="">Todas las unidades</option>
+            {PROCESO_ORDEN.filter(u => unidades.includes(u)).map(u => (
+              <option key={u} value={u}>{u}</option>
+            ))}
+          </select>
+        </div>
+
         <div className="cal-filter-group">
           <label className="cal-filter-label">Parámetro</label>
           <select
@@ -181,7 +208,7 @@ export default function CalidadDashboardPage() {
             <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
               <TendenciaChart
                 data={tendencia}
-                unidades={unidades}
+                unidades={filteredUnidades}
                 unidad_medida={unidadMedida}
               />
             </div>
@@ -194,7 +221,7 @@ export default function CalidadDashboardPage() {
               <span className="cal-section-meta">Promedio del período · {unidadMedida}</span>
             </div>
             <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
-              <EtapaChart summary={summary} unidad_medida={unidadMedida} />
+              <EtapaChart summary={filteredSummary} unidad_medida={unidadMedida} />
             </div>
           </section>
 
@@ -247,7 +274,7 @@ export default function CalidadDashboardPage() {
               <span className="cal-section-meta">Mín / Prom / Máx del período seleccionado · {parametro}</span>
             </div>
             <div className="dash-card" style={{ padding: '0' }}>
-              <TablaEstadistica summary={summary} unidad_medida={unidadMedida} />
+              <TablaEstadistica summary={filteredSummary} unidad_medida={unidadMedida} />
             </div>
           </section>
         </>
