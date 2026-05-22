@@ -475,3 +475,56 @@ async def get_estadisticas_reactivos(
         ORDER BY mes, sistema, producto_nombre
     """), params)).mappings().all()
     return [EstadisticasDia(**dict(r)) for r in rows]
+
+
+# ── GET /gem-eficiencia — operación GEM por turno con reactivos y costos ─────
+
+@router.get("/gem-eficiencia")
+async def get_gem_eficiencia(
+    fecha_inicio: str = Query(..., description="YYYY-MM-DD"),
+    fecha_fin: str = Query(..., description="YYYY-MM-DD"),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Devuelve datos de operación GEM por turno: horómetro, caudal, consumos de
+    reactivos (L y kg), PPM, costos operativos y kg removidos.
+    Usado para el análisis de eficiencia GEM del dashboard de calidad.
+    """
+    rows = (await db.execute(text("""
+        SELECT
+            DATE_FORMAT(fecha, '%Y-%m-%d')  AS fecha,
+            CASE turno
+                WHEN 1 THEN 'mañana'
+                WHEN 2 THEN 'tarde'
+                WHEN 3 THEN 'noche'
+            END                             AS turno,
+            horometro_inicial,
+            caudal_total_tratado_gem_m3     AS caudal_m3,
+            caudal_tratamiento_m3h          AS caudal_mh,
+            consumo_acido_l,
+            consumo_coagulante_l,
+            consumo_decolorante_l,
+            consumo_pol_anionico_kg,
+            consumo_pol_cationico_kg,
+            ppm_acido,
+            ppm_coagulante,
+            ppm_decolorante,
+            ppm_pol_anionico,
+            ppm_pol_cationico,
+            costo_op_acido,
+            costo_op_coagulante,
+            costo_op_decolorante,
+            costo_op_anionico,
+            costo_op_cationico,
+            costo_quimica_turno,
+            kg_acido,
+            kg_coagulante,
+            kg_decolorante,
+            kg_pol_anionico,
+            kg_pol_cationico,
+            pesos_por_m3
+        FROM operacion_gem_turno
+        WHERE fecha BETWEEN :fi AND :ff
+        ORDER BY fecha, turno
+    """), {"fi": fecha_inicio, "ff": fecha_fin})).mappings().all()
+    return [dict(r) for r in rows]

@@ -293,3 +293,91 @@ export function getReporteDashboardHtmlUrl(params: {
   });
   return `${API}/api/reportes/dashboard-html?${q}`;
 }
+
+// ─── Calidad — Dispersión ─────────────────────────────────────────────────────
+
+export interface DispersionRow {
+  fecha: string;
+  unidad_tratamiento: string;
+  minimo: number;
+  maximo: number;
+  promedio: number;
+  n: number;
+}
+
+export async function getCalidadDispersion(params: {
+  parametro: string;
+  fecha_inicio: string;
+  fecha_fin: string;
+}): Promise<DispersionRow[]> {
+  const q = new URLSearchParams({
+    parametro:    params.parametro,
+    fecha_inicio: params.fecha_inicio,
+    fecha_fin:    params.fecha_fin,
+  });
+  return request<DispersionRow[]>(`/api/calidad/dispersion?${q}`);
+}
+
+// ─── Calidad — MBR Eficiencia ─────────────────────────────────────────────────
+
+export interface MbrEficienciaRow {
+  fecha: string;
+  turno: string;
+  unidad_tratamiento: string;
+  parametro: string;
+  valor_promedio: number;
+}
+
+export async function getCalidadMbrEficiencia(params: {
+  fecha_inicio: string;
+  fecha_fin: string;
+}): Promise<MbrEficienciaRow[]> {
+  const q = new URLSearchParams({
+    fecha_inicio: params.fecha_inicio,
+    fecha_fin:    params.fecha_fin,
+  });
+  return request<MbrEficienciaRow[]>(`/api/calidad/mbr-eficiencia?${q}`);
+}
+
+// ─── Reactivos — GEM Eficiencia ───────────────────────────────────────────────
+
+export interface GemEficienciaRow {
+  fecha: string;
+  turno: string;
+  horometro_inicial: number | null;
+  caudal_m3: number | null;
+  caudal_mh: number | null;
+  consumo_acido_l: number | null;
+  consumo_coagulante_l: number | null;
+  consumo_decolorante_l: number | null;
+  consumo_pol_anionico_kg: number | null;
+  consumo_pol_cationico_kg: number | null;
+  ppm_acido: number | null;
+  ppm_coagulante: number | null;
+  ppm_decolorante: number | null;
+  ppm_pol_anionico: number | null;
+  ppm_pol_cationico: number | null;
+  costo_op_acido: number | null;
+  costo_op_coagulante: number | null;
+  costo_op_decolorante: number | null;
+  costo_op_anionico: number | null;
+  costo_op_cationico: number | null;
+  costo_quimica_turno: number | null;
+  kg_acido: number | null;
+  kg_coagulante: number | null;
+  kg_decolorante: number | null;
+  kg_pol_anionico: number | null;
+  kg_pol_cationico: number | null;
+  pesos_por_m3: number | null;
+}
+
+export async function getGemEficiencia(params: {
+  fecha_inicio: string;
+  fecha_fin: string;
+}): Promise<GemEficienciaRow[]> {
+  const q = new URLSearchParams({
+    fecha_inicio: params.fecha_inicio,
+    fecha_fin:    params.fecha_fin,
+  });
+  return request<GemEficienciaRow[]>(`/api/reactivos/gem-eficiencia?${q}`);
+}

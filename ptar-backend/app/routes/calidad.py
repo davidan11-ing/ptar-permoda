@@ -432,3 +432,78 @@ async def get_remociones(
         ORDER BY fecha DESC, turno, parametro
     """), params)).mappings().all()
     return [RemocionesOut(**dict(r)) for r in rows]
+
+
+# ── GET /dispersion — min/max/avg por fecha y unidad para un parámetro ──────
+
+@router.get("/dispersion")
+async def get_dispersion(
+    parametro: str = Query(..., description="Nombre exacto del parámetro, ej: DQO"),
+    fecha_inicio: str = Query(..., description="YYYY-MM-DD"),
+    fecha_fin: str = Query(..., description="YYYY-MM-DD"),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Devuelve dispersión (mínimo, máximo, promedio) por fecha y unidad de tratamiento
+    para un parámetro específico. Usado para el gráfico de dispersión del dashboard.
+    """
+    rows = (await db.execute(text("""
+        SELECT
+            DATE_FORMAT(mc.fecha, '%Y-%m-%d') AS fecha,
+            ut.nombre                          AS unidad_tratamiento,
+            MIN(mc.valor)                      AS minimo,
+            MAX(mc.valor)                      AS maximo,
+            AVG(mc.valor)                      AS promedio,
+            COUNT(*)                           AS n
+        FROM medicion_calidad mc
+        JOIN parametro_calidad pc ON pc.id = mc.parametro_id
+        JOIN unidad_tratamiento ut ON ut.id = mc.unidad_id
+        WHERE UPPER(pc.nombre) = UPPER(:parametro)
+          AND mc.fecha BETWEEN :fi AND :ff
+          AND mc.valor IS NOT NULL
+          AND mc.no_aplica = 0
+        GROUP BY mc.fecha, ut.nombre
+        ORDER BY mc.fecha, ut.nombre
+    """), {"parametro": parametro, "fi": fecha_inicio, "ff": fecha_fin})).mappings().all()
+    return [dict(r) for r in rows]
+
+
+# ── GET /mbr-eficiencia — DQO y SST en MBR interno vs permeado ──────────────
+
+@router.get("/mbr-eficiencia")
+async def get_mbr_eficiencia(
+    fecha_inicio: str = Query(..., description="YYYY-MM-DD"),
+    fecha_fin: str = Query(..., description="YYYY-MM-DD"),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Devuelve DQO y SST promedio por (fecha, turno, unidad) para MBR1/MBR2 interno
+    y permeado, más GEM Salida como referencia. Usado para el análisis de eficiencia MBR.
+    """
+    rows = (await db.execute(text("""
+        SELECT
+            DATE_FORMAT(mc.fecha, '%Y-%m-%d') AS fecha,
+            CASE mc.turno
+                WHEN 1 THEN 'mañana'
+                WHEN 2 THEN 'tarde'
+                WHEN 3 THEN 'noche'
+            END                               AS turno,
+            ut.nombre                         AS unidad_tratamiento,
+            pc.nombre                         AS parametro,
+            AVG(mc.valor)                     AS valor_promedio
+        FROM medicion_calidad mc
+        JOIN parametro_calidad pc ON pc.id = mc.parametro_id
+        JOIN unidad_tratamiento ut ON ut.id = mc.unidad_id
+        WHERE UPPER(pc.nombre) IN ('DQO', 'SST')
+          AND ut.nombre IN (
+              'MBR 1 Interno', 'MBR 2 Interno',
+              'MBR 1 Permeado', 'MBR 2 Permeado',
+              'GEM Salida'
+          )
+          AND mc.fecha BETWEEN :fi AND :ff
+          AND mc.valor IS NOT NULL
+          AND mc.no_aplica = 0
+        GROUP BY mc.fecha, mc.turno, ut.nombre, pc.nombre
+        ORDER BY mc.fecha, mc.turno
+    """), {"fi": fecha_inicio, "ff": fecha_fin})).mappings().all()
+    return [dict(r) for r in rows]
