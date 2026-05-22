@@ -8,8 +8,20 @@ import {
   KPI_METRICS, CAUDAL_HORARIO, DBO_HORARIO,
   ROLLING_7DIAS, TIME_AVAILABILITY, ESTADO_EQUIPOS,
 } from './mockData';
-import { getReportePdfUrl, getReporteDashboardHtmlUrl } from '../../services/ptarClient';
+import { getReportePdfUrl, getReporteDashboardHtmlUrl, getCalidadParametros } from '../../services/ptarClient';
 import { useAuth } from '../../state/AuthContext';
+import { useCalidadData }    from '../calidad/hooks/useCalidadData';
+import { useDispersionData } from '../calidad/hooks/useDispersionData';
+import { useMbrEficiencia }  from '../calidad/hooks/useMbrEficiencia';
+import { useGemEficiencia }  from '../calidad/hooks/useGemEficiencia';
+import SegDiarioChart        from '../calidad/components/SegDiarioChart';
+import DispersionChart       from '../calidad/components/DispersionChart';
+import HistogramaChart       from '../calidad/components/HistogramaChart';
+import PieDistribucionChart  from '../calidad/components/PieDistribucionChart';
+import PercentilChart        from '../calidad/components/PercentilChart';
+import SeccionMultiparametro from '../calidad/components/SeccionMultiparametro';
+import MbrEficienciaSection  from '../calidad/components/MbrEficienciaSection';
+import GemEficienciaSection  from '../calidad/components/GemEficienciaSection';
 
 interface Props { canEdit: boolean }
 
@@ -29,6 +41,16 @@ export default function DashboardPage({ canEdit }: Props) {
   const [editMode, setEditMode] = useState(false);
   const [kpis, setKpis] = useState(KPI_METRICS);
   const [realMetrics, setRealMetrics] = useState<DailyMetrics[]>([]);
+
+  // ── Estado sección calidad ────────────────────────────────────
+  const [calParametros, setCalParametros] = useState<string[]>([]);
+  const [calUnidadMap,  setCalUnidadMap]  = useState<Record<string, string>>({});
+  const [calParametro,  setCalParametro]  = useState('');
+  const calFechaInicio = useMemo(
+    () => new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+    []
+  );
+  const calFechaFin = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
   // ── Fetch real data from v_consumo_quimico_diario via FastAPI ─────────
   // Response shape: { fecha: string; caudal_m3_dia: number | null; ... }[]
@@ -87,6 +109,21 @@ export default function DashboardPage({ canEdit }: Props) {
     fetchDashboardData();
   }, []);
 
+  // ── Cargar parámetros de calidad ──────────────────────────────
+  useEffect(() => {
+    getCalidadParametros().then(data => {
+      const map: Record<string, string> = {};
+      for (const r of data) if (!map[r.nombre]) map[r.nombre] = r.unidad_medida ?? '';
+      const uniq = Object.keys(map).sort();
+      setCalUnidadMap(map);
+      setCalParametros(uniq);
+      if (uniq.length > 0) {
+        const pref = ['DQO', 'pH', 'SST', 'Color'];
+        setCalParametro(pref.find(p => uniq.includes(p)) ?? uniq[0]);
+      }
+    }).catch(() => {});
+  }, []);
+
   const handleTargetChange = (idx: number, val: number) => {
     setKpis(prev => prev.map((k, i) => i === idx ? { ...k, target: val } : k));
   };
@@ -115,6 +152,32 @@ export default function DashboardPage({ canEdit }: Props) {
       row.label === 'Activo' ? { ...row, value: timeStr, pct } : row
     );
   }, [realMetrics]);
+
+  // ── Hooks de calidad ──────────────────────────────────────────
+  const {
+    rawRows: calRawRows,
+    unidades: calUnidades,
+  } = useCalidadData({
+    parametro: calParametro,
+    fechaInicio: calFechaInicio,
+    fechaFin: calFechaFin,
+    turno: undefined,
+    unidadTurno: undefined,
+  });
+
+  const { data: calDispersion } = useDispersionData(calParametro, calFechaInicio, calFechaFin);
+  const { data: mbrData, loading: mbrLoading } = useMbrEficiencia(calFechaInicio, calFechaFin);
+  const { data: gemData, loading: gemLoading } = useGemEficiencia(calFechaInicio, calFechaFin);
+
+  const calUnidadMedida = calUnidadMap[calParametro] ?? 'u';
+
+  const calValoresFlat = useMemo(
+    () => calRawRows.map(r => r.valor).filter((v): v is number => v != null && !isNaN(v)),
+    [calRawRows]
+  );
+
+  // Suppress unused warning for calUnidades (used implicitly by child components)
+  void calUnidades;
 
   return (
     <div className="dashboard">
@@ -306,6 +369,87 @@ export default function DashboardPage({ canEdit }: Props) {
           </div>
         </section>
       </div>
+
+      {/* ═══════════════════════════════════════════════════════════ */}
+      {/* SECCIÓN: CALIDAD DEL AGUA                                  */}
+      {/* ═══════════════════════════════════════════════════════════ */}
+      <div className="dash-section-divider">
+        <span>CALIDAD DEL AGUA</span>
+      </div>
+
+      {/* Selector de parámetro */}
+      <div className="cal-filters" style={{ marginBottom: 16 }}>
+        <div className="cal-filter-group">
+          <label className="cal-filter-label">Parámetro</label>
+          <select
+            className="cal-filter-select"
+            value={calParametro}
+            onChange={e => setCalParametro(e.target.value)}
+          >
+            {calParametros.map(p => <option key={p} value={p}>{p}</option>)}
+          </select>
+        </div>
+        <span style={{ color: '#8b949e', fontSize: 12, alignSelf: 'flex-end', paddingBottom: 6 }}>
+          Últimos 60 días · {calUnidadMedida}
+        </span>
+      </div>
+
+      {/* Seguimiento Diario por Turno */}
+      <section className="dash-section">
+        <div className="section-title">Seguimiento Diario por Turno — {calParametro}</div>
+        <div className="dash-row-2col">
+          <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
+            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
+              Promedio por turno y fecha (todas las unidades)
+            </div>
+            <SegDiarioChart data={calRawRows} unidad_medida={calUnidadMedida} />
+          </div>
+          <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
+            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
+              Dispersión agregada (mín/prom/máx) — todas las unidades
+            </div>
+            <DispersionChart data={calDispersion} unidadFiltrada="ALL" unidad_medida={calUnidadMedida} />
+          </div>
+        </div>
+      </section>
+
+      {/* Multiparámetro por grupos */}
+      <SeccionMultiparametro
+        rawData={calRawRows}
+        dispersionData={calDispersion}
+        unidad_medida={calUnidadMedida}
+      />
+
+      {/* Distribución estadística */}
+      <section className="dash-section">
+        <div className="section-title">Distribución Estadística — {calParametro}</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+          <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
+            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
+              Histograma de frecuencias
+            </div>
+            <HistogramaChart values={calValoresFlat} unidad_medida={calUnidadMedida} />
+          </div>
+          <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
+            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
+              Distribución porcentual
+            </div>
+            <PieDistribucionChart values={calValoresFlat} unidad_medida={calUnidadMedida} />
+          </div>
+          <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
+            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
+              Percentiles (P10 – P90)
+            </div>
+            <PercentilChart values={calValoresFlat} unidad_medida={calUnidadMedida} />
+          </div>
+        </div>
+      </section>
+
+      {/* Eficiencia MBR */}
+      <MbrEficienciaSection data={mbrData} loading={mbrLoading} />
+
+      {/* Eficiencia GEM */}
+      <GemEficienciaSection data={gemData} loading={gemLoading} />
 
       {/* Footer info */}
       <div className="dash-footer">

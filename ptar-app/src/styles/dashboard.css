@@ -72,3 +72,15 @@
 .dash-update { margin-left: auto; }
 .can-edit-badge { color: #3fb950; }
 .no-edit-badge  { color: #8b949e; }
+
+/* ── Divisor de sección CALIDAD DEL AGUA ── */
+.dash-section-divider {
+  display: flex; align-items: center; gap: 12px;
+  margin: 32px 0 16px;
+  color: #8b949e; font-size: 11px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase;
+}
+.dash-section-divider::before,
+.dash-section-divider::after {
+  content: ''; flex: 1; height: 1px; background: #21262d;
+}

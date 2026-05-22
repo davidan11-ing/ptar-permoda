@@ -1,24 +1,13 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { getCalidadParametros, getReporteCalidadHtmlUrl } from '../../services/ptarClient';
 import { useCalidadData, PROCESO_ORDEN } from './hooks/useCalidadData';
 import { useCalidadKpis }   from './hooks/useCalidadKpis';
-import { useDispersionData } from './hooks/useDispersionData';
-import { useMbrEficiencia }  from './hooks/useMbrEficiencia';
-import { useGemEficiencia }  from './hooks/useGemEficiencia';
 import KpiCompliancePanel    from './components/KpiCompliancePanel';
 import TendenciaChart        from './components/TendenciaChart';
 import EtapaChart            from './components/EtapaChart';
 import TurnoChart            from './components/TurnoChart';
 import EficienciaPanel       from './components/EficienciaPanel';
 import TablaEstadistica      from './components/TablaEstadistica';
-import SegDiarioChart        from './components/SegDiarioChart';
-import DispersionChart       from './components/DispersionChart';
-import HistogramaChart       from './components/HistogramaChart';
-import PieDistribucionChart  from './components/PieDistribucionChart';
-import PercentilChart        from './components/PercentilChart';
-import SeccionMultiparametro from './components/SeccionMultiparametro';
-import MbrEficienciaSection  from './components/MbrEficienciaSection';
-import GemEficienciaSection  from './components/GemEficienciaSection';
 
 // Rango de fechas por defecto: últimos 60 días
 function defaultFechas() {
@@ -77,7 +66,6 @@ export default function CalidadDashboardPage() {
   // ── Hook de datos del parámetro seleccionado ─────────────────
   const {
     loading, error,
-    rawRows,
     unidades, tendencia, summary, turnoRows, eficiencia, tieneRemocion,
   } = useCalidadData({
     parametro,
@@ -87,21 +75,11 @@ export default function CalidadDashboardPage() {
     unidadTurno,
   });
 
-  // ── Hooks de datos adicionales ────────────────────────────────
-  const { data: dispersionData } = useDispersionData(parametro, fechaInicio, fechaFin);
-  const { data: mbrData, loading: mbrLoading } = useMbrEficiencia(fechaInicio, fechaFin);
-  const { data: gemData, loading: gemLoading } = useGemEficiencia(fechaInicio, fechaFin);
-
   // Unidad de medida real desde la BD
   const unidadMedida = unidadMap[parametro] ?? 'u';
 
   // Selector de unidad para TurnoChart
   const unidadTurnoFinal = unidadTurno ?? unidades[0] ?? '';
-
-  // Valores planos para histograma / pie / percentiles (todas las unidades)
-  const valoresFlat = useMemo((): number[] => {
-    return rawRows.map(r => r.valor).filter(v => v != null && !isNaN(v));
-  }, [rawRows]);
 
   return (
     <div className="cal-page">
@@ -272,71 +250,8 @@ export default function CalidadDashboardPage() {
               <TablaEstadistica summary={summary} unidad_medida={unidadMedida} />
             </div>
           </section>
-
-          {/* ── Sección 7: Seguimiento Diario por Turno ── */}
-          <section className="cal-section">
-            <div className="cal-section-header">
-              <h2 className="cal-section-title">Seguimiento Diario por Turno</h2>
-              <span className="cal-section-meta">{parametro} · {unidadMedida}</span>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
-                <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
-                  Promedio por turno y fecha (todas las unidades)
-                </div>
-                <SegDiarioChart data={rawRows} unidad_medida={unidadMedida} />
-              </div>
-              <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
-                <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
-                  Dispersión agregada (mín/prom/máx) — todas las unidades
-                </div>
-                <DispersionChart data={dispersionData} unidadFiltrada="ALL" unidad_medida={unidadMedida} />
-              </div>
-            </div>
-          </section>
-
-          {/* ── Sección 8: Multiparámetro por grupos ── */}
-          <SeccionMultiparametro
-            rawData={rawRows}
-            dispersionData={dispersionData}
-            unidad_medida={unidadMedida}
-          />
-
-          {/* ── Sección 9: Distribución estadística ── */}
-          <section className="cal-section">
-            <div className="cal-section-header">
-              <h2 className="cal-section-title">Distribución estadística — {parametro}</h2>
-              <span className="cal-section-meta">Basado en {valoresFlat.length} mediciones del período · {unidadMedida}</span>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
-              <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
-                <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
-                  Histograma de frecuencias
-                </div>
-                <HistogramaChart values={valoresFlat} unidad_medida={unidadMedida} />
-              </div>
-              <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
-                <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
-                  Distribución porcentual
-                </div>
-                <PieDistribucionChart values={valoresFlat} unidad_medida={unidadMedida} />
-              </div>
-              <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
-                <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
-                  Percentiles (P10 – P90)
-                </div>
-                <PercentilChart values={valoresFlat} unidad_medida={unidadMedida} />
-              </div>
-            </div>
-          </section>
         </>
       )}
-
-      {/* ── Sección 10: Eficiencia MBR (independiente del parámetro seleccionado) ── */}
-      <MbrEficienciaSection data={mbrData} loading={mbrLoading} />
-
-      {/* ── Sección 11: Eficiencia GEM (independiente del parámetro seleccionado) ── */}
-      <GemEficienciaSection data={gemData} loading={gemLoading} />
     </div>
   );
 }
