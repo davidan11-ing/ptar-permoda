@@ -1,4 +1,4 @@
-import { memo, type ReactNode } from 'react';
+import { memo, useRef, type ReactNode } from 'react';
 
 interface Phase {
   key: string;
@@ -21,6 +21,14 @@ function PhaseModalInner({
   phase, phaseIdx, totalPhases, closing,
   onClose, onNavigate, svgBody,
 }: Props) {
+  const touchX = useRef(0);
+
+  const onTouchStart = (e: React.TouchEvent) => { touchX.current = e.touches[0].clientX; };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const dx = e.changedTouches[0].clientX - touchX.current;
+    if (Math.abs(dx) > 60) onNavigate(dx > 0 ? -1 : 1);
+  };
+
   return (
     <div
       className={`phase-modal-backdrop${closing ? ' phase-modal-closing-bg' : ''}`}
@@ -29,6 +37,8 @@ function PhaseModalInner({
       <div
         className={`phase-modal-panel${closing ? ' phase-modal-closing' : ''}`}
         onClick={e => e.stopPropagation()}
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
         style={{
           borderColor: `${phase.color}55`,
           boxShadow: `0 0 40px ${phase.color}18, 0 24px 80px rgba(0,0,0,.8)`,
