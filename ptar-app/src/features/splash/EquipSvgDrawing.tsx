@@ -58,16 +58,6 @@ function Tank({ cx=100, cy=130, w=64, h=90, pct=0.65, fill=wG, border='#2a5a70' 
   </>;
 }
 
-/** Mixer/agitador vertical centrado en cx, desde yTop hasta yBottom */
-function Mixer({ cx=100, yTop=50, yBot=120 }:{ cx?:number; yTop?:number; yBot?:number }) {
-  return (
-    <g className="mixer">
-      <line x1={cx} y1={yTop} x2={cx} y2={yBot} stroke="#1a3555" strokeWidth="1.5"/>
-      <rect x={cx-22} y={yBot-8} width="44" height="8" rx="3"
-        fill="#1a4060" stroke="#2a5a80" strokeWidth="1"/>
-    </g>
-  );
-}
 
 /** Burbujas de aireación */
 function Bubbles({ cx=100, cy=130 }:{ cx?:number; cy?:number }) {
@@ -271,7 +261,13 @@ function DrawHomogenizer({ s }:{ s:Status }) {
   const c = SC[s];
   return <>
     <Tank cx={100} cy={158} w={96} h={118} pct={0.64} border={`${c}60`}/>
-    <Mixer cx={100} yTop={40} yBot={148}/>
+    {/* Eje del agitador — estático (solo la cabeza/impulsor gira) */}
+    <line x1="100" y1="42" x2="100" y2="148" stroke="#1a3555" strokeWidth="1.5"/>
+    {/* Impulsor inferior — solo este grupo rota */}
+    <g className="mixer">
+      <rect x="78" y="142" width="44" height="7" rx="3"
+        fill="#1a4060" stroke="#2a5a80" strokeWidth="1"/>
+    </g>
     {/* Dosing inlets top */}
     {[{x:72,col:'#d29922',l:'O₃'},{x:100,col:'#00c5e3',l:'Q'},{x:128,col:'#3fb950',l:'Lixiv'}].map(d=>(
       <g key={d.l}>
