@@ -142,7 +142,6 @@ export default function SplashScreen() {
   const navigate = useNavigate();
   const [activePhase, setActivePhase] = useState<PhaseKey | null>(null);
   const [closing, setClosing] = useState(false);
-  const [highlightPhase, setHighlightPhase] = useState<PhaseKey | null>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const modalOpen = activePhase != null;
 
@@ -163,8 +162,7 @@ export default function SplashScreen() {
 
   const openPhase = (key: PhaseKey) => {
     if (closing) return;
-    setHighlightPhase(key);
-    setTimeout(() => { setHighlightPhase(null); setActivePhase(key); }, 150);
+    setActivePhase(key);
   };
 
   useEffect(() => {
@@ -236,7 +234,7 @@ export default function SplashScreen() {
                 <rect key={ph.key}
                   x={vx} y={vy} width={vw} height={vh}
                   fill="transparent"
-                  className={`phase-zone${highlightPhase === ph.key ? ' phase-highlight' : ''}`}
+                  className="phase-zone"
                   tabIndex={0} role="button"
                   aria-label={`Ampliar ${ph.label}`}
                   onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') openPhase(ph.key); }}

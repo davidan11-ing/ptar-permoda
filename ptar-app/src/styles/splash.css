@@ -77,7 +77,6 @@
 .phase-modal-backdrop.phase-modal-closing-bg{animation:phaseFadeOut .2s ease-in forwards;}
 @keyframes phaseFadeIn{from{opacity:0}to{opacity:1}}
 @keyframes phaseFadeOut{from{opacity:1}to{opacity:0}}
-.phase-highlight{fill:rgba(255,255,255,.12)!important;transition:fill .1s;}
 .phase-modal-panel{width:min(92vw,1400px);height:min(88vh,900px);background:#0d1117;border:1px solid transparent;border-radius:14px;overflow:hidden;display:flex;flex-direction:column;animation:phaseSlideUp .22s ease-out;box-shadow:0 24px 80px rgba(0,0,0,.7);}
 .phase-modal-panel.phase-modal-closing{animation:phaseSlideDown .2s ease-in forwards;}
 @keyframes phaseSlideUp{from{transform:scale(.96) translateY(12px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
