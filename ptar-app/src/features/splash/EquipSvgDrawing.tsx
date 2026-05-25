@@ -115,11 +115,10 @@ function DrawTankLarge({ s }:{ s:Status }) {
     {/* Outline glow */}
     <rect x="55" y="32" width="90" height="130" rx="30" fill="url(#eqGlowG)"/>
     <Tank cx={100} cy={162} w={80} h={120} pct={0.68} border={`${c}80`}/>
-    <Mixer cx={100} yTop={50} yBot={142}/>
     <text x="100" y="115" textAnchor="middle" fill={c} fillOpacity=".25" fontSize="22"
       fontWeight="800" fontFamily="monospace">m³</text>
     <text x="100" y="176" textAnchor="middle" fill={c} fontSize="8"
-      fontWeight="700" fontFamily="monospace" letterSpacing="1">TANQUE PULMÓN</text>
+      fontWeight="700" fontFamily="monospace" letterSpacing="1">TANQUE</text>
     <FlowArrow x1={100} y1={38} x2={100} y2={50} color="#00c5e3"/>
     <FlowArrow x1={100} y1={165} x2={100} y2={185} color={c} dashed/>
   </>;
@@ -254,8 +253,6 @@ function DrawCarcamo({ s }:{ s:Status }) {
     {/* Pit shape — wider at top */}
     <path d="M42,65 L50,155 L150,155 L158,65Z" fill={tG} stroke="#2a5a70" strokeWidth="1.5"/>
     <path d="M50,112 L50,155 L150,155 L150,112 Q100,108 50,112Z" fill={wG} opacity=".5"/>
-    {/* Bubbles */}
-    <Bubbles cx={100} cy={150}/>
     {/* Inlet arrows */}
     <FlowArrow x1={72} y1={38} x2={72} y2={65} color="#00c5e3"/>
     <FlowArrow x1={128} y1={38} x2={128} y2={65} color="#00c5e3"/>
@@ -492,13 +489,13 @@ function DrawCartridgeFilter({ s }:{ s:Status }) {
     <rect x="56" y="38" width="88" height="14" rx="4" fill="#121a20" stroke="#1f6feb50" strokeWidth="1"/>
     {/* Bottom sump */}
     <rect x="56" y="148" width="88" height="18" rx="4" fill="#121a20" stroke="#1f6feb50" strokeWidth="1"/>
-    {/* Cartridge elements */}
-    {[-16,0,16].map(dx=>(
+    {/* Cartridge elements — 2 cartuchos simétricos (igual que el diagrama) */}
+    {[-12,12].map(dx=>(
       <g key={dx}>
-        <rect x={100+dx-6} y="56" width="12" height="88" rx="6"
+        <rect x={100+dx-7} y="56" width="14" height="88" rx="7"
           fill="#1a3050" stroke="#2a5070" strokeWidth="1"/>
         <line x1={100+dx} y1="58" x2={100+dx} y2="142"
-          stroke="#00c5e312" strokeWidth="8"/>
+          stroke="#00c5e312" strokeWidth="10"/>
       </g>
     ))}
     {/* ΔP indicator */}
