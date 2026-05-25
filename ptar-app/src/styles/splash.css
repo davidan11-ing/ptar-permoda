@@ -179,6 +179,15 @@
   color:#3a4254;text-transform:uppercase;
   margin-bottom:8px;margin-top:6px;
 }
+
+/* ── Description text ── */
+.eq-modal-description{
+  font-size:11px;line-height:1.6;color:#6e7a8a;
+  margin:0 0 4px;padding:8px 10px;
+  background:rgba(255,255,255,.022);
+  border-left:2px solid #1a2d3d;
+  border-radius:0 4px 4px 0;
+}
 .eq-modal-section-chart{
   margin-top:14px;
   display:flex;align-items:center;gap:7px;

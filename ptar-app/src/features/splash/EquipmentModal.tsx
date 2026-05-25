@@ -1,4 +1,4 @@
-import { memo, type ReactNode } from 'react';
+import { memo } from 'react';
 import {
   ResponsiveContainer, AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip,
@@ -6,6 +6,7 @@ import {
 import type { EqDef } from './equipment';
 import { SC, SL } from './equipment';
 import { useEquipChart } from './hooks/useEquipChart';
+import { EquipSvgDrawing } from './EquipSvgDrawing';
 
 /* ── helpers ─────────────────────────────────────────────────────── */
 
@@ -81,11 +82,10 @@ interface Props {
   eq: EqDef;
   closing: boolean;
   onClose: () => void;
-  svgBody: ReactNode;
 }
 
 /* ── componente principal ────────────────────────────────────────── */
-function EquipmentModalInner({ equipKey, eq, closing, onClose, svgBody }: Props) {
+function EquipmentModalInner({ equipKey, eq, closing, onClose }: Props) {
   const statusColor = SC[eq.status];
 
   // Parámetro a graficar
@@ -93,9 +93,6 @@ function EquipmentModalInner({ equipKey, eq, closing, onClose, svgBody }: Props)
   const chartEntry = eq.params[chartIdx] ?? eq.params[0] ?? ['Variable', '50'];
   const [chartLabel, chartRaw] = chartEntry;
   const { num: baseValue, unit: chartUnit } = parseParam(chartRaw);
-
-  // ViewBox: usa vb del equipo o muestra el SVG completo como fallback
-  const viewBox = eq.vb ?? '0 0 1800 700';
 
   return (
     <div
@@ -126,24 +123,24 @@ function EquipmentModalInner({ equipKey, eq, closing, onClose, svgBody }: Props)
         {/* ── BODY ───────────────────────────────────────────────── */}
         <div className="eq-modal-body">
 
-          {/* Columna SVG */}
+          {/* Columna SVG — ilustración standalone */}
           <div className="eq-modal-svg-col">
-            <svg
-              viewBox={viewBox}
-              preserveAspectRatio="xMidYMid meet"
-              className="eq-modal-svg"
-              role="img"
-              aria-label={`Vista de ${eq.label}`}
-            >
-              {svgBody}
-            </svg>
+            <EquipSvgDrawing equipKey={equipKey} status={eq.status} />
           </div>
 
           {/* Columna datos */}
           <div className="eq-modal-data-col">
 
+            {/* Sección descripción */}
+            {eq.description && (
+              <>
+                <div className="eq-modal-section-label">DESCRIPCIÓN</div>
+                <p className="eq-modal-description">{eq.description}</p>
+              </>
+            )}
+
             {/* Sección parámetros */}
-            <div className="eq-modal-section-label">PARÁMETROS</div>
+            <div className="eq-modal-section-label" style={{ marginTop: eq.description ? 14 : 6 }}>PARÁMETROS</div>
             <table className="eq-params-table">
               <tbody>
                 {eq.params.map(([lbl, val], i) => (
