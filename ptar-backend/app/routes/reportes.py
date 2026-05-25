@@ -2958,3 +2958,445 @@ async def generar_reporte_dashboard_html(
             )
         },
     )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  INFORME BALANCE HÍDRICO HTML
+# ══════════════════════════════════════════════════════════════════════════════
+
+_CSS_REPORT = """
+  body{margin:0;font-family:'Segoe UI',Arial,sans-serif;background:#0d1117;color:#e6edf3;}
+  .rp-wrap{max-width:960px;margin:0 auto;padding:32px 24px;}
+  .rp-header{border-bottom:2px solid #1f6feb;padding-bottom:16px;margin-bottom:24px;}
+  .rp-title{font-size:22px;font-weight:700;color:#58a6ff;margin:0 0 4px;}
+  .rp-sub{font-size:12px;color:#8b949e;margin:0;}
+  .rp-section{margin:28px 0 0;}
+  .rp-section-title{font-size:14px;font-weight:600;color:#00c5e3;
+    border-left:3px solid #00c5e3;padding-left:10px;margin:0 0 12px;}
+  table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:16px;}
+  th{background:#161b22;color:#8b949e;padding:8px 10px;text-align:left;
+    border-bottom:1px solid #30363d;font-weight:600;}
+  td{padding:7px 10px;border-bottom:1px solid #21262d;color:#e6edf3;}
+  tr:hover td{background:#161b22;}
+  .badge-ok{color:#3fb950;font-weight:600;}
+  .badge-warn{color:#d29922;font-weight:600;}
+  .badge-bad{color:#f85149;font-weight:600;}
+  .kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;}
+  .kpi-box{background:#161b22;border:1px solid #30363d;border-radius:8px;
+    padding:16px;text-align:center;}
+  .kpi-val{font-size:26px;font-weight:700;color:#58a6ff;}
+  .kpi-lbl{font-size:11px;color:#8b949e;margin-top:4px;}
+  .kpi-unit{font-size:10px;color:#484f58;margin-top:2px;}
+  @media print{body{background:#fff;color:#000;}
+    .rp-section-title{color:#1a5a8a;border-color:#1a5a8a;}
+    .rp-title{color:#1a5a8a;} th{background:#e8f4ff;color:#333;}
+    td{color:#333;border-color:#ddd;} tr:hover td{background:none;}
+    .kpi-box{border:1px solid #ccc;} .kpi-val{color:#1a5a8a;} .kpi-lbl{color:#666;}
+  }
+"""
+
+
+@router.get("/balance-html")
+async def generar_reporte_balance_html(
+    fecha_inicio: str = Query(..., description="YYYY-MM-DD"),
+    fecha_fin:    str = Query(..., description="YYYY-MM-DD"),
+    usuario:      str = Query("Encargado"),
+    db: AsyncSession = Depends(get_db),
+):
+    """Informe HTML de Balance Hídrico — abre en nueva pestaña, imprimir como PDF con Ctrl+P."""
+
+    gen_dt = datetime.now().strftime("%Y-%m-%d %H:%M")
+
+    # ── Resumen del período ──────────────────────────────────────────────────
+    kpis_row = (await db.execute(text("""
+        SELECT
+            ROUND(COALESCE(SUM(total_agua_limpia_m3), 0), 1) AS agua_limpia,
+            ROUND(COALESCE(SUM(envio_th),             0), 1) AS envio_th,
+            ROUND(COALESCE(SUM(acueducto_m3),         0), 1) AS acueducto,
+            ROUND(COALESCE(SUM(consumo_gem_m3),       0), 1) AS gem_m3,
+            ROUND(COALESCE(SUM(entrada_ro1),          0), 1) AS ro_entrada,
+            ROUND(COALESCE(SUM(permeado_ro1),         0), 1) AS ro_permeado,
+            ROUND(COALESCE(SUM(rechazo_ro1),          0), 1) AS ro_rechazo,
+            ROUND(AVG(NULLIF(eficiencia_ro_pct, 0)),  1) AS ef_ro_pct,
+            ROUND(COALESCE(SUM(lavanderia_m3),        0), 1) AS lavanderia,
+            ROUND(COALESCE(SUM(tintoreria_m3),        0), 1) AS tintoreria,
+            ROUND(COALESCE(SUM(rotativa_m3),          0), 1) AS rotativa,
+            COUNT(DISTINCT fecha)                            AS n_dias
+        FROM v_balance_hidrico
+        WHERE fecha BETWEEN :fi AND :ff
+    """), {"fi": fecha_inicio, "ff": fecha_fin})).mappings().first() or {}
+
+    # ── Detalle diario ────────────────────────────────────────────────────────
+    rows_d = (await db.execute(text("""
+        SELECT
+            fecha,
+            ROUND(SUM(ingreso_ptap),          1) AS ingreso_ptap,
+            ROUND(SUM(potable_ptap),          1) AS potable_ptap,
+            ROUND(SUM(total_agua_limpia_m3),  1) AS agua_limpia,
+            ROUND(SUM(acueducto_m3),          1) AS acueducto,
+            ROUND(SUM(envio_th),              1) AS envio_th,
+            ROUND(SUM(entrada_ro1),           1) AS ro_entrada,
+            ROUND(SUM(permeado_ro1),          1) AS ro_permeado,
+            ROUND(SUM(rechazo_ro1),           1) AS ro_rechazo,
+            ROUND(AVG(NULLIF(eficiencia_ro_pct, 0)), 1) AS ef_ro_pct,
+            ROUND(SUM(lavanderia_m3),         1) AS lavanderia,
+            ROUND(SUM(tintoreria_m3),         1) AS tintoreria,
+            ROUND(SUM(rotativa_m3),           1) AS rotativa
+        FROM v_balance_hidrico
+        WHERE fecha BETWEEN :fi AND :ff
+        GROUP BY fecha
+        ORDER BY fecha
+    """), {"fi": fecha_inicio, "ff": fecha_fin})).mappings().all()
+
+    # ── Indicadores de consumo ────────────────────────────────────────────────
+    rows_ind = (await db.execute(text("""
+        SELECT
+            fecha,
+            ROUND(AVG(NULLIF(indicador_lav_l_und, 0)), 1) AS lav_l_und,
+            ROUND(AVG(NULLIF(indicador_tin_l_kg,  0)), 1) AS tin_l_kg,
+            ROUND(AVG(NULLIF(indicador_rot_l_m,   0)), 1) AS rot_l_m
+        FROM v_balance_hidrico
+        WHERE fecha BETWEEN :fi AND :ff
+        GROUP BY fecha
+        ORDER BY fecha
+    """), {"fi": fecha_inicio, "ff": fecha_fin})).mappings().all()
+
+    def fmt_num(v) -> str:
+        if v is None: return "—"
+        try:
+            f = float(v)
+            return f"{f:,.1f}" if f != int(f) else f"{int(f):,}"
+        except Exception:
+            return str(v)
+
+    def ef_class(v) -> str:
+        if v is None: return ""
+        try:
+            f = float(v)
+            if f >= 70: return "badge-ok"
+            if f >= 55: return "badge-warn"
+            return "badge-bad"
+        except Exception:
+            return ""
+
+    # ── Filas de la tabla diaria ──────────────────────────────────────────────
+    tr_diario = ""
+    for r in rows_d:
+        ef = r.get("ef_ro_pct")
+        ec = ef_class(ef)
+        tr_diario += f"""
+        <tr>
+          <td>{r['fecha']}</td>
+          <td>{fmt_num(r.get('ingreso_ptap'))}</td>
+          <td>{fmt_num(r.get('potable_ptap'))}</td>
+          <td>{fmt_num(r.get('agua_limpia'))}</td>
+          <td>{fmt_num(r.get('acueducto'))}</td>
+          <td>{fmt_num(r.get('envio_th'))}</td>
+          <td>{fmt_num(r.get('ro_entrada'))}</td>
+          <td>{fmt_num(r.get('ro_permeado'))}</td>
+          <td>{fmt_num(r.get('ro_rechazo'))}</td>
+          <td class="{ec}">{fmt_num(ef)}%</td>
+          <td>{fmt_num(r.get('lavanderia'))}</td>
+          <td>{fmt_num(r.get('tintoreria'))}</td>
+          <td>{fmt_num(r.get('rotativa'))}</td>
+        </tr>"""
+
+    # ── Filas de indicadores ──────────────────────────────────────────────────
+    tr_ind = ""
+    for r in rows_ind:
+        tr_ind += f"""
+        <tr>
+          <td>{r['fecha']}</td>
+          <td>{fmt_num(r.get('lav_l_und'))}</td>
+          <td>{fmt_num(r.get('tin_l_kg'))}</td>
+          <td>{fmt_num(r.get('rot_l_m'))}</td>
+        </tr>"""
+
+    kpis   = kpis_row
+    lav_v  = float(kpis.get('lavanderia') or 0)
+    tin_v  = float(kpis.get('tintoreria') or 0)
+    rot_v  = float(kpis.get('rotativa')   or 0)
+    th_tot = float(kpis.get('envio_th')   or 0) or 1
+    tr_proceso = (
+        f"<tr><td>Lavandería</td><td>{fmt_num(lav_v)}</td><td>{lav_v/th_tot*100:.1f}%</td></tr>"
+        f"<tr><td>Tintorería</td><td>{fmt_num(tin_v)}</td><td>{tin_v/th_tot*100:.1f}%</td></tr>"
+        f"<tr><td>Rotativa</td><td>{fmt_num(rot_v)}</td><td>{rot_v/th_tot*100:.1f}%</td></tr>"
+    )
+
+    html = f"""<!DOCTYPE html><html lang="es"><head>
+<meta charset="utf-8">
+<title>Informe Balance Hídrico — PERMODA {fecha_inicio} / {fecha_fin}</title>
+<style>{_CSS_REPORT}</style>
+</head><body>
+<div class="rp-wrap">
+  <div class="rp-header">
+    <div class="rp-title">💧 Informe Balance Hídrico — PTAR PERMODA</div>
+    <div class="rp-sub">Período: {fecha_inicio} al {fecha_fin} &nbsp;·&nbsp; Usuario: {usuario} &nbsp;·&nbsp; Generado: {gen_dt}</div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-grid">
+    <div class="kpi-box">
+      <div class="kpi-val">{fmt_num(kpis.get('agua_limpia'))}</div>
+      <div class="kpi-lbl">Total agua limpia producción</div>
+      <div class="kpi-unit">m³ en el período</div>
+    </div>
+    <div class="kpi-box">
+      <div class="kpi-val">{fmt_num(kpis.get('envio_th'))}</div>
+      <div class="kpi-lbl">Enviado a Taller / Producción</div>
+      <div class="kpi-unit">m³ en el período</div>
+    </div>
+    <div class="kpi-box">
+      <div class="kpi-val">{fmt_num(kpis.get('acueducto'))}</div>
+      <div class="kpi-lbl">Acueducto consumido</div>
+      <div class="kpi-unit">m³ en el período</div>
+    </div>
+    <div class="kpi-box">
+      <div class="kpi-val">{fmt_num(kpis.get('ef_ro_pct'))}%</div>
+      <div class="kpi-lbl">Eficiencia RO promedio</div>
+      <div class="kpi-unit">% recuperación</div>
+    </div>
+    <div class="kpi-box">
+      <div class="kpi-val">{fmt_num(kpis.get('gem_m3'))}</div>
+      <div class="kpi-lbl">Caudal tratado GEM</div>
+      <div class="kpi-unit">m³ en el período</div>
+    </div>
+    <div class="kpi-box">
+      <div class="kpi-val">{fmt_num(kpis.get('n_dias'))}</div>
+      <div class="kpi-lbl">Días con registro</div>
+      <div class="kpi-unit">días de operación</div>
+    </div>
+  </div>
+
+  <!-- Resumen RO -->
+  <div class="rp-section">
+    <div class="rp-section-title">Sistema de Ósmosis Inversa — Totales del Período</div>
+    <table>
+      <thead><tr><th>Flujo</th><th>Total (m³)</th></tr></thead>
+      <tbody>
+        <tr><td>Entrada RO1</td><td>{fmt_num(kpis.get('ro_entrada'))}</td></tr>
+        <tr><td>Permeado RO1</td><td>{fmt_num(kpis.get('ro_permeado'))}</td></tr>
+        <tr><td>Rechazo RO1</td><td>{fmt_num(kpis.get('ro_rechazo'))}</td></tr>
+        <tr><td><strong>Eficiencia promedio</strong></td><td><strong>{fmt_num(kpis.get('ef_ro_pct'))}%</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Consumo por proceso -->
+  <div class="rp-section">
+    <div class="rp-section-title">Consumo por Proceso — Totales del Período</div>
+    <table>
+      <thead><tr><th>Área</th><th>Total m³</th><th>% sobre envío TH</th></tr></thead>
+      <tbody>{tr_proceso}</tbody>
+    </table>
+  </div>
+
+  <!-- Tabla diaria -->
+  <div class="rp-section">
+    <div class="rp-section-title">Detalle Diario de Volúmenes (m³)</div>
+    <div style="overflow-x:auto;">
+    <table>
+      <thead><tr>
+        <th>Fecha</th><th>Ingreso PTAP</th><th>Potable PTAP</th><th>Agua limpia</th>
+        <th>Acueducto</th><th>Envío TH</th>
+        <th>RO Entrada</th><th>RO Permeado</th><th>RO Rechazo</th><th>Efic. RO</th>
+        <th>Lavandería</th><th>Tintorería</th><th>Rotativa</th>
+      </tr></thead>
+      <tbody>{tr_diario}</tbody>
+    </table>
+    </div>
+  </div>
+
+  <!-- Indicadores -->
+  {'<div class="rp-section"><div class="rp-section-title">Indicadores de Consumo Específico</div><table><thead><tr><th>Fecha</th><th>Lav. L/und</th><th>Tin. L/kg tela</th><th>Rot. L/m tela</th></tr></thead><tbody>' + tr_ind + '</tbody></table></div>' if tr_ind else ''}
+
+</div>
+<script>window.onload=()=>{{document.title='Balance Hídrico PTAR {fecha_inicio}_{fecha_fin}';}}</script>
+</body></html>"""
+
+    return Response(
+        content=html,
+        media_type="text/html; charset=utf-8",
+        headers={"Content-Disposition": f'inline; filename="balance_hidrico_{fecha_inicio}_{fecha_fin}.html"'},
+    )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  INFORME COSTOS QUÍMICOS HTML
+# ══════════════════════════════════════════════════════════════════════════════
+
+@router.get("/costos-html")
+async def generar_reporte_costos_html(
+    anio:    int = Query(..., description="Año, ej. 2026"),
+    mes:     int | None = Query(None, ge=1, le=12, description="Mes 1-12; omitir para todos"),
+    sistema: str | None = Query(None, description="GEM | RO | PTAP"),
+    usuario: str = Query("Encargado"),
+    db: AsyncSession = Depends(get_db),
+):
+    """Informe HTML de Costos Químicos — abre en nueva pestaña, imprimir como PDF con Ctrl+P."""
+
+    gen_dt = datetime.now().strftime("%Y-%m-%d %H:%M")
+
+    filters = ["anio = :anio"]
+    params: dict = {"anio": anio}
+    if mes is not None:
+        filters.append("mes = :mes")
+        params["mes"] = mes
+    if sistema:
+        filters.append("sistema = :sistema")
+        params["sistema"] = sistema.upper()
+    where = "WHERE " + " AND ".join(filters)
+
+    # ── Consumo mensual por producto ──────────────────────────────────────────
+    rows_m = (await db.execute(text(f"""
+        SELECT anio, mes, sistema, producto_nombre,
+               ROUND(kg_mes,  2) AS kg_mes,
+               ROUND(L_mes,   1) AS L_mes,
+               ROUND(costo_mes)  AS costo_mes,
+               ROUND(ppm_promedio_mes, 1) AS ppm_prom,
+               ROUND(pesos_por_m3, 0)     AS pesos_m3,
+               dias_con_dato
+        FROM v_consumo_quimico_mensual
+        {where}
+        ORDER BY anio, mes, sistema, producto_nombre
+    """), params)).mappings().all()
+
+    # ── Real vs proyectado ────────────────────────────────────────────────────
+    rows_p = (await db.execute(text(f"""
+        SELECT mes, producto, sistema,
+               ROUND(kg_real,         2) AS kg_real,
+               ROUND(kg_proyectado,   2) AS kg_proy,
+               ROUND(costo_real)         AS costo_real,
+               ROUND(costo_proyectado)   AS costo_proy,
+               ROUND(cumplimiento_pct, 1)      AS cumpl_pct,
+               ROUND(cumplimiento_costo_pct,1) AS cumpl_costo_pct,
+               ROUND(desviacion_pct, 1)        AS desv_pct
+        FROM v_quimico_real_vs_proyectado
+        {where}
+        ORDER BY mes, sistema, producto
+    """), params)).mappings().all()
+
+    # ── KPIs globales ─────────────────────────────────────────────────────────
+    kpi_row = (await db.execute(text(f"""
+        SELECT
+            ROUND(SUM(kg_mes),   1) AS total_kg,
+            ROUND(SUM(costo_mes))   AS total_costo,
+            ROUND(AVG(NULLIF(pesos_por_m3, 0)), 0) AS pesos_m3_avg,
+            COUNT(DISTINCT mes)     AS n_meses
+        FROM v_consumo_quimico_mensual
+        {where}
+    """), params)).mappings().first() or {}
+
+    MESES_ES = ['', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
+                'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+
+    def fmt_n(v, decimals=1) -> str:
+        if v is None: return "—"
+        try:
+            f = float(v)
+            return f"{f:,.{decimals}f}"
+        except Exception:
+            return str(v)
+
+    def fmt_cop(v) -> str:
+        if v is None: return "—"
+        try: return f"${float(v):,.0f}"
+        except Exception: return str(v)
+
+    def cumpl_cls(v) -> str:
+        if v is None: return ""
+        try:
+            f = float(v)
+            if f >= 95: return "badge-ok"
+            if f >= 75: return "badge-warn"
+            return "badge-bad"
+        except Exception: return ""
+
+    # Filas tabla mensual
+    tr_mes = ""
+    for r in rows_m:
+        tr_mes += f"""<tr>
+          <td>{MESES_ES[r['mes']]} {r['anio']}</td>
+          <td>{r['sistema']}</td>
+          <td>{r['producto_nombre']}</td>
+          <td>{fmt_n(r.get('kg_mes'))}</td>
+          <td>{fmt_n(r.get('L_mes'))}</td>
+          <td>{fmt_cop(r.get('costo_mes'))}</td>
+          <td>{fmt_n(r.get('ppm_prom'))} ppm</td>
+          <td>{fmt_cop(r.get('pesos_m3'))}/m³</td>
+          <td>{r.get('dias_con_dato', '—')}</td>
+        </tr>"""
+
+    # Filas tabla proyección
+    tr_proy = ""
+    for r in rows_p:
+        cc = cumpl_cls(r.get('cumpl_pct'))
+        tr_proy += f"""<tr>
+          <td>{MESES_ES[r['mes']]}</td>
+          <td>{r['sistema']}</td>
+          <td>{r['producto']}</td>
+          <td>{fmt_n(r.get('kg_real'))}</td>
+          <td>{fmt_n(r.get('kg_proy'))}</td>
+          <td>{fmt_cop(r.get('costo_real'))}</td>
+          <td>{fmt_cop(r.get('costo_proy'))}</td>
+          <td class="{cc}">{fmt_n(r.get('cumpl_pct'))}%</td>
+          <td>{fmt_n(r.get('desv_pct'))}%</td>
+        </tr>"""
+
+    periodo_label = f"{anio}" + (f" — {MESES_ES[mes]}" if mes else "")
+    sis_label = sistema.upper() if sistema else "Todos"
+
+    html = f"""<!DOCTYPE html><html lang="es"><head>
+<meta charset="utf-8">
+<title>Informe Costos Químicos — PERMODA {anio}</title>
+<style>{_CSS_REPORT}</style>
+</head><body>
+<div class="rp-wrap">
+  <div class="rp-header">
+    <div class="rp-title">⚗️ Informe Costos Químicos — PTAR PERMODA</div>
+    <div class="rp-sub">Período: {periodo_label} &nbsp;·&nbsp; Sistema: {sis_label} &nbsp;·&nbsp; Usuario: {usuario} &nbsp;·&nbsp; Generado: {gen_dt}</div>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-box">
+      <div class="kpi-val">{fmt_cop(kpi_row.get('total_costo'))}</div>
+      <div class="kpi-lbl">Costo total químicos</div>
+      <div class="kpi-unit">COP en el período</div>
+    </div>
+    <div class="kpi-box">
+      <div class="kpi-val">{fmt_n(kpi_row.get('total_kg'))} kg</div>
+      <div class="kpi-lbl">Kg consumidos total</div>
+      <div class="kpi-unit">período</div>
+    </div>
+    <div class="kpi-box">
+      <div class="kpi-val">{fmt_cop(kpi_row.get('pesos_m3_avg'))}/m³</div>
+      <div class="kpi-lbl">$/m³ tratado promedio</div>
+      <div class="kpi-unit">eficiencia económica</div>
+    </div>
+  </div>
+
+  <div class="rp-section">
+    <div class="rp-section-title">Consumo Mensual por Producto</div>
+    <div style="overflow-x:auto;">
+    <table>
+      <thead><tr>
+        <th>Mes</th><th>Sistema</th><th>Producto</th>
+        <th>Kg/mes</th><th>L/mes</th><th>Costo</th>
+        <th>PPM prom.</th><th>$/m³</th><th>Días</th>
+      </tr></thead>
+      <tbody>{tr_mes}</tbody>
+    </table>
+    </div>
+  </div>
+
+  {'<div class="rp-section"><div class="rp-section-title">Real vs Proyectado por Producto</div><div style="overflow-x:auto;"><table><thead><tr><th>Mes</th><th>Sistema</th><th>Producto</th><th>Kg real</th><th>Kg proyec.</th><th>Costo real</th><th>Costo proyec.</th><th>Cumpl. %</th><th>Desviación %</th></tr></thead><tbody>' + tr_proy + '</tbody></table></div></div>' if tr_proy else ''}
+
+</div>
+<script>window.onload=()=>{{document.title='Costos Químicos PTAR {anio}';}}</script>
+</body></html>"""
+
+    return Response(
+        content=html,
+        media_type="text/html; charset=utf-8",
+        headers={"Content-Disposition": f'inline; filename="costos_quimicos_{anio}.html"'},
+    )

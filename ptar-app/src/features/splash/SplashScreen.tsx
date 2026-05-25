@@ -1018,7 +1018,6 @@ export default function SplashScreen() {
           eq={{ ...EQ[activeEquip], status: eqLive[activeEquip]?.status ?? EQ[activeEquip].status }}
           closing={equipClosing}
           onClose={closeEquip}
-          svgBody={svgBody}
         />
       )}
     </div>

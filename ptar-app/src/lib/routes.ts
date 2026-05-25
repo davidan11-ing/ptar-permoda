@@ -9,6 +9,8 @@ export const ROUTES = {
   // Encargado
   ENCARGADO_DASHBOARD: '/encargado/dashboard',
   ENCARGADO_CALIDAD:   '/encargado/calidad',
+  ENCARGADO_BALANCE:   '/encargado/balance',
+  ENCARGADO_COSTOS:    '/encargado/costos',
   // Administrador
   ADMIN_DASHBOARD: '/admin/dashboard',
 } as const;

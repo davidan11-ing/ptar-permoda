@@ -11,8 +11,10 @@ const FormatoCaudales    = lazy(() => import('../features/operario/FormatoCaudal
 const FormatoReactivos   = lazy(() => import('../features/operario/FormatoReactivos'));
 const FormatoIncidencias    = lazy(() => import('../features/operario/FormatoIncidencias'));
 const FormatoCondicionesOp  = lazy(() => import('../features/operario/FormatoCondicionesOp'));
-const DashboardPage        = lazy(() => import('../features/dashboard/DashboardPage'));
-const CalidadDashboardPage = lazy(() => import('../features/calidad/CalidadDashboardPage'));
+const DashboardPage            = lazy(() => import('../features/dashboard/DashboardPage'));
+const CalidadDashboardPage     = lazy(() => import('../features/calidad/CalidadDashboardPage'));
+const BalanceHidricoDashboard  = lazy(() => import('../features/balance/BalanceHidricoDashboard'));
+const CostosDashboard          = lazy(() => import('../features/costos/CostosDashboard'));
 
 const Spinner = () => (
   <div className="page-loading">
@@ -65,6 +67,16 @@ export default function AppRouter() {
             <Route path="/encargado/calidad" element={
               <RoleGuard allowedRoles={['encargado', 'administrador']}>
                 <CalidadDashboardPage />
+              </RoleGuard>
+            }/>
+            <Route path="/encargado/balance" element={
+              <RoleGuard allowedRoles={['encargado', 'administrador']}>
+                <BalanceHidricoDashboard />
+              </RoleGuard>
+            }/>
+            <Route path="/encargado/costos" element={
+              <RoleGuard allowedRoles={['encargado', 'administrador']}>
+                <CostosDashboard />
               </RoleGuard>
             }/>
 

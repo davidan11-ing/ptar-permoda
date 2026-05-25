@@ -339,6 +339,178 @@ export async function getCalidadMbrEficiencia(params: {
   return request<MbrEficienciaRow[]>(`/api/calidad/mbr-eficiencia?${q}`);
 }
 
+// ─── Balance Hídrico ──────────────────────────────────────────────────────────
+
+export interface BalanceHidricoRow {
+  fecha: string;
+  turno: number;
+  semana: number | null;
+  ingreso_ptap: number | null;
+  potable_ptap: number | null;
+  carrotanques_m3: number | null;
+  mulas_funza_m3: number | null;
+  contador_principal: number | null;
+  entrada_ro1: number | null;
+  permeado_ro1: number | null;
+  rechazo_ro1: number | null;
+  eficiencia_ro_pct: number | null;
+  permeado_mbr1: number | null;
+  permeado_mbr2: number | null;
+  envio_th: number | null;
+  acueducto_m3: number | null;
+  total_agua_limpia_m3: number | null;
+  consumo_gem_m3: number | null;
+  lavanderia_m3: number | null;
+  tintoreria_m3: number | null;
+  rotativa_m3: number | null;
+  indicador_lav_l_und: number | null;
+  indicador_tin_l_kg: number | null;
+  indicador_rot_l_m: number | null;
+}
+
+export async function getBalanceHidrico(params: {
+  fecha_inicio: string;
+  fecha_fin: string;
+  turno?: number;
+  limit?: number;
+}): Promise<BalanceHidricoRow[]> {
+  const q = new URLSearchParams({
+    fecha_inicio: params.fecha_inicio,
+    fecha_fin:    params.fecha_fin,
+    limit:        String(params.limit ?? 2000),
+  });
+  if (params.turno != null) q.set('turno', String(params.turno));
+  return request<BalanceHidricoRow[]>(`/api/caudales/?${q}`);
+}
+
+export interface ResumenBalanceRow {
+  medidor: string;
+  descripcion: string;
+  total_m3: number;
+  n_turnos: number;
+}
+
+export async function getResumenBalance(params: {
+  fecha_inicio: string;
+  fecha_fin: string;
+}): Promise<ResumenBalanceRow[]> {
+  const q = new URLSearchParams({
+    fecha_inicio: params.fecha_inicio,
+    fecha_fin:    params.fecha_fin,
+  });
+  return request<ResumenBalanceRow[]>(`/api/caudales/resumen?${q}`);
+}
+
+// ─── Reactivos — Consumo diario y proyección ──────────────────────────────────
+
+export interface ConsumoQuimicoDiaRow {
+  fecha: string;
+  sistema: string;
+  producto_id: number;
+  producto_codigo: string | null;
+  producto_nombre: string;
+  L_dia: number | null;
+  kg_dia: number | null;
+  ppm_promedio_dia: number | null;
+  costo_dia: number | null;
+  caudal_m3_dia: number | null;
+}
+
+export async function getConsumoQuimicoDiario(params: {
+  fecha_inicio: string;
+  fecha_fin: string;
+  sistema?: string;
+  limit?: number;
+}): Promise<ConsumoQuimicoDiaRow[]> {
+  const q = new URLSearchParams({
+    fecha_inicio: params.fecha_inicio,
+    fecha_fin:    params.fecha_fin,
+    limit:        String(params.limit ?? 2000),
+  });
+  if (params.sistema) q.set('sistema', params.sistema);
+  return request<ConsumoQuimicoDiaRow[]>(`/api/reactivos/?${q}`);
+}
+
+export interface RealVsProyectadoRow {
+  anio: number;
+  mes: number;
+  producto_id: number;
+  producto: string;
+  sistema: string;
+  kg_real: number | null;
+  costo_real: number | null;
+  kg_proyectado: number | null;
+  costo_proyectado: number | null;
+  kg_por_m3_real: number | null;
+  kg_por_m3_proyectado: number | null;
+  cumplimiento_pct: number | null;
+  cumplimiento_costo_pct: number | null;
+  desviacion_pct: number | null;
+}
+
+export async function getProyeccionQuimicos(params: {
+  anio: number;
+  mes?: number;
+  sistema?: string;
+}): Promise<RealVsProyectadoRow[]> {
+  const q = new URLSearchParams({ anio: String(params.anio) });
+  if (params.mes != null) q.set('mes', String(params.mes));
+  if (params.sistema) q.set('sistema', params.sistema);
+  return request<RealVsProyectadoRow[]>(`/api/reactivos/proyeccion?${q}`);
+}
+
+export interface EstadisticasDiaRow {
+  anio: number;
+  mes: number;
+  sistema: string;
+  producto_id: number;
+  producto_nombre: string;
+  dias: number | null;
+  kg_min: number | null;
+  kg_max: number | null;
+  kg_avg: number | null;
+  kg_total: number | null;
+  ppm_min: number | null;
+  ppm_max: number | null;
+  ppm_avg: number | null;
+  costo_total: number | null;
+}
+
+export async function getEstadisticasReactivos(params: {
+  anio: number;
+  mes?: number;
+  sistema?: string;
+}): Promise<EstadisticasDiaRow[]> {
+  const q = new URLSearchParams({ anio: String(params.anio) });
+  if (params.mes != null) q.set('mes', String(params.mes));
+  if (params.sistema) q.set('sistema', params.sistema);
+  return request<EstadisticasDiaRow[]>(`/api/reactivos/estadisticas?${q}`);
+}
+
+/** URL del informe HTML de Balance Hídrico */
+export function getReporteBalanceHtmlUrl(params: {
+  fecha_inicio: string;
+  fecha_fin: string;
+}): string {
+  const q = new URLSearchParams({
+    fecha_inicio: params.fecha_inicio,
+    fecha_fin:    params.fecha_fin,
+  });
+  return `${API}/api/reportes/balance-html?${q}`;
+}
+
+/** URL del informe HTML de Costos Químicos */
+export function getReporteCostosHtmlUrl(params: {
+  anio: number;
+  mes?: number;
+  sistema?: string;
+}): string {
+  const q = new URLSearchParams({ anio: String(params.anio) });
+  if (params.mes != null) q.set('mes', String(params.mes));
+  if (params.sistema) q.set('sistema', params.sistema);
+  return `${API}/api/reportes/costos-html?${q}`;
+}
+
 // ─── Reactivos — GEM Eficiencia ───────────────────────────────────────────────
 
 export interface GemEficienciaRow {

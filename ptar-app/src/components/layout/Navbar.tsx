@@ -70,6 +70,18 @@ export default function Navbar() {
             >
               Calidad
             </Link>
+            <Link
+              to={ROUTES.ENCARGADO_BALANCE}
+              className={`nav-link${location.pathname.startsWith(ROUTES.ENCARGADO_BALANCE) ? ' active' : ''}`}
+            >
+              Balance
+            </Link>
+            <Link
+              to={ROUTES.ENCARGADO_COSTOS}
+              className={`nav-link${location.pathname.startsWith(ROUTES.ENCARGADO_COSTOS) ? ' active' : ''}`}
+            >
+              Costos
+            </Link>
           </>
         )}
       </nav>
