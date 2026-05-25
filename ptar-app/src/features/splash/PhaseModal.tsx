@@ -68,7 +68,7 @@ function PhaseModalInner({
             preserveAspectRatio="xMidYMid meet"
             className="splash-svg phase-modal-svg"
             role="img"
-            aria-label={`Diagrama ${phase.label}`}
+            aria-label={`Vista ampliada de ${phase.label}`}
           >
             {svgBody}
           </svg>

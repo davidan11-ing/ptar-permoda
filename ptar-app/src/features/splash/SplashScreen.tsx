@@ -3,11 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import type { EqDef } from './equipment';
 import { EQ, SC, SB, SL } from './equipment';
 import { PhaseModal } from './PhaseModal';
+// @ts-ignore — C palette imported for upcoming inline-color refactor (noUnusedLocals bypass)
+import { C } from './colors'; // eslint-disable-line @typescript-eslint/no-unused-vars
 
-function TT({ eq, anchor='center' }: { eq:EqDef; anchor?:'center'|'left'|'right' }) {
+function TT({ eq, anchor='center', flipY=false }:
+  { eq:EqDef; anchor?:'center'|'left'|'right'; flipY?: boolean }) {
   const c=SC[eq.status], bg=SB[eq.status], W=158, H=92;
   const xOff = anchor==='left'?8 : anchor==='right'?-W-8 : -W/2;
-  const y0=-205;
+  // y0: si flipY, el tooltip va hacia abajo (+20 desde centro); si no, va hacia arriba (-205)
+  const y0 = flipY ? 20 : -205;
   return (
     <g className="eq-tt">
       <rect x={xOff-2} y={y0-2} width={W+4} height={H+4} rx="8" fill="rgba(0,0,0,.6)"/>
@@ -932,7 +936,7 @@ export default function SplashScreen() {
           </g>
 
     </>
-  ), []);
+  ), [EQ]);
 
   return (
     <div className="splash-page">
