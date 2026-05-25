@@ -4,6 +4,7 @@ import type { EqDef } from './equipment';
 import { EQ, SC, SB, SL } from './equipment';
 import { useEquipmentStatus } from './hooks/useEquipmentStatus';
 import { PhaseModal } from './PhaseModal';
+import { EquipmentModal } from './EquipmentModal';
 // @ts-ignore — C palette imported for upcoming inline-color refactor (noUnusedLocals bypass)
 import { C } from './colors'; // eslint-disable-line @typescript-eslint/no-unused-vars
 
@@ -165,16 +166,38 @@ export default function SplashScreen() {
     setActivePhase(key);
   };
 
+  // ── Equipment Detail Modal state ──────────────────────────────────
+  const [activeEquip, setActiveEquip]   = useState<string | null>(null);
+  const [equipClosing, setEquipClosing] = useState(false);
+  const equipTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  // Ref estable para usar en el useMemo de svgBody sin añadirlo a deps
+  const openEquipRef = useRef<(key: string) => void>(() => {});
+
+  const openEquip = (key: string) => {
+    if (equipClosing || activePhase) return;  // no abrir si hay otro modal
+    setActiveEquip(key);
+  };
+  const closeEquip = () => {
+    if (equipTimerRef.current) clearTimeout(equipTimerRef.current);
+    setEquipClosing(true);
+    equipTimerRef.current = setTimeout(() => { setActiveEquip(null); setEquipClosing(false); }, 200);
+  };
+  openEquipRef.current = openEquip;
+
   useEffect(() => {
-    if (!modalOpen) return;
+    const anyOpen = modalOpen || !!activeEquip;
+    if (!anyOpen) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape')     closeModal();
-      if (e.key === 'ArrowRight') goPhase(1);
-      if (e.key === 'ArrowLeft')  goPhase(-1);
+      if (e.key === 'Escape') {
+        if (activePhase) closeModal();
+        else if (activeEquip) closeEquip();
+      }
+      if (e.key === 'ArrowRight' && activePhase) goPhase(1);
+      if (e.key === 'ArrowLeft'  && activePhase) goPhase(-1);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [modalOpen]);
+  }, [modalOpen, activeEquip, activePhase]);
 
   // Estado dinámico de equipos (polling cada 2 min)
   const liveStatus = useEquipmentStatus();
@@ -265,7 +288,7 @@ export default function SplashScreen() {
                 stroke="#f85149" strokeWidth="1.5" opacity=".6" className="p-reject"/>
 
               {/* TK PERMEADO (bottom y=520, h=80) */}
-              <g className={`eq-h eq-g d${17+i}`} transform={`translate(${sx},520)`}>
+              <g className={`eq-h eq-g d${17+i}`} transform={`translate(${sx},520)`} onDoubleClick={()=>openEquipRef.current('tkVert')}>
                 <TT eq={eqLive.tkVert}/>
                 <SD eq={eqLive.tkVert} cx={35} cy={-80}/>
                 <rect x="-35" y="-80" width="70" height="80" rx="3"
@@ -282,7 +305,7 @@ export default function SplashScreen() {
                 stroke="#3fb950" strokeWidth="1.5" opacity=".7" className="p-bio"/>
 
               {/* FILTRO CARBÓN ACTIVADO (bottom y=630, h=87) */}
-              <g className={`eq-h eq-g d${17+i}`} transform={`translate(${sx},630)`}>
+              <g className={`eq-h eq-g d${17+i}`} transform={`translate(${sx},630)`} onDoubleClick={()=>openEquipRef.current('filtVert')}>
                 <TT eq={eqLive.filtVert}/>
                 <SD eq={eqLive.filtVert} cx={28} cy={-87}/>
                 <rect x="-28" y="-87" width="56" height="87" rx="3"
@@ -307,24 +330,24 @@ export default function SplashScreen() {
           {/* ══════════════ FASE PRELIMINAR (unchanged) ══════════════ */}
 
           {/* Input label boxes */}
-          <g className="eq-h eq-g d1"><TT eq={eqLive.rotativa} anchor="left"/>
+          <g className="eq-h eq-g d1" onDoubleClick={()=>openEquipRef.current('rotativa')}><TT eq={eqLive.rotativa} anchor="left"/>
             <rect x="14" y="95" width="66" height="17" rx="3" fill="#071520" stroke="#00c5e3" strokeWidth="1.2" className="eq-b"/>
             <text x="47" y="107" textAnchor="middle" fill="#00c5e3" fontSize="6.5" fontFamily="monospace">D. ROTATIVA</text>
           </g>
-          <g className="eq-h eq-g d2"><TT eq={eqLive.funza} anchor="left"/>
+          <g className="eq-h eq-g d2" onDoubleClick={()=>openEquipRef.current('funza')}><TT eq={eqLive.funza} anchor="left"/>
             <rect x="14" y="116" width="66" height="17" rx="3" fill="#071520" stroke="#8b5cf6" strokeWidth="1.2" className="eq-b"/>
             <SD eq={eqLive.funza} cx={80} cy={124}/>
             <text x="47" y="128" textAnchor="middle" fill="#8b5cf6" fontSize="6.5" fontFamily="monospace">D. FUNZA</text>
           </g>
-          <g className="eq-h eq-g d3"><TT eq={eqLive.tintoreria} anchor="left"/>
+          <g className="eq-h eq-g d3" onDoubleClick={()=>openEquipRef.current('tintoreria')}><TT eq={eqLive.tintoreria} anchor="left"/>
             <rect x="14" y="179" width="66" height="17" rx="3" fill="#071520" stroke="#f85149" strokeWidth="1.2" className="eq-b"/>
             <text x="47" y="191" textAnchor="middle" fill="#f85149" fontSize="6.5" fontFamily="monospace">D. TINTORERÍA</text>
           </g>
-          <g className="eq-h eq-g d4"><TT eq={eqLive.lavanderia} anchor="left"/>
+          <g className="eq-h eq-g d4" onDoubleClick={()=>openEquipRef.current('lavanderia')}><TT eq={eqLive.lavanderia} anchor="left"/>
             <rect x="14" y="200" width="66" height="17" rx="3" fill="#071520" stroke="#d29922" strokeWidth="1.2" className="eq-b"/>
             <text x="47" y="212" textAnchor="middle" fill="#d29922" fontSize="6.5" fontFamily="monospace">D. LAVANDERÍA</text>
           </g>
-          <g className="eq-h eq-g d5"><TT eq={eqLive.tk15m3} anchor="left"/>
+          <g className="eq-h eq-g d5" onDoubleClick={()=>openEquipRef.current('tk15m3')}><TT eq={eqLive.tk15m3} anchor="left"/>
             <rect x="14" y="258" width="66" height="17" rx="3" fill="#071520" stroke="#d29922" strokeWidth="1" strokeDasharray="4 2" className="eq-b"/>
             <text x="47" y="270" textAnchor="middle" fill="#d2992290" fontSize="6.5" fontFamily="monospace">LAV. REMOTA</text>
           </g>
@@ -343,19 +366,19 @@ export default function SplashScreen() {
           <PL x={83} y={263} label="E"/>
 
           {/* TK 2m³ */}
-          <g className="eq-h eq-g d6" transform="translate(120,143)">
+          <g className="eq-h eq-g d6" transform="translate(120,143)" onDoubleClick={()=>openEquipRef.current('tk2m3')}>
             <TT eq={eqLive.tk2m3}/><SD eq={eqLive.tk2m3} cx={18} cy={-38}/>
             <Tk w={44} h={38} wp={0.60}/>
             <text y="12" textAnchor="middle" fill="#00c5e3" fontSize="7" fontWeight="700" fontFamily="monospace">TK 2 m³</text>
           </g>
           {/* TK 30m³ */}
-          <g className="eq-h eq-g d7" transform="translate(120,234)">
+          <g className="eq-h eq-g d7" transform="translate(120,234)" onDoubleClick={()=>openEquipRef.current('tk30m3')}>
             <TT eq={eqLive.tk30m3}/><SD eq={eqLive.tk30m3} cx={22} cy={-50}/>
             <Tk w={48} h={50} wp={0.62}/>
             <text y="12" textAnchor="middle" fill="#00c5e3" fontSize="7" fontWeight="700" fontFamily="monospace">TK 30 m³</text>
           </g>
           {/* TK 15m³ */}
-          <g className="eq-h eq-g d8" transform="translate(120,281)">
+          <g className="eq-h eq-g d8" transform="translate(120,281)" onDoubleClick={()=>openEquipRef.current('tk15m3')}>
             <TT eq={eqLive.tk15m3}/><SD eq={eqLive.tk15m3} cx={18} cy={-35}/>
             <Tk w={44} h={35} wp={0.55}/>
             <text y="12" textAnchor="middle" fill="#00c5e3" fontSize="7" fontWeight="700" fontFamily="monospace">TK 15 m³</text>
@@ -374,7 +397,7 @@ export default function SplashScreen() {
           <circle cx="183" cy="215" r="3" fill="#00c5e3" opacity=".9"/>
           <text x="168" y="229" fill="#00c5e360" fontSize="6" fontFamily="monospace">G+H</text>
           {/* TK 60m³ */}
-          <g className="eq-h eq-g d9" transform="translate(215,257)">
+          <g className="eq-h eq-g d9" transform="translate(215,257)" onDoubleClick={()=>openEquipRef.current('tk60m3')}>
             <TT eq={eqLive.tk60m3}/><SD eq={eqLive.tk60m3} cx={28} cy={-112}/>
             <rect x="-32" y="-112" width="64" height="112" rx="3" fill={tG} stroke="#2a5a70" strokeWidth="1.5" className="eq-b"/>
             <rect x="-30" y="-78" width="60" height="76" fill={wG} opacity=".55"/>
@@ -398,7 +421,7 @@ export default function SplashScreen() {
           ══════════════════════════════════════════ */}
 
           {/* ── Criba Rotativa (340, 215) ── */}
-          <g className="eq-h eq-g d10" transform="translate(340,215)">
+          <g className="eq-h eq-g d10" transform="translate(340,215)" onDoubleClick={()=>openEquipRef.current('cribRot')}>
             <TT eq={eqLive.cribRot}/><SD eq={eqLive.cribRot} cx={28} cy={-82}/>
             {/* housing trough */}
             <path d="M-42,0 L-42,-22 Q-42,-30 -36,-30 L36,-30 Q42,-30 42,-22 L42,0Z"
@@ -430,12 +453,12 @@ export default function SplashScreen() {
           <PL x={370} y={300} label="K2" color="#8a6a2a"/>
 
           {/* ── Criba Vibratoria 1 / M1 — circular (center 455, 191) ── */}
-          <g className="eq-h eq-g d11" transform="translate(455,191)">
+          <g className="eq-h eq-g d11" transform="translate(455,191)" onDoubleClick={()=>openEquipRef.current('vibrat1')}>
             <VibratoriaStage eq={eqLive.vibrat1} motorLabel="M1" svgLabel="VIBRAT. 1" showFinosLabel={true}/>
           </g>
 
           {/* ── Criba Vibratoria 2 / M2 — circular (center 455, 283) ── */}
-          <g className="eq-h eq-g d12" transform="translate(455,283)">
+          <g className="eq-h eq-g d12" transform="translate(455,283)" onDoubleClick={()=>openEquipRef.current('vibrat2')}>
             <VibratoriaStage eq={eqLive.vibrat2} motorLabel="M2" svgLabel="VIBRAT. 2"/>
           </g>
 
@@ -453,7 +476,7 @@ export default function SplashScreen() {
           <text x="520" y="210" fill="#8a6a2a" fontSize="6" fontFamily="monospace">N1+N2</text>
 
           {/* ── TK PULMÓN (bottom at y=272, center x=570) ── */}
-          <g className="eq-h eq-g d13" transform="translate(570,272)">
+          <g className="eq-h eq-g d13" transform="translate(570,272)" onDoubleClick={()=>openEquipRef.current('tkPulmon')}>
             <TT eq={eqLive.tkPulmon}/><SD eq={eqLive.tkPulmon} cx={26} cy={-108}/>
             <Tk w={52} h={108} wp={0.65}/>
             <Dh w={52} h={108} pct={0.65}/>
@@ -468,7 +491,7 @@ export default function SplashScreen() {
           <PL x={622} y={243} label="R" color="#2a6a7a"/>
 
           {/* ── TORRE DE ENFRIAMIENTO (bottom y=202, center x=685) ── */}
-          <g className="eq-h eq-g d14" transform="translate(685,202)">
+          <g className="eq-h eq-g d14" transform="translate(685,202)" onDoubleClick={()=>openEquipRef.current('torre')}>
             <TT eq={eqLive.torre}/><SD eq={eqLive.torre} cx={24} cy={-95}/>
             <rect x="-26" y="-98" width="52" height="98" rx="3" fill={tG} stroke="#8b5cf660" strokeWidth="1.5" className="eq-b"/>
             {[-85,-70,-55,-40,-25].map(y=>(
@@ -486,7 +509,7 @@ export default function SplashScreen() {
           </g>
 
           {/* ── CÁRCAMO (bottom y=285, center x=685) ── */}
-          <g className="eq-h eq-g d15" transform="translate(685,285)">
+          <g className="eq-h eq-g d15" transform="translate(685,285)" onDoubleClick={()=>openEquipRef.current('carcamo')}>
             <TT eq={eqLive.carcamo}/><SD eq={eqLive.carcamo} cx={22} cy={-62}/>
             <Tk w={46} h={65} wp={0.60}/>
             <text y="13" textAnchor="middle" fill="#d29922" fontSize="7" fontWeight="700" fontFamily="monospace">CÁRCAMO</text>
@@ -513,7 +536,7 @@ export default function SplashScreen() {
           <circle cx="810" cy="99" r="5" fill="#3fb950" opacity=".85"/>
           <text x="810" y="91" textAnchor="middle" fill="#3fb950" fontSize="5.5" fontFamily="monospace">LIXIV. V</text>
 
-          <g className="eq-h eq-g d16" transform="translate(800,272)">
+          <g className="eq-h eq-g d16" transform="translate(800,272)" onDoubleClick={()=>openEquipRef.current('homogen')}>
             <TT eq={eqLive.homogen}/><SD eq={eqLive.homogen} cx={32} cy={-115}/>
             <rect x="-34" y="-118" width="68" height="118" rx="4" fill={tG} stroke="#d2992260" strokeWidth="1.8" className="eq-b"/>
             <rect x="-32" y="-78" width="64" height="76" fill={wG} opacity=".52"/>
@@ -548,7 +571,7 @@ export default function SplashScreen() {
               <text x={d.x} y="94" textAnchor="middle" fill={d.color} fontSize="5" fontFamily="monospace">{d.label}</text>
             </g>
           ))}
-          <g className="eq-h eq-g d17" transform="translate(915,267)">
+          <g className="eq-h eq-g d17" transform="translate(915,267)" onDoubleClick={()=>openEquipRef.current('eqGem')}>
             <TT eq={eqLive.eqGem}/><SD eq={eqLive.eqGem} cx={30} cy={-108}/>
             <rect x="-32" y="-110" width="64" height="110" rx="4" fill={tG} stroke="#d2992260" strokeWidth="1.8" className="eq-b"/>
             <rect x="-30" y="-70" width="60" height="68" fill={wG} opacity=".5"/>
@@ -570,7 +593,7 @@ export default function SplashScreen() {
           <PL x={967} y={210} label="U" color="#7a5820"/>
 
           {/* ── SWINGMILL / ESPESADOR (cx=1025) ── */}
-          <g className="eq-h eq-g d18" transform="translate(1025,237)">
+          <g className="eq-h eq-g d18" transform="translate(1025,237)" onDoubleClick={()=>openEquipRef.current('swingmill')}>
             <TT eq={eqLive.swingmill}/><SD eq={eqLive.swingmill} cx={28} cy={-55}/>
             <circle cx="0" cy="-22" r="28" fill={sG} stroke="#5a4018" strokeWidth="1.5" className="eq-bc"/>
             <g className="mixer">
@@ -603,7 +626,7 @@ export default function SplashScreen() {
           ══════════════════════════════════════════════════════════════ */}
 
           {/* ── ANÓXICO (cx=1741, bottom=277) ── */}
-          <g className="eq-h eq-g d19" transform="translate(1741,277)">
+          <g className="eq-h eq-g d19" transform="translate(1741,277)" onDoubleClick={()=>openEquipRef.current('anoxic')}>
             <TT eq={eqLive.anoxic} anchor="right"/><SD eq={eqLive.anoxic} cx={38} cy={-108}/>
             <rect x="-38" y="-108" width="76" height="108" rx="3" fill={tG} stroke="#3fb95060" strokeWidth="1.5" className="eq-b"/>
             <rect x="-36" y="-75" width="72" height="73" fill="#0a2510" opacity=".65"/>
@@ -618,7 +641,7 @@ export default function SplashScreen() {
           <PL x={1642} y={210} label="Y" color="#2a6a3a"/>
 
           {/* ── MBBR (cx=1535, bottom=287) ── */}
-          <g className="eq-h eq-g d19" transform="translate(1535,287)">
+          <g className="eq-h eq-g d19" transform="translate(1535,287)" onDoubleClick={()=>openEquipRef.current('mbbr')}>
             <TT eq={eqLive.mbbr}/><SD eq={eqLive.mbbr} cx={46} cy={-118}/>
             <rect x="-46" y="-118" width="92" height="118" rx="3" fill={tG} stroke="#3fb95060" strokeWidth="1.5" className="eq-b"/>
             <rect x="-44" y="-88" width="88" height="86" fill={wG} opacity=".48"/>
@@ -666,12 +689,12 @@ export default function SplashScreen() {
           <PL x={1390} y={293} label="Z2" color="#2a6a3a"/>
 
           {/* ── MBR T (cx=1329, bottom=195) ── */}
-          <g className="eq-h eq-g d20" transform="translate(1329,195)">
+          <g className="eq-h eq-g d20" transform="translate(1329,195)" onDoubleClick={()=>openEquipRef.current('mbrT')}>
             <MBRTank eq={eqLive.mbrT} svgLabel="MBR T" borderColor="#3fb95060" labelColor="#3fb950" innerStroke="#2a5575"/>
           </g>
 
           {/* ── MBR K (cx=1329, bottom=317) ── */}
-          <g className="eq-h eq-g d20" transform="translate(1329,317)">
+          <g className="eq-h eq-g d20" transform="translate(1329,317)" onDoubleClick={()=>openEquipRef.current('mbrK')}>
             <MBRTank eq={eqLive.mbrK} svgLabel="MBR K" borderColor="#d2992260" labelColor="#d29922" innerStroke="#3a5040" waterOpacity=".42" animDelay=".4s"/>
           </g>
 
@@ -692,7 +715,7 @@ export default function SplashScreen() {
           <text x="1206" y="310" fill="#f8514950" fontSize="5.5" fontFamily="monospace">→ VERT.</text>
 
           {/* ── TK PERMEADO (cx=1123, bottom=257) — izquierda SECUNDARIA ── */}
-          <g className="eq-h eq-g d19" transform="translate(1123,257)">
+          <g className="eq-h eq-g d19" transform="translate(1123,257)" onDoubleClick={()=>openEquipRef.current('tkPermeado')}>
             <TT eq={eqLive.tkPermeado}/><SD eq={eqLive.tkPermeado} cx={30} cy={-110}/>
             <rect x="-30" y="-110" width="60" height="110" rx="3" fill={tG} stroke="#3fb95060" strokeWidth="1.5" className="eq-b"/>
             <rect x="-28" y="-72" width="56" height="70" fill={wG} opacity=".52"/>
@@ -755,7 +778,7 @@ export default function SplashScreen() {
 
           {/* ── FILTRO INTERCAMBIO IÓNICO HORIZONTAL 90° (x=1093, bottom=mYA) — recibe AE ── */}
           {/* w=100 h=54 → top=426 (53px bajo título y=373 ✓, era top=390 que cubría título) */}
-          <g className="eq-h eq-g d17" transform={`translate(1093,${mYA})`}>
+          <g className="eq-h eq-g d17" transform={`translate(1093,${mYA})`} onDoubleClick={()=>openEquipRef.current('filtrosII')}>
             <TT eq={eqLive.filtrosII}/><SD eq={eqLive.filtrosII} cx={50} cy={-52}/>
             <rect x="-50" y="-54" width="100" height="54" rx="3" fill="#120a18" stroke="#c084fc60" strokeWidth="1.5" className="eq-b"/>
             {/* 3 columnas de lecho de resina — dentro de ±42 para no desbordar el outer rect ±50 */}
@@ -783,7 +806,7 @@ export default function SplashScreen() {
           <circle cx="920" cy={mYA} r="3" fill="#3fb950" opacity=".8"/>
           <text x="937" y={mYA-2} fill="#1f6feb50" fontSize="4.8" fontFamily="monospace">∥ PARALELO</text>
           {/* FILTRO A — arriba del pipe (bottom=453, top=375) */}
-          <g className="eq-h eq-g d18" transform="translate(920,453)">
+          <g className="eq-h eq-g d18" transform="translate(920,453)" onDoubleClick={()=>openEquipRef.current('filtro5')}>
             <TT eq={eqLive.filtro5}/><SD eq={eqLive.filtro5} cx={22} cy={-76}/>
             <rect x="-22" y="-78" width="44" height="78" rx="3" fill={tG} stroke="#1f6feb60" strokeWidth="1.5" className="eq-b"/>
             <rect x="-20" y="-74" width="40" height="22" fill={wG} opacity=".3"/>
@@ -793,7 +816,7 @@ export default function SplashScreen() {
           {/* FILTRO B — debajo del pipe (vibratoria real), top=485 bottom=563 */}
           {/* CAJA VERT movida a x=1060 → deja x=942-1032 libre para FILTRO B sin solapamiento */}
           <line x1="920" y1={mYA} x2="920" y2="485" stroke="#3fb950" strokeWidth="1.5" opacity=".7" className="p-clean"/>
-          <g className="eq-h eq-g d18" transform="translate(920,563)">
+          <g className="eq-h eq-g d18" transform="translate(920,563)" onDoubleClick={()=>openEquipRef.current('filtro5')}>
             <TT eq={eqLive.filtro5}/><SD eq={eqLive.filtro5} cx={22} cy={-76}/>
             <rect x="-22" y="-78" width="44" height="78" rx="3" fill={tG} stroke="#1f6feb60" strokeWidth="1.5" className="eq-b"/>
             <rect x="-20" y="-74" width="40" height="22" fill={wG} opacity=".3"/>
@@ -803,18 +826,18 @@ export default function SplashScreen() {
 
           {/* ── RO1 ETAPA 1 — tubos de presión (x=740, w=90, h=88, bottom=mYA) ── */}
           {/* top=392 — 19px bajo título y=373 ✓ (era x=755 h=110, top=370 cubría título) */}
-          <g className="eq-h eq-g d19" transform={`translate(740,${mYA})`}>
+          <g className="eq-h eq-g d19" transform={`translate(740,${mYA})`} onDoubleClick={()=>openEquipRef.current('ro1e1')}>
             <ROStage eq={eqLive.ro1e1} svgLabel="RO1 E1" animDelayMultiplier={0.18}/>
           </g>
 
           {/* ── RO1 ETAPA 2 — tubos de presión (x=575, w=90, h=88, bottom=mYA) ── */}
           {/* top=392 — 19px bajo título y=373 ✓ (era x=590 h=110, top=370 cubría título) */}
-          <g className="eq-h eq-g d19" transform={`translate(575,${mYA})`}>
+          <g className="eq-h eq-g d19" transform={`translate(575,${mYA})`} onDoubleClick={()=>openEquipRef.current('ro1e2')}>
             <ROStage eq={eqLive.ro1e2} svgLabel="RO1 E2" animDelayMultiplier={0.22}/>
           </g>
 
           {/* ── TK RECHAZO RO1 (x=530, bottom=mYB) — recibe AJ en center ── */}
-          <g className="eq-h eq-g d22" transform={`translate(530,${mYB})`}>
+          <g className="eq-h eq-g d22" transform={`translate(530,${mYB})`} onDoubleClick={()=>openEquipRef.current('tkRechazo')}>
             <TT eq={eqLive.tkRechazo}/><SD eq={eqLive.tkRechazo} cx={28} cy={-66}/>
             <rect x="-28" y="-68" width="56" height="68" rx="3" fill={tG} stroke="#f8514960" strokeWidth="1.5" className="eq-b"/>
             <rect x="-26" y="-52" width="52" height="50" fill={sG} opacity=".55"/>
@@ -830,7 +853,7 @@ export default function SplashScreen() {
           </g>
 
           {/* ── RO2 — tubos de presión (x=745, w=90, bottom=mYB) ── */}
-          <g className="eq-h eq-g d20" transform={`translate(745,${mYB})`}>
+          <g className="eq-h eq-g d20" transform={`translate(745,${mYB})`} onDoubleClick={()=>openEquipRef.current('ro2')}>
             <TT eq={eqLive.ro2}/><SD eq={eqLive.ro2} cx={46} cy={-108}/>
             <rect x="-45" y="-110" width="90" height="110" rx="4" fill="#140808" stroke="#f8514960" strokeWidth="2" className="eq-b"/>
             {[-94,-73,-52,-31,-10].map((ty,i)=>(
@@ -845,7 +868,7 @@ export default function SplashScreen() {
           </g>
 
           {/* ── TK RECHAZO RO2 (x=850, bottom=mYB) — claro de FILTRO B en x=898-942 ── */}
-          <g className="eq-h eq-g d22" transform={`translate(850,${mYB})`}>
+          <g className="eq-h eq-g d22" transform={`translate(850,${mYB})`} onDoubleClick={()=>openEquipRef.current('tkRechazoRO2')}>
             <TT eq={eqLive.tkRechazoRO2}/><SD eq={eqLive.tkRechazoRO2} cx={26} cy={-66}/>
             <rect x="-26" y="-68" width="52" height="68" rx="3" fill={tG} stroke="#f8514960" strokeWidth="1.5" className="eq-b"/>
             <rect x="-24" y="-52" width="48" height="50" fill={sG} opacity=".55"/>
@@ -854,7 +877,7 @@ export default function SplashScreen() {
           </g>
 
           {/* ── CAJA VERTIMIENTO (x=1060, bottom=mYB) — desplazada derecha, claro para FILTRO B ── */}
-          <g className="eq-h eq-g d22" transform={`translate(1060,${mYB})`}>
+          <g className="eq-h eq-g d22" transform={`translate(1060,${mYB})`} onDoubleClick={()=>openEquipRef.current('cajaVert')}>
             <TT eq={eqLive.cajaVert}/><SD eq={eqLive.cajaVert} cx={28} cy={-66}/>
             <rect x="-28" y="-68" width="56" height="68" rx="4" fill="#1e0808" stroke="#f8514980" strokeWidth="1.5" className="eq-b"/>
             <rect x="-26" y="-52" width="52" height="50" fill="#2e1010" opacity=".7"/>
@@ -863,7 +886,7 @@ export default function SplashScreen() {
           </g>
 
           {/* ── TK RECIRCULACIÓN — x=200 (movido a la izquierda) ── */}
-          <g className="eq-h eq-g d21" transform={`translate(200,${mYB})`}>
+          <g className="eq-h eq-g d21" transform={`translate(200,${mYB})`} onDoubleClick={()=>openEquipRef.current('tkRecir')}>
             <TT eq={eqLive.tkRecir}/><SD eq={eqLive.tkRecir} cx={40} cy={-93}/>
             <rect x="-40" y="-95" width="80" height="95" rx="3" fill={tG} stroke="#3fb95060" strokeWidth="1.5" className="eq-b"/>
             <rect x="-38" y="-72" width="76" height="70" fill={wG} opacity=".48"/>
@@ -874,7 +897,7 @@ export default function SplashScreen() {
           </g>
 
           {/* ── PRODUCCIÓN / REÚSO — superior izquierda zona TERCIARIA (x=65, top=362) ── */}
-          <g className="eq-h eq-g d22" transform="translate(65,450)">
+          <g className="eq-h eq-g d22" transform="translate(65,450)" onDoubleClick={()=>openEquipRef.current('produccion')}>
             <TT eq={eqLive.produccion}/>
             <rect x="-50" y="-88" width="100" height="88" rx="5" fill="#071a10" stroke="#3fb95060" strokeWidth="2" className="eq-b"/>
             <text x="0" y="-60" textAnchor="middle" fill="#3fb950" fontSize="10" fontWeight="800" fontFamily="monospace">REÚSO</text>
@@ -984,6 +1007,17 @@ export default function SplashScreen() {
           closing={closing}
           onClose={closeModal}
           onNavigate={goPhase}
+          svgBody={svgBody}
+        />
+      )}
+
+      {/* Equipment Detail Modal */}
+      {activeEquip && EQ[activeEquip] && (
+        <EquipmentModal
+          equipKey={activeEquip}
+          eq={{ ...EQ[activeEquip], status: eqLive[activeEquip]?.status ?? EQ[activeEquip].status }}
+          closing={equipClosing}
+          onClose={closeEquip}
           svgBody={svgBody}
         />
       )}
