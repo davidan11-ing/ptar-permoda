@@ -83,6 +83,60 @@ const Dh = ({ w, h, pct = 0.63 }: { w: number; h: number; pct?: number }) => {
   </>;
 };
 
+function VibratoriaStage({ eq, motorLabel, svgLabel, showFinosLabel = false }:
+  { eq: EqDef; motorLabel: string; svgLabel: string; showFinosLabel?: boolean }) {
+  return <>
+    <TT eq={eq}/><SD eq={eq} cx={24} cy={-88}/>
+    <circle cx="0" cy="-42" r="38" fill={tG} stroke="#2a5a70" strokeWidth="1.5" className="eq-b"/>
+    <circle cx="0" cy="-88" r="5.5" fill="#1a3040" stroke="#2a5a70" strokeWidth="1"/>
+    <text x="0" y="-85" textAnchor="middle" fill="#4a8aaa" fontSize="5" fontWeight="700">{motorLabel}</text>
+    <line x1="0" y1="-83" x2="0" y2="-76" stroke="#2a5a70" strokeWidth="1.2"/>
+    <g className="vibrato">
+      <circle cx="0" cy="-62" r="17" fill="#0f2535" stroke="#00c5e350" strokeWidth="1"/>
+      {[-10,-3,4,11].map(bx=><line key={bx} x1={bx} y1="-74" x2={bx} y2="-50" stroke="#00c5e325" strokeWidth="1.2"/>)}
+      {[-72,-66,-60,-54].map(by=><line key={by} x1="-15" y1={by} x2="15" y2={by} stroke="#00c5e318" strokeWidth="1"/>)}
+    </g>
+    <path d="M-32,-22 Q0,-17 32,-22 L32,4 L-32,4 Z" fill={wG} opacity=".4"/>
+    <path d="M38,-48 L48,-41 L48,-30 L38,-30" fill="#0d2030" stroke="#2a5a70" strokeWidth="1"/>
+    <text y="12" textAnchor="middle" fill="#d29922" fontSize="7" fontWeight="700" fontFamily="monospace">{svgLabel}</text>
+    {showFinosLabel && <text x="-34" y="-88" fill="#5a4018" fontSize="5.5" fontFamily="monospace">← RES. FINOS</text>}
+  </>;
+}
+
+function MBRTank({ eq, svgLabel, borderColor, labelColor, innerStroke, waterOpacity = '.45', animDelay }:
+  { eq: EqDef; svgLabel: string; borderColor: string; labelColor: string; innerStroke: string; waterOpacity?: string; animDelay?: string }) {
+  return <>
+    <TT eq={eq}/><SD eq={eq} cx={32} cy={-82}/>
+    <rect x="-32" y="-82" width="64" height="82" rx="3" fill={tG} stroke={borderColor} strokeWidth="1.5" className="eq-b"/>
+    <rect x="-30" y="-55" width="60" height="53" fill={wG} opacity={waterOpacity}/>
+    {[-24,-8,8,24].map(bx=>(
+      <g key={bx} className="mem" style={animDelay ? {animationDelay: animDelay} : undefined}>
+        <rect x={bx-6} y="-52" width="12" height="48" rx="2" fill="#1a3550" stroke={innerStroke} strokeWidth="1"/>
+      </g>
+    ))}
+    <text y="13" textAnchor="middle" fill={labelColor} fontSize="7" fontWeight="700" fontFamily="monospace">{svgLabel}</text>
+  </>;
+}
+
+function ROStage({ eq, svgLabel, animDelayMultiplier }:
+  { eq: EqDef; svgLabel: string; animDelayMultiplier: number }) {
+  return <>
+    <TT eq={eq}/><SD eq={eq} cx={46} cy={-86}/>
+    <rect x="-45" y="-88" width="90" height="88" rx="4" fill="#081420" stroke="#1f6feb60" strokeWidth="1.5" className="eq-b"/>
+    {[-72,-51,-30,-9].map((ty,i)=>(
+      <g key={ty} className="mem" style={{animationDelay:`${i*animDelayMultiplier}s`}}>
+        <rect x="-40" y={ty} width="80" height="17" rx="8" fill="#0c1d30" stroke="#1b4a72" strokeWidth="1"/>
+        <ellipse cx="-33" cy={ty+8.5} rx="5" ry="7.5" fill="#091525" stroke="#1b4a72" strokeWidth="0.8"/>
+        <ellipse cx="33"  cy={ty+8.5} rx="5" ry="7.5" fill="#091525" stroke="#1b4a72" strokeWidth="0.8"/>
+        <line x1="-28" y1={ty+8.5} x2="28" y2={ty+8.5} stroke="#3b82f6" strokeWidth="0.5" opacity=".4"/>
+        <line x1="-28" y1={ty+5}   x2="28" y2={ty+5}   stroke="#3b82f6" strokeWidth="0.3" opacity=".2"/>
+        <line x1="-28" y1={ty+12}  x2="28" y2={ty+12}  stroke="#3b82f6" strokeWidth="0.3" opacity=".2"/>
+      </g>
+    ))}
+    <text y="12" textAnchor="middle" fill="#1f6feb" fontSize="7" fontWeight="700" fontFamily="monospace">{svgLabel}</text>
+  </>;
+}
+
 export default function SplashScreen() {
   const navigate = useNavigate();
   const [activePhase, setActivePhase] = useState<PhaseKey | null>(null);
@@ -363,37 +417,12 @@ export default function SplashScreen() {
 
           {/* ── Criba Vibratoria 1 / M1 — circular (center 455, 191) ── */}
           <g className="eq-h eq-g d11" transform="translate(455,191)">
-            <TT eq={EQ.vibrat1}/><SD eq={EQ.vibrat1} cx={24} cy={-88}/>
-            <circle cx="0" cy="-42" r="38" fill={tG} stroke="#2a5a70" strokeWidth="1.5" className="eq-b"/>
-            <circle cx="0" cy="-88" r="5.5" fill="#1a3040" stroke="#2a5a70" strokeWidth="1"/>
-            <text x="0" y="-85" textAnchor="middle" fill="#4a8aaa" fontSize="5" fontWeight="700">M1</text>
-            <line x1="0" y1="-83" x2="0" y2="-76" stroke="#2a5a70" strokeWidth="1.2"/>
-            <g className="vibrato">
-              <circle cx="0" cy="-62" r="17" fill="#0f2535" stroke="#00c5e350" strokeWidth="1"/>
-              {[-10,-3,4,11].map(bx=><line key={bx} x1={bx} y1="-74" x2={bx} y2="-50" stroke="#00c5e325" strokeWidth="1.2"/>)}
-              {[-72,-66,-60,-54].map(by=><line key={by} x1="-15" y1={by} x2="15" y2={by} stroke="#00c5e318" strokeWidth="1"/>)}
-            </g>
-            <path d="M-32,-22 Q0,-17 32,-22 L32,4 L-32,4 Z" fill={wG} opacity=".4"/>
-            <path d="M38,-48 L48,-41 L48,-30 L38,-30" fill="#0d2030" stroke="#2a5a70" strokeWidth="1"/>
-            <text y="12" textAnchor="middle" fill="#d29922" fontSize="7" fontWeight="700" fontFamily="monospace">VIBRAT. 1</text>
-            <text x="-34" y="-88" fill="#5a4018" fontSize="5.5" fontFamily="monospace">← RES. FINOS</text>
+            <VibratoriaStage eq={EQ.vibrat1} motorLabel="M1" svgLabel="VIBRAT. 1" showFinosLabel={true}/>
           </g>
 
           {/* ── Criba Vibratoria 2 / M2 — circular (center 455, 283) ── */}
           <g className="eq-h eq-g d12" transform="translate(455,283)">
-            <TT eq={EQ.vibrat2}/><SD eq={EQ.vibrat2} cx={24} cy={-88}/>
-            <circle cx="0" cy="-42" r="38" fill={tG} stroke="#2a5a70" strokeWidth="1.5" className="eq-b"/>
-            <circle cx="0" cy="-88" r="5.5" fill="#1a3040" stroke="#2a5a70" strokeWidth="1"/>
-            <text x="0" y="-85" textAnchor="middle" fill="#4a8aaa" fontSize="5" fontWeight="700">M2</text>
-            <line x1="0" y1="-83" x2="0" y2="-76" stroke="#2a5a70" strokeWidth="1.2"/>
-            <g className="vibrato">
-              <circle cx="0" cy="-62" r="17" fill="#0f2535" stroke="#00c5e350" strokeWidth="1"/>
-              {[-10,-3,4,11].map(bx=><line key={bx} x1={bx} y1="-74" x2={bx} y2="-50" stroke="#00c5e325" strokeWidth="1.2"/>)}
-              {[-72,-66,-60,-54].map(by=><line key={by} x1="-15" y1={by} x2="15" y2={by} stroke="#00c5e318" strokeWidth="1"/>)}
-            </g>
-            <path d="M-32,-22 Q0,-17 32,-22 L32,4 L-32,4 Z" fill={wG} opacity=".4"/>
-            <path d="M38,-48 L48,-41 L48,-30 L38,-30" fill="#0d2030" stroke="#2a5a70" strokeWidth="1"/>
-            <text y="12" textAnchor="middle" fill="#d29922" fontSize="7" fontWeight="700" fontFamily="monospace">VIBRAT. 2</text>
+            <VibratoriaStage eq={EQ.vibrat2} motorLabel="M2" svgLabel="VIBRAT. 2"/>
           </g>
 
           {/* N1: Vibrat1 right → vertical down → mainY → TK Pulmón */}
@@ -624,28 +653,12 @@ export default function SplashScreen() {
 
           {/* ── MBR T (cx=1329, bottom=195) ── */}
           <g className="eq-h eq-g d20" transform="translate(1329,195)">
-            <TT eq={EQ.mbrT}/><SD eq={EQ.mbrT} cx={32} cy={-82}/>
-            <rect x="-32" y="-82" width="64" height="82" rx="3" fill={tG} stroke="#3fb95060" strokeWidth="1.5" className="eq-b"/>
-            <rect x="-30" y="-55" width="60" height="53" fill={wG} opacity=".45"/>
-            {[-24,-8,8,24].map(bx=>(
-              <g key={bx} className="mem">
-                <rect x={bx-6} y="-52" width="12" height="48" rx="2" fill="#1a3550" stroke="#2a5575" strokeWidth="1"/>
-              </g>
-            ))}
-            <text y="13" textAnchor="middle" fill="#3fb950" fontSize="7" fontWeight="700" fontFamily="monospace">MBR T</text>
+            <MBRTank eq={EQ.mbrT} svgLabel="MBR T" borderColor="#3fb95060" labelColor="#3fb950" innerStroke="#2a5575"/>
           </g>
 
           {/* ── MBR K (cx=1329, bottom=317) ── */}
           <g className="eq-h eq-g d20" transform="translate(1329,317)">
-            <TT eq={EQ.mbrK}/><SD eq={EQ.mbrK} cx={32} cy={-82}/>
-            <rect x="-32" y="-82" width="64" height="82" rx="3" fill={tG} stroke="#d2992260" strokeWidth="1.5" className="eq-b"/>
-            <rect x="-30" y="-55" width="60" height="53" fill={wG} opacity=".42"/>
-            {[-24,-8,8,24].map(bx=>(
-              <g key={bx} className="mem" style={{animationDelay:'.4s'}}>
-                <rect x={bx-6} y="-52" width="12" height="48" rx="2" fill="#1a3550" stroke="#3a5040" strokeWidth="1"/>
-              </g>
-            ))}
-            <text y="13" textAnchor="middle" fill="#d29922" fontSize="7" fontWeight="700" fontFamily="monospace">MBR K</text>
+            <MBRTank eq={EQ.mbrK} svgLabel="MBR K" borderColor="#d2992260" labelColor="#d29922" innerStroke="#3a5040" waterOpacity=".42" animDelay=".4s"/>
           </g>
 
           {/* MBR T/K left(1297) → merge junction(1195) */}
@@ -777,37 +790,13 @@ export default function SplashScreen() {
           {/* ── RO1 ETAPA 1 — tubos de presión (x=740, w=90, h=88, bottom=mYA) ── */}
           {/* top=392 — 19px bajo título y=373 ✓ (era x=755 h=110, top=370 cubría título) */}
           <g className="eq-h eq-g d19" transform={`translate(740,${mYA})`}>
-            <TT eq={EQ.ro1e1}/><SD eq={EQ.ro1e1} cx={46} cy={-86}/>
-            <rect x="-45" y="-88" width="90" height="88" rx="4" fill="#081420" stroke="#1f6feb60" strokeWidth="1.5" className="eq-b"/>
-            {[-72,-51,-30,-9].map((ty,i)=>(
-              <g key={ty} className="mem" style={{animationDelay:`${i*0.18}s`}}>
-                <rect x="-40" y={ty} width="80" height="17" rx="8" fill="#0c1d30" stroke="#1b4a72" strokeWidth="1"/>
-                <ellipse cx="-33" cy={ty+8.5} rx="5" ry="7.5" fill="#091525" stroke="#1b4a72" strokeWidth="0.8"/>
-                <ellipse cx="33"  cy={ty+8.5} rx="5" ry="7.5" fill="#091525" stroke="#1b4a72" strokeWidth="0.8"/>
-                <line x1="-28" y1={ty+8.5} x2="28" y2={ty+8.5} stroke="#3b82f6" strokeWidth="0.5" opacity=".4"/>
-                <line x1="-28" y1={ty+5}   x2="28" y2={ty+5}   stroke="#3b82f6" strokeWidth="0.3" opacity=".2"/>
-                <line x1="-28" y1={ty+12}  x2="28" y2={ty+12}  stroke="#3b82f6" strokeWidth="0.3" opacity=".2"/>
-              </g>
-            ))}
-            <text y="12" textAnchor="middle" fill="#1f6feb" fontSize="7" fontWeight="700" fontFamily="monospace">RO1 E1</text>
+            <ROStage eq={EQ.ro1e1} svgLabel="RO1 E1" animDelayMultiplier={0.18}/>
           </g>
 
           {/* ── RO1 ETAPA 2 — tubos de presión (x=575, w=90, h=88, bottom=mYA) ── */}
           {/* top=392 — 19px bajo título y=373 ✓ (era x=590 h=110, top=370 cubría título) */}
           <g className="eq-h eq-g d19" transform={`translate(575,${mYA})`}>
-            <TT eq={EQ.ro1e2}/><SD eq={EQ.ro1e2} cx={46} cy={-86}/>
-            <rect x="-45" y="-88" width="90" height="88" rx="4" fill="#081420" stroke="#1f6feb60" strokeWidth="1.5" className="eq-b"/>
-            {[-72,-51,-30,-9].map((ty,i)=>(
-              <g key={ty} className="mem" style={{animationDelay:`${i*0.22}s`}}>
-                <rect x="-40" y={ty} width="80" height="17" rx="8" fill="#0c1d30" stroke="#1b4a72" strokeWidth="1"/>
-                <ellipse cx="-33" cy={ty+8.5} rx="5" ry="7.5" fill="#091525" stroke="#1b4a72" strokeWidth="0.8"/>
-                <ellipse cx="33"  cy={ty+8.5} rx="5" ry="7.5" fill="#091525" stroke="#1b4a72" strokeWidth="0.8"/>
-                <line x1="-28" y1={ty+8.5} x2="28" y2={ty+8.5} stroke="#3b82f6" strokeWidth="0.5" opacity=".4"/>
-                <line x1="-28" y1={ty+5}   x2="28" y2={ty+5}   stroke="#3b82f6" strokeWidth="0.3" opacity=".2"/>
-                <line x1="-28" y1={ty+12}  x2="28" y2={ty+12}  stroke="#3b82f6" strokeWidth="0.3" opacity=".2"/>
-              </g>
-            ))}
-            <text y="12" textAnchor="middle" fill="#1f6feb" fontSize="7" fontWeight="700" fontFamily="monospace">RO1 E2</text>
+            <ROStage eq={EQ.ro1e2} svgLabel="RO1 E2" animDelayMultiplier={0.22}/>
           </g>
 
           {/* ── TK RECHAZO RO1 (x=530, bottom=mYB) — recibe AJ en center ── */}
