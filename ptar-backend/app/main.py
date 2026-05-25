@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from app.config import settings
-from app.routes import auth, caudales, reactivos, calidad, dashboard, reportes
+from app.routes import auth, caudales, reactivos, calidad, dashboard, reportes, equipos
 
 # Raíz del proyecto (App_PTAR_SQL/ptar-backend/) — funciona desde cualquier CWD
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -31,6 +31,7 @@ app.include_router(reactivos.router, prefix="/api/reactivos", tags=["reactivos"]
 app.include_router(calidad.router,   prefix="/api/calidad",   tags=["calidad"])
 app.include_router(dashboard.router, prefix="/api/dashboard", tags=["dashboard"])
 app.include_router(reportes.router,  prefix="/api/reportes",  tags=["reportes"])
+app.include_router(equipos.router,   prefix="/api/equipos",   tags=["equipos"])
 
 @app.get("/api/health")
 async def health():
