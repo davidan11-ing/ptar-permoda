@@ -1,52 +1,10 @@
-# App PTAR — PERMODA
+# PETAR PERMODA — App PTAR
 
 ## Proyecto
-- **Nombre:** ptar-permoda
-- **Stack:** React 19 + Vite 6 + TypeScript (frontend) · FastAPI + MySQL (backend)
-- **Directorio raíz:** `App_PTAR_SQL/`
-- **Frontend dev server:** `npm run dev` → http://localhost:5174
-- **Backend dev server:** `uvicorn app.main:app --reload --port 8001` → http://localhost:8001
-
-## Repositorio GitHub
-- **URL:** https://github.com/davidan11-ing/ptar-permoda
-- **Rama principal:** `master`
-- **Repo local:** `C:\Users\davidan\OneDrive - PERMODA LTDA\Documents\Claude\App_PTAR_SQL\`
-
-## ── GIT — REGLA IMPORTANTE ──────────────────────────────────────────────────
-**Después de cada sesión de cambios significativos, generar automáticamente un commit y push.**
-
-### Cuándo hacer commit+push
-- Al terminar una funcionalidad nueva o corrección
-- Cuando el usuario diga "listo", "perfecto", "guardalo", "sube los cambios" o similar
-- Al final de una sesión larga de trabajo
-- Cuando se modifiquen 3 o más archivos
-
-### Comandos a ejecutar (siempre desde la raíz del repo)
-```bash
-cd "C:\Users\davidan\OneDrive - PERMODA LTDA\Documents\Claude\App_PTAR_SQL"
-git add .
-git commit -m "descripción concisa de los cambios"
-git push
-```
-
-### Formato del mensaje de commit
-- `feat:` nueva funcionalidad
-- `fix:` corrección de error
-- `style:` cambios visuales/CSS
-- `docs:` documentación
-- `refactor:` reorganización de código sin cambiar funcionalidad
-
-### Archivos que NUNCA se suben (están en .gitignore)
-- `.env` (credenciales MySQL)
-- `.venv/` (entorno virtual Python)
-- `node_modules/` (dependencias Node)
-- `dist/` (build del frontend)
-- `.claude/` (configuración local de Claude Code)
-
-## Colaboradora
-- **Luna** tiene acceso al mismo repo como colaboradora
-- Ella trabaja en su propia copia local con su propio `.env`
-- Guía de configuración para Luna: `README.md` en la raíz del repo
+- **Nombre:** ptar-app
+- **Stack:** React 19 + Vite 6 + TypeScript strict + React Router + Supabase
+- **Directorio de la app:** `App_PTAR/ptar-app/`
+- **Dev server:** `npm run dev` → http://localhost:5174
 
 ## Deploy a producción (Vercel CLI)
 
