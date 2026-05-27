@@ -365,34 +365,34 @@ export default function SplashScreen() {
           <polygon points="95,263 103,267 95,271" fill="#d29922" opacity=".55"/>
           <PL x={83} y={263} label="E"/>
 
-          {/* TK 2m³ */}
+          {/* TK 2m³ — el más pequeño (2 m³) */}
           <g className="eq-h eq-g d6" transform="translate(120,143)" onDoubleClick={()=>openEquipRef.current('tk2m3')}>
-            <TT eq={eqLive.tk2m3}/><SD eq={eqLive.tk2m3} cx={18} cy={-38}/>
-            <Tk w={44} h={38} wp={0.60}/>
+            <TT eq={eqLive.tk2m3}/><SD eq={eqLive.tk2m3} cx={14} cy={-22}/>
+            <Tk w={30} h={22} wp={0.60}/>
             <text y="12" textAnchor="middle" fill="#00c5e3" fontSize="7" fontWeight="700" fontFamily="monospace">TK 2 m³</text>
           </g>
-          {/* TK 30m³ */}
+          {/* TK 30m³ — el mayor de los tres (30 m³) */}
           <g className="eq-h eq-g d7" transform="translate(120,234)" onDoubleClick={()=>openEquipRef.current('tk30m3')}>
-            <TT eq={eqLive.tk30m3}/><SD eq={eqLive.tk30m3} cx={22} cy={-50}/>
-            <Tk w={48} h={50} wp={0.62}/>
+            <TT eq={eqLive.tk30m3}/><SD eq={eqLive.tk30m3} cx={26} cy={-58}/>
+            <Tk w={54} h={58} wp={0.62}/>
             <text y="12" textAnchor="middle" fill="#00c5e3" fontSize="7" fontWeight="700" fontFamily="monospace">TK 30 m³</text>
           </g>
-          {/* TK 15m³ */}
+          {/* TK 15m³ — mediano (15 m³) */}
           <g className="eq-h eq-g d8" transform="translate(120,281)" onDoubleClick={()=>openEquipRef.current('tk15m3')}>
-            <TT eq={eqLive.tk15m3}/><SD eq={eqLive.tk15m3} cx={18} cy={-35}/>
-            <Tk w={44} h={35} wp={0.55}/>
+            <TT eq={eqLive.tk15m3}/><SD eq={eqLive.tk15m3} cx={20} cy={-42}/>
+            <Tk w={44} h={42} wp={0.55}/>
             <text y="12" textAnchor="middle" fill="#00c5e3" fontSize="7" fontWeight="700" fontFamily="monospace">TK 15 m³</text>
           </g>
           {/* F: TK15 → TK30 */}
-          <line x1="120" y1="246" x2="120" y2="236" stroke="#d29922" strokeWidth="1.8" opacity=".8" className="p-raw"/>
+          <line x1="120" y1="239" x2="120" y2="236" stroke="#d29922" strokeWidth="1.8" opacity=".8" className="p-raw"/>
           <polygon points="116,239 120,231 124,239" fill="#d29922" opacity=".8"/>
           <PL x={127} y={264} label="F"/>
           {/* G: TK2 → junction x=183,y=215 */}
-          <line x1="142" y1="124" x2="183" y2="124" stroke="#00c5e3" strokeWidth="1.8" opacity=".8" className="p-raw"/>
-          <line x1="183" y1="124" x2="183" y2="215" stroke="#00c5e3" strokeWidth="1.8" opacity=".8" className="p-raw"/>
-          <PL x={157} y={119} label="G"/>
+          <line x1="135" y1="132" x2="183" y2="132" stroke="#00c5e3" strokeWidth="1.8" opacity=".8" className="p-raw"/>
+          <line x1="183" y1="132" x2="183" y2="215" stroke="#00c5e3" strokeWidth="1.8" opacity=".8" className="p-raw"/>
+          <PL x={152} y={127} label="G"/>
           {/* H: TK30 → junction */}
-          <line x1="144" y1="215" x2="183" y2="215" stroke="#00c5e3" strokeWidth="1.8" opacity=".8" className="p-raw"/>
+          <line x1="147" y1="215" x2="183" y2="215" stroke="#00c5e3" strokeWidth="1.8" opacity=".8" className="p-raw"/>
           <PL x={157} y={211} label="H"/>
           <circle cx="183" cy="215" r="3" fill="#00c5e3" opacity=".9"/>
           <text x="168" y="229" fill="#00c5e360" fontSize="6" fontFamily="monospace">G+H</text>
