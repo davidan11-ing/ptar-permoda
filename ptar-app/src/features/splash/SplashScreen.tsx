@@ -892,9 +892,26 @@ export default function SplashScreen() {
             <rect x="-38" y="-72" width="76" height="70" fill={wG} opacity=".48"/>
             <path d="M-38,-72 Q0,-75 38,-72 L38,-70 Q0,-73 -38,-70Z" fill="#00c5e3" opacity=".4"/>
             <Dh w={80} h={95} pct={0.75}/>
-            <text x="0" y="-38" textAnchor="middle" fill="#3fb95055" fontSize="5.5" fontFamily="monospace">AQ · AR · AS</text>
             <text y="12" textAnchor="middle" fill="#3fb950" fontSize="7" fontWeight="700" fontFamily="monospace">TK RECIR.</text>
           </g>
+
+          {/* ── AQ: Acueducto → TK Recirculación (entrada por derecha) ── */}
+          <line x1="350" y1={mYB-75} x2="242" y2={mYB-75} stroke="#3fb950" strokeWidth="1.8" opacity=".85" className="p-clean"/>
+          <polygon points={`246,${mYB-79} 238,${mYB-75} 246,${mYB-71}`} fill="#3fb950" opacity=".85"/>
+          <text x="355" y={mYB-71} fill="#3fb95090" fontSize="6" fontFamily="monospace">ACUEDUCTO</text>
+          <text x="408" y={mYB-71} fill="#00c5e3" fontSize="6.5" fontWeight="700" fontFamily="monospace">AQ</text>
+
+          {/* ── AR: Carrotanques → TK Recirculación (entrada por derecha) ── */}
+          <line x1="350" y1={mYB-55} x2="242" y2={mYB-55} stroke="#3fb950" strokeWidth="1.8" opacity=".85" className="p-clean"/>
+          <polygon points={`246,${mYB-59} 238,${mYB-55} 246,${mYB-51}`} fill="#3fb950" opacity=".85"/>
+          <text x="355" y={mYB-51} fill="#3fb95090" fontSize="6" fontFamily="monospace">CARROTANQUES</text>
+          <text x="420" y={mYB-51} fill="#00c5e3" fontSize="6.5" fontWeight="700" fontFamily="monospace">AR</text>
+
+          {/* ── AS: PTAP → TK Recirculación (entrada por derecha) ── */}
+          <line x1="350" y1={mYB-35} x2="242" y2={mYB-35} stroke="#3fb950" strokeWidth="1.8" opacity=".85" className="p-clean"/>
+          <polygon points={`246,${mYB-39} 238,${mYB-35} 246,${mYB-31}`} fill="#3fb950" opacity=".85"/>
+          <text x="355" y={mYB-31} fill="#3fb95090" fontSize="6" fontFamily="monospace">PTAP</text>
+          <text x="375" y={mYB-31} fill="#00c5e3" fontSize="6.5" fontWeight="700" fontFamily="monospace">AS</text>
 
           {/* ── PRODUCCIÓN / REÚSO — superior izquierda zona TERCIARIA (x=65, top=362) ── */}
           <g className="eq-h eq-g d22" transform="translate(65,450)" onDoubleClick={()=>openEquipRef.current('produccion')}>
