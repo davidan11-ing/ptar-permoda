@@ -22,10 +22,10 @@ QUIMICOS_MAP = {
     'Q-03': ('Decolorante',       'GEM', 'consumo_decolorante_l',   'kg_decolorante',          'ppm_decolorante',    'costo_op_decolorante','final_decolorante_l'),
     'Q-04': ('Polímero Aniónico', 'GEM', 'consumo_pol_anionico_l',  'consumo_pol_anionico_kg', 'ppm_pol_anionico',   'costo_op_anionico',   'final_pol_anionico_kg'),
     'Q-05': ('Polímero Catiónico','GEM', 'consumo_pol_cationico_l', 'consumo_pol_cationico_kg','ppm_pol_cationico',  'costo_op_cationico',  'final_pol_cationico_kg'),
-    # ── Sistema RO ────────────────────────────────────────────────────────────
-    'Q-06': ('Anti-incrustante',       'RO', 'consumo_antiincrustante_l', 'kg_antiincrustante', 'ppm_antiincrustante', 'costo_op_antiincrustante', 'final_antiincrustante_l'),
-    'Q-07': ('Biocida / Desinfectante','RO', 'consumo_biocida_l',         'kg_biocida',         'ppm_biocida',         'costo_op_biocida',         'final_biocida_l'),
-    'Q-08': ('Limpiador Químico',      'RO', 'consumo_limpiador_l',       'kg_limpiador',       'ppm_limpiador',       'costo_op_limpiador',       'final_limpiador_l'),
+    # ── Sistema RO — columnas reales de operacion_ro_turno ───────────────────
+    'Q-06': ('HCL 10%',          'RO', 'consumo_l_hcl',        'consumo_kg_hcl',        'ppm_hcl',        'costo_op_hcl',        'inv_l_hcl'),
+    'Q-07': ('Kuriverter IK-220','RO', 'consumo_l_kuriverter', 'consumo_kg_kuriverter', 'ppm_kuriverter', 'costo_op_kuriverter', 'inv_l_kuriverter'),
+    'Q-08': ('Vitec 7000',       'RO', 'consumo_l_vitec',      'consumo_kg_vitec',      'ppm_vitec',      'costo_op_vitec',      'inv_l_vitec'),
     # ── Sistema PTAP ──────────────────────────────────────────────────────────
     'Q-09': ('Polímero Aniónico PTAP', 'PTAP', 'consumo_pol_anionico_ptap_l', 'kg_pol_anionico_ptap', 'ppm_pol_anionico_ptap', 'costo_op_pol_anionico_ptap', 'final_pol_anionico_ptap_l'),
     'Q-10': ('Coagulante PTAP',        'PTAP', 'consumo_coagulante_ptap_l',   'kg_coagulante_ptap',   'ppm_coagulante_ptap',   'costo_op_coagulante_ptap',   'final_coagulante_ptap_l'),
@@ -176,15 +176,19 @@ async def get_ultimo_nivel(
     if tabla is None:
         return {"nivel_final": None, "fecha": None, "turno": None}
 
-    row = (await db.execute(text(f"""
-        SELECT {col_final} AS nivel_final,
-               DATE_FORMAT(fecha, '%Y-%m-%d') AS fecha,
-               CASE turno WHEN 1 THEN 'mañana' WHEN 2 THEN 'tarde' WHEN 3 THEN 'noche' ELSE NULL END AS turno
-        FROM {tabla}
-        WHERE {col_final} IS NOT NULL
-        ORDER BY fecha DESC, turno DESC
-        LIMIT 1
-    """))).mappings().first()
+    try:
+        row = (await db.execute(text(f"""
+            SELECT {col_final} AS nivel_final,
+                   DATE_FORMAT(fecha, '%Y-%m-%d') AS fecha,
+                   CASE turno WHEN 1 THEN 'mañana' WHEN 2 THEN 'tarde' WHEN 3 THEN 'noche' ELSE NULL END AS turno
+            FROM {tabla}
+            WHERE {col_final} IS NOT NULL
+            ORDER BY fecha DESC, turno DESC
+            LIMIT 1
+        """))).mappings().first()
+    except Exception:
+        # Tabla o columna no existe aún (ej. operacion_ptap_turno)
+        return {"nivel_final": None, "fecha": None, "turno": None}
 
     if not row:
         return {"nivel_final": None, "fecha": None, "turno": None}

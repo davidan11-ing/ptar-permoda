@@ -270,7 +270,14 @@ function ProductCard({
       )}
 
       {!c.active && (
-        <span className="param-hint">↑ Ingresa nivel inicial y final para ver Kg, PPM y Costo automáticamente</span>
+        <span className="param-hint">
+          {(p.nivel_final && p.nivel_final !== '') && (!p.nivel_inicial || p.nivel_inicial === '')
+            ? '↑ Falta nivel inicial — ingresa el nivel del tanque al inicio de este turno'
+            : (!p.nivel_final || p.nivel_final === '') && (p.nivel_inicial && p.nivel_inicial !== '')
+              ? '↑ Ingresa el nivel final al cierre del turno'
+              : '↑ Ingresa nivel inicial y final para ver L, Kg, PPM y Costo automáticamente'
+          }
+        </span>
       )}
 
       {c.active && (
@@ -419,6 +426,7 @@ export default function FormatoReactivos() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [watchProducts, volGEM],
   );
+  /*adapter funciion{ formularios} computeProduct (q,p?.nivel_inicial*/
 
   const activeGEM  = QUIMICOS_GEM.filter(q => computed[q.id].active);
   const activeRO   = QUIMICOS_RO.filter(q  => computed[q.id].active);
