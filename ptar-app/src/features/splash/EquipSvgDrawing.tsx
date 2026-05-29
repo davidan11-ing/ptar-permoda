@@ -289,11 +289,11 @@ function DrawHomogenizer({ s }:{ s:Status }) {
 function DrawGEM({ s }:{ s:Status }) {
   const c = SC[s];
   const dosing = [
-    {x:82,  col:'#f85149',  l:'Ácido'},
-    {x:90,  col:'#ff6b35',  l:'Decol'},
+    {x:60,  col:'#f85149',  l:'Ácido'},
+    {x:80,  col:'#ff6b35',  l:'Decol'},
     {x:100, col:'#00c5e3',  l:'Coag'},
-    {x:110, col:'#3fb950',  l:'F.Cat'},
-    {x:118, col:'#8b5cf6',  l:'F.An'},
+    {x:120, col:'#3fb950',  l:'F.Cat'},
+    {x:140, col:'#8b5cf6',  l:'F.An'},
   ];
   return <>
     {/* Reactor body */}
@@ -302,10 +302,10 @@ function DrawGEM({ s }:{ s:Status }) {
     {/* Dosing lines */}
     {dosing.map(d=>(
       <g key={d.l}>
-        <line x1={d.x} y1={28} x2={d.x} y2={48} stroke={d.col} strokeWidth="1.2"
+        <line x1={d.x} y1={30} x2={d.x} y2={48} stroke={d.col} strokeWidth="1.2"
           strokeDasharray="2 2" opacity=".7"/>
-        <circle cx={d.x} cy={26} r="4.5" fill={d.col} opacity=".85"/>
-        <text x={d.x} y={19} textAnchor="middle" fill={d.col} fontSize="4.8"
+        <circle cx={d.x} cy={24} r="5.5" fill={d.col} opacity=".85"/>
+        <text x={d.x} y={15} textAnchor="middle" fill={d.col} fontSize="5.5"
           fontFamily="monospace">{d.l}</text>
       </g>
     ))}
@@ -593,9 +593,9 @@ function DrawProduccion({ s }:{ s:Status }) {
     {/* Box */}
     <rect x="26" y="36" width="148" height="108" rx="8"
       fill="#071a10" stroke={`${c}60`} strokeWidth="2"/>
-    {/* REÚSO label */}
-    <text x="100" y="78" textAnchor="middle" fill="#3fb950" fontSize="28"
-      fontWeight="800" fontFamily="monospace">REÚSO</text>
+    {/* RECIRCULACIÓN label */}
+    <text x="100" y="78" textAnchor="middle" fill="#3fb950" fontSize="16"
+      fontWeight="800" fontFamily="monospace">RECIRCULACIÓN</text>
     {/* Water drop / flow icon */}
     <path d="M82,88 L72,102 L72,114 L82,118 L82,96 L118,96 L118,118 L128,114 L128,102 L118,88 L110,83 Q100,79 90,83Z"
       fill="#3fb95030" stroke="#3fb95070" strokeWidth="1.5"/>

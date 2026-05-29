@@ -34,9 +34,9 @@
 .d9{animation-delay:.36s}.d10{animation-delay:.40s}.d11{animation-delay:.44s}.d12{animation-delay:.48s}
 .d13{animation-delay:.52s}.d14{animation-delay:.56s}.d15{animation-delay:.60s}.d16{animation-delay:.64s}
 .d17{animation-delay:.68s}.d18{animation-delay:.72s}.d19{animation-delay:.76s}.d20{animation-delay:.80s}
-.eq-tt{opacity:0;pointer-events:none;transition:opacity .15s;}
+/* eq-tt es ahora siempre visible: se monta/desmonta via React state (tooltipOverlay) */
+.eq-tt{opacity:1;pointer-events:none;}
 .eq-h{cursor:pointer;}
-.eq-h:hover .eq-tt{opacity:1;}
 .eq-h:hover .eq-b{stroke:#00c5e3 !important;stroke-width:2 !important;}
 .eq-h:hover .eq-bc{stroke:#00c5e3 !important;stroke-width:2 !important;}
 @keyframes flowR{from{stroke-dashoffset:28}to{stroke-dashoffset:0}}
@@ -313,6 +313,45 @@
   padding:7px 4px;font-size:12px;
   color:#d0d9e4;text-align:right;
   font-family:monospace;letter-spacing:.3px;
+}
+
+/* ── Costo operativo en modal de equipo ── */
+.eq-modal-cost-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:6px 14px;margin:10px 0 4px;
+  border-radius:6px;
+  background:rgba(126,200,200,.07);
+  border:1px solid rgba(126,200,200,.22);
+}
+.eq-modal-cost-value{
+  font-family:monospace;font-size:11px;font-weight:700;
+  color:#7ec8c8;letter-spacing:.04em;
+  display:inline-flex;align-items:center;gap:1px;
+}
+.eq-modal-cost-range{
+  font-family:monospace;font-size:9px;
+  color:#4a9a8a;margin-left:8px;opacity:.85;
+}
+
+/* Símbolo $ rebota suavemente en el modal */
+@keyframes signBounce{
+  0%,60%,100%{transform:translateY(0)}
+  30%        {transform:translateY(-3px)}
+}
+.eq-cost-sign{
+  display:inline-block;
+  animation:signBounce 2s ease-in-out infinite;
+  color:#a0e8e8;font-size:1.1em;
+}
+
+/* Costo en SVG principal flota levemente */
+@keyframes costFloat{
+  0%,100%{transform:translateY(0)}
+  50%    {transform:translateY(-1.5px)}
+}
+.eq-cost-float{
+  transform-box:fill-box;transform-origin:center;
+  animation:costFloat 2.5s ease-in-out infinite;
 }
 
 /* ── Double-click hint on equip groups ── */

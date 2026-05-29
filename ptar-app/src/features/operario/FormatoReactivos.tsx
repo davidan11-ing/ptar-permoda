@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../state/AuthContext';
 import { ROUTES } from '../../lib/routes';
@@ -412,19 +412,17 @@ export default function FormatoReactivos() {
   const c13Act       = parseFloat(watchROCauda?.c13_actual ?? '') || 0;
 
   // ── Computed por químico ──────────────────────────────────────────────────
-  const computed = useMemo(
-    () => Object.fromEntries(
-      TODOS.map(q => {
-        const p = watchProducts[q.id];
-        const trasL = q.id === 'Q-02' && p?.trasiego_check && p?.trasiego_l
-          ? (parseFloat(p.trasiego_l) || 0) : 0;
-        // Para GEM usamos volGEM; para RO y PTAP también (ppms relativas)
-        const vol = volGEM;
-        return [q.id, computeProduct(q, p?.nivel_inicial, p?.nivel_final, trasL, vol)];
-      })
-    ),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [watchProducts, volGEM],
+  // Sin useMemo: RHF devuelve la misma referencia de watchProducts aunque
+  // cambien sus propiedades internas → Object.is siempre true → memo nunca
+  // recomputa. Con 13 químicos la operación es tan barata que no necesita cache.
+  const computed = Object.fromEntries(
+    TODOS.map(q => {
+      const p = watchProducts[q.id];
+      const trasL = q.id === 'Q-02' && p?.trasiego_check && p?.trasiego_l
+        ? (parseFloat(p.trasiego_l) || 0) : 0;
+      const vol = volGEM;
+      return [q.id, computeProduct(q, p?.nivel_inicial, p?.nivel_final, trasL, vol)];
+    })
   );
   /*adapter funciion{ formularios} computeProduct (q,p?.nivel_inicial*/
 
@@ -620,7 +618,7 @@ export default function FormatoReactivos() {
               <div className="form-group">
                 <label className="form-label">Horas de Operación (calculado)</label>
                 <div className={`form-readonly${horasOp !== null ? (horasOp > 0 ? ' value-ok' : ' value-alert') : ''}`}>
-                  {horasOp !== null ? `${horasOp.toFixed(3)} h` : '—'}
+                  {horasOp !== null ? `${+horasOp.toFixed(2)} h` : '—'}
                 </div>
                 {horasOp !== null && horasOp <= 0 && (
                   <span className="field-error">Horómetro actual debe ser mayor al anterior.</span>
@@ -630,11 +628,21 @@ export default function FormatoReactivos() {
             <div className="form-row-2">
               <div className="form-group">
                 <label className="form-label">Caudal de Tratamiento (m³/h)</label>
-                <input
-                  type="number" step="1" min="0"
-                  className="form-input"
-                  placeholder="80"
-                  {...register('caudal_mh')}
+                <Controller
+                  name="caudal_mh"
+                  control={control}
+                  defaultValue="80"
+                  render={({ field }) => (
+                    <input
+                      type="number" step="1" min="0"
+                      className="form-input"
+                      placeholder="80"
+                      value={field.value ?? '80'}
+                      onChange={e => field.onChange(e.target.value === '' ? '80' : e.target.value)}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                    />
+                  )}
                 />
                 <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3, display: 'block' }}>
                   Por defecto: 80 m³/h
@@ -647,7 +655,7 @@ export default function FormatoReactivos() {
                 </div>
                 {horasOp !== null && (
                   <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3, display: 'block' }}>
-                    = {horasOp.toFixed(3)} h × {caudal} m³/h
+                    = {+horasOp.toFixed(2)} h × {caudal} m³/h
                   </span>
                 )}
               </div>

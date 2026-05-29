@@ -15,11 +15,12 @@ interface Props {
   onClose: () => void;
   onNavigate: (dir: 1 | -1) => void;
   svgBody: ReactNode;
+  tooltipOverlay?: ReactNode;
 }
 
 function PhaseModalInner({
   phase, phaseIdx, totalPhases, closing,
-  onClose, onNavigate, svgBody,
+  onClose, onNavigate, svgBody, tooltipOverlay,
 }: Props) {
   const touchX = useRef(0);
 
@@ -92,13 +93,12 @@ function PhaseModalInner({
               const [vx, vy, vw, vh] = phase.vb.split(' ').map(Number);
               const clipId = `phase-clip-${phase.key}`;
 
-              // Fases SUPERIORES (vy=26): solo hay fondo oscuro por encima → expandir clip
-              // 220px permite que los tooltips (y0=-205) caigan en el letterbox natural.
-              // Fases INFERIORES (vy=345): encima hay equipos de otras fases → NO expandir
-              // para evitar sangrado visual.
+              // Fases SUPERIORES (vy=26): expandir clip 240px hacia arriba (tooltips y0=-230)
+              // Fases INFERIORES (vy=345): expandir 120px para tooltips del borde superior
+              // de la zona, cubrir el área extra con rect oscuro para ocultar equipos vecinos.
               const isTopPhase  = vy <= 30;
-              const clipTopPad  = isTopPhase ? 220 : 0;
-              const svgOverflow = isTopPhase ? 'visible' : 'hidden';
+              const clipTopPad  = isTopPhase ? 240 : 120;
+              const svgOverflow = 'visible';
 
               return (
                 <svg
@@ -115,11 +115,12 @@ function PhaseModalInner({
                     </clipPath>
                   </defs>
                   <g clipPath={`url(#${clipId})`}>
-                    {/* Fondo que tapa el texto "FASE X" — va ANTES de svgBody
-                        para que los carteles (tooltips) siempre queden encima */}
-                    <rect x={vx} y={vy - 30} width={vw} height={35} fill="#070e16" />
+                    {/* Fondo que tapa la zona expandida por clipTopPad (equipos vecinos y
+                        texto de fase), va ANTES de svgBody para que tooltips queden encima */}
+                    <rect x={vx} y={vy - clipTopPad} width={vw} height={clipTopPad + 4} fill="#070e16" />
                     {svgBody}
                   </g>
+                  {tooltipOverlay}
                 </svg>
               );
             })()}

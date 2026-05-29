@@ -139,8 +139,24 @@ function EquipmentModalInner({ equipKey, eq, closing, onClose }: Props) {
               </>
             )}
 
+            {/* Costo operativo */}
+            {eq.cost && (
+              <div className="eq-modal-cost-row">
+                <span className="eq-modal-section-label" style={{margin:0}}>COSTO OPERATIVO</span>
+                <div style={{display:'flex',alignItems:'center'}}>
+                  <span className="eq-modal-cost-value">
+                    <span className="eq-cost-sign">$</span>
+                    <span>{eq.cost.replace(/^\$/, '')}</span>
+                  </span>
+                  {eq.costRange && (
+                    <span className="eq-modal-cost-range">{eq.costRange}</span>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Sección parámetros */}
-            <div className="eq-modal-section-label" style={{ marginTop: eq.description ? 14 : 6 }}>PARÁMETROS</div>
+            <div className="eq-modal-section-label" style={{ marginTop: eq.cost ? 14 : (eq.description ? 14 : 6) }}>PARÁMETROS</div>
             <table className="eq-params-table">
               <tbody>
                 {eq.params.map(([lbl, val], i) => (
