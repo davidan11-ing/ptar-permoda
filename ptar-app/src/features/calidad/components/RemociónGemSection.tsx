@@ -101,9 +101,9 @@ export default function RemociónGemSection({fechaInicio,fechaFin}:Props) {
        ) : (
         <div>
           {/* Gráfico ancho completo */}
-          <div className="dash-card" style={{padding:'12px 4px 8px',marginBottom:16}}>
-            <ResponsiveContainer width="100%" height={360}>
-              <ComposedChart data={chartData} margin={{top:20,right:60,left:10,bottom:80}}>
+          <div className="dash-card" style={{padding:'12px 4px 0px',marginBottom:16}}>
+            <ResponsiveContainer width="100%" height={300}>
+              <ComposedChart data={chartData} margin={{top:20,right:60,left:10,bottom:10}}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#21262d"/>
                 <XAxis dataKey="label" tick={{fill:'#8b949e',fontSize:8}}
                   angle={-90} textAnchor="end" interval={0} height={80}/>
