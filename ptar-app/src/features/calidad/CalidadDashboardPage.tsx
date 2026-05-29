@@ -1,17 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
 import { getCalidadParametros, getReporteCalidadHtmlUrl } from '../../services/ptarClient';
 import { useCalidadData, PROCESO_ORDEN } from './hooks/useCalidadData';
-import { useDispersionData }    from './hooks/useDispersionData';
-import { useMbrEficiencia }     from './hooks/useMbrEficiencia';
-import { useGemEficiencia }     from './hooks/useGemEficiencia';
-import SegDiarioChart           from './components/SegDiarioChart';
-import DispersionChart          from './components/DispersionChart';
 import HistogramaChart          from './components/HistogramaChart';
 import PieDistribucionChart     from './components/PieDistribucionChart';
 import PercentilChart           from './components/PercentilChart';
-import SeccionMultiparametro    from './components/SeccionMultiparametro';
-import MbrEficienciaSection     from './components/MbrEficienciaSection';
-import GemEficienciaSection     from './components/GemEficienciaSection';
+import { TablaParams, TablaRangos } from './components/TablaFrecuencias';
+import TablaPercentiles              from './components/TablaPercentiles';
+import RemociónGemSection            from './components/RemociónGemSection';
 
 // Rango de fechas por defecto: últimos 60 días
 function defaultFechas() {
@@ -58,10 +53,6 @@ export default function CalidadDashboardPage() {
     unidadTurno: undefined,
   });
 
-  const { data: dispersion }              = useDispersionData(parametro, fechaInicio, fechaFin);
-  const { data: mbrData, loading: mbrLoading } = useMbrEficiencia(fechaInicio, fechaFin);
-  const { data: gemData, loading: gemLoading } = useGemEficiencia(fechaInicio, fechaFin);
-
   const unidadMedida = unidadMap[parametro] ?? 'u';
 
   // ── Derivados filtrados por unidad ───────────────────────────
@@ -72,8 +63,9 @@ export default function CalidadDashboardPage() {
     [rawRows, unidadPrincipal]
   );
 
+  // Spec §3.1: solo valores > 0 (MINIFS con ">0") — ceros excluidos de todos los cálculos
   const valoresFlat = useMemo(
-    () => filteredRawRows.map(r => r.valor).filter((v): v is number => v != null && !isNaN(v)),
+    () => filteredRawRows.map(r => r.valor).filter((v): v is number => v != null && !isNaN(v) && v > 0),
     [filteredRawRows]
   );
 
@@ -139,65 +131,60 @@ export default function CalidadDashboardPage() {
         </div>
       </div>
 
-      {/* ── Seguimiento Diario por Turno ── */}
+      {/* ── Distribución y Comportamiento Multiparámetro ── */}
       <section className="dash-section">
-        <div className="section-title">
-          Seguimiento Diario por Turno — {parametro}
-          {unidadPrincipal && <span style={{ color: '#8b949e', fontWeight: 400, marginLeft: 8 }}>· {unidadPrincipal}</span>}
+        <div style={{
+          background: '#d29922',
+          color: '#fff',
+          fontWeight: 700,
+          fontSize: 13,
+          letterSpacing: '0.08em',
+          padding: '6px 16px',
+          marginBottom: 16,
+          borderRadius: 4,
+          textAlign: 'center',
+        }}>
+          DISTRIBUCIÓN Y COMPORTAMIENTO MULTIPARÁMETRO
         </div>
-        <div className="dash-row-2col">
-          <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
-            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
-              Promedio por turno y fecha (todas las unidades)
-            </div>
-            <SegDiarioChart data={filteredRawRows} unidad_medida={unidadMedida} />
-          </div>
-          <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
-            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
-              Dispersión agregada (mín/prom/máx) — todas las unidades
-            </div>
-            <DispersionChart data={dispersion} unidadFiltrada={unidadPrincipal || 'ALL'} unidad_medida={unidadMedida} />
-          </div>
-        </div>
-      </section>
-
-      {/* ── Multiparámetro por grupos ── */}
-      <SeccionMultiparametro
-        rawData={filteredRawRows}
-        dispersionData={dispersion}
-        unidad_medida={unidadMedida}
-      />
-
-      {/* ── Distribución Estadística ── */}
-      <section className="dash-section">
-        <div className="section-title">Distribución Estadística — {parametro}</div>
+        {/* ── Gráficos ── */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
           <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
-            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
-              Histograma de frecuencias
+            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8, fontWeight: 600, textTransform: 'uppercase' }}>
+              Frecuencia
             </div>
             <HistogramaChart values={valoresFlat} unidad_medida={unidadMedida} />
           </div>
           <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
-            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
-              Distribución porcentual
+            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8, fontWeight: 600, textTransform: 'uppercase' }}>
+              Distribución
             </div>
             <PieDistribucionChart values={valoresFlat} unidad_medida={unidadMedida} />
           </div>
           <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
-            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
-              Percentiles (P10 – P90)
+            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8, fontWeight: 600, textTransform: 'uppercase' }}>
+              Distribución Percentil
             </div>
             <PercentilChart values={valoresFlat} unidad_medida={unidadMedida} />
           </div>
         </div>
+
+        {/* ── Tablas: Parámetros | Distribución frecuencias | Percentiles ── */}
+        {/* align-items:start → cada card su altura natural; Percentiles scrollea internamente */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.6fr 1fr', gap: 16, marginTop: 16, alignItems: 'start' }}>
+          <div className="dash-card" style={{ padding: 14 }}>
+            <TablaParams values={valoresFlat} unidad_medida={unidadMedida} />
+          </div>
+          <div className="dash-card" style={{ padding: 14 }}>
+            <TablaRangos values={valoresFlat} />
+          </div>
+          <div className="dash-card" style={{ padding: 14 }}>
+            <TablaPercentiles values={valoresFlat} unidad_medida={unidadMedida} />
+          </div>
+        </div>
       </section>
 
-      {/* ── Eficiencia MBR ── */}
-      <MbrEficienciaSection data={mbrData} loading={mbrLoading} />
-
-      {/* ── Eficiencia GEM ── */}
-      <GemEficienciaSection data={gemData} loading={gemLoading} />
+      {/* ── Remoción Sistema GEM — filtro independiente interno ── */}
+      <RemociónGemSection fechaInicio={fechaInicio} fechaFin={fechaFin} />
 
     </div>
   );

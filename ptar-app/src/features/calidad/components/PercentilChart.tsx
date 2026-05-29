@@ -1,6 +1,6 @@
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  Tooltip, Cell, ResponsiveContainer,
+  Tooltip, LabelList, ResponsiveContainer,
 } from 'recharts';
 
 interface Props {
@@ -9,6 +9,8 @@ interface Props {
 }
 
 function percentil(sorted: number[], p: number): number {
+  if (p === 0)   return sorted[0];
+  if (p === 100) return sorted[sorted.length - 1];
   const idx = (p / 100) * (sorted.length - 1);
   const lo  = Math.floor(idx);
   const hi  = Math.ceil(idx);
@@ -16,13 +18,9 @@ function percentil(sorted: number[], p: number): number {
   return +(sorted[lo] + (idx - lo) * (sorted[hi] - sorted[lo])).toFixed(2);
 }
 
-const PCT_COLORS: Record<string, string> = {
-  P10: '#1f6feb',
-  P25: '#3fb950',
-  P50: '#d29922',
-  P75: '#f0883e',
-  P90: '#f85149',
-};
+// Spec §3.3: P100 usa 0.999 (no 1.0) igual que PERCENTILE() del Excel
+// Spec §5.3: P100 arriba, P10 abajo → array en orden descendente
+const PCTS = [100, 90, 80, 70, 60, 50, 40, 30, 20, 10, 0];
 
 export default function PercentilChart({ values, unidad_medida }: Props) {
   if (values.length === 0) {
@@ -30,37 +28,40 @@ export default function PercentilChart({ values, unidad_medida }: Props) {
   }
 
   const sorted = [...values].sort((a, b) => a - b);
+  const vMin = sorted[0];
+  const vMax = sorted[sorted.length - 1];
 
-  const chartData = [
-    { pct: 'P10', valor: percentil(sorted, 10) },
-    { pct: 'P25', valor: percentil(sorted, 25) },
-    { pct: 'P50', valor: percentil(sorted, 50) },
-    { pct: 'P75', valor: percentil(sorted, 75) },
-    { pct: 'P90', valor: percentil(sorted, 90) },
-  ];
+  // Dominio X: ligeramente por debajo del mínimo para que las barras sean visibles
+  const padding = (vMax - vMin) * 0.08 || 0.5;
+  const xMin    = +(vMin - padding).toFixed(2);
+
+  const chartData = PCTS.map(p => ({
+    pct:      p === 0 ? 'MIN' : p === 100 ? 'P100' : `P${p}`,
+    pctLabel: p === 0 ? '0%'  : p === 100 ? '100%' : `${p}%`,
+    // Spec §8.3: P100 usa 0.999 como argumento (no 1.0), igual que PERCENTILE() de Excel
+    valor:    percentil(sorted, p === 100 ? 99.9 : p),
+  }));
 
   return (
-    <ResponsiveContainer width="100%" height={260}>
+    <ResponsiveContainer width="100%" height={290}>
       <BarChart
         layout="vertical"
         data={chartData}
-        margin={{ top: 8, right: 60, left: 8, bottom: 4 }}
+        margin={{ top: 4, right: 56, left: 8, bottom: 20 }}
       >
         <CartesianGrid strokeDasharray="3 3" stroke="#21262d" horizontal={false} />
         <XAxis
           type="number"
-          tick={{ fill: '#8b949e', fontSize: 11 }}
-          domain={[0, (dataMax: number) => +(dataMax * 1.15).toFixed(2)]}
-          tickFormatter={(v: number) =>
-            v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v % 1 === 0 ? String(v) : v.toFixed(1)
-          }
-          label={{ value: unidad_medida, position: 'insideBottom', fill: '#484f58', fontSize: 10, offset: -2 }}
+          tick={{ fill: '#8b949e', fontSize: 10 }}
+          domain={[xMin, (dataMax: number) => +(dataMax * 1.01).toFixed(2)]}
+          tickFormatter={(v: number) => v.toFixed(2)}
+          label={{ value: unidad_medida, position: 'insideBottom', fill: '#484f58', fontSize: 10, offset: -4 }}
         />
         <YAxis
           type="category"
-          dataKey="pct"
-          tick={{ fill: '#8b949e', fontSize: 12 }}
-          width={40}
+          dataKey="pctLabel"
+          tick={{ fill: '#8b949e', fontSize: 10 }}
+          width={38}
         />
         <Tooltip
           contentStyle={{ background: '#161b22', border: '1px solid #30363d', borderRadius: 8, fontSize: 12 }}
@@ -70,14 +71,13 @@ export default function PercentilChart({ values, unidad_medida }: Props) {
           ]}
           labelFormatter={() => ''}
         />
-        <Bar
-          dataKey="valor"
-          radius={[0, 4, 4, 0]}
-          label={{ position: 'right', fill: '#8b949e', fontSize: 11, formatter: (v: number) => v }}
-        >
-          {chartData.map((entry, i) => (
-            <Cell key={i} fill={PCT_COLORS[entry.pct] ?? '#8b949e'} />
-          ))}
+        <Bar dataKey="valor" fill="#3fb950" radius={[0, 4, 4, 0]}>
+          <LabelList
+            dataKey="valor"
+            position="right"
+            style={{ fill: '#8b949e', fontSize: 10 }}
+            formatter={(v: number) => v.toFixed(2)}
+          />
         </Bar>
       </BarChart>
     </ResponsiveContainer>

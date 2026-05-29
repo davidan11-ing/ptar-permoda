@@ -8,22 +8,28 @@ interface Props {
   unidad_medida: string;
 }
 
+// Colores en el orden de la imagen: rojo → amarillo → verde → morado → azul
 const BIN_COLORS = [
-  '#1f6feb', '#3fb950', '#d29922', '#f0883e', '#9e7aff',
-  '#58a6ff', '#e3b341', '#f85149',
+  '#c0392b', // RANGO1 — rojo ladrillo
+  '#d4a017', // RANGO2 — amarillo dorado
+  '#27ae60', // RANGO3 — verde
+  '#7d3c98', // RANGO4 — morado
+  '#2980b9', // RANGO5 — azul
 ];
+
+const N_RANGOS = 5; // Fijo según tabla de distribución de frecuencias
 
 function calcBins(values: number[]) {
   if (values.length === 0) return [];
-  const n    = values.length;
-  // Regla de Sturges: k = ceil(log2(n)) + 1, mín 4 bins máx 12
-  const k    = Math.min(12, Math.max(4, Math.ceil(Math.log2(n)) + 1));
+  const k    = N_RANGOS;
   const vMin = Math.min(...values);
   const vMax = Math.max(...values);
+  // TAMAÑO = AMPLITUD / #RANGOS, igual que la tabla
   const width = vMax === vMin ? 1 : (vMax - vMin) / k;
 
+  // Spec §5.1: formato exacto "(min - max)" con 2 decimales y espacios alrededor del guion
   const bins = Array.from({ length: k }, (_, i) => ({
-    label: `${(vMin + i * width).toFixed(1)}–${(vMin + (i + 1) * width).toFixed(1)}`,
+    label: `(${(vMin + i * width).toFixed(2)} - ${(vMin + (i + 1) * width).toFixed(2)})`,
     count: 0,
   }));
 
