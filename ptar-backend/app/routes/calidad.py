@@ -190,24 +190,26 @@ async def create_calidad_batch(registros: list[RegistroCalidadIn], db: AsyncSess
         if turno_int is None:
             raise HTTPException(status_code=400, detail=f"Turno inválido: {reg.turno}")
 
-        # Resolver parámetro_id
-        param_key = reg.parametro.upper()
-        parametro_id = None
-        for k, v in param_map.items():
-            if param_key in k or k in param_key:
-                parametro_id = v
-                break
+        # Resolver parámetro_id — exact match primero, luego contains como fallback
+        param_key = reg.parametro.strip().upper()
+        parametro_id = param_map.get(param_key)
+        if parametro_id is None:
+            for k, v in param_map.items():
+                if param_key in k or k in param_key:
+                    parametro_id = v
+                    break
 
         if parametro_id is None:
             raise HTTPException(status_code=400, detail=f"Parámetro no encontrado: {reg.parametro}")
 
-        # Resolver unidad_id
-        unit_key = reg.unidad_tratamiento.upper()
-        unidad_id = None
-        for k, v in unit_map.items():
-            if unit_key in k or k in unit_key:
-                unidad_id = v
-                break
+        # Resolver unidad_id — exact match primero, luego contains como fallback
+        unit_key = reg.unidad_tratamiento.strip().upper()
+        unidad_id = unit_map.get(unit_key)
+        if unidad_id is None:
+            for k, v in unit_map.items():
+                if unit_key in k or k in unit_key:
+                    unidad_id = v
+                    break
 
         if unidad_id is None:
             raise HTTPException(status_code=400, detail=f"Unidad no encontrada: {reg.unidad_tratamiento}")
@@ -215,15 +217,15 @@ async def create_calidad_batch(registros: list[RegistroCalidadIn], db: AsyncSess
         # UPSERT en medicion_calidad
         sql = text("""
             INSERT INTO medicion_calidad
-            (fecha, turno, parametro_id, unidad_id, valor, observacion, usuario, equipo, no_aplica)
-            VALUES (:fecha, :turno, :param_id, :unit_id, :valor, :obs, :usuario, :equipo, :no_aplica)
+              (fecha, turno, parametro_id, unidad_id, valor, observacion, usuario, equipo, no_aplica)
+            VALUES
+              (:fecha, :turno, :param_id, :unit_id, :valor, :obs, :usuario, :equipo, :no_aplica)
             ON DUPLICATE KEY UPDATE
-                valor = :valor,
-                observacion = :obs,
-                usuario = :usuario,
-                equipo = :equipo,
-                no_aplica = :no_aplica,
-                updated_at = CURRENT_TIMESTAMP
+                valor      = :valor,
+                observacion= :obs,
+                usuario    = :usuario,
+                equipo     = :equipo,
+                no_aplica  = :no_aplica
         """)
 
         result = await db.execute(sql, {
@@ -286,7 +288,7 @@ async def get_ultimo_valor(
 @router.get("/parametros")
 async def get_parametros_disponibles(db: AsyncSession = Depends(get_db)):
     rows = (await db.execute(text("""
-        SELECT id, nombre, unidad AS unidad_medida
+        SELECT id, codigo, nombre, unidad AS unidad_medida
         FROM parametro_calidad
         ORDER BY nombre
     """))).mappings().all()
@@ -320,7 +322,7 @@ async def get_mediciones_largo(
         params["turno"] = turno
     if solo_con_valor:
         filters.append("mc.valor IS NOT NULL")
-        filters.append("mc.no_aplica = 0")
+        filters.append("mc.valor > 0")
 
     where = "WHERE " + " AND ".join(filters)
 
@@ -335,8 +337,8 @@ async def get_mediciones_largo(
             p.nombre                     AS parametro,
             u.nombre                     AS unidad_tratamiento,
             CAST(mc.valor AS DECIMAL(18,4)) AS valor,
-            mc.metodo,
-            mc.usuario
+            NULL        AS metodo,
+            mc.usuario  AS usuario
         FROM medicion_calidad mc
         JOIN parametro_calidad  p ON p.id = mc.parametro_id
         JOIN unidad_tratamiento u ON u.id = mc.unidad_id

@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     APP_HOST: str = "0.0.0.0"
     APP_PORT: int = 8001
     CORS_ORIGIN: str = "http://localhost:5174"
+    JWT_SECRET: str = "ptar-permoda-secret-2026"  # override en .env en producción
+    JWT_EXPIRY_HOURS: int = 24
 
     @property
     def database_url(self) -> str:

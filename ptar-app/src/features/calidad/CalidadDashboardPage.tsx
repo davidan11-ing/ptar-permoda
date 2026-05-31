@@ -7,6 +7,10 @@ import PercentilChart           from './components/PercentilChart';
 import { TablaParams, TablaRangos } from './components/TablaFrecuencias';
 import TablaPercentiles              from './components/TablaPercentiles';
 import RemociónGemSection            from './components/RemociónGemSection';
+import RemocionCostoChart           from './components/RemocionCostoChart';
+import ParamVsDosisSection          from './components/ParamVsDosisSection';
+import CargaRemovoidaSection        from './components/CargaRemovoidaSection';
+import KgQuimicoSection             from './components/KgQuimicoSection';
 
 // Rango de fechas por defecto: últimos 60 días
 function defaultFechas() {
@@ -28,6 +32,7 @@ export default function CalidadDashboardPage() {
   const [turno,           setTurno]           = useState('');
   const [fechaInicio,     setFechaInicio]     = useState(inicio);
   const [fechaFin,        setFechaFin]        = useState(fin);
+  const [remGemParam,     setRemGemParam]     = useState('');
 
   // ── Cargar parámetros desde la BD ─────────────────────────────
   useEffect(() => {
@@ -183,8 +188,45 @@ export default function CalidadDashboardPage() {
         </div>
       </section>
 
-      {/* ── Remoción Sistema GEM — filtro independiente interno ── */}
-      <RemociónGemSection fechaInicio={fechaInicio} fechaFin={fechaFin} />
+      {/* ── Remoción Sistema GEM — parámetro compartido con sección siguiente ── */}
+      <RemociónGemSection
+        fechaInicio={fechaInicio}
+        fechaFin={fechaFin}
+        parametro={remGemParam || undefined}
+        onParametroChange={setRemGemParam}
+      />
+
+      {/* ── % Remoción pH vs Costo/m³ — va DESPUÉS de Remoción GEM ── */}
+      <section className="dash-section">
+        <div style={{
+          background: '#1f6feb22',
+          borderLeft: '3px solid #1f6feb',
+          padding: '5px 12px',
+          marginBottom: 12,
+          fontSize: 12,
+          fontWeight: 700,
+          color: '#58a6ff',
+          letterSpacing: '0.06em',
+          textTransform: 'uppercase',
+        }}>
+          % REMOCIÓN pH Vs $COSTO/M³ — TURNO A TURNO
+        </div>
+        <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
+          <div style={{ fontSize: 12, color: '#8b949e', marginBottom: 8, paddingLeft: 8, fontFamily: 'monospace', textAlign: 'center' }}>
+            % REMOCIÓN Vs $COSTO/M3
+          </div>
+          <RemocionCostoChart fechaInicio={fechaInicio} fechaFin={fechaFin} parametro={remGemParam || undefined} />
+        </div>
+      </section>
+
+      {/* ── PARÁMETRO VS DOSIS DE QUÍMICO ── */}
+      <ParamVsDosisSection fechaInicio={fechaInicio} fechaFin={fechaFin} />
+
+      {/* ── CARGA REMOVIDA KG/DÍA ── */}
+      <CargaRemovoidaSection fechaInicio={fechaInicio} fechaFin={fechaFin} />
+
+      {/* ── KG QUÍMICO / KG REMOVIDO — última sección ── */}
+      <KgQuimicoSection fechaInicio={fechaInicio} fechaFin={fechaFin} />
 
     </div>
   );

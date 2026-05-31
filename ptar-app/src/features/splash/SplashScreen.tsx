@@ -347,31 +347,31 @@ export default function SplashScreen() {
           {/* ══════════════ FASE PRELIMINAR (unchanged) ══════════════ */}
 
           {/* Input label boxes */}
-          <g className="eq-h eq-g d1" onDoubleClick={()=>openEquipRef.current('rotativa')} onMouseEnter={()=>setTt({eq:eqLive.rotativa,x:14,y:104,anchor:'left'})} onMouseLeave={hideTt}>
+          <g className="eq-h eq-g d1" onDoubleClick={()=>openEquipRef.current('rotativa')} onMouseEnter={()=>setTt({eq:eqLive.rotativa,x:14,y:104,anchor:'left',flipY:true})} onMouseLeave={hideTt}>
             <rect x="14" y="95" width="66" height="17" rx="3" fill="#071520" stroke="#00c5e3" strokeWidth="1.2" className="eq-b"/>
             <text x="47" y="107" textAnchor="middle" fill="#00c5e3" fontSize="6.5" fontFamily="monospace">D. ROTATIVA</text>
-            {eqLive.rotativa.cost && <text x="78" y="107" textAnchor="end" fill="#7ec8c8" fontSize="5" fontFamily="monospace" className="eq-cost-float">{eqLive.rotativa.cost}</text>}
+            {eqLive.rotativa.cost && <text x="78" y="93" textAnchor="end" fill="#7ec8c8" fontSize="5" fontFamily="monospace" className="eq-cost-float">{eqLive.rotativa.cost}</text>}
           </g>
-          <g className="eq-h eq-g d2" onDoubleClick={()=>openEquipRef.current('funza')} onMouseEnter={()=>setTt({eq:eqLive.funza,x:14,y:116,anchor:'left'})} onMouseLeave={hideTt}>
+          <g className="eq-h eq-g d2" onDoubleClick={()=>openEquipRef.current('funza')} onMouseEnter={()=>setTt({eq:eqLive.funza,x:14,y:116,anchor:'left',flipY:true})} onMouseLeave={hideTt}>
             <rect x="14" y="116" width="66" height="17" rx="3" fill="#071520" stroke="#8b5cf6" strokeWidth="1.2" className="eq-b"/>
             <SD eq={eqLive.funza} cx={80} cy={124}/>
             <text x="47" y="128" textAnchor="middle" fill="#8b5cf6" fontSize="6.5" fontFamily="monospace">D. FUNZA</text>
-            {eqLive.funza.cost && <text x="78" y="128" textAnchor="end" fill="#7ec8c8" fontSize="5" fontFamily="monospace" className="eq-cost-float">{eqLive.funza.cost}</text>}
+            {eqLive.funza.cost && <text x="78" y="140" textAnchor="end" fill="#7ec8c8" fontSize="5" fontFamily="monospace" className="eq-cost-float">{eqLive.funza.cost}</text>}
           </g>
-          <g className="eq-h eq-g d3" onDoubleClick={()=>openEquipRef.current('tintoreria')} onMouseEnter={()=>setTt({eq:eqLive.tintoreria,x:14,y:179,anchor:'left'})} onMouseLeave={hideTt}>
+          <g className="eq-h eq-g d3" onDoubleClick={()=>openEquipRef.current('tintoreria')} onMouseEnter={()=>setTt({eq:eqLive.tintoreria,x:14,y:179,anchor:'left',flipY:true})} onMouseLeave={hideTt}>
             <rect x="14" y="179" width="66" height="17" rx="3" fill="#071520" stroke="#f85149" strokeWidth="1.2" className="eq-b"/>
             <text x="47" y="191" textAnchor="middle" fill="#f85149" fontSize="6.5" fontFamily="monospace">D. TINTORERÍA</text>
-            {eqLive.tintoreria.cost && <text x="78" y="191" textAnchor="end" fill="#7ec8c8" fontSize="5" fontFamily="monospace" className="eq-cost-float">{eqLive.tintoreria.cost}</text>}
+            {eqLive.tintoreria.cost && <text x="78" y="174" textAnchor="end" fill="#7ec8c8" fontSize="5" fontFamily="monospace" className="eq-cost-float">{eqLive.tintoreria.cost}</text>}
           </g>
-          <g className="eq-h eq-g d4" onDoubleClick={()=>openEquipRef.current('lavanderia')} onMouseEnter={()=>setTt({eq:eqLive.lavanderia,x:14,y:200,anchor:'left'})} onMouseLeave={hideTt}>
+          <g className="eq-h eq-g d4" onDoubleClick={()=>openEquipRef.current('lavanderia')} onMouseEnter={()=>setTt({eq:eqLive.lavanderia,x:14,y:200,anchor:'left',flipY:true})} onMouseLeave={hideTt}>
             <rect x="14" y="200" width="66" height="17" rx="3" fill="#071520" stroke="#d29922" strokeWidth="1.2" className="eq-b"/>
             <text x="47" y="212" textAnchor="middle" fill="#d29922" fontSize="6.5" fontFamily="monospace">D. LAVANDERÍA</text>
-            {eqLive.lavanderia.cost && <text x="78" y="212" textAnchor="end" fill="#7ec8c8" fontSize="5" fontFamily="monospace" className="eq-cost-float">{eqLive.lavanderia.cost}</text>}
+            {eqLive.lavanderia.cost && <text x="78" y="225" textAnchor="end" fill="#7ec8c8" fontSize="5" fontFamily="monospace" className="eq-cost-float">{eqLive.lavanderia.cost}</text>}
           </g>
           <g className="eq-h eq-g d5" onDoubleClick={()=>openEquipRef.current('tk15m3')} onMouseEnter={()=>setTt({eq:eqLive.tk15m3,x:14,y:258,anchor:'left'})} onMouseLeave={hideTt}>
             <rect x="14" y="258" width="66" height="17" rx="3" fill="#071520" stroke="#d29922" strokeWidth="1" strokeDasharray="4 2" className="eq-b"/>
             <text x="47" y="270" textAnchor="middle" fill="#d2992290" fontSize="6.5" fontFamily="monospace">LAV. REMOTA</text>
-            {eqLive.tk15m3.cost && <text x="78" y="270" textAnchor="end" fill="#7ec8c8" fontSize="5" fontFamily="monospace" className="eq-cost-float">{eqLive.tk15m3.cost}</text>}
+            {eqLive.tk15m3.cost && <text x="78" y="283" textAnchor="end" fill="#7ec8c8" fontSize="5" fontFamily="monospace" className="eq-cost-float">{eqLive.tk15m3.cost}</text>}
           </g>
 
           {/* Input arrows A-E */}

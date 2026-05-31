@@ -4,7 +4,8 @@ from app.config import settings
 
 engine = create_async_engine(
     settings.database_url,
-    pool_pre_ping=True,
+    pool_pre_ping=False,   # SQLAlchemy wrapper no pasa reconnect= a aiomysql.ping()
+    pool_recycle=1800,     # reciclar conexiones cada 30 min (MySQL timeout = 8h, previene 'gone away')
     pool_size=10,
     max_overflow=20,
     echo=False,

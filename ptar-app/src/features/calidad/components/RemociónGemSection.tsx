@@ -54,14 +54,26 @@ function fmtFecha(raw:string):string {
   try { const [,m,d]=raw.split('-'); return `${d}/${m}`; } catch { return raw; }
 }
 
-interface Props { fechaInicio:string; fechaFin:string }
+interface Props {
+  fechaInicio: string;
+  fechaFin: string;
+  parametro?: string;
+  onParametroChange?: (p: string) => void;
+}
 
-export default function RemociónGemSection({fechaInicio,fechaFin}:Props) {
-  const [parametro, setParametro] = useState('');
+export default function RemociónGemSection({fechaInicio,fechaFin,parametro:paramProp,onParametroChange}:Props) {
+  const [parametroInterno, setParametroInterno] = useState('');
   const {data:allData, loading} = useRemociónGem('', fechaInicio, fechaFin);
 
   // Parámetros disponibles extraídos de los datos reales de la BD
   const parametros = useMemo(()=>[...new Set(allData.map(r=>r.parametro))].sort(),[allData]);
+
+  // Usar prop controlada si viene del padre, sino estado interno
+  const parametro = paramProp ?? parametroInterno;
+  const setParametro = (p: string) => {
+    setParametroInterno(p);
+    onParametroChange?.(p);
+  };
 
   // Seleccionar el primero disponible si no hay selección
   const param = parametro || parametros[0] || '';
