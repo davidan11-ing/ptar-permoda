@@ -7,10 +7,11 @@ export const ROUTES = {
   FORMATO_INCIDENCIAS: '/operario/formato/incidencias',
   FORMATO_CONDICIONES_OP: '/operario/formato/condiciones',
   // Encargado
-  ENCARGADO_DASHBOARD: '/encargado/dashboard',
-  ENCARGADO_CALIDAD:   '/encargado/calidad',
-  ENCARGADO_BALANCE:   '/encargado/balance',
-  ENCARGADO_COSTOS:    '/encargado/costos',
+  ENCARGADO_DASHBOARD:  '/encargado/dashboard',
+  ENCARGADO_CALIDAD:    '/encargado/calidad',
+  ENCARGADO_BALANCE:    '/encargado/balance',
+  ENCARGADO_COSTOS:     '/encargado/costos',
+  ENCARGADO_REGISTROS:  '/encargado/registros',
   // Administrador
   ADMIN_DASHBOARD: '/admin/dashboard',
 } as const;

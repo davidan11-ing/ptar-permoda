@@ -1,5 +1,5 @@
 .cal-page {
-  max-width: 1200px;
+  max-width: 100%;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -230,3 +230,10 @@
 }
 .cal-remocion-param { font-size: 11px; color: #8b949e; font-weight: 600; }
 .cal-remocion-pct   { font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* ── Pantallas grandes (1600px+) ── */
+@media (min-width: 1600px) {
+  .cal-filters { gap: 16px; }
+  .cal-kpi-row { grid-template-columns: repeat(4, 1fr); }
+  .dash-section { gap: 20px; }
+}

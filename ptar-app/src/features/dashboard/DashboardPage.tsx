@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import KpiGauge from './KpiGauge';
 import { KPI_METRICS } from './mockData';
 import { getReportePdfUrl, getReporteDashboardHtmlUrl } from '../../services/ptarClient';
 import { useAuth } from '../../state/AuthContext';
+import { ROUTES } from '../../lib/routes';
 
 interface Props { canEdit: boolean }
 
@@ -11,6 +13,7 @@ const CAUDAL_TARGET_M3 = 640; // m³ por turno — meta de diseño de la PTAR
 
 export default function DashboardPage({ canEdit }: Props) {
   const { currentUser } = useAuth();
+  const navigate = useNavigate();
   const [editMode, setEditMode] = useState(false);
   const [kpis, setKpis] = useState(KPI_METRICS);
 
@@ -83,6 +86,15 @@ export default function DashboardPage({ canEdit }: Props) {
           >
             ↓ PDF últimos 30 días
           </a>
+          {canEdit && (
+            <button
+              onClick={() => navigate(ROUTES.ENCARGADO_REGISTROS)}
+              style={{ background: '#21262d', color: '#8b949e', border: '1px solid #30363d',
+                padding: '6px 14px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+            >
+              📋 Registros Operarios
+            </button>
+          )}
           {canEdit && (
             <button
               className={`edit-toggle-btn ${editMode ? 'active' : ''}`}

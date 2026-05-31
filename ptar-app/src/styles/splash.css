@@ -1,5 +1,6 @@
 .splash-page{min-height:100vh;background:#060d14;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;overflow:hidden;position:relative;padding:10px 14px;}
+  align-items:center;justify-content:center;overflow:hidden;position:relative;
+  padding:clamp(6px,0.8vh,14px) clamp(8px,1vw,16px);}
 .splash-bg-grid{position:absolute;inset:0;
   background-image:linear-gradient(rgba(0,197,227,.02) 1px,transparent 1px),
   linear-gradient(90deg,rgba(0,197,227,.02) 1px,transparent 1px);
@@ -7,7 +8,7 @@
 .splash-bg-glow{position:absolute;width:800px;height:500px;border-radius:50%;
   background:radial-gradient(ellipse,rgba(0,120,212,.07) 0%,transparent 70%);
   top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;}
-.splash-inner{position:relative;width:100%;max-width:1560px;display:flex;
+.splash-inner{position:relative;width:100%;max-width:min(1900px,98vw);display:flex;
   flex-direction:column;align-items:center;gap:12px;}
 .splash-hdr{display:flex;align-items:center;gap:10px;animation:fdDown .8s ease both;}
 .s-logo{filter:drop-shadow(0 0 8px #00c5e3aa);}

@@ -35,7 +35,7 @@ export default function Navbar() {
 
   return (
     <header className="navbar">
-      <div className="navbar-brand">
+      <Link to="/" className="navbar-brand" style={{ textDecoration: 'none' }}>
         <div className="navbar-logo">
           <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
             <circle cx="14" cy="14" r="13" stroke="#00c5e3" strokeWidth="2"/>
@@ -45,7 +45,7 @@ export default function Navbar() {
           </svg>
         </div>
         <span className="navbar-title">PTAR <span className="navbar-subtitle">Sistema de Gestión</span></span>
-      </div>
+      </Link>
 
       <nav className="navbar-nav">
         {currentUser.activeRole === 'operario' && (

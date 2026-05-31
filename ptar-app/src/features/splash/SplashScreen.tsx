@@ -332,7 +332,7 @@ export default function SplashScreen() {
                 ))}
                 <circle cx="0" cy="-44" r="18" fill="#a0e0ff" opacity=".05" className="uv-l"/>
                 <text x="0" y="13" textAnchor="middle" fill="#3fb950" fontSize="6.5" fontWeight="700" fontFamily="monospace">FILT.C+O₃</text>
-                {eqLive.filtVert.cost && <text x="0" y="22" textAnchor="middle" fill="#7ec8c8" fontSize="5.5" fontFamily="monospace" className="eq-cost-float">{eqLive.filtVert.cost}</text>}
+                {eqLive.filtVert.cost && <text x="0" y="6" textAnchor="middle" fill="#7ec8c8" fontSize="5.5" fontFamily="monospace" className="eq-cost-float">{eqLive.filtVert.cost}</text>}
               </g>
 
               {/* Salida EFLUENTE */}
@@ -392,8 +392,8 @@ export default function SplashScreen() {
           <g className="eq-h eq-g d6" transform="translate(120,118)" onDoubleClick={()=>openEquipRef.current('tk2m3')} onMouseEnter={()=>setTt({eq:eqLive.tk2m3,x:120,y:118,flipY:true})} onMouseLeave={hideTt}>
             <SD eq={eqLive.tk2m3} cx={13} cy={-43}/>
             <Tk w={26} h={45} wp={0.60}/>
-            <text y="12" textAnchor="middle" fill="#00c5e3" fontSize="6" fontWeight="700" fontFamily="monospace">TK 2 m³</text>
-            {eqLive.tk2m3.cost && <text y="20" textAnchor="middle" fill="#7ec8c8" fontSize="5" fontFamily="monospace" className="eq-cost-float">{eqLive.tk2m3.cost}</text>}
+            <text y="9" textAnchor="middle" fill="#00c5e3" fontSize="6" fontWeight="700" fontFamily="monospace">TK 2 m³</text>
+            {eqLive.tk2m3.cost && <text y="16" textAnchor="middle" fill="#7ec8c8" fontSize="5" fontFamily="monospace" className="eq-cost-float">{eqLive.tk2m3.cost}</text>}
           </g>
           {/* TK 30m³ — el mayor de los tres (30 m³) */}
           <g className="eq-h eq-g d7" transform="translate(120,234)" onDoubleClick={()=>openEquipRef.current('tk30m3')} onMouseEnter={()=>setTt({eq:eqLive.tk30m3,x:120,y:234})} onMouseLeave={hideTt}>
@@ -691,15 +691,15 @@ export default function SplashScreen() {
             {[-30,-10,10,30].map(bx=>(
               <rect key={bx} x={bx-6} y="-4" width="12" height="4" rx="2" fill="#1a4060"/>
             ))}
-            <text y="13" textAnchor="middle" fill="#3fb950" fontSize="9" fontWeight="700" fontFamily="monospace">MBBR</text>
-            {eqLive.mbbr.cost && <text y="23" textAnchor="middle" fill="#7ec8c8" fontSize="7" fontFamily="monospace" className="eq-cost-float">{eqLive.mbbr.cost}</text>}
+            <text y="35" textAnchor="middle" fill="#3fb950" fontSize="9" fontWeight="700" fontFamily="monospace">MBBR</text>
+            {eqLive.mbbr.cost && <text y="-122" textAnchor="middle" fill="#7ec8c8" fontSize="7" fontFamily="monospace" className="eq-cost-float">{eqLive.mbbr.cost}</text>}
           </g>
 
           {/* Recirc: MBR T/K(1329) → ANÓXICO(1749) — path invertido → flowL muestra MBR→ANÓXICO */}
           <path d="M1749,169 C1749,85 1329,85 1329,113" fill="none" stroke="#8b5cf6"
             strokeWidth="1.8" opacity=".6" className="p-recirc"/>
           <polygon points="1745,165 1749,173 1753,165" fill="#8b5cf6" opacity=".6"/>
-          <text x="1539" y="80" textAnchor="middle" fill="#8b5cf650" fontSize="5.5" fontFamily="monospace">RECIRC. LODO BIO.</text>
+          <text x="1539" y="95" textAnchor="middle" fill="#8b5cf650" fontSize="5.5" fontFamily="monospace">RECIRC. LODO BIO.</text>
 
           {/* Sopladores → MBBR */}
           {[1495,1535,1575].map((sx,i)=>(
@@ -709,7 +709,7 @@ export default function SplashScreen() {
               <text x={sx} y="308" textAnchor="middle" fill="#3fb95070" fontSize="6.5" fontFamily="monospace">S</text>
             </g>
           ))}
-          <text x="1535" y="320" textAnchor="middle" fill="#3fb95040" fontSize="5.5" fontFamily="monospace">SOPLADORES</text>
+          <text x="1535" y="330" textAnchor="middle" fill="#3fb95040" fontSize="5.5" fontFamily="monospace">SOPLADORES</text>
 
           {/* Z: MBBR(1489) → junction(1420) */}
           <line x1="1489" y1="215" x2="1420" y2="215" stroke="#3fb950" strokeWidth="2" opacity=".85" className="p-bio"/>
@@ -988,7 +988,7 @@ export default function SplashScreen() {
           {/* ── AT: CAJA VERT(1060) → VERTIMIENTO ── */}
           <line x1="1088" y1={mYB} x2="1190" y2={mYB} stroke="#f85149" strokeWidth="1.8" opacity=".5" strokeDasharray="5 4" className="p-reject"/>
           <polygon points={`1186,${mYB-4} 1194,${mYB} 1186,${mYB+4}`} fill="#f85149" opacity=".6"/>
-          <text x="1139" y={mYB-5} textAnchor="middle" fill="#f8514950" fontSize="5.5" fontStyle="italic" fontFamily="monospace">AT → VERT.</text>
+          <text x="1139" y={mYB-5} textAnchor="middle" fill="#f8514950" fontSize="10" fontStyle="italic" fontFamily="monospace">AT → VERT.</text>
 
           {/* ── Overflow bypass: TK RECH RO1 → CAJA VERT ── */}
           <path d={`M530,${mYB} C530,${mYB+44} 1060,${mYB+44} 1060,${mYB}`}

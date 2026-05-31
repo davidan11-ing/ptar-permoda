@@ -36,7 +36,9 @@ function calcBins(values: number[]) {
     bins[idx].count++;
   }
 
-  return bins.filter(b => b.count > 0).map(b => ({
+  // Devolver los 5 rangos siempre (igual que el histograma)
+  // Los rangos con count=0 aparecen en la leyenda pero sin slice visible
+  return bins.map(b => ({
     ...b,
     pct: +((b.count / n) * 100).toFixed(1),
   }));

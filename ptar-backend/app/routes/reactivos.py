@@ -532,3 +532,65 @@ async def get_gem_eficiencia(
         ORDER BY fecha, turno
     """), {"fi": fecha_inicio, "ff": fecha_fin})).mappings().all()
     return [dict(r) for r in rows]
+
+
+# ── GET /edicion-gem — listado GEM para panel de revisión ────────────────────
+
+@router.get("/edicion-gem")
+async def get_edicion_gem(
+    fecha_inicio: str = Query(..., description="YYYY-MM-DD"),
+    fecha_fin:    str = Query(..., description="YYYY-MM-DD"),
+    limit:        int = Query(200, ge=1, le=1000),
+    offset:       int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db),
+):
+    rows = (await db.execute(text("""
+        SELECT id,
+               DATE_FORMAT(fecha, '%Y-%m-%d') AS fecha,
+               CASE turno WHEN 1 THEN 'mañana' WHEN 2 THEN 'tarde' WHEN 3 THEN 'noche' END AS turno,
+               turno AS turno_int,
+               COALESCE(caudal_total_tratado_gem_m3, 0) AS caudal_m3,
+               COALESCE(kg_acido,        0) AS kg_acido,
+               COALESCE(kg_coagulante,   0) AS kg_coagulante,
+               COALESCE(kg_decolorante,  0) AS kg_decolorante,
+               COALESCE(kg_pol_anionico, 0) AS kg_pol_anionico,
+               COALESCE(kg_pol_cationico,0) AS kg_pol_cationico,
+               COALESCE(costo_quimica_turno, 0) AS costo_quimica_turno,
+               pesos_por_m3
+        FROM operacion_gem_turno
+        WHERE fecha BETWEEN :fi AND :ff
+        ORDER BY fecha DESC, turno
+        LIMIT :limit OFFSET :offset
+    """), {"fi": fecha_inicio, "ff": fecha_fin, "limit": limit, "offset": offset})).mappings().all()
+    return [dict(r) for r in rows]
+
+
+# ── PUT /edicion-gem/{id} — actualizar fila de operacion_gem_turno ───────────
+
+from pydantic import BaseModel as _BM2
+
+class EdicionGemIn(_BM2):
+    caudal_total_tratado_gem_m3: float | None = None
+    kg_acido:         float | None = None
+    kg_coagulante:    float | None = None
+    kg_decolorante:   float | None = None
+    kg_pol_anionico:  float | None = None
+    kg_pol_cationico: float | None = None
+
+@router.put("/edicion-gem/{registro_id}")
+async def put_edicion_gem(
+    registro_id: int,
+    body: EdicionGemIn,
+    db: AsyncSession = Depends(get_db),
+):
+    updates = {k: v for k, v in body.model_dump().items() if v is not None}
+    if not updates:
+        return {"ok": True, "updated": 0}
+    set_clause = ", ".join(f"{k} = :{k}" for k in updates)
+    updates["id"] = registro_id
+    result = await db.execute(
+        text(f"UPDATE operacion_gem_turno SET {set_clause} WHERE id = :id"),
+        updates,
+    )
+    await db.commit()
+    return {"ok": True, "updated": result.rowcount}

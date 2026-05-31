@@ -14,7 +14,12 @@ input, select, textarea { font-family: inherit; }
 
 /* ─── App Shell ─── */
 .app-shell { display: flex; flex-direction: column; min-height: 100vh; }
-.main-content { flex: 1; padding: 24px; overflow-y: auto; max-width: 1400px; margin: 0 auto; width: 100%; }
+.main-content {
+  flex: 1;
+  padding: 16px 20px;
+  overflow-y: auto;
+  width: 100%;
+}
 
 /* ─── Page loading ─── */
 .page-loading { display: flex; align-items: center; justify-content: center; height: 100vh; }
@@ -30,7 +35,7 @@ input, select, textarea { font-family: inherit; }
 /* ─── Navbar ─── */
 .navbar {
   display: flex; align-items: center; gap: 16px;
-  height: 56px; padding: 0 20px;
+  height: 56px; padding: 0 clamp(16px, 2vw, 36px);
   background: #161b22;
   border-bottom: 1px solid #30363d;
   position: sticky; top: 0; z-index: 100;
@@ -146,7 +151,7 @@ input, select, textarea { font-family: inherit; }
 .login-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
 /* ─── Dashboard ─── */
-.dashboard { display: flex; flex-direction: column; gap: 20px; }
+.dashboard { width: 100%; display: flex; flex-direction: column; gap: 20px; }
 .dash-header {
   display: flex; align-items: center; justify-content: space-between;
   background: #161b22; border: 1px solid #30363d; border-radius: 10px;
@@ -178,6 +183,10 @@ input, select, textarea { font-family: inherit; }
 .dash-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 20px; }
 .dash-row-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 @media (max-width: 900px) { .dash-row-2col { grid-template-columns: 1fr; } }
+@media (min-width: 1600px) {
+  .dash-card { padding: clamp(16px, 1.5vw, 28px); }
+  .dash-row-2col { gap: clamp(16px, 1.5vw, 28px); }
+}
 
 /* KPI Gauges */
 .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
@@ -485,12 +494,14 @@ select.form-input { cursor: pointer; }
 
 /* ── Página principal ── */
 .cal-page {
-  max-width: 1200px;
-  margin: 0 auto;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
   display: flex;
   flex-direction: column;
   gap: 24px;
 }
+.dash-section { width: 100%; }
 
 /* ── Encabezado ── */
 .cal-header { margin-bottom: 4px; }

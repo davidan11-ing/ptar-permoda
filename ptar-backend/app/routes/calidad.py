@@ -509,3 +509,76 @@ async def get_mbr_eficiencia(
         ORDER BY mc.fecha, mc.turno
     """), {"fi": fecha_inicio, "ff": fecha_fin})).mappings().all()
     return [dict(r) for r in rows]
+
+
+# ── GET /edicion — listado para panel de revisión/edición ────────────────────
+
+@router.get("/edicion")
+async def get_edicion(
+    fecha_inicio: str = Query(..., description="YYYY-MM-DD"),
+    fecha_fin:    str = Query(..., description="YYYY-MM-DD"),
+    turno:        int | None = Query(None, ge=1, le=3),
+    limit:        int = Query(500, ge=1, le=2000),
+    offset:       int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db),
+):
+    """Lista registros de medicion_calidad para el panel de edición del encargado."""
+    filters = ["mc.fecha BETWEEN :fi AND :ff"]
+    params: dict = {"fi": fecha_inicio, "ff": fecha_fin, "limit": limit, "offset": offset}
+    if turno is not None:
+        filters.append("mc.turno = :turno")
+        params["turno"] = turno
+    where = "WHERE " + " AND ".join(filters)
+    rows = (await db.execute(text(f"""
+        SELECT
+            mc.id,
+            DATE_FORMAT(mc.fecha, '%Y-%m-%d') AS fecha,
+            CASE mc.turno WHEN 1 THEN 'mañana' WHEN 2 THEN 'tarde' WHEN 3 THEN 'noche' END AS turno,
+            mc.turno AS turno_int,
+            p.nombre  AS parametro,
+            u.nombre  AS unidad_tratamiento,
+            mc.valor,
+            mc.no_aplica,
+            mc.observacion,
+            mc.usuario
+        FROM medicion_calidad mc
+        JOIN parametro_calidad  p ON p.id = mc.parametro_id
+        JOIN unidad_tratamiento u ON u.id = mc.unidad_id
+        {where}
+        ORDER BY mc.fecha DESC, mc.turno, p.nombre, u.nombre
+        LIMIT :limit OFFSET :offset
+    """), params)).mappings().all()
+    return [dict(r) for r in rows]
+
+
+# ── PUT /edicion/{id} — actualizar un registro de medicion_calidad ───────────
+
+from pydantic import BaseModel as _BM
+
+class EdicionCalidadIn(_BM):
+    valor:       float | None = None
+    no_aplica:   bool  | None = None
+    observacion: str   | None = None
+
+@router.put("/edicion/{registro_id}")
+async def put_edicion(
+    registro_id: int,
+    body: EdicionCalidadIn,
+    db: AsyncSession = Depends(get_db),
+):
+    """Actualiza valor, no_aplica u observacion de un registro de medicion_calidad."""
+    updates = {}
+    if body.valor       is not None: updates["valor"]       = body.valor
+    if body.no_aplica   is not None: updates["no_aplica"]   = int(body.no_aplica)
+    if body.observacion is not None: updates["observacion"] = body.observacion
+    if not updates:
+        return {"ok": True, "updated": 0}
+
+    set_clause = ", ".join(f"{k} = :{k}" for k in updates)
+    updates["id"] = registro_id
+    result = await db.execute(
+        text(f"UPDATE medicion_calidad SET {set_clause} WHERE id = :id"),
+        updates,
+    )
+    await db.commit()
+    return {"ok": True, "updated": result.rowcount}

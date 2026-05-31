@@ -84,3 +84,9 @@
 .dash-section-divider::after {
   content: ''; flex: 1; height: 1px; background: #21262d;
 }
+
+/* ── Pantallas grandes (1600px+) ── */
+@media (min-width: 1600px) {
+  .dash-card { padding: clamp(16px, 1.5vw, 28px); }
+  .dash-row-2col { gap: clamp(16px, 1.5vw, 28px); }
+}

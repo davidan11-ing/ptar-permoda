@@ -344,3 +344,68 @@ async def get_resumen_balance(
         ORDER BY total_m3 DESC
     """), {"fi": fecha_inicio, "ff": fecha_fin})).mappings().all()
     return [ResumenBalance(**dict(r)) for r in rows]
+
+
+# ── GET /edicion — listado de contadores_lectura (sin columna usuario) ────────
+
+@router.get("/edicion")
+async def get_edicion_caudales(
+    fecha_inicio: str = Query(..., description="YYYY-MM-DD"),
+    fecha_fin:    str = Query(..., description="YYYY-MM-DD"),
+    limit:        int = Query(200, ge=1, le=1000),
+    offset:       int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db),
+):
+    rows = (await db.execute(text("""
+        SELECT id,
+               DATE_FORMAT(fecha, '%Y-%m-%d') AS fecha,
+               CASE turno WHEN 1 THEN 'mañana' WHEN 2 THEN 'tarde' WHEN 3 THEN 'noche' END AS turno,
+               turno AS turno_int,
+               hora_lectura,
+               tanque_reuso_2in, ptar, envio_th,
+               entrada_ro1, salida_ro1, entrada_ro2, salida_ro2,
+               mbr1, mbr2, ingreso_uf_ptap, salida_uf_ptap,
+               medidor_verde_retorno
+        FROM contadores_lectura
+        WHERE fecha BETWEEN :fi AND :ff
+        ORDER BY fecha DESC, turno
+        LIMIT :limit OFFSET :offset
+    """), {"fi": fecha_inicio, "ff": fecha_fin, "limit": limit, "offset": offset})).mappings().all()
+    return [dict(r) for r in rows]
+
+
+# ── PUT /edicion/{id} — actualizar fila de contadores_lectura ────────────────
+
+from pydantic import BaseModel as _BM3
+
+class EdicionCaudalesIn(_BM3):
+    tanque_reuso_2in:     int | None = None
+    ptar:                 int | None = None
+    envio_th:             int | None = None
+    entrada_ro1:          int | None = None
+    salida_ro1:           int | None = None
+    entrada_ro2:          int | None = None
+    salida_ro2:           int | None = None
+    mbr1:                 int | None = None
+    mbr2:                 int | None = None
+    ingreso_uf_ptap:      int | None = None
+    salida_uf_ptap:       int | None = None
+    medidor_verde_retorno: int | None = None
+
+@router.put("/edicion/{registro_id}")
+async def put_edicion_caudales(
+    registro_id: int,
+    body: EdicionCaudalesIn,
+    db: AsyncSession = Depends(get_db),
+):
+    updates = {k: v for k, v in body.model_dump().items() if v is not None}
+    if not updates:
+        return {"ok": True, "updated": 0}
+    set_clause = ", ".join(f"{k} = :{k}" for k in updates)
+    updates["id"] = registro_id
+    result = await db.execute(
+        text(f"UPDATE contadores_lectura SET {set_clause}, actualizado_en = CURRENT_TIMESTAMP WHERE id = :id"),
+        updates,
+    )
+    await db.commit()
+    return {"ok": True, "updated": result.rowcount}
