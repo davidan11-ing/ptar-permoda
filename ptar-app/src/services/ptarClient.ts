@@ -6,10 +6,21 @@
 // En desarrollo, VITE_API_URL=http://localhost:8001 desde .env.development.
 const API = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
 
+export const TOKEN_KEY = 'ptar_access_token';
+
+function getAuthHeaders(): Record<string, string> {
+  const token = localStorage.getItem(TOKEN_KEY);
+  return token ? { 'Authorization': `Bearer ${token}` } : {};
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API}${path}`, {
     ...init,
-    headers: { 'Content-Type': 'application/json', ...init?.headers },
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
+      ...init?.headers,
+    },
   });
   if (!res.ok) {
     const body = await res.text().catch(() => '');

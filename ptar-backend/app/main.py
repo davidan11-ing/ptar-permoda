@@ -1,9 +1,12 @@
 import os
 from pathlib import Path
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 from app.config import settings
 from app.routes import auth, caudales, reactivos, calidad, dashboard, reportes, equipos
 
@@ -11,18 +14,27 @@ from app.routes import auth, caudales, reactivos, calidad, dashboard, reportes, 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DIST_DIR = BASE_DIR / "dist"
 
+# ── Rate limiter ──────────────────────────────────────────────────────────────
+limiter = Limiter(key_func=get_remote_address)
+
 app = FastAPI(
     title="PTAR Permoda API",
     description="Backend REST para la app de gestión de la Planta de Tratamiento de Aguas Residuales",
     version="1.0.0",
 )
 
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# ── CORS restrictivo ──────────────────────────────────────────────────────────
+_allowed_origins = [o.strip() for o in settings.CORS_ORIGIN.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.CORS_ORIGIN, "http://localhost:5174"],
+    allow_origins=_allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 app.include_router(auth.router,      prefix="/api/auth",      tags=["auth"])

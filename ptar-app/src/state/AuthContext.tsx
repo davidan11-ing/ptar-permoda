@@ -1,13 +1,6 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
 import type { AppUser, Role } from '../models';
-
-const MOCK_USERS: AppUser[] = [
-  { id: 'op1', nombre: 'Carlos Mendoza', roles: ['operario'], activeRole: 'operario' },
-  { id: 'op2', nombre: 'Ana Suárez', roles: ['operario'], activeRole: 'operario' },
-  { id: 'enc1', nombre: 'Jorge Rivera', roles: ['encargado'], activeRole: 'encargado' },
-  { id: 'adm1', nombre: 'Laura Gómez', roles: ['administrador'], activeRole: 'administrador' },
-  { id: 'multi1', nombre: 'Director PTAR', roles: ['encargado', 'administrador'], activeRole: 'encargado' },
-];
+import { TOKEN_KEY } from '../services/ptarClient';
 
 // Lista de operarios disponibles para el checklist de equipo en turno
 export const OPERARIOS_LISTA = [
@@ -20,10 +13,18 @@ export const OPERARIOS_LISTA = [
 ];
 
 const SESSION_KEY = 'ptar_session';
+const API = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
+
+// ── Mapa email → perfil de usuario (para la UI de selección de rol) ──────────
+export const USERS_BY_EMAIL: Record<string, { nombre: string; role: Role }> = {
+  'operario@permoda.com.co':  { nombre: 'Operario',  role: 'operario'      },
+  'encargado@permoda.com.co': { nombre: 'Encargado', role: 'encargado'     },
+  'davidan@permoda.com.co':   { nombre: 'David',     role: 'administrador' },
+};
 
 interface AuthContextValue {
   currentUser: AppUser | null;
-  login: (userId: string, equipo?: string[]) => boolean;
+  loginWithCredentials: (email: string, password: string, equipo?: string[]) => Promise<boolean>;
   selectRole: (role: Role) => void;
   logout: () => void;
 }
@@ -34,7 +35,11 @@ function loadSession(): AppUser | null {
   try {
     const raw = localStorage.getItem(SESSION_KEY);
     if (!raw) return null;
-    return JSON.parse(raw) as AppUser;
+    const user = JSON.parse(raw) as AppUser;
+    // Verificar que el token sigue en localStorage (no expirado localmente)
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) return null;
+    return user;
   } catch {
     return null;
   }
@@ -43,18 +48,39 @@ function loadSession(): AppUser | null {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<AppUser | null>(loadSession);
 
-  const login = useCallback((userId: string, equipo?: string[]): boolean => {
-    const user = MOCK_USERS.find(u => u.id === userId);
-    if (!user) return false;
-    const session: AppUser = {
-      ...user,
-      activeRole: user.roles[0],
-      equipo: equipo ?? [user.nombre],
-    };
-    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-    setCurrentUser(session);
-    return true;
-  }, []);
+  // ── Login real con email + contraseña ───────────────────────────────────────
+  const loginWithCredentials = useCallback(
+    async (email: string, password: string, equipo?: string[]): Promise<boolean> => {
+      try {
+        const res = await fetch(`${API}/api/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+        if (!res.ok) return false;
+
+        const data = await res.json();
+
+        // Guardar JWT
+        localStorage.setItem(TOKEN_KEY, data.access_token);
+
+        // Construir sesión del usuario
+        const session: AppUser = {
+          id: data.id,
+          nombre: data.nombre,
+          roles: [data.role as Role],
+          activeRole: data.role as Role,
+          equipo: equipo ?? [data.nombre],
+        };
+        localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+        setCurrentUser(session);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [],
+  );
 
   const selectRole = useCallback((role: Role) => {
     setCurrentUser(prev => {
@@ -67,11 +93,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     localStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem(TOKEN_KEY);
     setCurrentUser(null);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ currentUser, login, selectRole, logout }}>
+    <AuthContext.Provider value={{ currentUser, loginWithCredentials, selectRole, logout }}>
       {children}
     </AuthContext.Provider>
   );
@@ -83,4 +110,11 @@ export function useAuth() {
   return ctx;
 }
 
-export { MOCK_USERS };
+// Mantener compatibilidad: exportar lista de usuarios para la UI de login
+export const MOCK_USERS = Object.entries(USERS_BY_EMAIL).map(([email, u]) => ({
+  id: email,
+  nombre: u.nombre,
+  roles: [u.role] as Role[],
+  activeRole: u.role,
+  email,
+}));

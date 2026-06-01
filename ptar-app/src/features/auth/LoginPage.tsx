@@ -39,24 +39,42 @@ const ROLE_DESCS = {
 export default function LoginPage() {
   const [selected, setSelected] = useState<AppUser | null>(null);
   const [equipoChecked, setEquipoChecked] = useState<string[]>([]);
-  const [step, setStep] = useState<'select' | 'equipo'>('select');
-  const { login } = useAuth();
+  const [step, setStep] = useState<'select' | 'password' | 'equipo'>('select');
+  const [password, setPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [loggingIn, setLoggingIn] = useState(false);
+  const { loginWithCredentials } = useAuth();
   const navigate = useNavigate();
 
   const isOperario = selected?.roles[0] === 'operario';
 
   const handleSelectUser = (user: AppUser) => {
     setSelected(user);
-    // Resetear selección de equipo cuando cambia el usuario
     setEquipoChecked([]);
+    setLoginError('');
+    setPassword('');
   };
 
   const handleNext = () => {
     if (!selected) return;
+    setStep('password');
+  };
+
+  const handlePasswordSubmit = async () => {
+    if (!selected || !password) return;
+    setLoggingIn(true);
+    setLoginError('');
+    // selected.id es el email (ver MOCK_USERS en AuthContext)
+    const ok = await loginWithCredentials(selected.id, password, [selected.nombre]);
+    setLoggingIn(false);
+    if (!ok) {
+      setLoginError('Contraseña incorrecta. Inténtalo de nuevo.');
+      return;
+    }
     if (isOperario) {
       setStep('equipo');
     } else {
-      doLogin([]);
+      navigate(ROLE_HOME[selected.roles[0]]);
     }
   };
 
@@ -66,10 +84,10 @@ export default function LoginPage() {
     );
   };
 
-  const doLogin = (equipo: string[]) => {
+  const doLogin = async (equipo: string[]) => {
     if (!selected) return;
     const equipoCompleto = [selected.nombre, ...equipo.filter(n => n !== selected.nombre)];
-    const ok = login(selected.id, equipoCompleto);
+    const ok = await loginWithCredentials(selected.id, password, equipoCompleto);
     if (ok) navigate(ROLE_HOME[selected.roles[0]]);
   };
 
@@ -79,7 +97,76 @@ export default function LoginPage() {
     { role: 'administrador' as const, users: MOCK_USERS.filter(u => u.roles.includes('administrador') && u.roles.length === 1) },
   ];
 
-  // ── Paso 2: Selección de equipo ─────────────────────────────────────────────
+  // ── Paso 2: Contraseña ────────────────────────────────────────────────────────
+  if (step === 'password' && selected) {
+    return (
+      <div className="login-page">
+        <div className="login-bg" />
+        <div className="login-container">
+          <div className="login-header">
+            <div className="login-logo">
+              <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+                <circle cx="28" cy="28" r="27" stroke="#00c5e3" strokeWidth="2"/>
+                <path d="M14 32c4-8 10-12 14-12s10 4 14 12" stroke="#00c5e3" strokeWidth="2.5" strokeLinecap="round"/>
+                <path d="M28 20v8" stroke="#00c5e3" strokeWidth="2.5" strokeLinecap="round"/>
+                <circle cx="28" cy="34" r="3.5" fill="#00c5e3"/>
+              </svg>
+            </div>
+            <h1 className="login-title">Verificación</h1>
+            <p className="login-subtitle">Ingresa tu contraseña para continuar</p>
+          </div>
+
+          <div className="login-body">
+            <div style={{ textAlign: 'center', marginBottom: 20 }}>
+              <div className="user-item selected" style={{ cursor: 'default', justifyContent: 'center', gap: 12 }}>
+                <div className="user-avatar">{selected.nombre.charAt(0)}</div>
+                <span style={{ fontWeight: 600 }}>{selected.nombre}</span>
+                <span style={{ fontSize: 11, color: '#8b949e' }}>({ROLE_LABELS[selected.roles[0]]})</span>
+              </div>
+            </div>
+
+            <div style={{ marginBottom: loginError ? 8 : 0 }}>
+              <input
+                type="password"
+                placeholder="Contraseña"
+                value={password}
+                onChange={e => { setPassword(e.target.value); setLoginError(''); }}
+                onKeyDown={e => e.key === 'Enter' && handlePasswordSubmit()}
+                autoFocus
+                style={{
+                  width: '100%', padding: '12px 14px', fontSize: 14,
+                  background: '#0d1117', border: `1px solid ${loginError ? '#f85149' : '#30363d'}`,
+                  borderRadius: 8, color: '#e6edf3', outline: 'none',
+                }}
+              />
+            </div>
+            {loginError && (
+              <p style={{ color: '#f85149', fontSize: 12, marginBottom: 8 }}>{loginError}</p>
+            )}
+          </div>
+
+          <div className="login-footer" style={{ display: 'flex', gap: 10 }}>
+            <button
+              className="login-btn"
+              style={{ background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-muted)', flex: 0 }}
+              onClick={() => { setStep('select'); setPassword(''); setLoginError(''); }}
+            >
+              ← Volver
+            </button>
+            <button
+              className="login-btn"
+              disabled={!password || loggingIn}
+              onClick={handlePasswordSubmit}
+            >
+              {loggingIn ? 'Verificando...' : 'Ingresar →'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Paso 3: Selección de equipo ─────────────────────────────────────────────
   if (step === 'equipo' && selected) {
     const otrosOperarios = OPERARIOS_LISTA.filter(n => n !== selected.nombre);
     return (
@@ -156,7 +243,7 @@ export default function LoginPage() {
             </button>
             <button
               className="login-btn"
-              onClick={() => doLogin(equipoChecked)}
+              onClick={() => void doLogin(equipoChecked)}
             >
               {equipoChecked.length > 0
                 ? `Ingresar con equipo de ${1 + equipoChecked.length}`
