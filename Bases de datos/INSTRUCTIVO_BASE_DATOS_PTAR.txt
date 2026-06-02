@@ -1,0 +1,213 @@
+﻿# BASE DE DATOS PTAR PERMODA — INSTRUCTIVO COMPLETO
+# Generado: 02/06/2026 07:16
+# Base de datos: ptar_permoda | Host: localhost:3306
+
+================================================================================
+1. ARQUITECTURA GENERAL
+================================================================================
+
+La BD tiene 3 capas:
+
+  CAPA 1 — CATÁLOGOS (datos fijos de referencia)
+  CAPA 2 — TABLAS DE HECHOS (registros operativos con fecha y turno)
+  CAPA 3 — VISTAS (cálculos automáticos que unen las tablas)
+
+Los formularios de la app escriben en CAPA 2.
+Los gráficos del dashboard leen de CAPA 3 (vistas) o CAPA 2 directamente.
+
+================================================================================
+2. CATÁLOGOS (CAPA 1)
+================================================================================
+
+TABLA               REGISTROS  DESCRIPCION
+parametro_calidad      21       Lista de 21 parámetros: Temperatura, pH, DQO, TDS, SST...
+unidad_tratamiento     15       Unidades del tren: Tanque Pulmon, GEM Salida, MBR1...
+producto_quimico       16       Químicos GEM y RO con precio y densidad
+ptar_users              3       Usuarios del sistema con roles (operario/encargado/admin)
+
+NOMENCLATURA DE TURNOS:
+  turno 1 = Noche    (10pm - 6am)
+  turno 2 = Mañana   (6am  - 2pm)
+  turno 3 = Tarde    (2pm  - 10pm)
+
+================================================================================
+3. TABLAS DE HECHOS (CAPA 2)
+================================================================================
+
+--- CALIDAD DE AGUA ---
+
+TABLA: medicion_calidad
+  Registros: 14.182
+  Período:   2026-01-02 → 2026-05-26
+  Llave única: (fecha, turno, parametro_id, unidad_id)
+  Campos clave:
+    fecha, turno (1/2/3), parametro_id → FK parametro_calidad
+    unidad_id → FK unidad_tratamiento, valor DECIMAL(18,6)
+    usuario, metodo, no_aplica, created_at, updated_at
+  Fuentes de carga:
+    - Formulario app (POST /api/calidad/batch) → usuario = nombre del operario
+    - Loader Excel    (scripts/loaders/load_calidad_excel.py) → usuario = 'loader_excel'
+
+--- CAUDALES / BALANCE HÍDRICO ---
+
+TABLA: contadores_lectura
+  Registros: 452
+  Período:   2026-01-01 → 2026-06-01
+  Llave única: (fecha, turno)
+  Campos clave:
+    ptar, envio_th, entrada_ro1, salida_ro1, mbr1, mbr2
+    ingreso_uf_ptap, salida_uf_ptap, medidor_verde_retorno
+    entrada_ap_principal_6in (C-01), entrada_ap_fria_lavanderia_4in (C-02) ...
+    actualizado_en, usuario
+  Descripción: Lecturas RAW acumuladas de cada medidor (m³ totales del contador)
+  Formulario app: POST /api/caudales/batch
+  ⚠️ Importante: guarda lecturas ACUMULADAS, no consumos
+
+TABLA: consumo_turno
+  Registros: 430
+  Período:   2026-01-01 → 2026-06-01
+  Llave única: (fecha, turno)
+  Campos clave:
+    cons_envio_th, cons_entrada_ro1 (en litros → la vista /1000 = m³)
+    cons_lavanderia_m3, cons_entrada_ap_rotativa_3in
+    cons_mbr1, cons_mbr2, cons_ingreso_uf_ptap
+    rollover_detectado (1 si el medidor dio vuelta)
+  Descripción: Consumos calculados por turno (delta entre lecturas)
+  Fuente: Loader Excel DASHBOARD BALANCE HIDRICO → hoja BASE DE DATOS
+
+TABLA: balance_hidrico_manual
+  Registros: 430
+  Período:   2026-01-01 → 2026-06-01
+  Llave única: (fecha, turno)
+  Campos clave:
+    carrotanques_m3, mulas_funza_m3 (agua de camiones cisterna)
+    kg_tela, und_efectivas, m_tela (producción textil)
+  Descripción: 5 datos manuales que se digitan aparte (no vienen de medidores)
+  Fuente: Loader Excel DASHBOARD BALANCE HIDRICO
+
+--- REACTIVOS QUÍMICOS ---
+
+TABLA: operacion_gem_turno
+  Registros: 453
+  Período:   2026-01-01 → 2026-05-31
+  Llave única: (fecha, turno)
+  Campos clave:
+    caudal_total_tratado_gem_m3  (volumen tratado en el turno)
+    consumo_acido_l, consumo_coagulante_l, consumo_decolorante_l
+    consumo_pol_anionico_kg, consumo_pol_cationico_kg
+    kg_acido, kg_coagulante, kg_decolorante, kg_pol_anionico, kg_pol_cationico
+    ppm_acido, ppm_coagulante, ppm_decolorante, ppm_pol_anionico, ppm_pol_cationico
+    costo_op_acido ... costo_op_cationico, costo_quimica_turno
+    pesos_por_m3  (costo por m³ tratado = costo_quimica_turno / caudal)
+  Fuentes:
+    - Loader Excel FORMATO BITÁCORA OPERACIÓN / DASHBOARD COSTOS
+    - Formulario app (POST /api/reactivos/batch)
+
+TABLA: operacion_ro_turno
+  Registros: 270
+  Período:   2026-01-01 → 2026-03-31
+  Similar a operacion_gem_turno pero para el sistema de Ósmosis Inversa (RO)
+  Químicos: HCl, Bisulfito, Vitec, NaOH, etc.
+
+--- PROYECCIONES (Plan Maestro) ---
+
+TABLA: proyeccion_caudal_mensual
+  Registros: 24
+  Campos: anio, mes, sistema (GEM_RO/PTAP), caudal_m3_proyectado
+
+TABLA: proyeccion_quimica_mensual
+  Registros: 252
+  Campos: anio, mes, producto_id, kg_proyectado, costo_proyectado, dosificacion_kg_m3
+
+================================================================================
+4. VISTAS (CAPA 3) — Qué gráfico las usa
+================================================================================
+
+VISTA                        TABLAS QUE UNE                   GRÁFICO EN LA APP
+------------------------------------------------------------------------------------
+v_balance_hidrico            consumo_turno                     Dashboard Balance Hídrico
+                             + balance_hidrico_manual           (KPIs, tendencias)
+                             + operacion_gem_turno
+
+v_tabla_datos_1              medicion_calidad                  Tabla pivot de calidad
+                             + parametro_calidad               (fecha × turno × 15 unidades)
+                             + unidad_tratamiento
+
+v_calidad_remociones         medicion_calidad (pivot)          Gráfico REMOCIÓN GEM
+                             + parametro_calidad               % remoción por etapa
+                             + unidad_tratamiento
+
+v_calidad_estadisticas       medicion_calidad (agregado)       Estadísticas min/max/avg
+                             + parametro_calidad               por mes y unidad
+                             + unidad_tratamiento
+
+v_consumo_quimico_diario     operacion_gem_turno               Reactivos por día
+                             + operacion_ro_turno
+                             + producto_quimico
+
+v_consumo_quimico_mensual    (mismas tablas)                   Reactivos por mes
+                             agregado mensual
+
+v_quimico_real_vs_proyectado v_consumo_quimico_mensual         Gráfico Real vs Plan Maestro
+                             + proyeccion_quimica_mensual
+                             + proyeccion_caudal_mensual
+
+v_quimico_estadisticas_dia   operacion_gem/ro_turno            Min/Max/Avg reactivos
+                             + producto_quimico
+
+================================================================================
+5. FLUJO COMPLETO POR FORMULARIO DE LA APP
+================================================================================
+
+FORMULARIO              ENDPOINT                TABLA DESTINO
+-------------------------------------------------------------------
+Registro de Calidad     POST /api/calidad/batch medicion_calidad
+Registro de Contadores  POST /api/caudales/batch contadores_lectura
+Reactivos GEM           POST /api/reactivos/batch operacion_gem_turno
+Reactivos RO            POST /api/reactivos/batch operacion_ro_turno
+
+LECTURA ANTERIOR del formulario de contadores:
+  GET /api/caudales/ultimas-lecturas
+  → Lee de contadores_lectura (lecturas RAW del medidor acumuladas)
+  → Devuelve el último registro por (fecha, turno)
+
+================================================================================
+6. LOADERS EXCEL (carga masiva histórica)
+================================================================================
+
+SCRIPT                          EXCEL FUENTE                    TABLA DESTINO
+---------------------------------------------------------------------------------------------------
+load_calidad_excel.py           DASHBOARD CALIDAD AGUA *.xlsm   medicion_calidad
+                                hoja: BITÁCORA CALIDAD DE AGUA
+load_gem_excel.py               FORMATO BITÁCORA / DASHBOARD     operacion_gem_turno
+                                hoja: INVENTARIO Y CONSUMO GEM
+load_balance_hidrico_excel.py   DASHBOARD BALANCE HIDRICO        consumo_turno
+                                hoja: BASE DE DATOS              balance_hidrico_manual
+
+IMPORTANTE: Los loaders NO cargan fechas futuras (filtro fecha <= hoy)
+IMPORTANTE: Usan usuario='loader_excel' → se pueden identificar y recargar
+
+================================================================================
+7. CÓMO SUBIR LA BD A OTRO SERVIDOR
+================================================================================
+
+PASO 1 — En el servidor ORIGEN (este equipo), ejecutar el dump:
+  mysqldump -h 127.0.0.1 -u root -p ptar_permoda > ptar_permoda_dump.sql
+
+PASO 2 — En el servidor DESTINO, crear la base de datos:
+  mysql -h [HOST_DESTINO] -u [USUARIO] -p -e "CREATE DATABASE ptar_permoda CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+
+PASO 3 — Importar el dump:
+  mysql -h [HOST_DESTINO] -u [USUARIO] -p ptar_permoda < ptar_permoda_dump.sql
+
+PASO 4 — Verificar:
+  mysql -h [HOST_DESTINO] -u [USUARIO] -p ptar_permoda -e "
+    SELECT TABLE_NAME, TABLE_ROWS FROM information_schema.TABLES
+    WHERE TABLE_SCHEMA='ptar_permoda' AND TABLE_TYPE='BASE TABLE'
+    ORDER BY TABLE_NAME;"
+
+El archivo dump generado está en:
+  
+  Tamaño: 2.18 MB
+
+================================================================================
