@@ -53,11 +53,11 @@ export const EQ: Record<string, EqDef> = {
   /* FASE PRIMARIA */
   cribRot:     { id:'cribRot', label:'Criba Rotativa',              status:'operando',
     description:'Criba rotativa fina con malla de 1 mm que retiene sólidos gruesos y fibras textiles del efluente crudo. El tambor giratorio conduce los sólidos capturados hacia una tolva de descarga mientras el líquido filtrado continúa al siguiente cribado. Es la primera barrera de separación sólido-líquido del sistema de pretratamiento.',
-    params:[['Apertura','2 mm'],['Velocidad','4 rpm'],['Captura','35 kg/d']],
+    params:[['Apertura','1 mm'],['Velocidad','4 rpm'],['Captura','35 kg/d']],
     vb:'262 105 180 170', chartParam:2, cost:'$2.158 COP/m³', costRange:'$2.000 – $2.300' },
   vibrat1:     { id:'vib1',    label:'Criba Vibratoria 1 (M1)',     status:'operando',
     description:'Primera criba vibratoria con apertura de 0.25 mm. Separa partículas finas y fibras textiles submilimétricas mediante vibración mecánica. Opera en paralelo con la segunda criba vibratoria para garantizar continuidad operativa si una requiere mantenimiento. La malla es un consumible crítico con duración aproximada de 2 meses, requiriendo reemplazo programado para mantener la eficiencia del cribado.',
-    params:[['Apertura','0.5 mm'],['Frecuencia','50 Hz'],['Potencia','2.2 kW']],
+    params:[['Apertura','0.25 mm'],['Frecuencia','50 Hz'],['Potencia','2.2 kW']],
     vb:'370 72 175 168', chartParam:1, cost:'$340k COP/m³' },
   vibrat2:     { id:'vib2',    label:'Criba Vibratoria 2 (M2)',     status:'operando',
     description:'Segunda criba vibratoria con apertura de 0.25 mm. Separa partículas finas y fibras textiles submilimétricas mediante vibración mecánica. Opera en paralelo con la primera criba vibratoria para garantizar continuidad operativa si una requiere mantenimiento. La malla es un consumible crítico con duración aproximada de 2 meses, requiriendo reemplazo programado para mantener la eficiencia del cribado.',
