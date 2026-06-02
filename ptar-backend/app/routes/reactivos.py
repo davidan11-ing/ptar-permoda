@@ -180,7 +180,7 @@ async def get_ultimo_nivel(
         row = (await db.execute(text(f"""
             SELECT {col_final} AS nivel_final,
                    DATE_FORMAT(fecha, '%Y-%m-%d') AS fecha,
-                   CASE turno WHEN 1 THEN 'mañana' WHEN 2 THEN 'tarde' WHEN 3 THEN 'noche' ELSE NULL END AS turno
+                   CASE turno WHEN 1 THEN 'noche' WHEN 2 THEN 'mañana' WHEN 3 THEN 'tarde' ELSE NULL END AS turno
             FROM {tabla}
             WHERE {col_final} IS NOT NULL
             ORDER BY fecha DESC, turno DESC
@@ -204,7 +204,7 @@ async def get_ultimo_horometro(db: AsyncSession = Depends(get_db)):
     row = (await db.execute(text("""
         SELECT horometro_inicial AS horometro,
                DATE_FORMAT(fecha, '%Y-%m-%d') AS fecha,
-               CASE turno WHEN 1 THEN 'mañana' WHEN 2 THEN 'tarde' WHEN 3 THEN 'noche' ELSE NULL END AS turno
+               CASE turno WHEN 1 THEN 'noche' WHEN 2 THEN 'mañana' WHEN 3 THEN 'tarde' ELSE NULL END AS turno
         FROM operacion_gem_turno
         WHERE horometro_inicial IS NOT NULL AND horometro_inicial > 0
         ORDER BY fecha DESC, turno DESC
@@ -273,7 +273,7 @@ async def create_reactivos_batch(registros: list[RegistroReactivoIn], db: AsyncS
 
     today = date.today()
     inserted, updated = 0, 0
-    turno_map = {"manana": 1, "tarde": 2, "noche": 3}
+    turno_map = {"manana": 2, "tarde": 3, "noche": 1}
 
     # Agrupar por (fecha, turno, sistema)
     grouped: dict[tuple[date, int, str], dict[str, any]] = {}
@@ -383,6 +383,32 @@ async def create_reactivos_batch(registros: list[RegistroReactivoIn], db: AsyncS
             inserted += 1
         elif result.rowcount == 2:
             updated += 1
+
+        # ── Recalcular costo_quimica_turno y pesos_por_m3 para este turno ──
+        # El batch guarda costos individuales (costo_op_*) pero no la suma total.
+        if sistema == 'GEM':
+            await db.execute(text("""
+                UPDATE operacion_gem_turno SET
+                  costo_quimica_turno = (
+                    COALESCE(costo_op_acido,      0) +
+                    COALESCE(costo_op_coagulante,  0) +
+                    COALESCE(costo_op_decolorante, 0) +
+                    COALESCE(costo_op_anionico,    0) +
+                    COALESCE(costo_op_cationico,   0)
+                  ),
+                  pesos_por_m3 = IF(
+                    caudal_total_tratado_gem_m3 > 0,
+                    (
+                      COALESCE(costo_op_acido,      0) +
+                      COALESCE(costo_op_coagulante,  0) +
+                      COALESCE(costo_op_decolorante, 0) +
+                      COALESCE(costo_op_anionico,    0) +
+                      COALESCE(costo_op_cationico,   0)
+                    ) / caudal_total_tratado_gem_m3,
+                    NULL
+                  )
+                WHERE fecha = :fecha AND turno = :turno
+            """), {'fecha': fecha, 'turno': turno_int})
 
     await db.commit()
     return ReactivosBatchResponse(inserted=inserted, updated=updated, total=inserted + updated)
@@ -547,7 +573,7 @@ async def get_edicion_gem(
     rows = (await db.execute(text("""
         SELECT id,
                DATE_FORMAT(fecha, '%Y-%m-%d') AS fecha,
-               CASE turno WHEN 1 THEN 'mañana' WHEN 2 THEN 'tarde' WHEN 3 THEN 'noche' END AS turno,
+               CASE turno WHEN 1 THEN 'noche' WHEN 2 THEN 'mañana' WHEN 3 THEN 'tarde' END AS turno,
                turno AS turno_int,
                COALESCE(caudal_total_tratado_gem_m3, 0) AS caudal_m3,
                COALESCE(kg_acido,        0) AS kg_acido,

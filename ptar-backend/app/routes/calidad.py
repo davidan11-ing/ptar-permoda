@@ -101,7 +101,7 @@ class RemocionesOut(BaseModel):
     pct_remocion_global: float | None
 
 
-TURNO_INT = {"mañana": 1, "manana": 1, "tarde": 2, "noche": 3}
+TURNO_INT = {"mañana": 2, "manana": 2, "tarde": 3, "noche": 1}
 
 
 # ── GET / — detalle pivot (v_tabla_datos_1) ──────────────────────────────────
@@ -162,7 +162,7 @@ async def create_calidad_batch(registros: list[RegistroCalidadIn], db: AsyncSess
     inserted, updated = 0, 0
 
     # Mapeo turno string → int
-    turno_map = {"manana": 1, "tarde": 2, "noche": 3}
+    turno_map = {"manana": 2, "tarde": 3, "noche": 1}
 
     # Pre-cargar todos los parámetros y unidades para evitar queries repetidas
     params_rows = (await db.execute(text("""
@@ -262,7 +262,7 @@ async def get_ultimo_valor(
     row = (await db.execute(text("""
         SELECT mc.valor,
                DATE_FORMAT(mc.fecha, '%Y-%m-%d') AS fecha,
-               CASE mc.turno WHEN 1 THEN 'mañana' WHEN 2 THEN 'tarde' WHEN 3 THEN 'noche' ELSE NULL END AS turno
+               CASE mc.turno WHEN 1 THEN 'noche' WHEN 2 THEN 'mañana' WHEN 3 THEN 'tarde' ELSE NULL END AS turno
         FROM medicion_calidad mc
         JOIN parametro_calidad pc ON mc.parametro_id = pc.id
         JOIN unidad_tratamiento ut ON mc.unidad_id = ut.id
@@ -486,9 +486,9 @@ async def get_mbr_eficiencia(
         SELECT
             DATE_FORMAT(mc.fecha, '%Y-%m-%d') AS fecha,
             CASE mc.turno
-                WHEN 1 THEN 'mañana'
-                WHEN 2 THEN 'tarde'
-                WHEN 3 THEN 'noche'
+                WHEN 1 THEN 'noche'
+                WHEN 2 THEN 'mañana'
+                WHEN 3 THEN 'tarde'
             END                               AS turno,
             ut.nombre                         AS unidad_tratamiento,
             pc.nombre                         AS parametro,
@@ -533,7 +533,7 @@ async def get_edicion(
         SELECT
             mc.id,
             DATE_FORMAT(mc.fecha, '%Y-%m-%d') AS fecha,
-            CASE mc.turno WHEN 1 THEN 'mañana' WHEN 2 THEN 'tarde' WHEN 3 THEN 'noche' END AS turno,
+            CASE mc.turno WHEN 1 THEN 'noche' WHEN 2 THEN 'mañana' WHEN 3 THEN 'tarde' END AS turno,
             mc.turno AS turno_int,
             p.nombre  AS parametro,
             u.nombre  AS unidad_tratamiento,

@@ -68,6 +68,7 @@ export default function TablaCalidad({ fechaInicio, fechaFin, turno, trigger }: 
   }, [fechaInicio, fechaFin, turno]);
 
   useEffect(() => { load(); }, [load, trigger]);
+  useEffect(() => { const id = setInterval(() => load(), 30_000); return () => clearInterval(id); }, [load]);
 
   const startEdit = (r: Registro) => {
     setEditId(r.id);

@@ -78,6 +78,7 @@ export default function TablaCaudales({ fechaInicio, fechaFin, trigger }: Props)
   }, [fechaInicio, fechaFin]);
 
   useEffect(() => { load(); }, [load, trigger]);
+  useEffect(() => { const id = setInterval(() => load(), 30_000); return () => clearInterval(id); }, [load]);
 
   const startEdit = (r: Registro) => {
     setEditId(r.id);
