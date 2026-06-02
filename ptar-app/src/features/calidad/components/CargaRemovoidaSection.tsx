@@ -10,7 +10,7 @@
  *   Fila superior: [Parámetro ▼] [FechaInicio] [FechaFin]  |  KPI total
  *   Gráfico ancho completo (width="100%")
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   ComposedChart, Bar, Line,
   XAxis, YAxis, CartesianGrid,
@@ -47,28 +47,34 @@ function TooltipCustom({ active, payload, label }: any) {
 interface Props { fechaInicio: string; fechaFin: string }
 
 // ─── Componente ───────────────────────────────────────────────────────────
+// Orden preferido: SST primero, DQO segundo, resto alfabético
+function ordenarParametros(lista: string[]): string[] {
+  const PREF = ['Sólidos suspendidos Totales', 'SST', 'Demanda química de oxígeno (DQO)', 'DQO'];
+  const pref  = PREF.filter(p => lista.includes(p));
+  const resto = lista.filter(p => !PREF.includes(p)).sort();
+  return [...pref, ...resto];
+}
+
 export default function CargaRemovoidaSection({ fechaInicio: propFI, fechaFin: propFF }: Props) {
-  const [parametro,       setParametro]       = useState('');
-  const [localFechaInicio, setLocalFechaInicio] = useState(propFI);
-  const [localFechaFin,    setLocalFechaFin]    = useState(propFF);
+  const [parametro,     setParametro]     = useState('');
+  const [mostrarVacios, setMostrarVacios] = useState(false);
 
-  // Sincronizar con el prop si cambia desde el padre
-  useEffect(() => { setLocalFechaInicio(propFI); }, [propFI]);
-  useEffect(() => { setLocalFechaFin(propFF);    }, [propFF]);
-
-  // Catálogo completo de parámetros desde la BD (igual que el slicer de 21 opciones del Excel)
-  const [parametros, setParametros] = useState<string[]>([]);
+  // Catálogo: SST primero, DQO segundo, resto alfabético
+  const [parametrosRaw, setParametrosRaw] = useState<string[]>([]);
   useEffect(() => {
     getCalidadParametros().then(rows => {
-      setParametros(rows.map(r => r.nombre).sort());
+      setParametrosRaw(rows.map((r: any) => r.nombre));
     }).catch(() => {});
   }, []);
+
+  const parametros = useMemo(() => ordenarParametros(parametrosRaw), [parametrosRaw]);
   const param = parametro || parametros[0] || '';
 
-  const { data, totalKg, loading, error } = useCargaRemovida(localFechaInicio, localFechaFin, param);
+  const { data, allData, totalKg, loading, error } = useCargaRemovida(propFI, propFF, param);
+  const chartData = mostrarVacios ? allData : data;
 
   // Rango eje derecho
-  const inds   = data.map(d => d.indicadorKgM3).filter(v => v > 0);
+  const inds   = chartData.map(d => d.indicadorKgM3).filter(v => v > 0);
   const maxInd = inds.length ? Math.ceil(Math.max(...inds) * 1.4) : 15;
 
   return (
@@ -101,23 +107,24 @@ export default function CargaRemovoidaSection({ fechaInicio: propFI, fechaFin: p
             {parametros.map(p => <option key={p} value={p}>{p}</option>)}
           </select>
 
-          <label className="cal-filter-label" style={{ whiteSpace: 'nowrap', marginLeft: 8 }}>
-            Fecha inicio
+          {/* Toggle días sin datos */}
+          <label style={{ display:'flex', alignItems:'center', gap:7, cursor:'pointer',
+            fontSize:11, color:'#8b949e', userSelect:'none', whiteSpace:'nowrap' }}
+            onClick={() => setMostrarVacios(v => !v)}>
+            <div style={{
+              width:30, height:16, borderRadius:8, position:'relative',
+              background: mostrarVacios ? '#1f6feb' : '#30363d',
+              border: `1px solid ${mostrarVacios ? '#388bfd' : '#484f58'}`,
+              transition:'background .2s', flexShrink:0,
+            }}>
+              <div style={{
+                position:'absolute', top:1, width:12, height:12, borderRadius:'50%',
+                background: mostrarVacios ? '#fff' : '#8b949e', transition:'left .2s',
+                left: mostrarVacios ? 15 : 2,
+              }}/>
+            </div>
+            Días/turnos sin datos
           </label>
-          <input
-            type="date"
-            className="cal-filter-input"
-            value={localFechaInicio}
-            onChange={e => setLocalFechaInicio(e.target.value)}
-          />
-
-          <label className="cal-filter-label" style={{ whiteSpace: 'nowrap' }}>Fecha fin</label>
-          <input
-            type="date"
-            className="cal-filter-input"
-            value={localFechaFin}
-            onChange={e => setLocalFechaFin(e.target.value)}
-          />
         </div>
 
         {/* KPI card derecha */}
@@ -158,7 +165,7 @@ export default function CargaRemovoidaSection({ fechaInicio: propFI, fechaFin: p
             Kg removidos Vs Kg removido/m³
           </div>
           <ResponsiveContainer width="100%" height={300}>
-            <ComposedChart data={data} margin={{ top: 20, right: 55, left: 10, bottom: 10 }}>
+            <ComposedChart data={chartData} margin={{ top: 20, right: 55, left: 10, bottom: 10 }}>
 
               <CartesianGrid strokeDasharray="3 3" stroke="#21262d" />
 

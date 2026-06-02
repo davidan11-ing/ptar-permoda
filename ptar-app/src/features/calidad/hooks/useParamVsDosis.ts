@@ -11,30 +11,30 @@ import { useState, useEffect } from 'react';
 import { getCalidadMediciones, getGemEficiencia } from '../../../services/ptarClient';
 
 export interface ParamVsDosisPoint {
-  label:    string;   // "DD - TX"
-  fecha:    string;
-  turno:    string;   // "T1" | "T2" | "T3"
-  entrada:  number | null;   // Tanque Homogeneizador
-  salida:   number | null;   // GEM Salida
-  ppm:      number | null;   // PPM del químico (eje derecho)
+  label:             string;        // "DD - TX"
+  fecha:             string;
+  turno:             string;        // "T1" | "T2" | "T3"
+  entrada:           number | null; // Tanque Homogeneizador
+  salida:            number | null; // GEM Salida
+  ppm_acido:         number | null;
+  ppm_coagulante:    number | null;
+  ppm_decolorante:   number | null;
+  ppm_pol_anionico:  number | null;
+  ppm_pol_cationico: number | null;
 }
 
+// Nomenclatura correcta: T1=Noche, T2=Mañana, T3=Tarde
 const TURNO_KEY: Record<string, string> = {
-  mañana: 'T1', manana: 'T1',
-  tarde:  'T2',
-  noche:  'T3',
+  noche:  'T1',
+  mañana: 'T2', manana: 'T2',
+  tarde:  'T3',
 };
 
-/**
- * ppmKey: columna PPM a leer de GemEficienciaRow.
- * Ej: 'ppm_coagulante' | 'ppm_pol_cationico' | 'ppm_acido' | etc.
- * Se determinará según especificación de la carpeta.
- */
+/** Devuelve todos los PPM de los 5 químicos GEM por turno */
 export function useParamVsDosis(
   fechaInicio: string,
   fechaFin:    string,
   parametro:   string,
-  ppmKey:      keyof import('../../../services/ptarClient').GemEficienciaRow = 'ppm_pol_cationico',
 ) {
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState<string | null>(null);
@@ -71,13 +71,25 @@ export function useParamVsDosis(
           if (row.unidad_tratamiento === 'GEM Salida')            e.salida  = row.valor;
         }
 
-        // Agrupar PPM por (fecha|turno)
-        const ppmMap = new Map<Key, number>();
+        // Agrupar todos los PPM por (fecha|turno)
+        type PpmRow = {
+          ppm_acido: number | null;
+          ppm_coagulante: number | null;
+          ppm_decolorante: number | null;
+          ppm_pol_anionico: number | null;
+          ppm_pol_cationico: number | null;
+        };
+        const ppmMap = new Map<Key, PpmRow>();
         for (const row of gemRows) {
           const t   = TURNO_KEY[row.turno?.toLowerCase() ?? ''] ?? 'T1';
           const key = `${row.fecha}|${t}`;
-          const val = (row as any)[ppmKey];
-          if (val != null) ppmMap.set(key, val);
+          ppmMap.set(key, {
+            ppm_acido:         row.ppm_acido         ?? null,
+            ppm_coagulante:    row.ppm_coagulante    ?? null,
+            ppm_decolorante:   row.ppm_decolorante   ?? null,
+            ppm_pol_anionico:  row.ppm_pol_anionico  ?? null,
+            ppm_pol_cationico: row.ppm_pol_cationico ?? null,
+          });
         }
 
         // Union ordenada
@@ -88,13 +100,18 @@ export function useParamVsDosis(
           const [fecha, turnoStr] = key.split('|');
           const day  = fecha.slice(8, 10);
           const med  = medMap.get(key);
+          const ppms = ppmMap.get(key);
           return {
-            label:   `${day} - ${turnoStr}`,
+            label:             `${day} - ${turnoStr}`,
             fecha,
-            turno:   turnoStr,
-            entrada: med?.entrada ?? null,
-            salida:  med?.salida  ?? null,
-            ppm:     ppmMap.get(key) ?? null,
+            turno:             turnoStr,
+            entrada:           med?.entrada ?? null,
+            salida:            med?.salida  ?? null,
+            ppm_acido:         ppms?.ppm_acido         ?? null,
+            ppm_coagulante:    ppms?.ppm_coagulante    ?? null,
+            ppm_decolorante:   ppms?.ppm_decolorante   ?? null,
+            ppm_pol_anionico:  ppms?.ppm_pol_anionico  ?? null,
+            ppm_pol_cationico: ppms?.ppm_pol_cationico ?? null,
           };
         });
 
@@ -108,7 +125,7 @@ export function useParamVsDosis(
 
     load();
     return () => { cancelled = true; };
-  }, [fechaInicio, fechaFin, parametro, ppmKey]);
+  }, [fechaInicio, fechaFin, parametro]);
 
   return { data, loading, error };
 }

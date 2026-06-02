@@ -164,10 +164,11 @@ export async function getUltimoValorCalidad(
   return request<UltimoValorCalidad>(`/api/calidad/ultimo-valor?${q}`);
 }
 
+// Nomenclatura correcta: turno 1=Noche, 2=Mañana, 3=Tarde
 const TURNO_STR_TO_INT: Record<string, string> = {
-  'mañana': '1', 'manana': '1',
-  'tarde':  '2',
-  'noche':  '3',
+  'noche':  '1',
+  'mañana': '2', 'manana': '2',
+  'tarde':  '3',
 };
 
 /** Mediciones en formato largo — una fila por (fecha, turno, unidad_tratamiento) */

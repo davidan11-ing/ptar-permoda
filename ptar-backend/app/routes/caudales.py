@@ -273,15 +273,15 @@ async def create_caudales_batch(registros: list[LecturaContadorIn], db: AsyncSes
 
 @router.get("/ultimas-lecturas")
 async def get_ultimas_lecturas(db: AsyncSession = Depends(get_db)):
-    """Devuelve los valores del turno más reciente en v_balance_hidrico."""
+    """
+    Devuelve las lecturas RAW (acumuladas) más recientes de contadores_lectura.
+    El formulario las usa como 'Lect. anterior' para calcular el consumo del turno.
+    Lee de contadores_lectura (no de v_balance_hidrico que tiene consumos/deltas).
+    """
     row = (await db.execute(text("""
-        SELECT fecha, turno,
-               envio_th, entrada_ro1, permeado_ro1, rechazo_ro1, eficiencia_ro_pct,
-               consumo_gem_m3, ingreso_ptap, potable_ptap,
-               lavanderia_m3, tintoreria_m3, rotativa_m3,
-               acueducto_m3, total_agua_limpia_m3,
-               carrotanques_m3, mulas_funza_m3
-        FROM v_balance_hidrico
+        SELECT *
+        FROM contadores_lectura
+        WHERE fecha <= CURDATE()
         ORDER BY fecha DESC, turno DESC
         LIMIT 1
     """))).mappings().first()
@@ -289,12 +289,13 @@ async def get_ultimas_lecturas(db: AsyncSession = Depends(get_db)):
     if not row:
         return {}
 
-    # Retornar un dict con los valores mapeados a los ids del contador
+    # Mapear columnas de contadores_lectura a IDs de contador del formulario
     row_dict = dict(row)
     result = {}
     for contador_id, col_name in CONTADOR_MAPPING.items():
-        if col_name in row_dict:
-            result[contador_id] = row_dict[col_name]
+        val = row_dict.get(col_name)
+        if val is not None:
+            result[contador_id] = float(val)
     return result
 
 

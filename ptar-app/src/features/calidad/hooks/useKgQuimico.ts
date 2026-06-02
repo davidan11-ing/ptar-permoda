@@ -28,12 +28,22 @@ export interface KgQuimicoPoint {
   polAnionicoRatio: number;
   cationicoRatio:   number;
   kgRemovidos:      number;   // para la línea
+  sinDatos:         boolean;
 }
 
+function generarFechas(inicio: string, fin: string): string[] {
+  const fechas: string[] = [];
+  const cur = new Date(inicio + 'T00:00:00');
+  const end = new Date(fin   + 'T00:00:00');
+  while (cur <= end) { fechas.push(cur.toISOString().slice(0, 10)); cur.setDate(cur.getDate() + 1); }
+  return fechas;
+}
+
+// Nomenclatura correcta: T1=Noche, T2=Mañana, T3=Tarde
 const TURNO_KEY: Record<string, string> = {
-  mañana: 'T1', manana: 'T1',
-  tarde:  'T2',
-  noche:  'T3',
+  noche:  'T1',
+  mañana: 'T2', manana: 'T2',
+  tarde:  'T3',
 };
 
 // Parámetro de contaminante removido (Sólidos Suspendidos Totales — igual que Excel)
@@ -43,6 +53,7 @@ export function useKgQuimico(fechaInicio: string, fechaFin: string) {
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState<string | null>(null);
   const [data,    setData]    = useState<KgQuimicoPoint[]>([]);
+  const [allData, setAllData] = useState<KgQuimicoPoint[]>([]);
 
   useEffect(() => {
     if (!fechaInicio || !fechaFin) return;
@@ -130,8 +141,7 @@ export function useKgQuimico(fechaInicio: string, fechaFin: string) {
 
         // Calcular ratios por fecha
         const sorted = Array.from(dayMap.keys()).sort();
-        const result: KgQuimicoPoint[] = sorted.map(fecha => {
-          const day = dayMap.get(fecha)!;
+        const toPoint = (fecha: string, day: { kgRem:number; coagulante:number; decolorante:number; polAnionico:number; cationico:number }, sinDatos: boolean): KgQuimicoPoint => {
           const rem = day.kgRem;
           const [, m, d] = fecha.split('-');
           return {
@@ -142,10 +152,21 @@ export function useKgQuimico(fechaInicio: string, fechaFin: string) {
             polAnionicoRatio: rem > 0 ? Math.round((day.polAnionico / rem) * 10000) / 10000 : 0,
             cationicoRatio:   rem > 0 ? Math.round((day.cationico   / rem) * 10000) / 10000 : 0,
             kgRemovidos:      Math.round(rem * 100) / 100,
+            sinDatos,
           };
-        });
+        };
+
+        const EMPTY = { kgRem:0, coagulante:0, decolorante:0, polAnionico:0, cationico:0 };
+        const result = sorted.map(f => toPoint(f, dayMap.get(f)!, false));
+
+        // allData: todas las fechas del rango (vacías con sinDatos=true)
+        const realSet = new Set(sorted);
+        const allResult = generarFechas(fechaInicio, fechaFin).map(f =>
+          realSet.has(f) ? toPoint(f, dayMap.get(f)!, false) : toPoint(f, EMPTY, true)
+        );
 
         setData(result);
+        setAllData(allResult);
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : 'Error');
       } finally {
@@ -157,5 +178,5 @@ export function useKgQuimico(fechaInicio: string, fechaFin: string) {
     return () => { cancelled = true; };
   }, [fechaInicio, fechaFin]);
 
-  return { data, loading, error };
+  return { data, allData, loading, error };
 }

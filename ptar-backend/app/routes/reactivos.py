@@ -498,9 +498,9 @@ async def get_gem_eficiencia(
         SELECT
             DATE_FORMAT(fecha, '%Y-%m-%d')  AS fecha,
             CASE turno
-                WHEN 1 THEN 'mañana'
-                WHEN 2 THEN 'tarde'
-                WHEN 3 THEN 'noche'
+                WHEN 1 THEN 'noche'
+                WHEN 2 THEN 'mañana'
+                WHEN 3 THEN 'tarde'
             END                             AS turno,
             horometro_inicial,
             caudal_total_tratado_gem_m3     AS caudal_m3,

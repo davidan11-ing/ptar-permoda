@@ -13,7 +13,7 @@
  *
  * Filtros: dos date-range independientes (intersecc. aplicada al gráfico)
  */
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   ComposedChart, Bar, Line,
   XAxis, YAxis, CartesianGrid,
@@ -53,30 +53,18 @@ function TooltipCustom({ active, payload, label }: any) {
 interface Props { fechaInicio: string; fechaFin: string }
 
 // ─── Componente ───────────────────────────────────────────────────────────
-export default function KgQuimicoSection({ fechaInicio: propFI, fechaFin: propFF }: Props) {
+export default function KgQuimicoSection({ fechaInicio, fechaFin }: Props) {
+  const [mostrarVacios, setMostrarVacios] = useState(false);
 
-  // Slicer 1
-  const [fi1, setFi1] = useState(propFI);
-  const [ff1, setFf1] = useState(propFF);
-  // Slicer 2
-  const [fi2, setFi2] = useState(propFI);
-  const [ff2, setFf2] = useState(propFF);
-
-  useEffect(() => { setFi1(propFI); setFi2(propFI); }, [propFI]);
-  useEffect(() => { setFf1(propFF); setFf2(propFF); }, [propFF]);
-
-  // Rango efectivo = intersección de ambos slicers
-  const fechaInicio = fi1 > fi2 ? fi1 : fi2;
-  const fechaFin    = ff1 < ff2 ? ff1 : ff2;
-
-  const { data, loading, error } = useKgQuimico(fechaInicio, fechaFin);
+  const { data, allData, loading, error } = useKgQuimico(fechaInicio, fechaFin);
+  const chartData = mostrarVacios ? allData : data;
 
   // Rango eje derecho (kg removidos)
-  const kgs    = data.map(d => d.kgRemovidos).filter(v => v > 0);
+  const kgs    = chartData.map(d => d.kgRemovidos).filter(v => v > 0);
   const maxKg  = kgs.length ? Math.ceil(Math.max(...kgs) * 1.3) : 1400;
 
   // Rango eje izquierdo (ratios, suma de barras apiladas)
-  const sums   = data.map(d => d.coagulanteRatio + d.decoloranteRatio + d.polAnionicoRatio + d.cationicoRatio);
+  const sums   = chartData.map(d => d.coagulanteRatio + d.decoloranteRatio + d.polAnionicoRatio + d.cationicoRatio);
   const maxRatio = sums.length ? Math.ceil(Math.max(...sums) * 1.3 * 10) / 10 : 2;
 
   return (
@@ -91,35 +79,21 @@ export default function KgQuimicoSection({ fechaInicio: propFI, fechaFin: propFF
         KG QUÍMICO / KG REMOVIDO
       </div>
 
-      {/* ── Dos slicers de fecha en fila ── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 24, marginBottom: 14, flexWrap: 'wrap' }}>
-
-        {/* Slicer 1 */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 10, fontWeight: 700, color: '#8b949e',
-            textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>
-            Fecha 1
-          </span>
-          <input type="date" className="cal-filter-input" value={fi1}
-            onChange={e => setFi1(e.target.value)} />
-          <span style={{ color: '#484f58', fontSize: 11 }}>–</span>
-          <input type="date" className="cal-filter-input" value={ff1}
-            onChange={e => setFf1(e.target.value)} />
-        </div>
-
-        {/* Slicer 2 */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 10, fontWeight: 700, color: '#8b949e',
-            textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>
-            Fecha 2
-          </span>
-          <input type="date" className="cal-filter-input" value={fi2}
-            onChange={e => setFi2(e.target.value)} />
-          <span style={{ color: '#484f58', fontSize: 11 }}>–</span>
-          <input type="date" className="cal-filter-input" value={ff2}
-            onChange={e => setFf2(e.target.value)} />
-        </div>
-
+      {/* ── Toggle días sin datos ── */}
+      <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:14 }}>
+        <label style={{ display:'flex', alignItems:'center', gap:7, cursor:'pointer',
+          fontSize:11, color:'#8b949e', userSelect:'none' }}
+          onClick={() => setMostrarVacios(v => !v)}>
+          <div style={{ width:30, height:16, borderRadius:8, position:'relative',
+            background: mostrarVacios ? '#1f6feb' : '#30363d',
+            border:`1px solid ${mostrarVacios ? '#388bfd' : '#484f58'}`,
+            transition:'background .2s', flexShrink:0 }}>
+            <div style={{ position:'absolute', top:1, width:12, height:12, borderRadius:'50%',
+              background: mostrarVacios ? '#fff' : '#8b949e', transition:'left .2s',
+              left: mostrarVacios ? 15 : 2 }}/>
+          </div>
+          Días sin datos
+        </label>
       </div>
 
       {/* ── Gráfico ancho completo ── */}
@@ -133,7 +107,7 @@ export default function KgQuimicoSection({ fechaInicio: propFI, fechaFin: propFF
         <div className="dash-card" style={{ padding: '12px 4px 0px' }}>
           <ResponsiveContainer width="100%" height={300}>
             <ComposedChart
-              data={data}
+              data={chartData}
               margin={{ top: 20, right: 10, left: 10, bottom: 5 }}
               barCategoryGap="40%"
             >

@@ -330,9 +330,9 @@ async def get_mediciones_largo(
         SELECT
             mc.fecha,
             CASE mc.turno
-                WHEN 1 THEN 'mañana'
-                WHEN 2 THEN 'tarde'
-                WHEN 3 THEN 'noche'
+                WHEN 1 THEN 'noche'
+                WHEN 2 THEN 'mañana'
+                WHEN 3 THEN 'tarde'
             END                          AS turno,
             p.nombre                     AS parametro,
             u.nombre                     AS unidad_tratamiento,

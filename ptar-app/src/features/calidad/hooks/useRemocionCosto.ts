@@ -10,10 +10,11 @@ export interface RemocionCostoPunto {
 }
 
 // Turno string → T1/T2/T3
+// Nomenclatura correcta: T1=Noche, T2=Mañana, T3=Tarde
 const TURNO_KEY: Record<string, string> = {
-  mañana: 'T1', manana: 'T1',
-  tarde:  'T2',
-  noche:  'T3',
+  noche:  'T1',
+  mañana: 'T2', manana: 'T2',
+  tarde:  'T3',
 };
 
 export function useRemocionCosto(fechaInicio: string, fechaFin: string, parametro = 'pH') {

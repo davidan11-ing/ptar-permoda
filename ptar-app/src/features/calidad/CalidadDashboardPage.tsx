@@ -209,7 +209,7 @@ export default function CalidadDashboardPage() {
           letterSpacing: '0.06em',
           textTransform: 'uppercase',
         }}>
-          % REMOCIÓN pH Vs $COSTO/M³ — TURNO A TURNO
+          % REMOCIÓN PARÁMETRO Vs $COSTO/M³ — TURNO A TURNO
         </div>
         <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
           <div style={{ fontSize: 12, color: '#8b949e', marginBottom: 8, paddingLeft: 8, fontFamily: 'monospace', textAlign: 'center' }}>
