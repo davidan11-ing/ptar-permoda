@@ -50,6 +50,104 @@ CONTADOR_MAPPING = {
     'C-35': 'entrada_ap_zona_lodos_acueducto',
 }
 
+# Mapeo contadores_lectura → consumo_turno (columnas con delta por turno)
+# Las columnas que no tienen equivalente en consumo_turno (gem_prueba) se omiten.
+LECTURA_TO_CONSUMO: dict[str, str] = {
+    'tanque_reuso_2in':                    'cons_tanque_reuso_2in',
+    'ptar':                                'cons_ptar',
+    'entrada_ro1':                         'cons_entrada_ro1',
+    'salida_ro1':                          'cons_salida_ro1',
+    'entrada_ro2':                         'cons_entrada_ro2',
+    'salida_ro2':                          'cons_salida_ro2',
+    'medidor_verde_retorno':               'cons_medidor_verde_retorno',
+    'envio_th':                            'cons_envio_th',
+    'mbr1':                                'cons_mbr1',
+    'mbr2':                                'cons_mbr2',
+    'ingreso_uf_ptap':                     'cons_ingreso_uf_ptap',
+    'salida_uf_ptap':                      'cons_salida_uf_ptap',
+    'entrada_ap_principal_6in':            'cons_entrada_ap_principal_6in',
+    'entrada_ap_fria_lavanderia_4in':      'cons_entrada_ap_fria_lavanderia_4in',
+    'entrada_ap_lab_lavanderia':           'cons_entrada_ap_lab_lavanderia',
+    'entrada_medidor_rojo_tintoreria_4in': 'cons_entrada_medidor_rojo_tintoreria',
+    'entrada_ap_fria_tintoreria_4in':      'cons_entrada_ap_fria_tintoreria_4in',
+    'entrada_medidor_rojo_lavanderia_4in': 'cons_entrada_medidor_rojo_lavanderia',
+    'rama':                                'cons_rama',
+    'abridora_1':                          'cons_abridora_1',
+    'abridora_2':                          'cons_abridora_2',
+    'entrada_ap_rotativa_3in':             'cons_entrada_ap_rotativa_3in',
+    'entrada_ap_tintoreria_6in':           'cons_entrada_ap_tintoreria_6in',
+    'entrada_ap_ptar2_acueducto':          'cons_entrada_ap_ptar2_acueducto',
+    'entrada_ap_puerta4_acueducto':        'cons_entrada_ap_puerta4_acueducto',
+    'entrada_ap_quimicos':                 'cons_entrada_ap_quimicos',
+    'agua_caliente_tintoreria':            'cons_agua_caliente_tintoreria',
+    'medidor_prueba_agua_caliente':        'cons_medidor_prueba_agua_caliente',
+    'entrada_ap_puerta2_acueducto':        'cons_entrada_ap_puerta2_acueducto',
+    'entrada_ap_caldera_acueducto':        'cons_entrada_ap_caldera_acueducto',
+    'entrada_ap_puerta5_acueducto':        'cons_entrada_ap_puerta5_acueducto',
+    'entrada_ap_puerta6_acueducto':        'cons_entrada_ap_puerta6_acueducto',
+    'entrada_ap_puerta7_acueducto':        'cons_entrada_ap_puerta7_acueducto',
+    'entrada_ap_lavanderia_acueducto':     'cons_entrada_ap_lavanderia_acueducto',
+    'entrada_ap_zona_lodos_acueducto':     'cons_entrada_ap_zona_lodos_acueducto',
+}
+
+
+async def _sync_consumo_turno(db: AsyncSession, fecha: date, turno_int: int) -> None:
+    """
+    Calcula el delta entre la lectura actual y la anterior en contadores_lectura
+    y hace UPSERT en consumo_turno.  Se llama después de cada batch de caudales.
+
+    Reglas:
+    - delta = lectura_actual - lectura_previa  (por columna)
+    - Si delta < 0  →  rollover_detectado = 1,  delta = 0
+    - Si no hay fila previa  →  no escribe nada (primer registro histórico)
+    """
+    # Lectura actual
+    current = (await db.execute(text("""
+        SELECT * FROM contadores_lectura
+        WHERE fecha = :fecha AND turno = :turno
+    """), {"fecha": fecha, "turno": turno_int})).mappings().first()
+
+    if not current:
+        return
+
+    # Lectura previa (orden cronológico: dentro del día turno 1→2→3; entre días por fecha)
+    prev = (await db.execute(text("""
+        SELECT * FROM contadores_lectura
+        WHERE (fecha < :fecha) OR (fecha = :fecha AND turno < :turno)
+        ORDER BY fecha DESC, turno DESC
+        LIMIT 1
+    """), {"fecha": fecha, "turno": turno_int})).mappings().first()
+
+    if not prev:
+        return
+
+    rollover = 0
+    deltas: dict[str, float] = {}
+    for lectura_col, consumo_col in LECTURA_TO_CONSUMO.items():
+        curr_val = current.get(lectura_col)
+        prev_val = prev.get(lectura_col)
+        if curr_val is None or prev_val is None:
+            continue
+        delta = float(curr_val) - float(prev_val)
+        if delta < 0:
+            rollover = 1
+            delta = 0.0
+        deltas[consumo_col] = delta
+
+    if not deltas:
+        return
+
+    cols = ['fecha', 'turno', 'rollover_detectado'] + list(deltas.keys())
+    vals = [':fecha', ':turno', ':rollover'] + [f':{k}' for k in deltas.keys()]
+    update_parts = ['rollover_detectado = :rollover'] + [f'{k} = :{k}' for k in deltas.keys()]
+    params: dict = {'fecha': fecha, 'turno': turno_int, 'rollover': rollover, **deltas}
+
+    await db.execute(text(f"""
+        INSERT INTO consumo_turno ({', '.join(cols)})
+        VALUES ({', '.join(vals)})
+        ON DUPLICATE KEY UPDATE {', '.join(update_parts)}
+    """), params)
+
 
 class LecturaContadorIn(BaseModel):
     """Modelo para recibir una lectura de contador desde el formulario"""
@@ -265,6 +363,10 @@ async def create_caudales_batch(registros: list[LecturaContadorIn], db: AsyncSes
         elif result.rowcount == 2:
             updated += 1
 
+    # Sincronizar deltas → consumo_turno para que v_balance_hidrico refleje datos de la app
+    for (fecha, turno_int) in grouped.keys():
+        await _sync_consumo_turno(db, fecha, turno_int)
+
     await db.commit()
     return CaudalesBatchResponse(inserted=inserted, updated=updated, total=inserted + updated)
 
@@ -408,5 +510,15 @@ async def put_edicion_caudales(
         text(f"UPDATE contadores_lectura SET {set_clause}, actualizado_en = CURRENT_TIMESTAMP WHERE id = :id"),
         updates,
     )
+
+    # Re-sincronizar consumo_turno si se modificaron lecturas
+    if result.rowcount:
+        row = (await db.execute(
+            text("SELECT fecha, turno FROM contadores_lectura WHERE id = :id"),
+            {"id": registro_id},
+        )).mappings().first()
+        if row:
+            await _sync_consumo_turno(db, row["fecha"], row["turno"])
+
     await db.commit()
     return {"ok": True, "updated": result.rowcount}

@@ -105,7 +105,10 @@ export function useCargaRemovida(
         }
 
         // 4. Construir resultado solo con datos reales
-        const sortedDates = Array.from(dayMap.keys()).sort();
+        // Solo incluir fechas que tuvieron medición de concentración
+        // (excluye días donde solo hay caudal GEM pero no se midió DQO/SST etc.)
+        const conDates = new Set(Array.from(conMap.keys()).map(k => k.split('|')[0]));
+        const sortedDates = Array.from(dayMap.keys()).sort().filter(f => conDates.has(f));
         let total = 0;
 
         const realResult: CargaRemovPoint[] = sortedDates.map(fecha => {

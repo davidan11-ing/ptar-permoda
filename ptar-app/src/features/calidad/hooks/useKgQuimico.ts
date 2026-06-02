@@ -140,7 +140,10 @@ export function useKgQuimico(fechaInicio: string, fechaFin: string) {
         }
 
         // Calcular ratios por fecha
-        const sorted = Array.from(dayMap.keys()).sort();
+        // Solo incluir fechas con medición de concentración
+        // (excluye días donde GEM dosificó pero no se midió SST)
+        const conDates = new Set(Array.from(conMap.keys()).map(k => k.split('|')[0]));
+        const sorted = Array.from(dayMap.keys()).sort().filter(f => conDates.has(f));
         const toPoint = (fecha: string, day: { kgRem:number; coagulante:number; decolorante:number; polAnionico:number; cationico:number }, sinDatos: boolean): KgQuimicoPoint => {
           const rem = day.kgRem;
           const [, m, d] = fecha.split('-');

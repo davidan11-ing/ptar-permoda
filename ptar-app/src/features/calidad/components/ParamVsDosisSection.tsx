@@ -95,7 +95,11 @@ export default function ParamVsDosisSection({ fechaInicio, fechaFin }: Props) {
     if (!mostrarVacios) {
       return [...rawData]
         .sort((a,b) => a.fecha.localeCompare(b.fecha) || a.turno.localeCompare(b.turno))
-        .map(toRow);
+        .map(toRow)
+        // Excluir entradas sin dato real (sin medición ni PPM)
+        .filter(r => r.entrada != null || r.salida != null ||
+          r.ppm_acido != null || r.ppm_coagulante != null ||
+          r.ppm_decolorante != null || r.ppm_pol_anionico != null || r.ppm_pol_cationico != null);
     }
     // Calendario completo: todas las fechas × T1, T2, T3
     const rows: ReturnType<typeof toRow>[] = [];

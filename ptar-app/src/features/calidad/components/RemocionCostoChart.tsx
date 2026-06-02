@@ -113,7 +113,10 @@ export default function RemocionCostoChart({ fechaInicio, fechaFin, parametro: p
   }, [rawData]);
 
   const data = useMemo(() => {
-    if (!mostrarVacios) return rawData;
+    if (!mostrarVacios) {
+      // Excluir entradas sin dato real (remoción=0 y costo=0)
+      return rawData.filter(r => r.remocion !== 0 || r.costoM3 > 0);
+    }
     const rows: typeof rawData = [];
     generarFechas(fechaInicio, fechaFin).forEach(f => {
       ['T1','T2','T3'].forEach(t => {
