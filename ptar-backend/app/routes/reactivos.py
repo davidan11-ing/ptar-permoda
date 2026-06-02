@@ -180,7 +180,7 @@ async def get_ultimo_nivel(
         row = (await db.execute(text(f"""
             SELECT {col_final} AS nivel_final,
                    DATE_FORMAT(fecha, '%Y-%m-%d') AS fecha,
-                   CASE turno WHEN 1 THEN 'mañana' WHEN 2 THEN 'tarde' WHEN 3 THEN 'noche' ELSE NULL END AS turno
+                   CASE turno WHEN 1 THEN 'noche' WHEN 2 THEN 'mañana' WHEN 3 THEN 'tarde' ELSE NULL END AS turno
             FROM {tabla}
             WHERE {col_final} IS NOT NULL
             ORDER BY fecha DESC, turno DESC
@@ -204,7 +204,7 @@ async def get_ultimo_horometro(db: AsyncSession = Depends(get_db)):
     row = (await db.execute(text("""
         SELECT horometro_inicial AS horometro,
                DATE_FORMAT(fecha, '%Y-%m-%d') AS fecha,
-               CASE turno WHEN 1 THEN 'mañana' WHEN 2 THEN 'tarde' WHEN 3 THEN 'noche' ELSE NULL END AS turno
+               CASE turno WHEN 1 THEN 'noche' WHEN 2 THEN 'mañana' WHEN 3 THEN 'tarde' ELSE NULL END AS turno
         FROM operacion_gem_turno
         WHERE horometro_inicial IS NOT NULL AND horometro_inicial > 0
         ORDER BY fecha DESC, turno DESC
@@ -273,7 +273,7 @@ async def create_reactivos_batch(registros: list[RegistroReactivoIn], db: AsyncS
 
     today = date.today()
     inserted, updated = 0, 0
-    turno_map = {"manana": 1, "tarde": 2, "noche": 3}
+    turno_map = {"manana": 2, "tarde": 3, "noche": 1}
 
     # Agrupar por (fecha, turno, sistema)
     grouped: dict[tuple[date, int, str], dict[str, any]] = {}
@@ -524,9 +524,9 @@ async def get_gem_eficiencia(
         SELECT
             DATE_FORMAT(fecha, '%Y-%m-%d')  AS fecha,
             CASE turno
-                WHEN 1 THEN 'mañana'
-                WHEN 2 THEN 'tarde'
-                WHEN 3 THEN 'noche'
+                WHEN 1 THEN 'noche'
+                WHEN 2 THEN 'mañana'
+                WHEN 3 THEN 'tarde'
             END                             AS turno,
             horometro_inicial,
             caudal_total_tratado_gem_m3     AS caudal_m3,
@@ -573,7 +573,7 @@ async def get_edicion_gem(
     rows = (await db.execute(text("""
         SELECT id,
                DATE_FORMAT(fecha, '%Y-%m-%d') AS fecha,
-               CASE turno WHEN 1 THEN 'mañana' WHEN 2 THEN 'tarde' WHEN 3 THEN 'noche' END AS turno,
+               CASE turno WHEN 1 THEN 'noche' WHEN 2 THEN 'mañana' WHEN 3 THEN 'tarde' END AS turno,
                turno AS turno_int,
                COALESCE(caudal_total_tratado_gem_m3, 0) AS caudal_m3,
                COALESCE(kg_acido,        0) AS kg_acido,

@@ -120,7 +120,7 @@ class ResumenBalance(BaseModel):
     n_turnos: int
 
 
-TURNO_INT = {"mañana": 1, "manana": 1, "tarde": 2, "noche": 3}
+TURNO_INT = {"mañana": 2, "manana": 2, "tarde": 3, "noche": 1}
 
 # Mapeo turno a hora_lectura requerida por CHECK CONSTRAINT chk_hora_turno
 TURNO_HORA_MAP = {
@@ -189,7 +189,7 @@ async def create_caudales_batch(registros: list[LecturaContadorIn], db: AsyncSes
     """
     today = date.today()
     inserted, updated = 0, 0
-    turno_map = {"manana": 1, "tarde": 2, "noche": 3}
+    turno_map = {"manana": 2, "tarde": 3, "noche": 1}
 
     # Agrupar por (fecha, turno)
     # Cada entrada: {'usuario': str, 'cols': {col_name: valor}}
@@ -359,7 +359,7 @@ async def get_edicion_caudales(
     rows = (await db.execute(text("""
         SELECT id,
                DATE_FORMAT(fecha, '%Y-%m-%d') AS fecha,
-               CASE turno WHEN 1 THEN 'mañana' WHEN 2 THEN 'tarde' WHEN 3 THEN 'noche' END AS turno,
+               CASE turno WHEN 1 THEN 'noche' WHEN 2 THEN 'mañana' WHEN 3 THEN 'tarde' END AS turno,
                turno AS turno_int,
                hora_lectura,
                tanque_reuso_2in, ptar, envio_th,

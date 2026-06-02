@@ -79,9 +79,9 @@ export default function RegistrosPanel() {
         <select className="cal-filter-select" value={turno}
           onChange={e => setTurno(e.target.value)} style={{ minWidth: 120 }}>
           <option value="">Todos</option>
-          <option value="1">Mañana</option>
-          <option value="2">Tarde</option>
-          <option value="3">Noche</option>
+          <option value="1">Noche</option>
+          <option value="2">Mañana</option>
+          <option value="3">Tarde</option>
         </select>
 
         <button
