@@ -69,6 +69,12 @@ export default function TablaReactivos({ fechaInicio, fechaFin, trigger }: Props
 
   useEffect(() => { load(); }, [load, trigger]);
 
+  // Auto-refresh cada 30 s para ver nuevos registros del operario sin recargar
+  useEffect(() => {
+    const id = setInterval(() => load(), 30_000);
+    return () => clearInterval(id);
+  }, [load]);
+
   const startEdit = (r: Registro) => {
     setEditId(r.id);
     setEdit({

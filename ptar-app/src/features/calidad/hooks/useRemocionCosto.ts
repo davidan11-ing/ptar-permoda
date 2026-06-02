@@ -62,10 +62,26 @@ export function useRemocionCosto(fechaInicio: string, fechaFin: string, parametr
         for (const row of gemRows) {
           const t   = TURNO_KEY[row.turno?.toLowerCase() ?? ''] ?? 'T1';
           const key = `${row.fecha}|${t}`;
+
+          // Prioridad 1: pesos_por_m3 precalculado en BD
           let costo = row.pesos_por_m3 ?? 0;
-          if (!costo && row.caudal_m3 && row.caudal_m3 > 0 && row.costo_quimica_turno) {
-            costo = row.costo_quimica_turno / row.caudal_m3;
+
+          if (!costo && row.caudal_m3 && row.caudal_m3 > 0) {
+            // Prioridad 2: costo_quimica_turno / caudal
+            if (row.costo_quimica_turno) {
+              costo = row.costo_quimica_turno / row.caudal_m3;
+            } else {
+              // Prioridad 3: suma de costo_op_* individuales (cuando el turno fue
+              // guardado desde el RegistrosPanel sin calcular costo_quimica_turno)
+              const sumaCostos = (row.costo_op_acido      ?? 0)
+                               + (row.costo_op_coagulante ?? 0)
+                               + (row.costo_op_decolorante ?? 0)
+                               + (row.costo_op_anionico   ?? 0)
+                               + (row.costo_op_cationico  ?? 0);
+              if (sumaCostos > 0) costo = sumaCostos / row.caudal_m3;
+            }
           }
+
           costoMap.set(key, costo);
         }
 

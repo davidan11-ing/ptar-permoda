@@ -324,7 +324,14 @@ export default function FormatoReactivos() {
   const [ultimosNiveles, setUltimosNiveles] = useState<Record<string, UltimoNivel>>({});
 
   // ── Modo manual de fecha / turno ──────────────────────────────────────────
-  const [autoTurno]   = useState<'mañana' | 'tarde' | 'noche'>(getTurno);
+  // autoTurno se recalcula cada minuto para detectar cambio de turno mientras
+  // el formulario está abierto (ej: se abre en Mañana y se envía en Tarde)
+  const [autoTurno, setAutoTurno] = useState<'mañana' | 'tarde' | 'noche'>(getTurno);
+  useEffect(() => {
+    const id = setInterval(() => setAutoTurno(getTurno()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+
   const [manualMode,  setManualMode]  = useState(false);
   const [manualFecha, setManualFecha] = useState(() => new Date().toISOString().slice(0, 10));
   const [manualTurno, setManualTurno] = useState<'mañana' | 'tarde' | 'noche'>(autoTurno);
