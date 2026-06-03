@@ -355,6 +355,105 @@
   animation:costFloat 2.5s ease-in-out infinite;
 }
 
+/* ── Desglose de costos por fase — collapsible ── */
+.eq-cost-breakdown{
+  margin:6px 0 0;
+  border:1px solid rgba(126,200,200,.28);
+  border-radius:5px;
+}
+.eq-cost-breakdown-summary{
+  display:flex;align-items:center;gap:6px;
+  padding:6px 12px;
+  cursor:pointer;
+  font-size:9px;font-weight:700;letter-spacing:1.8px;
+  color:#6e7681;text-transform:uppercase;
+  background:rgba(126,200,200,.08);
+  user-select:none;
+  list-style:none;
+}
+.eq-cost-breakdown-summary::-webkit-details-marker{display:none;}
+.eq-cost-bd-chevron{
+  font-size:7px;color:#7ec8c8;
+  transition:transform .2s ease;
+  display:inline-block;
+}
+details[open] .eq-cost-bd-chevron{transform:rotate(90deg);}
+.eq-cost-breakdown-phase{
+  margin-left:auto;
+  font-size:8px;color:#7ec8c8;
+  font-weight:600;letter-spacing:1px;
+  background:rgba(126,200,200,.1);
+  padding:1px 6px;border-radius:3px;
+}
+.eq-cost-breakdown-body{
+  padding:8px 12px 10px;
+  border-top:1px solid rgba(126,200,200,.12);
+}
+.eq-cost-breakdown-body--shared{
+  border-top:1px dashed rgba(126,200,200,.18);
+  background:rgba(255,255,255,.015);
+}
+.eq-cost-bd-section-title{
+  font-size:8px;font-weight:700;letter-spacing:1.6px;
+  color:#4a5568;text-transform:uppercase;
+  margin-bottom:5px;padding-bottom:3px;
+  border-bottom:1px solid rgba(126,200,200,.10);
+}
+.eq-cost-bd-subtotal{
+  display:flex;justify-content:space-between;
+  padding:3px 0 2px;
+  font-size:8px;color:#6e7681;
+  font-family:monospace;letter-spacing:.03em;
+  border-top:1px solid rgba(255,255,255,.06);
+  margin-top:3px;
+}
+.eq-cost-bd-row{
+  display:grid;
+  grid-template-columns:8px 1fr 56px 30px 62px;
+  align-items:center;
+  gap:5px;
+  margin-bottom:5px;
+}
+.eq-cost-bd-dot{
+  width:7px;height:7px;
+  border-radius:50%;
+  flex-shrink:0;
+}
+.eq-cost-bd-label{
+  font-size:9px;color:#8b949e;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.eq-cost-bd-bar-wrap{
+  background:rgba(255,255,255,.04);
+  border-radius:2px;height:5px;overflow:hidden;
+}
+.eq-cost-bd-bar{
+  height:100%;border-radius:2px;
+  transition:width .4s ease;
+}
+.eq-cost-bd-pct{
+  font-size:8px;color:#6e7681;
+  text-align:right;font-family:monospace;
+}
+.eq-cost-bd-val{
+  font-size:9px;font-family:monospace;
+  color:#7ec8c8;text-align:right;
+}
+.eq-cost-bd-total{
+  display:flex;justify-content:space-between;
+  padding:5px 0 3px;
+  border-top:1px solid rgba(126,200,200,.18);
+  margin-top:4px;
+  font-size:9px;font-weight:700;
+  color:#7ec8c8;letter-spacing:.04em;
+  font-family:monospace;
+}
+.eq-cost-bd-note{
+  font-size:8px;color:#484f58;
+  margin:5px 0 0;
+  font-style:italic;line-height:1.45;
+}
+
 /* ── Double-click hint on equip groups ── */
 .eq-h{cursor:pointer;}
 .eq-h:active{opacity:.85;}

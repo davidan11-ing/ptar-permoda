@@ -4,7 +4,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip,
 } from 'recharts';
 import type { EqDef } from './equipment';
-import { SC, SL } from './equipment';
+import { SC, SL, PHASE_BREAKDOWNS, EQ_COSTS } from './equipment';
 import { useEquipChart } from './hooks/useEquipChart';
 import { EquipSvgDrawing } from './EquipSvgDrawing';
 
@@ -73,6 +73,84 @@ function EquipChart({ equipKey, baseValue, paramLabel, unit, accentColor }: Char
         />
       </AreaChart>
     </ResponsiveContainer>
+  );
+}
+
+/* ── helpers ─────────────────────────────────────────────────────── */
+function fmt(v: number) {
+  return '$' + v.toLocaleString('es-CO', { minimumFractionDigits: 2 });
+}
+
+function BdRow({ label, value, total, hex }: { label: string; value: number; total: number; hex: string }) {
+  const pct = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
+  return (
+    <div className="eq-cost-bd-row">
+      <span className="eq-cost-bd-dot" style={{ background: hex }} />
+      <span className="eq-cost-bd-label">{label}</span>
+      <div className="eq-cost-bd-bar-wrap">
+        <div className="eq-cost-bd-bar" style={{ width: `${pct}%`, background: hex + '66' }} />
+      </div>
+      <span className="eq-cost-bd-pct">{pct}%</span>
+      <span className="eq-cost-bd-val">{fmt(value)}</span>
+    </div>
+  );
+}
+
+/* ── Desglose de costos: por equipo + compartidos de fase ────────── */
+function CostBreakdownSection({ equipKey, costPhase }: { equipKey: string; costPhase?: string }) {
+  const eqC  = EQ_COSTS[equipKey];
+  const bd   = costPhase ? PHASE_BREAKDOWNS[costPhase] : undefined;
+  if (!eqC && !bd) return null;
+
+  // Costos propios del equipo
+  const eqRows: { label: string; value: number; hex: string }[] = [];
+  if (eqC?.energia)  eqRows.push({ label: 'Energía eléctrica', value: eqC.energia,  hex: '#4fc3f7' });
+  if (eqC?.lavTK)    eqRows.push({ label: 'Lav. / M.O. tanques', value: eqC.lavTK,  hex: '#ffb74d' });
+  if (eqC?.quimicos) eqRows.push({ label: 'Químicos / Reactivos', value: eqC.quimicos, hex: '#ff8a65' });
+  const eqTotal = eqRows.reduce((s, r) => s + r.value, 0);
+
+  return (
+    <details className="eq-cost-breakdown">
+      <summary className="eq-cost-breakdown-summary">
+        <span className="eq-cost-bd-chevron">▶</span>
+        <span>DESGLOSE DE COSTOS</span>
+        {costPhase && <span className="eq-cost-breakdown-phase">{costPhase}</span>}
+      </summary>
+
+      {/* ── Sección 1: costos propios ── */}
+      {eqRows.length > 0 && (
+        <div className="eq-cost-breakdown-body">
+          <div className="eq-cost-bd-section-title">COSTOS DEL EQUIPO</div>
+          {eqRows.map(r => <BdRow key={r.label} label={r.label} value={r.value} total={eqTotal} hex={r.hex} />)}
+          <div className="eq-cost-bd-subtotal">
+            <span>Subtotal equipo</span>
+            <span>{fmt(eqTotal)}/m³</span>
+          </div>
+        </div>
+      )}
+
+      {/* ── Sección 2: costos compartidos de fase ── */}
+      {bd && (
+        <div className="eq-cost-breakdown-body eq-cost-breakdown-body--shared">
+          <div className="eq-cost-bd-section-title">
+            COSTOS COMPARTIDOS · FASE {bd.phase}
+          </div>
+          {bd.rows.map(r => {
+            const sharedTotal = bd.rows.reduce((s, x) => s + x.value, 0);
+            return <BdRow key={r.label} label={r.label} value={r.value} total={sharedTotal} hex={r.hex} />;
+          })}
+          <div className="eq-cost-bd-subtotal">
+            <span>Subtotal compartido</span>
+            <span>{fmt(bd.rows.reduce((s, r) => s + r.value, 0))}/m³</span>
+          </div>
+          <div className="eq-cost-bd-total">
+            <span>TOTAL FASE {bd.phase}</span>
+            <span>{fmt(bd.total)}/m³</span>
+          </div>
+          <p className="eq-cost-bd-note">{bd.note}</p>
+        </div>
+      )}
+    </details>
   );
 }
 
@@ -154,6 +232,9 @@ function EquipmentModalInner({ equipKey, eq, closing, onClose }: Props) {
                 </div>
               </div>
             )}
+
+            {/* Desglose de costos por equipo + fase — collapsible */}
+            <CostBreakdownSection equipKey={equipKey} costPhase={eq.costPhase} />
 
             {/* Sección parámetros */}
             <div className="eq-modal-section-label" style={{ marginTop: eq.cost ? 14 : (eq.description ? 14 : 6) }}>PARÁMETROS</div>
