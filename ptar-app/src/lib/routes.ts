@@ -4,6 +4,7 @@ export const ROUTES = {
   OPERARIO_HOME: '/operario',
   FORMATO_CAUDALES: '/operario/formato/caudales',
   FORMATO_REACTIVOS: '/operario/formato/reactivos',
+  FORMATO_CALIDAD: '/operario/formato/calidad',
   FORMATO_INCIDENCIAS: '/operario/formato/incidencias',
   FORMATO_CONDICIONES_OP: '/operario/formato/condiciones',
   // Encargado

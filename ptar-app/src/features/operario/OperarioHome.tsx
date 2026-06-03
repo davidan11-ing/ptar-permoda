@@ -38,7 +38,7 @@ const FORMATOS = [
     num: 'F-02',
   },
   {
-    to: ROUTES.FORMATO_INCIDENCIAS,
+    to: ROUTES.FORMATO_CALIDAD,
     title: 'Calidad de Agua',
     subtitle: 'Parámetros físico-químicos por unidad de tratamiento, turno a turno.',
     icon: (
@@ -51,6 +51,22 @@ const FORMATOS = [
     fields: ['pH, TDS, Conductividad…', 'Valor turno anterior', 'Validaciones especiales', 'Obs. generales al inicio'],
     color: '#d29922',
     num: 'F-03',
+  },
+  {
+    to: ROUTES.FORMATO_INCIDENCIAS,
+    title: 'Registro de Incidencias',
+    subtitle: 'Eventos, novedades y situaciones fuera de lo normal en el turno.',
+    icon: (
+      <svg width="36" height="36" viewBox="0 0 40 40" fill="none">
+        <circle cx="20" cy="20" r="19" stroke="#f0883e" strokeWidth="1.5"/>
+        <path d="M20 13v9" stroke="#f0883e" strokeWidth="2" strokeLinecap="round"/>
+        <circle cx="20" cy="27" r="1.5" fill="#f0883e"/>
+        <path d="M12 8l-3 4h22l-3-4" stroke="#f0883e" strokeWidth="1.2" strokeLinejoin="round"/>
+      </svg>
+    ),
+    fields: ['Incidencias operativas', 'Equipos fuera de servicio', 'Observaciones del turno', 'Registro de novedades'],
+    color: '#f0883e',
+    num: 'F-04',
   },
   {
     to: ROUTES.FORMATO_CONDICIONES_OP,

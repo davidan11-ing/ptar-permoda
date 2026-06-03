@@ -51,13 +51,14 @@ interface ProductComputed {
   kgConsumidos:    number | null;
   ppm:             number | null;
   costoOp:         number | null;
+  pesosM3:         number | null;  // $/m³ = costoOp / volGEM
   fueraCapacidad:  boolean;
   esIngreso:       boolean;
 }
 
 const NULL_COMPUTED: ProductComputed = {
   active: false, consumoL: null, consumoReal: null,
-  kgConsumidos: null, ppm: null, costoOp: null,
+  kgConsumidos: null, ppm: null, costoOp: null, pesosM3: null,
   fueraCapacidad: false, esIngreso: false,
 };
 
@@ -78,15 +79,18 @@ function computeProduct(
   const consumoReal = consumoL - trasiegoL;
   const kg         = q.unidad === 'L' ? consumoReal * q.densidad : consumoReal;
   return {
-    active:         true,
-    consumoL,
-    consumoReal,
-    kgConsumidos:   kg,
-    ppm:            volM3 > 0 ? (kg / volM3) * 1000 : null,
-    costoOp:        kg * q.precio_kg,
-    fueraCapacidad: nf > q.capacidad,
-    esIngreso:      nf > ni,
-  };
+    const costo = kg * q.precio_kg;
+    return {
+      active:         true,
+      consumoL,
+      consumoReal,
+      kgConsumidos:   kg,
+      ppm:            volM3 > 0 ? (kg / volM3) * 1000 : null,
+      costoOp:        costo,
+      pesosM3:        (volM3 > 0 && q.precio_kg > 0) ? costo / volM3 : null,
+      fueraCapacidad: nf > q.capacidad,
+      esIngreso:      nf > ni,
+    };
 }
 
 // ─── Acordeón ────────────────────────────────────────────────────────────────
@@ -301,6 +305,18 @@ function ProductCard({
                 {(c.costoOp ?? 0).toLocaleString('es-CO', {
                   style: 'currency', currency: 'COP', maximumFractionDigits: 0,
                 })}
+              </span>
+            </div>
+          )}
+          {c.pesosM3 !== null && (
+            <div className="reactivo-computed-item" style={{ gridColumn: '1 / -1' }}>
+              <span className="reactivo-computed-label" style={{ color: '#7ec8c8' }}>
+                $/m³ tratado
+              </span>
+              <span className="reactivo-computed-value" style={{ color: '#7ec8c8', fontWeight: 700 }}>
+                {c.pesosM3.toLocaleString('es-CO', {
+                  style: 'currency', currency: 'COP', maximumFractionDigits: 1,
+                })}/m³
               </span>
             </div>
           )}
@@ -805,6 +821,47 @@ export default function FormatoReactivos() {
             </div>
           </div>
         )}
+
+        {/* ── Banner $/m³ total del turno ───────────────────────────────── */}
+        {allActive.length > 0 && volGEM > 0 && (() => {
+          const costoTotal = allActive.reduce((sum, q) => {
+            const c = computed[q.id];
+            return sum + (c.costoOp ?? 0);
+          }, 0);
+          const pesosM3Total = costoTotal / volGEM;
+          return (
+            <div style={{
+              background: 'linear-gradient(135deg, #0d1a1a 0%, #0a1e14 100%)',
+              border: '1px solid #7ec8c8',
+              borderRadius: 8,
+              padding: '12px 16px',
+              marginBottom: 12,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: 8,
+            }}>
+              <div>
+                <div style={{ fontSize: 11, color: '#8b949e', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 2 }}>
+                  Costo total del turno
+                </div>
+                <div style={{ fontSize: 12, color: '#7ec8c8' }}>
+                  {allActive.length} reactivo{allActive.length !== 1 ? 's' : ''} activo{allActive.length !== 1 ? 's' : ''}
+                  {' · '}{volGEM.toFixed(0)} m³ tratados
+                </div>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: 22, fontWeight: 700, color: '#7ec8c8', fontFamily: 'monospace', lineHeight: 1 }}>
+                  {pesosM3Total.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 1 })}/m³
+                </div>
+                <div style={{ fontSize: 11, color: '#484f58', marginTop: 2 }}>
+                  = {costoTotal.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })} total
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* ── Acciones ──────────────────────────────────────────────────── */}
         {!confirmCero && (

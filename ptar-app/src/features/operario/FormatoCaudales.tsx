@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../state/AuthContext';
 import { ROUTES } from '../../lib/routes';
-import { getUltimasLecturas, createCaudalesBatch } from '../../services/ptarClient';
-import type { RegistroContador } from '../../services/ptarClient';
+import { getUltimasLecturas, createCaudalesBatch, getResumenBalance } from '../../services/ptarClient';
+import type { RegistroContador, ResumenBalanceRow } from '../../services/ptarClient';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -39,7 +39,10 @@ export default function FormatoCaudales() {
 
   const [lastReadings, setLastReadings] = useState<Record<string, number>>({});
   const [loadingPrev, setLoadingPrev] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [saving,    setSaving]    = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [resumen,   setResumen]   = useState<ResumenBalanceRow[]>([]);
+  const [resumenFecha, setResumenFecha] = useState('');
 
   // ── Modo manual de fecha / turno ──────────────────────────────────────────
   // getTurno() se calcula UNA vez al montar (useState lazy init) para que no
@@ -165,14 +168,110 @@ export default function FormatoCaudales() {
       return;
     }
     setSaving(false);
-    
     toast.success(`${rows.length} lectura${rows.length !== 1 ? 's' : ''} guardada${rows.length !== 1 ? 's' : ''} correctamente.`);
-    setTimeout(() => navigate(ROUTES.OPERARIO_HOME), 2000);
+
+    // Cargar resumen del turno y mostrar pantalla de cierre
+    const fecha = activeFecha;
+    setResumenFecha(fecha);
+    try {
+      const data = await getResumenBalance({ fecha_inicio: fecha, fecha_fin: fecha });
+      setResumen(data);
+    } catch { setResumen([]); }
+    setSubmitted(true);
   };
 
   const submitLabel = saving ? 'Guardando...'
     : totalActive === 0 ? 'Completa al menos una lectura'
     : `Enviar ${totalActive} Lectura${totalActive !== 1 ? 's' : ''}`;
+
+  // ── Pantalla de resumen post-submit ──────────────────────────────────────
+  if (submitted) {
+    // Grupos de medidores para el resumen
+    const FUENTES: { label: string; keys: string[]; color: string }[] = [
+      { label: 'Acueducto',   keys: ['acueducto_m3'],                                        color: '#00c5e3' },
+      { label: 'RO (Ósmosis)',keys: ['entrada_ro1','permeado_ro1','rechazo_ro1','permeado_ro2'], color: '#1f6feb' },
+      { label: 'PTAP',        keys: ['ingreso_ptap','potable_ptap'],                          color: '#8b5cf6' },
+    ];
+    const AREAS: { label: string; keys: string[]; color: string }[] = [
+      { label: 'Lavandería',  keys: ['lavanderia_m3'],  color: '#3fb950' },
+      { label: 'Tintorería',  keys: ['tintoreria_m3'],  color: '#d29922' },
+      { label: 'Rotativa',    keys: ['rotativa_m3'],    color: '#f0883e' },
+    ];
+    const sum = (keys: string[]) =>
+      resumen.filter(r => keys.includes(r.medidor)).reduce((acc, r) => acc + (r.total_m3 ?? 0), 0);
+
+    const cardStyle = (color: string): React.CSSProperties => ({
+      background: '#161b22', border: `1px solid ${color}30`, borderRadius: 8,
+      padding: '10px 14px', display: 'flex', justifyContent: 'space-between',
+      alignItems: 'center',
+    });
+
+    return (
+      <div className="formato-page">
+        <div className="formato-header" style={{ borderColor: '#00c5e3' }}>
+          <h1 className="formato-title">
+            <span className="formato-num" style={{ background: '#00c5e3' }}>F-01</span>
+            Registro guardado ✓
+          </h1>
+          <p className="formato-meta">Fecha: <strong>{resumenFecha}</strong> · Turno: <strong>{TURNO_LABELS[activeTurno] ?? activeTurno}</strong></p>
+        </div>
+
+        <div style={{ padding: '0 8px', maxWidth: 700, margin: '0 auto' }}>
+
+          {/* Por fuente */}
+          <div className="form-section-title" style={{ marginBottom: 10, marginTop: 16 }}>
+            Consumo por fuente de agua
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
+            {FUENTES.map(f => {
+              const total = sum(f.keys);
+              return (
+                <div key={f.label} style={cardStyle(f.color)}>
+                  <span style={{ fontSize: 13, color: '#c9d1d9', fontWeight: 600 }}>{f.label}</span>
+                  <span style={{ fontSize: 15, color: f.color, fontWeight: 700, fontFamily: 'monospace' }}>
+                    {total > 0 ? `${total.toLocaleString('es-CO', { maximumFractionDigits: 1 })} m³` : '—'}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Por área */}
+          <div className="form-section-title" style={{ marginBottom: 10 }}>
+            Consumo por área de proceso
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 28 }}>
+            {AREAS.map(a => {
+              const total = sum(a.keys);
+              return (
+                <div key={a.label} style={cardStyle(a.color)}>
+                  <span style={{ fontSize: 13, color: '#c9d1d9', fontWeight: 600 }}>{a.label}</span>
+                  <span style={{ fontSize: 15, color: a.color, fontWeight: 700, fontFamily: 'monospace' }}>
+                    {total > 0 ? `${total.toLocaleString('es-CO', { maximumFractionDigits: 1 })} m³` : '—'}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          {resumen.length === 0 && (
+            <p style={{ color: '#484f58', fontSize: 12, textAlign: 'center', marginBottom: 20 }}>
+              Los datos del resumen estarán disponibles después de que el sistema calcule los deltas.
+            </p>
+          )}
+
+          <button
+            type="button"
+            className="btn-primary"
+            style={{ width: '100%', padding: '12px', fontSize: 14, fontWeight: 700 }}
+            onClick={() => navigate(ROUTES.OPERARIO_HOME)}
+          >
+            ← Volver al inicio
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="formato-page">
