@@ -78,9 +78,8 @@ function computeProduct(
   const consumoL   = ni - nf;
   const consumoReal = consumoL - trasiegoL;
   const kg         = q.unidad === 'L' ? consumoReal * q.densidad : consumoReal;
+  const costo = kg * q.precio_kg;
   return {
-    const costo = kg * q.precio_kg;
-    return {
       active:         true,
       consumoL,
       consumoReal,
