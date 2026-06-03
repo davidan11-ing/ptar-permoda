@@ -22,6 +22,7 @@ export function ContadorCard({
   onLectura, onObs, onRemove,
 }: ContadorCardProps) {
   const c       = CONTADORES_MAP[id];
+  const unidad  = (c as { unidad?: string }).unidad ?? 'm³';  // R2: C-12 usa m³/h
   const isDecr  = delta !== null && delta < 0;
   const active  = lectura !== '';
   const cardClass = `param-row${active ? (isDecr ? ' has-error' : ' has-value') : ''}`;
@@ -46,25 +47,25 @@ export function ContadorCard({
       <div className="param-row-inputs">
         <div className="form-group" style={{ margin: 0 }}>
           <label className="form-label" style={{ fontSize: 11, marginBottom: 4 }}>
-            Lect. anterior (m³)
+            Lect. anterior ({unidad})
             {loadingPrev && <span style={{ color: '#484f58', marginLeft: 6 }}>cargando…</span>}
           </label>
           <div className="form-readonly">{prev.toLocaleString('es-CO', { minimumFractionDigits: 1 })}</div>
         </div>
 
         <div className="form-group" style={{ margin: 0 }}>
-          <label className="form-label" style={{ fontSize: 11, marginBottom: 4 }}>Lect. actual (m³)</label>
+          <label className="form-label" style={{ fontSize: 11, marginBottom: 4 }}>Lect. actual ({unidad})</label>
           <input
             type="number" step="1" min="0"
             className={`form-input${isDecr ? ' input-warning' : ''}`}
-            placeholder="m³"
+            placeholder={unidad}
             value={lectura}
             onChange={e => onLectura(e.target.value)}
           />
         </div>
 
         <div className="form-group" style={{ margin: 0 }}>
-          <label className="form-label" style={{ fontSize: 11, marginBottom: 4 }}>Delta (m³)</label>
+          <label className="form-label" style={{ fontSize: 11, marginBottom: 4 }}>Delta ({unidad})</label>
           <div className={`form-readonly${delta === null ? '' : delta < 0 ? ' value-alert' : ' value-ok'}`}>
             {delta !== null ? `${delta >= 0 ? '+' : ''}${delta.toFixed(0)}` : '—'}
           </div>

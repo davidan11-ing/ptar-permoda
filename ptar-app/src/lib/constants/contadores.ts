@@ -10,7 +10,7 @@ export const CONTADORES = [
   { id: 'C-09', nombre: 'Abridora 2',                                              ubicacion: 'Proceso',                 tipo_agua: 'Industrial'    },
   { id: 'C-10', nombre: 'Tanque de Reúso (2")',                                   ubicacion: 'Tanque de Reúso',         tipo_agua: 'Reúso'         },
   { id: 'C-11', nombre: 'PTAR',                                                    ubicacion: 'Entrada PTAR',            tipo_agua: 'Residual'      },
-  { id: 'C-12', nombre: 'Entrada RO #1',                                           ubicacion: 'Módulo RO #1',            tipo_agua: 'Pretratamiento'},
+  { id: 'C-12', nombre: 'Entrada RO #1',                                           ubicacion: 'Módulo RO #1',            tipo_agua: 'Pretratamiento', unidad: 'm³/h' },
   { id: 'C-13', nombre: 'Salida RO #1',                                            ubicacion: 'Módulo RO #1',            tipo_agua: 'RO'            },
   { id: 'C-14', nombre: 'Entrada RO #2',                                           ubicacion: 'Módulo RO #2',            tipo_agua: 'Pretratamiento'},
   { id: 'C-15', nombre: 'Salida RO #2',                                            ubicacion: 'Módulo RO #2',            tipo_agua: 'RO'            },
