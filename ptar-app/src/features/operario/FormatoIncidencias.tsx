@@ -287,10 +287,10 @@ export default function FormatoIncidencias() {
 
   return (
     <div className="formato-page">
-      <div className="formato-header" style={{ borderColor: '#d29922' }}>
+      <div className="formato-header" style={{ borderColor: '#f0883e' }}>
         <h1 className="formato-title">
-          <span className="formato-num" style={{ background: '#d29922' }}>F-03</span>
-          Calidad del Agua
+          <span className="formato-num" style={{ background: '#f0883e' }}>F-04</span>
+          Registro de Incidencias
         </h1>
         <p className="formato-meta">Operario: <strong>{currentUser?.nombre}</strong></p>
       </div>
