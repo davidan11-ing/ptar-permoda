@@ -50,10 +50,12 @@ export default function Navbar() {
       <nav className="navbar-nav">
         {currentUser.activeRole === 'operario' && (
           <>
-            <Link to="/operario" className="nav-link">Inicio</Link>
-            <Link to="/operario/formato/caudales" className="nav-link">Caudales</Link>
-            <Link to="/operario/formato/reactivos" className="nav-link">Reactivos</Link>
-            <Link to="/operario/formato/incidencias" className="nav-link">Incidencias</Link>
+            <Link to={ROUTES.OPERARIO_HOME}           className={`nav-link${location.pathname === ROUTES.OPERARIO_HOME ? ' active' : ''}`}>Inicio</Link>
+            <Link to={ROUTES.FORMATO_CAUDALES}        className={`nav-link${location.pathname === ROUTES.FORMATO_CAUDALES ? ' active' : ''}`}>Caudales</Link>
+            <Link to={ROUTES.FORMATO_REACTIVOS}       className={`nav-link${location.pathname === ROUTES.FORMATO_REACTIVOS ? ' active' : ''}`}>Reactivos</Link>
+            <Link to={ROUTES.FORMATO_CALIDAD}         className={`nav-link${location.pathname === ROUTES.FORMATO_CALIDAD ? ' active' : ''}`}>Calidad</Link>
+            <Link to={ROUTES.FORMATO_INCIDENCIAS}     className={`nav-link${location.pathname === ROUTES.FORMATO_INCIDENCIAS ? ' active' : ''}`}>Incidencias</Link>
+            <Link to={ROUTES.FORMATO_CONDICIONES_OP}  className={`nav-link${location.pathname === ROUTES.FORMATO_CONDICIONES_OP ? ' active' : ''}`}>Condiciones</Link>
           </>
         )}
         {(currentUser.activeRole === 'encargado' || currentUser.activeRole === 'administrador') && (
