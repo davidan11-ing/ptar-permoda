@@ -16,8 +16,10 @@ import {
   XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer, LabelList,
 } from 'recharts';
-import { useCargaRemovida }    from '../hooks/useCargaRemovida';
+import { useCargaRemovida, type CargaRemovPoint } from '../hooks/useCargaRemovida';
 import { getCalidadParametros } from '../../../services/ptarClient';
+import type { Granularidad } from '../../../hooks/useGranularidad';
+import { xLabel, sortKey, generateAllPeriods } from '../../../lib/utils/agruparTemporal';
 
 // ─── Colores ───────────────────────────────────────────────────────────────
 const COLOR_BAR  = '#7B3611';   // café oscuro — KG removidos
@@ -43,8 +45,46 @@ function TooltipCustom({ active, payload, label }: any) {
   );
 }
 
+// ─── Reagrupar por granularidad ───────────────────────────────────────────
+function reagruparCarga(
+  pts: CargaRemovPoint[],
+  gran: Granularidad | null,
+  mostrarVacios = false,
+  fechaInicio = '',
+  fechaFin    = '',
+): CargaRemovPoint[] {
+  if (!gran || gran === 'turno' || gran === 'dia') return pts;
+  type B = { sk: string; kgSum: number; indArr: number[]; label: string };
+  const map = new Map<string, B>();
+  for (const p of pts) {
+    if (p.sinDatos) continue;
+    const sk    = sortKey(p.fecha, undefined, gran);
+    const label = xLabel(p.fecha, undefined, gran);
+    if (!map.has(sk)) map.set(sk, { sk, kgSum: 0, indArr: [], label });
+    const b = map.get(sk)!;
+    b.kgSum += p.kgRemovidos;
+    if (p.indicadorKgM3 > 0) b.indArr.push(p.indicadorKgM3);
+  }
+  // Rellenar períodos vacíos
+  if (mostrarVacios && fechaInicio && fechaFin) {
+    for (const { sk, label } of generateAllPeriods(fechaInicio, fechaFin, gran)) {
+      if (!map.has(sk)) map.set(sk, { sk, kgSum: 0, indArr: [], label });
+    }
+  }
+  const avg = (arr: number[]) => arr.length ? +(arr.reduce((a, v) => a + v, 0) / arr.length).toFixed(4) : 0;
+  return Array.from(map.values())
+    .sort((a, b) => a.sk.localeCompare(b.sk))
+    .map(b => ({
+      label:         b.label,
+      fecha:         b.sk,
+      kgRemovidos:   +b.kgSum.toFixed(2),
+      indicadorKgM3: avg(b.indArr),
+      sinDatos:      b.kgSum === 0,
+    }));
+}
+
 // ─── Props ─────────────────────────────────────────────────────────────────
-interface Props { fechaInicio: string; fechaFin: string }
+interface Props { fechaInicio: string; fechaFin: string; granularidad?: Granularidad | null }
 
 // ─── Componente ───────────────────────────────────────────────────────────
 // Orden preferido: SST primero, DQO segundo, resto alfabético
@@ -55,7 +95,7 @@ function ordenarParametros(lista: string[]): string[] {
   return [...pref, ...resto];
 }
 
-export default function CargaRemovoidaSection({ fechaInicio: propFI, fechaFin: propFF }: Props) {
+export default function CargaRemovoidaSection({ fechaInicio: propFI, fechaFin: propFF, granularidad }: Props) {
   const [parametro,     setParametro]     = useState('');
   const [mostrarVacios, setMostrarVacios] = useState(false);
 
@@ -71,7 +111,11 @@ export default function CargaRemovoidaSection({ fechaInicio: propFI, fechaFin: p
   const param = parametro || parametros[0] || '';
 
   const { data, allData, totalKg, loading, error } = useCargaRemovida(propFI, propFF, param);
-  const chartData = mostrarVacios ? allData : data;
+  const rawChart  = mostrarVacios ? allData : data;
+  const chartData = useMemo(
+    () => reagruparCarga(rawChart, granularidad ?? null, mostrarVacios, propFI, propFF),
+    [rawChart, granularidad, mostrarVacios, propFI, propFF],
+  );
 
   // Rango eje derecho
   const inds   = chartData.map(d => d.indicadorKgM3).filter(v => v > 0);

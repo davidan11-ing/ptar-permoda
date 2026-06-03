@@ -6,16 +6,10 @@ import {
 } from 'recharts';
 type RechartsValue = string | number | (string | number)[];
 import { useCostosData, type ConsumoQuimicoDiaRow } from './hooks/useCostosData';
-import { getReporteCostosHtmlUrl } from '../../services/ptarClient';
-
-// ── Rango de fechas por defecto: últimos 60 días ──────────────────────────────
-function defaultFechas() {
-  const hoy = new Date();
-  const ini = new Date(hoy);
-  ini.setDate(ini.getDate() - 60);
-  const fmt = (d: Date) => d.toISOString().slice(0, 10);
-  return { inicio: fmt(ini), fin: fmt(hoy) };
-}
+import { getReporteCostosHtmlUrl, type GemEficienciaRow } from '../../services/ptarClient';
+import GranularidadSelector from '../../components/shared/GranularidadSelector';
+import { useGranularidad } from '../../hooks/useGranularidad';
+import { xLabel, sortKey, TURNO_LABEL } from '../../lib/utils/agruparTemporal';
 
 const TOOLTIP_STYLE = {
   contentStyle: { background: '#161b22', border: '1px solid #30363d', borderRadius: 8, fontSize: 11 },
@@ -23,10 +17,8 @@ const TOOLTIP_STYLE = {
 };
 const AXIS_TICK = { fill: '#8b949e', fontSize: 10 };
 
-function fmtFecha(f: string) {
-  const p = f.split('-');
-  return p.length >= 3 ? `${p[2]}/${p[1]}` : f;
-}
+// Label ya viene formateado desde la función de agregación
+const fmtFecha = (v: string) => v;
 
 const MESES = ['', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
@@ -49,41 +41,86 @@ function colorFor(nombre: string): string {
   return '#8b949e';
 }
 
-// ── Agrupa consumo diario por fecha (suma kg y costo de todos los productos) ──
-function byFecha(rows: ConsumoQuimicoDiaRow[]) {
-  const map = new Map<string, Record<string, number>>();
-  const productos = new Set<string>();
+import type { Granularidad } from '../../hooks/useGranularidad';
+
+// ── Agrupa consumo químico por granularidad (pivota productos como columnas) ──
+function byGranularidad(rows: ConsumoQuimicoDiaRow[], gran: Granularidad | null) {
+  type Bucket = {
+    sk: string;
+    label: string;
+    productos: Record<string, { kg: number; costo: number; ppm: number[]; caudal: number }>;
+  };
+
+  const map = new Map<string, Bucket>();
 
   for (const r of rows) {
-    if (!map.has(r.fecha)) map.set(r.fecha, {});
-    const e = map.get(r.fecha)!;
-    const key = r.producto_nombre;
-    productos.add(key);
-    if (r.kg_dia != null) e[`kg_${key}`] = (e[`kg_${key}`] ?? 0) + r.kg_dia;
-    if (r.costo_dia != null) e[`costo_${key}`] = (e[`costo_${key}`] ?? 0) + r.costo_dia;
-    if (r.ppm_promedio_dia != null) {
-      const arr = e[`_ppm_${key}`] ? (e[`_ppm_arr_${key}`] as unknown as number[]) : [];
-      arr.push(r.ppm_promedio_dia);
-      (e as Record<string, unknown>)[`_ppm_arr_${key}`] = arr;
-    }
-    if (r.caudal_m3_dia != null) e['caudal_m3'] = (e['caudal_m3'] ?? 0) + r.caudal_m3_dia;
+    const sk    = sortKey(r.fecha, undefined, gran);
+    const label = xLabel(r.fecha, undefined, gran);
+
+    if (!map.has(sk)) map.set(sk, { sk, label, productos: {} });
+    const bucket = map.get(sk)!;
+    const p = r.producto_nombre;
+
+    if (!bucket.productos[p]) bucket.productos[p] = { kg: 0, costo: 0, ppm: [], caudal: 0 };
+    const pe = bucket.productos[p];
+
+    if (r.kg_dia != null)          pe.kg     += r.kg_dia;
+    if (r.costo_dia != null)       pe.costo  += r.costo_dia;
+    if (r.ppm_promedio_dia != null) pe.ppm.push(r.ppm_promedio_dia);
+    if (r.caudal_m3_dia != null)   pe.caudal += r.caudal_m3_dia;
   }
 
-  const sorted = Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
-  const result = sorted.map(([fecha, e]) => {
-    const row: Record<string, number | string | null> = { fecha };
-    for (const p of productos) {
-      row[`kg_${p}`]    = +(e[`kg_${p}`]    ?? 0).toFixed(2);
-      row[`costo_${p}`] = +(e[`costo_${p}`] ?? 0).toFixed(0);
-      const arr = (e as Record<string, unknown>)[`_ppm_arr_${p}`] as number[] | undefined;
-      row[`ppm_${p}`] = arr?.length ? +(arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1) : null;
-    }
-    row['costo_total']  = Object.entries(e).filter(([k]) => k.startsWith('costo_')).reduce((s, [, v]) => s + (Number(v) || 0), 0);
-    row['caudal_m3']    = +(e['caudal_m3'] ?? 0).toFixed(1);
-    return row;
-  });
+  const productos = Array.from(new Set(rows.map(r => r.producto_nombre)));
+  const avg = (arr: number[]) => arr.length ? +(arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1) : null;
 
-  return { result, productos: Array.from(productos) };
+  const result = Array.from(map.values())
+    .sort((a, b) => a.sk.localeCompare(b.sk))
+    .map(bucket => {
+      const row: Record<string, number | string | null> = { fecha: bucket.label };
+      let costoTotal = 0;
+      let caudalTotal = 0;
+      for (const p of productos) {
+        const pe = bucket.productos[p];
+        row[`kg_${p}`]    = pe ? +(pe.kg.toFixed(2)) : 0;
+        row[`costo_${p}`] = pe ? +(pe.costo.toFixed(0)) : 0;
+        row[`ppm_${p}`]   = pe ? avg(pe.ppm) : null;
+        if (pe) { costoTotal += pe.costo; caudalTotal += pe.caudal; }
+      }
+      row['costo_total'] = +costoTotal.toFixed(0);
+      row['caudal_m3']   = +caudalTotal.toFixed(1);
+      return row;
+    });
+
+  return { result, productos };
+}
+
+// ── Agrupa datos GEM eficiencia por granularidad ──────────────────────────────
+function gemPorGranularidad(rows: GemEficienciaRow[], gran: Granularidad | null) {
+  type Bucket = { sk: string; label: string; pesos: number[]; caudal: number };
+  const map = new Map<string, Bucket>();
+
+  for (const r of rows) {
+    // GEM turno tiene campo turno en formato string ('mañana'/'tarde'/'noche')
+    // Necesitamos el número para el label
+    const turnoNum = r.turno === 'noche' ? 1 : r.turno === 'mañana' ? 2 : 3;
+    const sk    = sortKey(r.fecha, gran === 'turno' ? turnoNum : undefined, gran);
+    const label = xLabel(r.fecha, gran === 'turno' ? turnoNum : undefined, gran);
+
+    if (!map.has(sk)) map.set(sk, { sk, label, pesos: [], caudal: 0 });
+    const b = map.get(sk)!;
+    if (r.pesos_por_m3 != null) b.pesos.push(r.pesos_por_m3);
+    if (r.caudal_m3    != null) b.caudal += r.caudal_m3;
+  }
+
+  const avg = (arr: number[]) => arr.length ? +(arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(0) : null;
+
+  return Array.from(map.values())
+    .sort((a, b) => a.sk.localeCompare(b.sk))
+    .map(b => ({
+      fecha:       b.label,
+      pesos_por_m3: avg(b.pesos),
+      caudal_m3:   +b.caudal.toFixed(1),
+    }));
 }
 
 // ── KPI Card ──────────────────────────────────────────────────────────────────
@@ -100,21 +137,24 @@ function KpiCard({ label, value, unit, color }: { label: string; value: string; 
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function CostosDashboard() {
-  const { inicio, fin } = defaultFechas();
   const anioActual = new Date().getFullYear();
 
-  const [fechaInicio, setFechaInicio] = useState(inicio);
-  const [fechaFin,    setFechaFin]    = useState(fin);
-  const [sistema,     setSistema]     = useState('GEM');
-  const [mesProyec,   setMesProyec]   = useState(String(new Date().getMonth() + 1));
+  const {
+    granularidad, setGranularidad,
+    fechaInicio, fechaFin,
+    handleFechaInicio, handleFechaFin,
+  } = useGranularidad();
+
+  const [sistema,   setSistema]   = useState('GEM');
+  const [mesProyec, setMesProyec] = useState(String(new Date().getMonth() + 1));
 
   const { consumoDiario, proyeccion, estadisticas, gemEficiencia, loading, error } =
     useCostosData(fechaInicio, fechaFin, sistema);
 
-  // ── Datos por fecha ──────────────────────────────────────────────────────
+  // ── Datos agrupados por granularidad ─────────────────────────────────────
   const { result: datosFecha, productos } = useMemo(
-    () => byFecha(consumoDiario),
-    [consumoDiario],
+    () => byGranularidad(consumoDiario, granularidad),
+    [consumoDiario, granularidad],
   );
 
   // ── KPIs del período ──────────────────────────────────────────────────────
@@ -133,23 +173,11 @@ export default function CostosDashboard() {
     [proyeccion, mesProyec],
   );
 
-  // ── GEM $/m³ ──────────────────────────────────────────────────────────────
-  const gemAgrupado = useMemo(() => {
-    const map = new Map<string, { pesos: number[]; caudal: number }>();
-    for (const r of gemEficiencia) {
-      if (!map.has(r.fecha)) map.set(r.fecha, { pesos: [], caudal: 0 });
-      const e = map.get(r.fecha)!;
-      if (r.pesos_por_m3 != null) e.pesos.push(r.pesos_por_m3);
-      if (r.caudal_m3 != null) e.caudal += r.caudal_m3;
-    }
-    return Array.from(map.entries())
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([fecha, e]) => ({
-        fecha,
-        pesos_por_m3: e.pesos.length ? +(e.pesos.reduce((a, b) => a + b, 0) / e.pesos.length).toFixed(0) : null,
-        caudal_m3:    +e.caudal.toFixed(1),
-      }));
-  }, [gemEficiencia]);
+  // ── GEM $/m³ agrupado por granularidad ────────────────────────────────────
+  const gemAgrupado = useMemo(
+    () => gemPorGranularidad(gemEficiencia, granularidad),
+    [gemEficiencia, granularidad],
+  );
 
   const fmtCOP = (v: number) => v >= 1_000_000 ? `$${(v / 1_000_000).toFixed(1)}M` : v >= 1000 ? `$${(v / 1000).toFixed(0)}k` : `$${v.toFixed(0)}`;
 
@@ -181,8 +209,9 @@ export default function CostosDashboard() {
         </a>
       </div>
 
-      {/* ── Filtros ── */}
+      {/* ── Filtros + granularidad integrada ── */}
       <div className="cal-filters" style={{ marginBottom: 16 }}>
+        <GranularidadSelector value={granularidad} onChange={setGranularidad} />
         <div className="cal-filter-group">
           <label className="cal-filter-label">Sistema</label>
           <select className="cal-filter-select" value={sistema}
@@ -196,12 +225,12 @@ export default function CostosDashboard() {
         <div className="cal-filter-group">
           <label className="cal-filter-label">Fecha inicio</label>
           <input type="date" className="cal-filter-input" value={fechaInicio}
-            onChange={e => setFechaInicio(e.target.value)} />
+            onChange={e => handleFechaInicio(e.target.value)} />
         </div>
         <div className="cal-filter-group">
           <label className="cal-filter-label">Fecha fin</label>
           <input type="date" className="cal-filter-input" value={fechaFin}
-            onChange={e => setFechaFin(e.target.value)} />
+            onChange={e => handleFechaFin(e.target.value)} />
         </div>
         <div className="cal-filter-group">
           <label className="cal-filter-label">Mes proyección</label>

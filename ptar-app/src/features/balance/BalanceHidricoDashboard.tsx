@@ -6,15 +6,9 @@ import {
 } from 'recharts';
 import { useBalanceData } from './hooks/useBalanceData';
 import { getReporteBalanceHtmlUrl, type BalanceHidricoRow } from '../../services/ptarClient';
-
-// ── Rango de fechas por defecto: últimos 60 días ──────────────────────────────
-function defaultFechas() {
-  const hoy = new Date();
-  const ini = new Date(hoy);
-  ini.setDate(ini.getDate() - 60);
-  const fmt = (d: Date) => d.toISOString().slice(0, 10);
-  return { inicio: fmt(ini), fin: fmt(hoy) };
-}
+import GranularidadSelector from '../../components/shared/GranularidadSelector';
+import { useGranularidad } from '../../hooks/useGranularidad';
+import { agruparPorGranularidad } from '../../lib/utils/agruparTemporal';
 
 const TOOLTIP_STYLE = {
   contentStyle: { background: '#161b22', border: '1px solid #30363d', borderRadius: 8, fontSize: 11 },
@@ -22,57 +16,20 @@ const TOOLTIP_STYLE = {
 };
 const AXIS_TICK = { fill: '#8b949e', fontSize: 10 };
 
-function fmt(f: string) {
-  const p = f.split('-');
-  return p.length >= 3 ? `${p[2]}/${p[1]}` : f;
-}
+// El label ya viene formateado desde agruparPorGranularidad — solo lo devolvemos
+const fmt = (v: string) => v;
 
-function round2(v: number | null | undefined): number {
-  return v != null ? +v.toFixed(2) : 0;
-}
-
-// ── Agrega filas por fecha (suma volúmenes; promedia % eficiencia e indicadores) ─
-function agruparPorFecha(rows: BalanceHidricoRow[]) {
-  const map = new Map<string, { count: number; ef: number[]; lav_l: number[]; tin_l: number[]; rot_l: number[]; v: Record<string, number> }>();
-
-  for (const r of rows) {
-    if (!map.has(r.fecha)) {
-      map.set(r.fecha, { count: 0, ef: [], lav_l: [], tin_l: [], rot_l: [], v: {} });
-    }
-    const e = map.get(r.fecha)!;
-    e.count++;
-
-    const sumFields: (keyof BalanceHidricoRow)[] = [
-      'ingreso_ptap', 'potable_ptap', 'carrotanques_m3', 'mulas_funza_m3',
-      'entrada_ro1', 'permeado_ro1', 'rechazo_ro1',
-      'permeado_mbr1', 'permeado_mbr2', 'envio_th',
-      'acueducto_m3', 'total_agua_limpia_m3', 'consumo_gem_m3',
-      'lavanderia_m3', 'tintoreria_m3', 'rotativa_m3',
-    ];
-    for (const k of sumFields) {
-      const v = r[k] as number | null;
-      if (v != null && v > 0) e.v[k] = (e.v[k] ?? 0) + v;
-    }
-    if (r.eficiencia_ro_pct != null) e.ef.push(r.eficiencia_ro_pct);
-    if (r.indicador_lav_l_und != null) e.lav_l.push(r.indicador_lav_l_und);
-    if (r.indicador_tin_l_kg  != null) e.tin_l.push(r.indicador_tin_l_kg);
-    if (r.indicador_rot_l_m   != null) e.rot_l.push(r.indicador_rot_l_m);
-  }
-
-  return Array.from(map.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([fecha, e]) => {
-      const avg = (arr: number[]) => arr.length ? +(arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(2) : null;
-      return {
-        fecha,
-        ...Object.fromEntries(Object.entries(e.v).map(([k, v]) => [k, round2(v)])),
-        eficiencia_ro_pct:    avg(e.ef),
-        indicador_lav_l_und:  avg(e.lav_l),
-        indicador_tin_l_kg:   avg(e.tin_l),
-        indicador_rot_l_m:    avg(e.rot_l),
-      } as Record<string, number | string | null>;
-    });
-}
+// Campos del balance hídrico
+const BALANCE_SUM_FIELDS: (keyof BalanceHidricoRow)[] = [
+  'ingreso_ptap', 'potable_ptap', 'carrotanques_m3', 'mulas_funza_m3',
+  'entrada_ro1', 'permeado_ro1', 'rechazo_ro1',
+  'permeado_mbr1', 'permeado_mbr2', 'envio_th',
+  'acueducto_m3', 'total_agua_limpia_m3', 'consumo_gem_m3',
+  'lavanderia_m3', 'tintoreria_m3', 'rotativa_m3',
+];
+const BALANCE_AVG_FIELDS: (keyof BalanceHidricoRow)[] = [
+  'eficiencia_ro_pct', 'indicador_lav_l_und', 'indicador_tin_l_kg', 'indicador_rot_l_m',
+];
 
 // ── KPI Card ──────────────────────────────────────────────────────────────────
 function KpiCard({ label, value, unit, color }: { label: string; value: string; unit: string; color: string }) {
@@ -88,16 +45,27 @@ function KpiCard({ label, value, unit, color }: { label: string; value: string; 
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function BalanceHidricoDashboard() {
-  const { inicio, fin } = defaultFechas();
+  const {
+    granularidad, setGranularidad,
+    fechaInicio, fechaFin,
+    handleFechaInicio, handleFechaFin,
+  } = useGranularidad();
 
-  const [fechaInicio, setFechaInicio] = useState(inicio);
-  const [fechaFin,    setFechaFin]    = useState(fin);
   const [turnoFiltro, setTurnoFiltro] = useState('');
 
   const turnoNum = turnoFiltro ? Number(turnoFiltro) : undefined;
   const { data, loading, error } = useBalanceData(fechaInicio, fechaFin, turnoNum);
 
-  const agrupado = useMemo(() => agruparPorFecha(data), [data]);
+  const agrupado = useMemo(
+    () => agruparPorGranularidad(data, {
+      gran: granularidad,
+      getFecha:  r => r.fecha,
+      getTurno:  r => r.turno,
+      sumFields: BALANCE_SUM_FIELDS,
+      avgFields: BALANCE_AVG_FIELDS,
+    }),
+    [data, granularidad],
+  );
 
   // ── KPIs globales del período ──────────────────────────────────────────────
   const kpis = useMemo(() => {
@@ -147,8 +115,9 @@ export default function BalanceHidricoDashboard() {
         </a>
       </div>
 
-      {/* ── Filtros ── */}
+      {/* ── Filtros + granularidad integrada ── */}
       <div className="cal-filters" style={{ marginBottom: 16 }}>
+        <GranularidadSelector value={granularidad} onChange={setGranularidad} />
         <div className="cal-filter-group">
           <label className="cal-filter-label">Turno</label>
           <select className="cal-filter-select" value={turnoFiltro}
@@ -162,12 +131,12 @@ export default function BalanceHidricoDashboard() {
         <div className="cal-filter-group">
           <label className="cal-filter-label">Fecha inicio</label>
           <input type="date" className="cal-filter-input" value={fechaInicio}
-            onChange={e => setFechaInicio(e.target.value)} />
+            onChange={e => handleFechaInicio(e.target.value)} />
         </div>
         <div className="cal-filter-group">
           <label className="cal-filter-label">Fecha fin</label>
           <input type="date" className="cal-filter-input" value={fechaFin}
-            onChange={e => setFechaFin(e.target.value)} />
+            onChange={e => handleFechaFin(e.target.value)} />
         </div>
       </div>
 

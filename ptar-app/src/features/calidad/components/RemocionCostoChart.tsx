@@ -11,6 +11,8 @@ import {
 } from 'recharts';
 import { useRemocionCosto } from '../hooks/useRemocionCosto';
 import { getCalidadParametros } from '../../../services/ptarClient';
+import type { Granularidad } from '../../../hooks/useGranularidad';
+import { xLabel, sortKey, generateAllPeriods } from '../../../lib/utils/agruparTemporal';
 
 // ─── Colores ───────────────────────────────────────────────────────────────
 const COLOR_BAR  = '#ED7D31';   // naranja — costo $/m³
@@ -63,9 +65,10 @@ function TooltipCustom({ active, payload, label, param }: any) {
 
 // ─── Props ─────────────────────────────────────────────────────────────────
 interface Props {
-  fechaInicio: string;
-  fechaFin:    string;
-  parametro?:  string;   // parámetro inicial sugerido por el padre
+  fechaInicio:  string;
+  fechaFin:     string;
+  parametro?:   string;
+  granularidad?: Granularidad | null;
 }
 
 function generarFechas(inicio: string, fin: string): string[] {
@@ -77,7 +80,7 @@ function generarFechas(inicio: string, fin: string): string[] {
 }
 
 // ─── Componente principal ──────────────────────────────────────────────────
-export default function RemocionCostoChart({ fechaInicio, fechaFin, parametro: paramProp }: Props) {
+export default function RemocionCostoChart({ fechaInicio, fechaFin, parametro: paramProp, granularidad }: Props) {
   const [parametros,      setParametros]      = useState<string[]>([]);
   const [parametroLocal,  setParametroLocal]  = useState('');
   const [mostrarVacios,   setMostrarVacios]   = useState(false);
@@ -113,8 +116,40 @@ export default function RemocionCostoChart({ fechaInicio, fechaFin, parametro: p
   }, [rawData]);
 
   const data = useMemo(() => {
+    const gran = granularidad;
+    // Para día/semana/mes → agrupar y promediar
+    if (gran && gran !== 'turno') {
+      type B = { sk: string; label: string; rem: number[]; costo: number[] };
+      const map = new Map<string, B>();
+      for (const r of rawData) {
+        if (r.remocion === 0 && r.costoM3 === 0) continue;
+        const sk    = sortKey(r.fecha, undefined, gran);
+        const label = xLabel(r.fecha, undefined, gran);
+        if (!map.has(sk)) map.set(sk, { sk, label, rem: [], costo: [] });
+        const b = map.get(sk)!;
+        if (r.remocion !== 0) b.rem.push(r.remocion);
+        if (r.costoM3  >  0) b.costo.push(r.costoM3);
+      }
+      // Rellenar períodos vacíos si mostrarVacios está activo
+      if (mostrarVacios) {
+        for (const { sk, label } of generateAllPeriods(fechaInicio, fechaFin, gran)) {
+          if (!map.has(sk)) map.set(sk, { sk, label, rem: [], costo: [] });
+        }
+      }
+      const avg = (arr: number[]) =>
+        arr.length ? arr.reduce((a, v) => a + v, 0) / arr.length : 0;
+      return Array.from(map.values())
+        .sort((a, b) => a.sk.localeCompare(b.sk))
+        .map(b => ({
+          label:    b.label,
+          fecha:    b.sk,
+          turno:    '',
+          costoM3:  +avg(b.costo).toFixed(0),
+          remocion: +avg(b.rem).toFixed(4),
+        }));
+    }
+    // Turno a turno (comportamiento original)
     if (!mostrarVacios) {
-      // Excluir entradas sin dato real (remoción=0 y costo=0)
       return rawData.filter(r => r.remocion !== 0 || r.costoM3 > 0);
     }
     const rows: typeof rawData = [];
@@ -129,7 +164,7 @@ export default function RemocionCostoChart({ fechaInicio, fechaFin, parametro: p
       });
     });
     return rows;
-  }, [rawData, dataIdx, mostrarVacios, fechaInicio, fechaFin]);
+  }, [rawData, dataIdx, mostrarVacios, fechaInicio, fechaFin, granularidad]);
 
   const renderBody = () => {
     if (loading) return (

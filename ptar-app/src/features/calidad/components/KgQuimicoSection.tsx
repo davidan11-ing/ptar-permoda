@@ -13,13 +13,15 @@
  *
  * Filtros: dos date-range independientes (intersecc. aplicada al gráfico)
  */
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   ComposedChart, Bar, Line,
   XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer, LabelList,
 } from 'recharts';
-import { useKgQuimico } from '../hooks/useKgQuimico';
+import { useKgQuimico, type KgQuimicoPoint } from '../hooks/useKgQuimico';
+import type { Granularidad } from '../../../hooks/useGranularidad';
+import { xLabel, sortKey, generateAllPeriods } from '../../../lib/utils/agruparTemporal';
 
 // ─── Colores exactos del spec ─────────────────────────────────────────────
 const C_COAG = '#ED7D31';
@@ -49,15 +51,64 @@ function TooltipCustom({ active, payload, label }: any) {
   );
 }
 
+// ─── Reagrupar por granularidad ───────────────────────────────────────────
+function reagruparKgQuimico(
+  pts: KgQuimicoPoint[],
+  gran: Granularidad | null,
+  mostrarVacios = false,
+  fechaInicio = '',
+  fechaFin    = '',
+): KgQuimicoPoint[] {
+  if (!gran || gran === 'turno' || gran === 'dia') return pts;
+  type B = { sk: string; label: string; coag: number[]; deco: number[]; pola: number[]; cati: number[]; kg: number };
+  const map = new Map<string, B>();
+  for (const p of pts) {
+    if (p.sinDatos) continue;
+    const sk    = sortKey(p.fecha, undefined, gran);
+    const label = xLabel(p.fecha, undefined, gran);
+    if (!map.has(sk)) map.set(sk, { sk, label, coag: [], deco: [], pola: [], cati: [], kg: 0 });
+    const b = map.get(sk)!;
+    if (p.coagulanteRatio  > 0) b.coag.push(p.coagulanteRatio);
+    if (p.decoloranteRatio > 0) b.deco.push(p.decoloranteRatio);
+    if (p.polAnionicoRatio > 0) b.pola.push(p.polAnionicoRatio);
+    if (p.cationicoRatio   > 0) b.cati.push(p.cationicoRatio);
+    b.kg += p.kgRemovidos;
+  }
+  // Rellenar períodos vacíos
+  if (mostrarVacios && fechaInicio && fechaFin) {
+    for (const { sk, label } of generateAllPeriods(fechaInicio, fechaFin, gran)) {
+      if (!map.has(sk)) map.set(sk, { sk, label, coag: [], deco: [], pola: [], cati: [], kg: 0 });
+    }
+  }
+  const avg = (arr: number[]) => arr.length ? +(arr.reduce((a, v) => a + v, 0) / arr.length).toFixed(4) : 0;
+  return Array.from(map.values())
+    .sort((a, b) => a.sk.localeCompare(b.sk))
+    .map(b => ({
+      label:            b.label,
+      fecha:            b.sk,
+      coagulanteRatio:  avg(b.coag),
+      decoloranteRatio: avg(b.deco),
+      polAnionicoRatio: avg(b.pola),
+      cationicoRatio:   avg(b.cati),
+      kgRemovidos:      +b.kg.toFixed(2),
+      sinDatos:         b.kg === 0 && b.coag.length === 0,
+    }));
+}
+
 // ─── Props ─────────────────────────────────────────────────────────────────
-interface Props { fechaInicio: string; fechaFin: string }
+interface Props { fechaInicio: string; fechaFin: string; granularidad?: Granularidad | null }
 
 // ─── Componente ───────────────────────────────────────────────────────────
-export default function KgQuimicoSection({ fechaInicio, fechaFin }: Props) {
+export default function KgQuimicoSection({ fechaInicio, fechaFin, granularidad: granProp }: Props) {
+  const granularidad = granProp;
   const [mostrarVacios, setMostrarVacios] = useState(false);
 
   const { data, allData, loading, error } = useKgQuimico(fechaInicio, fechaFin);
-  const chartData = mostrarVacios ? allData : data;
+  const rawChart  = mostrarVacios ? allData : data;
+  const chartData = useMemo(
+    () => reagruparKgQuimico(rawChart, granularidad ?? null, mostrarVacios, fechaInicio, fechaFin),
+    [rawChart, granularidad, mostrarVacios, fechaInicio, fechaFin],
+  );
 
   // Rango eje derecho (kg removidos)
   const kgs    = chartData.map(d => d.kgRemovidos).filter(v => v > 0);

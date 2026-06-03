@@ -7,6 +7,9 @@ import { useState, useMemo } from 'react';
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer, LabelList } from 'recharts';
 import { useRemociónGem } from '../hooks/useRemociónGem';
+import type { Granularidad } from '../../../hooks/useGranularidad';
+import { xLabel, sortKey, generateAllPeriods } from '../../../lib/utils/agruparTemporal';
+import type { RemocionCalidad } from '../../../services/ptarClient';
 
 const COLOR_ENTRADA = '#1f6feb';
 const COLOR_SALIDA  = '#8b5cf6';
@@ -55,6 +58,60 @@ function fmtFecha(raw:string):string {
   try { const [,m,d]=raw.split('-'); return `${d}/${m}`; } catch { return raw; }
 }
 
+/** Agrupa remociones por granularidad (para semana/mes/dia → promedio de turnos) */
+function agruparRemociones(
+  data: RemocionCalidad[],
+  gran: Granularidad | null,
+  mostrarVacios = false,
+  fechaInicio = '',
+  fechaFin    = '',
+) {
+  // Turno → un punto por turno (comportamiento original)
+  if (!gran || gran === 'turno') {
+    return [...data]
+      .sort((a,b) => a.fecha.localeCompare(b.fecha) || a.turno - b.turno)
+      .map(r => ({
+        label:      `${fmtFecha(r.fecha)} T${r.turno}`,
+        entrada:    r.pulmon,
+        salida:     r.gem_salida,
+        eficiencia: r.pct_remocion_gem,
+        sinDatos:   false,
+      }));
+  }
+
+  // Día/Semana/Mes → agrupar y promediar
+  type Bucket = { sk: string; label: string; ent: number[]; sal: number[]; pct: number[] };
+  const map = new Map<string, Bucket>();
+  for (const r of data) {
+    const sk    = sortKey(r.fecha, undefined, gran);
+    const label = xLabel(r.fecha, undefined, gran);
+    if (!map.has(sk)) map.set(sk, { sk, label, ent: [], sal: [], pct: [] });
+    const b = map.get(sk)!;
+    if (r.pulmon != null)           b.ent.push(r.pulmon);
+    if (r.gem_salida != null)       b.sal.push(r.gem_salida);
+    if (r.pct_remocion_gem != null) b.pct.push(r.pct_remocion_gem);
+  }
+  const avg = (arr: number[]) =>
+    arr.length ? +(arr.reduce((a, v) => a + v, 0) / arr.length).toFixed(2) : null;
+
+  // Si mostrarVacios, rellenar períodos sin datos
+  if (mostrarVacios && fechaInicio && fechaFin) {
+    for (const { sk, label } of generateAllPeriods(fechaInicio, fechaFin, gran)) {
+      if (!map.has(sk)) map.set(sk, { sk, label, ent: [], sal: [], pct: [] });
+    }
+  }
+
+  return Array.from(map.values())
+    .sort((a, b) => a.sk.localeCompare(b.sk))
+    .map(b => ({
+      label:      b.label,
+      entrada:    avg(b.ent),
+      salida:     avg(b.sal),
+      eficiencia: avg(b.pct),
+      sinDatos:   b.ent.length === 0 && b.sal.length === 0,
+    }));
+}
+
 /** Genera array de todas las fechas entre inicio y fin (inclusive) */
 function generarFechas(inicio:string, fin:string): string[] {
   const fechas:string[] = [];
@@ -72,9 +129,10 @@ interface Props {
   fechaFin: string;
   parametro?: string;
   onParametroChange?: (p: string) => void;
+  granularidad?: Granularidad | null;
 }
 
-export default function RemociónGemSection({fechaInicio,fechaFin,parametro:paramProp,onParametroChange}:Props) {
+export default function RemociónGemSection({fechaInicio,fechaFin,parametro:paramProp,onParametroChange,granularidad}:Props) {
   const [parametroInterno, setParametroInterno] = useState('');
   const [mostrarVacios, setMostrarVacios] = useState(false);
   const {data:allData, loading} = useRemociónGem('', fechaInicio, fechaFin);
@@ -102,17 +160,13 @@ export default function RemociónGemSection({fechaInicio,fechaFin,parametro:para
   },[data]);
 
   const chartData = useMemo(()=>{
+    // Día/Semana/Mes → agrupar con soporte de períodos vacíos
+    if (granularidad && granularidad !== 'turno') {
+      return agruparRemociones(data, granularidad, mostrarVacios, fechaInicio, fechaFin);
+    }
     if (!mostrarVacios) {
-      // Solo días con datos (comportamiento original)
-      return [...data]
-        .sort((a,b)=>a.fecha.localeCompare(b.fecha)||a.turno-b.turno)
-        .map(r=>({
-          label:   `${fmtFecha(r.fecha)} T${r.turno}`,
-          entrada: r.pulmon,
-          salida:  r.gem_salida,
-          eficiencia: r.pct_remocion_gem,
-          sinDatos: false,
-        }));
+      // Solo datos con registros (comportamiento original, turno a turno)
+      return agruparRemociones(data, granularidad ?? null);
     }
     // Calendario completo: todas las fechas × 3 turnos
     const fechas = generarFechas(fechaInicio, fechaFin);
@@ -130,7 +184,7 @@ export default function RemociónGemSection({fechaInicio,fechaFin,parametro:para
       });
     });
     return rows;
-  },[data, dataIdx, mostrarVacios, fechaInicio, fechaFin]);
+  },[data, dataIdx, mostrarVacios, fechaInicio, fechaFin, granularidad]);
 
   const statsE = calcStats(data.map(r=>r.pulmon));
   const statsS = calcStats(data.map(r=>r.gem_salida));

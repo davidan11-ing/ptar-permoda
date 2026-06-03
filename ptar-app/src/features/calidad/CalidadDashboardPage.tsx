@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { getCalidadParametros, getReporteCalidadHtmlUrl } from '../../services/ptarClient';
 import { useCalidadData, PROCESO_ORDEN } from './hooks/useCalidadData';
+import GranularidadSelector from '../../components/shared/GranularidadSelector';
+import { useGranularidad } from '../../hooks/useGranularidad';
 import HistogramaChart          from './components/HistogramaChart';
 import PieDistribucionChart     from './components/PieDistribucionChart';
 import PercentilChart           from './components/PercentilChart';
@@ -12,17 +14,13 @@ import ParamVsDosisSection          from './components/ParamVsDosisSection';
 import CargaRemovoidaSection        from './components/CargaRemovoidaSection';
 import KgQuimicoSection             from './components/KgQuimicoSection';
 
-// Rango de fechas por defecto: últimos 60 días
-function defaultFechas() {
-  const hoy = new Date();
-  const ini = new Date(hoy);
-  ini.setDate(ini.getDate() - 60);
-  const fmt = (d: Date) => d.toISOString().slice(0, 10);
-  return { inicio: fmt(ini), fin: fmt(hoy) };
-}
-
 export default function CalidadDashboardPage() {
-  const { inicio, fin } = defaultFechas();
+  // ── Granularidad + fechas ─────────────────────────────────────
+  const {
+    granularidad, setGranularidad,
+    fechaInicio, fechaFin,
+    handleFechaInicio, handleFechaFin,
+  } = useGranularidad();
 
   // ── Estado de filtros ─────────────────────────────────────────
   const [parametros,      setParametros]      = useState<string[]>([]);
@@ -30,8 +28,6 @@ export default function CalidadDashboardPage() {
   const [parametro,       setParametro]       = useState('');
   const [unidadPrincipal, setUnidadPrincipal] = useState('');
   const [turno,           setTurno]           = useState('');
-  const [fechaInicio,     setFechaInicio]     = useState(inicio);
-  const [fechaFin,        setFechaFin]        = useState(fin);
   const [remGemParam,     setRemGemParam]     = useState('');
 
   // ── Cargar parámetros desde la BD ─────────────────────────────
@@ -95,8 +91,10 @@ export default function CalidadDashboardPage() {
         </a>
       </div>
 
-      {/* ── Panel de filtros ── */}
+      {/* ── Filtros + selector de granularidad integrado ── */}
       <div className="cal-filters" style={{ marginBottom: 16 }}>
+        {/* Granularidad — primera posición en la barra */}
+        <GranularidadSelector value={granularidad} onChange={setGranularidad} />
         <div className="cal-filter-group">
           <label className="cal-filter-label">Unidad</label>
           <select className="cal-filter-select" value={unidadPrincipal}
@@ -127,12 +125,12 @@ export default function CalidadDashboardPage() {
         <div className="cal-filter-group">
           <label className="cal-filter-label">Fecha inicio</label>
           <input type="date" className="cal-filter-input" value={fechaInicio}
-            onChange={e => setFechaInicio(e.target.value)} />
+            onChange={e => handleFechaInicio(e.target.value)} />
         </div>
         <div className="cal-filter-group">
           <label className="cal-filter-label">Fecha fin</label>
           <input type="date" className="cal-filter-input" value={fechaFin}
-            onChange={e => setFechaFin(e.target.value)} />
+            onChange={e => handleFechaFin(e.target.value)} />
         </div>
       </div>
 
@@ -194,6 +192,7 @@ export default function CalidadDashboardPage() {
         fechaFin={fechaFin}
         parametro={remGemParam || undefined}
         onParametroChange={setRemGemParam}
+        granularidad={granularidad}
       />
 
       {/* ── % Remoción pH vs Costo/m³ — va DESPUÉS de Remoción GEM ── */}
@@ -215,18 +214,23 @@ export default function CalidadDashboardPage() {
           <div style={{ fontSize: 12, color: '#8b949e', marginBottom: 8, paddingLeft: 8, fontFamily: 'monospace', textAlign: 'center' }}>
             % REMOCIÓN Vs $COSTO/M3
           </div>
-          <RemocionCostoChart fechaInicio={fechaInicio} fechaFin={fechaFin} parametro={remGemParam || undefined} />
+          <RemocionCostoChart
+            fechaInicio={fechaInicio}
+            fechaFin={fechaFin}
+            parametro={remGemParam || undefined}
+            granularidad={granularidad}
+          />
         </div>
       </section>
 
       {/* ── PARÁMETRO VS DOSIS DE QUÍMICO ── */}
-      <ParamVsDosisSection fechaInicio={fechaInicio} fechaFin={fechaFin} />
+      <ParamVsDosisSection fechaInicio={fechaInicio} fechaFin={fechaFin} granularidad={granularidad} />
 
       {/* ── CARGA REMOVIDA KG/DÍA ── */}
-      <CargaRemovoidaSection fechaInicio={fechaInicio} fechaFin={fechaFin} />
+      <CargaRemovoidaSection fechaInicio={fechaInicio} fechaFin={fechaFin} granularidad={granularidad} />
 
       {/* ── KG QUÍMICO / KG REMOVIDO — última sección ── */}
-      <KgQuimicoSection fechaInicio={fechaInicio} fechaFin={fechaFin} />
+      <KgQuimicoSection fechaInicio={fechaInicio} fechaFin={fechaFin} granularidad={granularidad} />
 
     </div>
   );

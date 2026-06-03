@@ -35,3 +35,69 @@ input, select, textarea { font-family: inherit; }
 ::-webkit-scrollbar-track { background: #0d1117; }
 ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #444d57; }
+
+/* ── Selector de granularidad temporal ───────────────────────────────────── */
+.gran-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-bottom: 12px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid #21262d;
+  flex-wrap: wrap;
+}
+
+.gran-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  background: transparent;
+  color: #8b949e;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  line-height: 1.4;
+}
+
+.gran-tab:hover:not(.gran-tab--active) {
+  border-color: #8b949e;
+  color: #c9d1d9;
+  background: #161b22;
+}
+
+.gran-tab--active {
+  border-color: #1f6feb;
+  color: #ffffff;
+  background: #1f6feb22;
+  font-weight: 600;
+}
+
+.gran-tab-rango {
+  font-size: 11px;
+  font-weight: 400;
+  color: #58a6ff;
+  opacity: 0.85;
+}
+
+.gran-custom-badge {
+  margin-left: 4px;
+  padding: 3px 10px;
+  background: #21262d;
+  border: 1px solid #30363d;
+  border-radius: 12px;
+  font-size: 11px;
+  color: #8b949e;
+  font-style: italic;
+  align-self: center;
+}
+
+@media (max-width: 600px) {
+  .gran-tab { padding: 6px 12px; font-size: 12px; }
+  .gran-tab-rango { display: none; }
+}

@@ -12,6 +12,8 @@ import {
 } from 'recharts';
 import { useParamVsDosis } from '../hooks/useParamVsDosis';
 import { useRemociónGem }  from '../hooks/useRemociónGem';
+import type { Granularidad } from '../../../hooks/useGranularidad';
+import { xLabel, sortKey, generateAllPeriods } from '../../../lib/utils/agruparTemporal';
 
 // ─── Catálogo de químicos GEM ─────────────────────────────────────────────
 const QUIMICOS = [
@@ -53,10 +55,10 @@ function TooltipCustom({ active, payload, label }: any) {
 }
 
 // ─── Props ─────────────────────────────────────────────────────────────────
-interface Props { fechaInicio: string; fechaFin: string }
+interface Props { fechaInicio: string; fechaFin: string; granularidad?: Granularidad | null }
 
 // ─── Componente ───────────────────────────────────────────────────────────
-export default function ParamVsDosisSection({ fechaInicio, fechaFin }: Props) {
+export default function ParamVsDosisSection({ fechaInicio, fechaFin, granularidad }: Props) {
   const [parametro,       setParametro]       = useState('');
   const [quimicosActivos, setQuimicosActivos] = useState<QuimicoKey[]>(['ppm_pol_cationico']);
   const [mostrarVacios,   setMostrarVacios]   = useState(false);
@@ -80,7 +82,11 @@ export default function ParamVsDosisSection({ fechaInicio, fechaFin }: Props) {
     return m;
   }, [rawData]);
 
+  const PPM_KEYS = ['ppm_acido','ppm_coagulante','ppm_decolorante','ppm_pol_anionico','ppm_pol_cationico'] as const;
+
   const chartData = useMemo(() => {
+    const gran = granularidad;
+
     const toRow = (r: typeof rawData[0]) => ({
       label:             r.label,
       entrada:           r.entrada           !== 0 ? r.entrada           : null,
@@ -92,16 +98,57 @@ export default function ParamVsDosisSection({ fechaInicio, fechaFin }: Props) {
       ppm_pol_cationico: r.ppm_pol_cationico !== 0 ? r.ppm_pol_cationico : null,
     });
 
+    // Día / semana / mes → agrupar y promediar
+    if (gran && gran !== 'turno') {
+      type B = {
+        sk: string; label: string;
+        ent: number[]; sal: number[];
+        ppm: Record<string, number[]>;
+      };
+      const newBucket = (sk: string, label: string): B => ({
+        sk, label, ent: [], sal: [], ppm: Object.fromEntries(PPM_KEYS.map(k => [k, []]))
+      });
+      const map = new Map<string, B>();
+      for (const r of rawData) {
+        const sk    = sortKey(r.fecha, undefined, gran);
+        const label = xLabel(r.fecha, undefined, gran);
+        if (!map.has(sk)) map.set(sk, newBucket(sk, label));
+        const b = map.get(sk)!;
+        if (r.entrada !== 0 && r.entrada != null) b.ent.push(r.entrada);
+        if (r.salida  !== 0 && r.salida  != null) b.sal.push(r.salida);
+        for (const k of PPM_KEYS) {
+          const v = (r as any)[k];
+          if (v != null && v !== 0) b.ppm[k].push(v);
+        }
+      }
+      // Rellenar períodos vacíos si mostrarVacios activo
+      if (mostrarVacios) {
+        for (const { sk, label } of generateAllPeriods(fechaInicio, fechaFin, gran)) {
+          if (!map.has(sk)) map.set(sk, newBucket(sk, label));
+        }
+      }
+      const avg = (arr: number[]) =>
+        arr.length ? +(arr.reduce((a, v) => a + v, 0) / arr.length).toFixed(2) : null;
+
+      return Array.from(map.values())
+        .sort((a, b) => a.sk.localeCompare(b.sk))
+        .map(b => ({
+          label:   b.label,
+          entrada: avg(b.ent),
+          salida:  avg(b.sal),
+          ...Object.fromEntries(PPM_KEYS.map(k => [k, avg(b.ppm[k])])),
+        }));
+    }
+
+    // Turno a turno (comportamiento original)
     if (!mostrarVacios) {
       return [...rawData]
         .sort((a,b) => a.fecha.localeCompare(b.fecha) || a.turno.localeCompare(b.turno))
         .map(toRow)
-        // Excluir entradas sin dato real (sin medición ni PPM)
         .filter(r => r.entrada != null || r.salida != null ||
           r.ppm_acido != null || r.ppm_coagulante != null ||
           r.ppm_decolorante != null || r.ppm_pol_anionico != null || r.ppm_pol_cationico != null);
     }
-    // Calendario completo: todas las fechas × T1, T2, T3
     const rows: ReturnType<typeof toRow>[] = [];
     generarFechas(fechaInicio, fechaFin).forEach(f => {
       ['T1','T2','T3'].forEach(t => {
@@ -114,7 +161,7 @@ export default function ParamVsDosisSection({ fechaInicio, fechaFin }: Props) {
       });
     });
     return rows;
-  }, [rawData, realIdx, mostrarVacios, fechaInicio, fechaFin]);
+  }, [rawData, realIdx, mostrarVacios, fechaInicio, fechaFin, granularidad]);
 
   // Escala eje PPM (máximo entre todos los químicos activos)
   const maxPpm = useMemo(() => {
