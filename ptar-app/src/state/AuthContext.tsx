@@ -22,22 +22,23 @@ export const OPERARIOS_LISTA = [
 const SESSION_KEY = 'ptar_session';
 const API = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
 
-// ── Mapa email → perfil de usuario ───────────────────────────────────────────
-export const USERS_BY_EMAIL: Record<string, { nombre: string; role: Role }> = {
-  // Administradores / multi-rol
-  'davidan@permoda.com.co':      { nombre: 'David Andrade',           role: 'administrador' },
+// ── Mapa email → perfil (nombre + roles que puede usar en la app) ─────────────
+// Si un usuario tiene más de 1 rol, el login mostrará un selector de rol.
+export const USERS_BY_EMAIL: Record<string, { nombre: string; roles: Role[] }> = {
+  // Multi-rol — elige con qué rol entrar cada vez
+  'davidan@permoda.com.co':   { nombre: 'David Arévalo',           roles: ['operario', 'encargado', 'administrador'] },
   // Analistas (encargado)
-  'lunaop@permoda.com.co':       { nombre: 'Luna Sofía Osorio Parra', role: 'encargado'     },
-  'encargado@permoda.com.co':    { nombre: 'Encargado',               role: 'encargado'     },
+  'lunaop@permoda.com.co':    { nombre: 'Luna Sofía Osorio Parra', roles: ['encargado'] },
+  'encargado@permoda.com.co': { nombre: 'Encargado',               roles: ['encargado'] },
   // Operarios de planta (registro)
-  'operario@permoda.com.co':     { nombre: 'Operario',                role: 'operario'      },
+  'operario@permoda.com.co':  { nombre: 'Operario',                roles: ['operario']  },
 };
 
 interface AuthContextValue {
-  currentUser: AppUser | null;
+  currentUser:         AppUser | null;
   loginWithCredentials: (email: string, password: string, equipo?: string[]) => Promise<boolean>;
-  selectRole: (role: Role) => void;
-  logout: () => void;
+  selectRole:          (role: Role) => void;
+  logout:              () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -47,9 +48,7 @@ function loadSession(): AppUser | null {
     const raw = localStorage.getItem(SESSION_KEY);
     if (!raw) return null;
     const user = JSON.parse(raw) as AppUser;
-    // Verificar que el token sigue en localStorage (no expirado localmente)
-    const token = localStorage.getItem(TOKEN_KEY);
-    if (!token) return null;
+    if (!localStorage.getItem(TOKEN_KEY)) return null;
     return user;
   } catch {
     return null;
@@ -71,17 +70,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!res.ok) return false;
 
         const data = await res.json();
-
-        // Guardar JWT
         localStorage.setItem(TOKEN_KEY, data.access_token);
 
-        // Construir sesión del usuario
+        // Verificar si el email tiene override de roles en USERS_BY_EMAIL
+        const emailKey    = email.toLowerCase().trim();
+        const knownProfile = USERS_BY_EMAIL[emailKey];
+        const roles: Role[] = knownProfile?.roles ?? [data.role as Role];
+        const nombre: string = knownProfile?.nombre ?? data.nombre ?? email.split('@')[0];
+
+        // activeRole se fijará en el selector de rol si hay más de 1;
+        // provisionalmente usamos el rol que devuelve el backend.
+        const backendRole = data.role as Role;
+        const activeRole  = roles.includes(backendRole) ? backendRole : roles[0];
+
         const session: AppUser = {
-          id: data.id,
-          nombre: data.nombre,
-          roles: [data.role as Role],
-          activeRole: data.role as Role,
-          equipo: equipo ?? [data.nombre],
+          id:         data.id,
+          nombre,
+          roles,
+          activeRole,
+          equipo: equipo ?? [nombre],
         };
         localStorage.setItem(SESSION_KEY, JSON.stringify(session));
         setCurrentUser(session);
@@ -120,12 +127,3 @@ export function useAuth() {
   if (!ctx) throw new Error('useAuth must be used within AuthProvider');
   return ctx;
 }
-
-// Mantener compatibilidad: exportar lista de usuarios para la UI de login
-export const MOCK_USERS = Object.entries(USERS_BY_EMAIL).map(([email, u]) => ({
-  id: email,
-  nombre: u.nombre,
-  roles: [u.role] as Role[],
-  activeRole: u.role,
-  email,
-}));

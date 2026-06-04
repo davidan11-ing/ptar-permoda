@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth, OPERARIOS_LISTA, USERS_BY_EMAIL } from '../../state/AuthContext';
 import { ROLE_HOME } from '../../lib/routes';
@@ -60,11 +60,11 @@ const INPUT_STYLE = (error?: boolean): React.CSSProperties => ({
 
 /* ── componente principal ────────────────────────────────────────────── */
 export default function LoginPage() {
-  const { loginWithCredentials } = useAuth();
+  const { loginWithCredentials, selectRole } = useAuth();
   const navigate = useNavigate();
 
-  // flujo: 'select' → 'login' → 'equipo'
-  const [step, setStep]             = useState<'select' | 'login' | 'equipo'>('select');
+  // flujo: 'select' → 'login' → 'roleselect'? → 'equipo'?
+  const [step, setStep]             = useState<'select' | 'login' | 'roleselect' | 'equipo'>('select');
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [email, setEmail]           = useState('');
   const [password, setPassword]     = useState('');
@@ -76,13 +76,13 @@ export default function LoginPage() {
   const [loggedRole,   setLoggedRole]   = useState<Role>('operario');
 
   // Resolución de nombre en tiempo real desde USERS_BY_EMAIL
-  const emailKey   = email.toLowerCase().trim();
-  const knownUser  = USERS_BY_EMAIL[emailKey];
+  const emailKey    = email.toLowerCase().trim();
+  const knownUser   = USERS_BY_EMAIL[emailKey];
   const resolvedName = knownUser?.nombre ?? '';
-  const resolvedRole = knownUser?.role   ?? selectedRole;
-
-  // Si el email cambia, y el rol conocido no coincide con el seleccionado → avisamos
-  const roleMismatch = knownUser && selectedRole && knownUser.role !== selectedRole;
+  // Rol principal (primer rol del perfil, o el seleccionado)
+  const resolvedRole = knownUser?.roles[0] ?? selectedRole;
+  // El email tiene roles que no coinciden con el rol seleccionado en paso 1
+  const roleMismatch = knownUser && selectedRole && !knownUser.roles.includes(selectedRole);
 
   const resetLogin = () => {
     setEmail(''); setPassword(''); setLoginError(''); setLoggingIn(false);
@@ -109,16 +109,23 @@ export default function LoginPage() {
       return;
     }
 
-    // Guardar nombre y rol del usuario logueado
-    const finalRole = resolvedRole ?? selectedRole ?? 'operario';
     setLoggedNombre(nombre);
-    setLoggedRole(finalRole as Role);
+
+    // ¿Usuario multi-rol? → mostrar selector de rol
+    const userRoles = knownUser?.roles ?? [resolvedRole ?? selectedRole ?? 'operario'] as Role[];
+    if (userRoles.length > 1) {
+      setStep('roleselect');
+      return;
+    }
+
+    const finalRole = (userRoles[0] ?? 'operario') as Role;
+    setLoggedRole(finalRole);
 
     if (finalRole === 'operario') {
       setEquipoChecked([]);
       setStep('equipo');
     } else {
-      navigate(ROLE_HOME[finalRole as Role]);
+      navigate(ROLE_HOME[finalRole]);
     }
   };
 
@@ -181,7 +188,11 @@ export default function LoginPage() {
                       <div>
                         <div style={{ fontSize: 13, fontWeight: 600, color: '#e6edf3' }}>{resolvedName}</div>
                         {knownUser && (
-                          <div style={{ fontSize: 10, color: '#8b949e' }}>{ROLE_LABELS[knownUser.role]}</div>
+                          <div style={{ fontSize: 10, color: '#8b949e' }}>
+                            {knownUser.roles.length > 1
+                              ? `${knownUser.roles.length} roles disponibles`
+                              : ROLE_LABELS[knownUser.roles[0]]}
+                          </div>
                         )}
                       </div>
                       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ marginLeft: 'auto' }}>
@@ -247,7 +258,73 @@ export default function LoginPage() {
   }
 
   /* ────────────────────────────────────────────────────────────────────
-     PASO 3 — Equipo en turno (solo operario)
+     PASO 3 — Selección de rol (usuarios multi-rol)
+  ──────────────────────────────────────────────────────────────────── */
+  if (step === 'roleselect') {
+    const userRoles = (knownUser?.roles ?? ['administrador']) as Role[];
+    const handlePickRole = (role: Role) => {
+      selectRole(role);
+      setLoggedRole(role);
+      if (role === 'operario') {
+        setEquipoChecked([]);
+        setStep('equipo');
+      } else {
+        navigate(ROLE_HOME[role]);
+      }
+    };
+
+    return (
+      <div className="login-page">
+        <div className="login-bg" />
+        <div className="login-container">
+          <div className="login-header">
+            <div className="login-logo">{LOGO_SVG}</div>
+            <h1 className="login-title">¿Con qué rol entras?</h1>
+            <p className="login-subtitle">
+              <span style={{ fontWeight: 600, color: '#00c5e3' }}>{loggedNombre}</span>
+              {' '}— elige el modo de trabajo para esta sesión
+            </p>
+          </div>
+
+          <div className="login-body">
+            <div className="role-cards">
+              {userRoles.map(role => (
+                <button
+                  key={role}
+                  onClick={() => handlePickRole(role)}
+                  style={{ textAlign: 'left', cursor: 'pointer', width: '100%', background: 'none', border: 'none', padding: 0 }}
+                >
+                  <div className={`role-card-header role-header-${role}`} style={{ pointerEvents: 'none' }}>
+                    <span className="role-card-icon">{ROLE_ICONS[role]}</span>
+                    <div>
+                      <span className="role-card-title">{ROLE_LABELS[role]}</span>
+                      <span className="role-card-desc">{ROLE_DESCS[role]}</span>
+                    </div>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ marginLeft: 'auto', opacity: .4 }}>
+                      <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="login-footer">
+            <button
+              className="login-btn"
+              style={{ background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
+              onClick={() => { setStep('login'); resetLogin(); }}
+            >
+              ← Volver
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ────────────────────────────────────────────────────────────────────
+     PASO 4 — Equipo en turno (solo operario)
   ──────────────────────────────────────────────────────────────────── */
   if (step === 'equipo') {
     const otrosOperarios = OPERARIOS_LISTA.filter(n => n !== loggedNombre);
