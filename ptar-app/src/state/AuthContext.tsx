@@ -4,12 +4,19 @@ import { TOKEN_KEY } from '../services/ptarClient';
 
 // Lista de operarios disponibles para el checklist de equipo en turno
 export const OPERARIOS_LISTA = [
-  'Carlos Mendoza',
-  'Ana Suárez',
-  'Operario 3',
-  'Operario 4',
-  'Operario 5',
-  'Operario 6',
+  'Raul Buenhombre Guzman',
+  'Marcos Eduardo Bolívar Biarreta',
+  'Joan Alejandro García Echeverry',
+  'Daniel Ricardo Duran Benavides',
+  'Randy Stephan Ramirez Lopera',
+  'Marlon Stich Florez Espinel',
+  'Emanuel Brayan Ceballos Chango',
+  'Cristian Camilo Rincón Ocampo',
+  'Yamid Yate Daza',
+  'Luisa Fernanda Contreras',
+  'Andrés Camilo Caviativa Bolívar',
+  'Jonier José Castañeda Parra',
+  'Luna Sofía Osorio Parra',
 ];
 
 const SESSION_KEY = 'ptar_session';

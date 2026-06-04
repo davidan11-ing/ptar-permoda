@@ -4,10 +4,18 @@ import { ROLE_HOME, ROUTES } from '../../lib/routes';
 import { useLocation } from 'react-router-dom';
 import type { Role } from '../../models';
 
+// Etiqueta corta para el badge del navbar
 const ROLE_LABELS: Record<Role, string> = {
-  operario: 'Operario',
-  encargado: 'Encargado',
-  administrador: 'Administrador',
+  operario:      'Registro',
+  encargado:     'Analista',
+  administrador: 'Visualizador',
+};
+
+// Nombre completo del rol (tooltip)
+export const ROLE_LABELS_FULL: Record<Role, string> = {
+  operario:      'Registro · Planta en Tiempo Real',
+  encargado:     'Analista · Gestor de Datos',
+  administrador: 'Visualizador Ejecutivo',
 };
 
 const ROLE_BADGE: Record<Role, string> = {
@@ -102,7 +110,10 @@ export default function Navbar() {
             ))}
           </div>
         )}
-        <span className={`role-badge ${ROLE_BADGE[currentUser.activeRole]}`}>
+        <span
+          className={`role-badge ${ROLE_BADGE[currentUser.activeRole]}`}
+          title={ROLE_LABELS_FULL[currentUser.activeRole]}
+        >
           {ROLE_LABELS[currentUser.activeRole]}
         </span>
         <span className="user-name">{currentUser.nombre}</span>

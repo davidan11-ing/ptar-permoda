@@ -4,7 +4,11 @@ import { useAuth, MOCK_USERS, OPERARIOS_LISTA } from '../../state/AuthContext';
 import { ROLE_HOME } from '../../lib/routes';
 import type { AppUser } from '../../models';
 
-const ROLE_LABELS = { operario: 'Operario', encargado: 'Encargado', administrador: 'Administrador' };
+const ROLE_LABELS = {
+  operario:      'Registro · Planta en Tiempo Real',
+  encargado:     'Analista · Gestor de Datos',
+  administrador: 'Visualizador Ejecutivo',
+};
 const ROLE_ICONS = {
   operario: (
     <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
@@ -31,9 +35,9 @@ const ROLE_ICONS = {
 };
 
 const ROLE_DESCS = {
-  operario: 'Registro de parámetros operativos y formatos de turno',
-  encargado: 'Monitoreo, edición de dashboards y gestión de planta',
-  administrador: 'Visualización ejecutiva de indicadores y KPIs',
+  operario:      'Registro de caudales, reactivos, calidad e incidencias en planta',
+  encargado:     'Análisis de datos, dashboards de costos, calidad y balance hídrico',
+  administrador: 'Visualización ejecutiva de indicadores, KPIs y reportes de gestión',
 };
 
 export default function LoginPage() {
