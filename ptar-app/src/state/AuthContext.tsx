@@ -22,11 +22,15 @@ export const OPERARIOS_LISTA = [
 const SESSION_KEY = 'ptar_session';
 const API = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
 
-// ── Mapa email → perfil de usuario (para la UI de selección de rol) ──────────
+// ── Mapa email → perfil de usuario ───────────────────────────────────────────
 export const USERS_BY_EMAIL: Record<string, { nombre: string; role: Role }> = {
-  'operario@permoda.com.co':  { nombre: 'Operario',  role: 'operario'      },
-  'encargado@permoda.com.co': { nombre: 'Encargado', role: 'encargado'     },
-  'davidan@permoda.com.co':   { nombre: 'David',     role: 'administrador' },
+  // Administradores / multi-rol
+  'davidan@permoda.com.co':      { nombre: 'David Andrade',           role: 'administrador' },
+  // Analistas (encargado)
+  'lunaop@permoda.com.co':       { nombre: 'Luna Sofía Osorio Parra', role: 'encargado'     },
+  'encargado@permoda.com.co':    { nombre: 'Encargado',               role: 'encargado'     },
+  // Operarios de planta (registro)
+  'operario@permoda.com.co':     { nombre: 'Operario',                role: 'operario'      },
 };
 
 interface AuthContextValue {
