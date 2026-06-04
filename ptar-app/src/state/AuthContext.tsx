@@ -28,7 +28,7 @@ export const USERS_BY_EMAIL: Record<string, { nombre: string; roles: Role[] }> =
   // Multi-rol — elige con qué rol entrar cada vez
   'davidan@permoda.com.co':   { nombre: 'David Arévalo',           roles: ['operario', 'encargado', 'administrador'] },
   // Analistas (encargado)
-  'lunaop@permoda.com.co':    { nombre: 'Luna Sofía Osorio Parra', roles: ['encargado'] },
+  'lunaop@permoda.com.co':    { nombre: 'Luna Sofía Osorio Parra', roles: ['operario', 'encargado', 'administrador'] },
   'encargado@permoda.com.co': { nombre: 'Encargado',               roles: ['encargado'] },
   // Operarios de planta (registro)
   'operario@permoda.com.co':  { nombre: 'Operario',                roles: ['operario']  },
