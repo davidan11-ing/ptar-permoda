@@ -15,6 +15,8 @@ export const ROUTES = {
   ENCARGADO_REGISTROS:  '/encargado/registros',
   // Administrador
   ADMIN_DASHBOARD: '/admin/dashboard',
+  // Mantenimientos (SharePoint)
+  MANTENIMIENTOS: '/mantenimientos',
 } as const;
 
 export const ROLE_HOME = {

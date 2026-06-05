@@ -17,6 +17,7 @@ const CalidadDashboardPage     = lazy(() => import('../features/calidad/CalidadD
 const BalanceHidricoDashboard  = lazy(() => import('../features/balance/BalanceHidricoDashboard'));
 const CostosDashboard          = lazy(() => import('../features/costos/CostosDashboard'));
 const RegistrosPanel           = lazy(() => import('../features/encargado/RegistrosPanel'));
+const MantenimientosDashboard  = lazy(() => import('../features/mantenimientos/MantenimientosDashboard'));
 
 const Spinner = () => (
   <div className="page-loading">
@@ -90,6 +91,13 @@ export default function AppRouter() {
             <Route path="/encargado/registros" element={
               <RoleGuard allowedRoles={['encargado', 'administrador']}>
                 <RegistrosPanel />
+              </RoleGuard>
+            }/>
+
+            {/* Mantenimientos — accesible por encargado y administrador */}
+            <Route path="/mantenimientos" element={
+              <RoleGuard allowedRoles={['encargado', 'administrador']}>
+                <MantenimientosDashboard />
               </RoleGuard>
             }/>
 

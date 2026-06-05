@@ -92,6 +92,12 @@ export default function Navbar() {
             >
               Costos
             </Link>
+            <Link
+              to={ROUTES.MANTENIMIENTOS}
+              className={`nav-link${location.pathname.startsWith(ROUTES.MANTENIMIENTOS) ? ' active' : ''}`}
+            >
+              🔧 Mantenimientos
+            </Link>
           </>
         )}
       </nav>
