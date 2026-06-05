@@ -71,22 +71,22 @@ def _parse_date(val) -> Optional[date]:
 
 def _map_item(props: dict) -> dict:
     return {
-        "sp_id":       int(props.get("ID", 0)),
-        "semana":      props.get("field_1"),
-        "gerencia":    props.get("GERENCIA") or props.get("field_0"),
-        "area":        _norm_area(props.get("field_3") or props.get("ÁREA", "")),
-        "gft":         props.get("field_4"),
-        "objeto":      props.get("field_5"),
-        "af":          props.get("field_6"),
-        "descripcion": props.get("field_7"),
-        "frecuencia":  props.get("field_9"),
-        "responsable": props.get("field_10"),
-        "pedido":      props.get("field_11"),
-        "estado":      _norm_estado(props.get("field_12") or props.get("ESTADO", "")),
-        "dia":         _parse_date(props.get("field_13")),
-        "asignado":    props.get("field_14"),
-        "criticidad":  props.get("CRITICIDAD"),
-        "tipo":        props.get("TIPO_DE_MANTENIMIENTO") or props.get("field_8"),
+        "sp_id":         int(props.get("ID", 0)),
+        "semana":        props.get("field_1"),
+        "gerencia":      None,           # no incluido en $select del BI
+        "area":          _norm_area(props.get("field_3", "")),
+        "gft":           props.get("field_4"),
+        "objeto":        props.get("field_5"),
+        "af":            props.get("field_6"),
+        "descripcion":   props.get("field_7"),
+        "frecuencia":    props.get("field_9"),
+        "responsable":   props.get("field_10"),
+        "pedido":        props.get("field_11"),
+        "estado":        _norm_estado(props.get("field_12", "")),
+        "dia":           _parse_date(props.get("field_13")),
+        "asignado":      props.get("field_14"),
+        "criticidad":    props.get("CRITICIDAD"),
+        "tipo":          None,           # no incluido en $select del BI
         "observaciones": props.get("field_21"),
     }
 
@@ -156,17 +156,17 @@ def fetch_sharepoint_items(site_url: str, _email: str = "", _password: str = "")
     token = _get_access_token()
     headers = {
         "Authorization": f"Bearer {token}",
-        "Accept": "application/json;odata=verbose",
+        "Accept": "application/json",
     }
 
     año_actual = datetime.now().year
     resultados: list[dict] = []
+    # Mismos campos que usa el BI (PBIR) — nombres internos field_N
     url = (
         f"{site_url.rstrip('/')}/_api/web/lists(guid'{SP_LIST_GUID}')/items"
         f"?$select=ID,field_1,field_3,field_4,field_5,field_6,field_7,"
-        f"field_9,field_10,field_11,field_12,field_13,field_14,"
-        f"CRITICIDAD,field_21,GERENCIA,TIPO_DE_MANTENIMIENTO"
-        f"&$orderby=ID desc&$top=500"
+        f"field_9,field_10,field_11,field_12,field_13,field_14,CRITICIDAD,field_21"
+        f"&$orderby=ID%20desc&$top=500"
     )
 
     page = 0
