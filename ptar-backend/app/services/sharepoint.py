@@ -159,9 +159,8 @@ def fetch_sharepoint_items(site_url: str, _email: str = "", _password: str = "")
         "Accept": "application/json",
     }
 
-    año_actual = datetime.now().year
+    MAX_PAGES  = 10   # 10 páginas × 500 ítems = 5 000 máximo (igual que el BI)
     resultados: list[dict] = []
-    # Mismos campos que usa el BI (PBIR) — nombres internos field_N
     url = (
         f"{site_url.rstrip('/')}/_api/web/lists(guid'{SP_LIST_GUID}')/items"
         f"?$select=ID,field_1,field_3,field_4,field_5,field_6,field_7,"
@@ -169,33 +168,27 @@ def fetch_sharepoint_items(site_url: str, _email: str = "", _password: str = "")
         f"&$orderby=ID%20desc&$top=500"
     )
 
-    page = 0
-    while url:
-        page += 1
+    for page in range(1, MAX_PAGES + 1):
+        if not url:
+            break
         log.info("SharePoint: página %d → %s...", page, url[:80])
         resp = requests.get(url, headers=headers, timeout=30)
         resp.raise_for_status()
 
-        data = resp.json()
-        # odata=verbose usa d.results; odata=nometadata usa value
+        data     = resp.json()
         items_raw = data.get("d", {}).get("results") or data.get("value", [])
 
         for item in items_raw:
             props = item if isinstance(item, dict) else {}
-            dia = _parse_date(props.get("field_13"))
-            if dia and dia.year != año_actual:
-                continue
             resultados.append(_map_item(props))
 
-        # Paginación
-        next_link = (
-            data.get("d", {}).get("__next")
+        url = (
+            data.get("d",  {}).get("__next")
             or data.get("odata.nextLink")
             or data.get("@odata.nextLink")
         )
-        url = next_link if next_link else None
 
-    log.info("SharePoint: %d ítems del año %d", len(resultados), año_actual)
+    log.info("SharePoint: %d ítems descargados (%d páginas)", len(resultados), page)
     return resultados
 
 
