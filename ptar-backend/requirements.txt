@@ -12,6 +12,7 @@ tzdata==2026.2
 bcrypt==4.2.1
 slowapi==0.1.9
 python-jose[cryptography]==3.3.0
-# SharePoint sync (sin Azure AD app — credenciales usuario)
+# SharePoint sync — Device Code Flow con MFA (msal) + scheduler
+msal==1.37.0
 Office365-REST-Python-Client==2.6.2
 apscheduler==3.10.4

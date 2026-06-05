@@ -1,43 +1,43 @@
 """
 sharepoint.py
 Servicio de sincronización SharePoint → MySQL para mantenimientos preventivos.
-Usa Office365-REST-Python-Client con credenciales de usuario (sin Azure AD app).
 
-Campos mapeados desde la lista SharePoint CONFIABILIDAD:
-  field_1  → semana          field_3  → area
-  field_4  → gft             field_5  → objeto
-  field_6  → af              field_7  → descripcion
-  field_9  → frecuencia      field_10 → responsable
-  field_11 → pedido_trabajo  field_12 → estado
-  field_13 → dia_programado  field_14 → asignado_a
-  CRITICIDAD → criticidad    (columna con nombre explícito)
+Autenticación: Device Code Flow (msal) — compatible con MFA.
+- Primera vez: correr `python auth_sharepoint.py` desde la carpeta ptar-backend/
+  El script imprime una URL y un código → el usuario los ingresa en el navegador
+  → completa MFA → token guardado en .sharepoint_token_cache.json
+- Siguientes veces: el token se renueva automáticamente (refresh token ~90 días)
+
+Sin Azure AD app propia — usa el cliente público de Microsoft Office.
 """
+import json
 import logging
+import os
 from datetime import datetime, date
+from pathlib import Path
 from typing import Optional
 
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import text
-
 log = logging.getLogger("ptar.sharepoint")
+
+# ── Configuración ─────────────────────────────────────────────────────────────
+# Cliente público de Microsoft Office (no requiere registro de app propia)
+MSAL_CLIENT_ID = "d3590ed6-52b3-4102-aeff-aad2292ab01c"
+MSAL_TENANT    = "permodaco.onmicrosoft.com"
+MSAL_SCOPES    = ["https://permodaco.sharepoint.com/.default"]
+
+# Archivo de caché del token (junto al .env, nunca commitear)
+TOKEN_CACHE_FILE = Path(__file__).resolve().parent.parent.parent / ".sharepoint_token_cache.json"
 
 # GUID de la lista SharePoint CONFIABILIDAD/MANTENIMIENTOS
 SP_LIST_GUID = "9f6714c3-6a81-4773-90f3-0600085416af"
 
-# Campos a seleccionar en la query OData
-SP_SELECT = (
-    "ID,field_1,field_3,field_4,field_5,field_6,field_7,"
-    "field_9,field_10,field_11,field_12,field_13,field_14,"
-    "CRITICIDAD,field_21,GERENCIA,TIPO_DE_MANTENIMIENTO"
-)
 
-# Normalización de ESTADO (igual que el BI)
+# ── Normalización de estados y áreas (igual que el BI) ───────────────────────
 _ESTADO_MAP = {
     "PROGRAMADO":    "PENDIENTE",
     "NO CONCERTADO": "PENDIENTE",
     "TERMINADO":     "COMPLETADO",
 }
-# Normalización de ÁREA
 _AREA_MAP = {
     "CORTE FAMILIAS FUNZA":        "CORTE",
     "CORTE JEAN FUNZA":            "CORTE",
@@ -49,7 +49,7 @@ def _norm_estado(val: Optional[str]) -> Optional[str]:
     if not val:
         return val
     upper = val.strip().upper()
-    return _ESTADO_MAP.get(upper, val.strip().upper())
+    return _ESTADO_MAP.get(upper, upper)
 
 
 def _norm_area(val: Optional[str]) -> Optional[str]:
@@ -59,7 +59,6 @@ def _norm_area(val: Optional[str]) -> Optional[str]:
 
 
 def _parse_date(val) -> Optional[date]:
-    """Convierte string ISO o datetime a date, None si falla."""
     if val is None:
         return None
     if isinstance(val, (datetime, date)):
@@ -70,74 +69,139 @@ def _parse_date(val) -> Optional[date]:
         return None
 
 
-def _map_item(raw: dict) -> dict:
-    """Convierte un ítem JSON de SharePoint al dict de la BD."""
-    estado_raw = raw.get("field_12") or raw.get("ESTADO") or ""
-    area_raw   = raw.get("field_3")  or raw.get("ÁREA")  or ""
+def _map_item(props: dict) -> dict:
     return {
-        "sp_id":       int(raw.get("ID", 0)),
-        "semana":      raw.get("field_1"),
-        "gerencia":    raw.get("GERENCIA") or raw.get("field_0"),
-        "area":        _norm_area(area_raw),
-        "gft":         raw.get("field_4"),
-        "objeto":      raw.get("field_5"),
-        "af":          raw.get("field_6"),
-        "descripcion": raw.get("field_7"),
-        "frecuencia":  raw.get("field_9"),
-        "responsable": raw.get("field_10"),
-        "pedido":      raw.get("field_11"),
-        "estado":      _norm_estado(estado_raw),
-        "dia":         _parse_date(raw.get("field_13")),
-        "asignado":    raw.get("field_14"),
-        "criticidad":  raw.get("CRITICIDAD"),
-        "tipo":        raw.get("TIPO_DE_MANTENIMIENTO") or raw.get("field_8"),
-        "observaciones": raw.get("field_21"),
+        "sp_id":       int(props.get("ID", 0)),
+        "semana":      props.get("field_1"),
+        "gerencia":    props.get("GERENCIA") or props.get("field_0"),
+        "area":        _norm_area(props.get("field_3") or props.get("ÁREA", "")),
+        "gft":         props.get("field_4"),
+        "objeto":      props.get("field_5"),
+        "af":          props.get("field_6"),
+        "descripcion": props.get("field_7"),
+        "frecuencia":  props.get("field_9"),
+        "responsable": props.get("field_10"),
+        "pedido":      props.get("field_11"),
+        "estado":      _norm_estado(props.get("field_12") or props.get("ESTADO", "")),
+        "dia":         _parse_date(props.get("field_13")),
+        "asignado":    props.get("field_14"),
+        "criticidad":  props.get("CRITICIDAD"),
+        "tipo":        props.get("TIPO_DE_MANTENIMIENTO") or props.get("field_8"),
+        "observaciones": props.get("field_21"),
     }
 
 
-# ── Función principal (síncrona — llamar con run_in_executor) ─────────────────
+# ── Gestión de token MSAL ─────────────────────────────────────────────────────
 
-def fetch_sharepoint_items(site_url: str, email: str, password: str) -> list[dict]:
-    """
-    Descarga todos los ítems de la lista MANTENIMIENTOS desde SharePoint.
-    Devuelve lista de dicts ya normalizados listos para UPSERT.
-    Síncrono — ejecutar en threadpool desde código async.
-    """
-    # Import aquí para que si no está instalada la lib, solo falle al llamar
-    from office365.runtime.auth.user_credential import UserCredential
-    from office365.sharepoint.client_context import ClientContext
+def _load_token_cache():
+    """Carga la caché de token desde disco."""
+    import msal
+    cache = msal.SerializableTokenCache()
+    if TOKEN_CACHE_FILE.exists():
+        cache.deserialize(TOKEN_CACHE_FILE.read_text(encoding="utf-8"))
+    return cache
 
-    log.info("Iniciando conexión SharePoint: %s", site_url)
-    ctx = ClientContext(site_url).with_credentials(
-        UserCredential(email, password)
+
+def _save_token_cache(cache):
+    """Guarda la caché de token en disco si hubo cambios."""
+    if cache.has_state_changed:
+        TOKEN_CACHE_FILE.write_text(cache.serialize(), encoding="utf-8")
+
+
+def _get_access_token() -> str:
+    """
+    Obtiene un access token válido para SharePoint.
+    - Si hay caché con refresh token → renueva silenciosamente.
+    - Si no hay caché → lanza RuntimeError con instrucciones para correr auth_sharepoint.py
+    """
+    import msal
+
+    cache = _load_token_cache()
+    msal_app = msal.PublicClientApplication(
+        MSAL_CLIENT_ID,
+        authority=f"https://login.microsoftonline.com/{MSAL_TENANT}",
+        token_cache=cache,
     )
+
+    accounts = msal_app.get_accounts()
+    if not accounts:
+        raise RuntimeError(
+            "No hay sesión SharePoint guardada. "
+            "Corre este comando UNA VEZ en la carpeta ptar-backend/:\n"
+            "  .venv\\Scripts\\python.exe auth_sharepoint.py\n"
+            "El script abrirá el navegador para que completes el login con MFA."
+        )
+
+    result = msal_app.acquire_token_silent(MSAL_SCOPES, account=accounts[0])
+    if not result or "access_token" not in result:
+        raise RuntimeError(
+            f"No se pudo renovar el token SharePoint: {result.get('error_description', 'desconocido')}. "
+            "Corre nuevamente auth_sharepoint.py para re-autenticar."
+        )
+
+    _save_token_cache(cache)
+    return result["access_token"]
+
+
+# ── Fetch de ítems desde SharePoint REST API ──────────────────────────────────
+
+def fetch_sharepoint_items(site_url: str, _email: str = "", _password: str = "") -> list[dict]:
+    """
+    Descarga todos los ítems del año actual desde la lista MANTENIMIENTOS.
+    Usa token MSAL (device code, compatible con MFA).
+    Síncrono — llamar con run_in_executor desde código async.
+    """
+    import requests
+
+    token = _get_access_token()
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/json;odata=verbose",
+    }
 
     año_actual = datetime.now().year
-    list_obj = ctx.web.lists.get_by_id(SP_LIST_GUID)
-
-    # Traer hasta 5 000 ítems, filtrar año actual en cliente
-    items = (
-        list_obj.items
-        .top(5000)
-        .order_by("ID desc")
-        .get()
-        .execute_query()
+    resultados: list[dict] = []
+    url = (
+        f"{site_url.rstrip('/')}/_api/web/lists(guid'{SP_LIST_GUID}')/items"
+        f"?$select=ID,field_1,field_3,field_4,field_5,field_6,field_7,"
+        f"field_9,field_10,field_11,field_12,field_13,field_14,"
+        f"CRITICIDAD,field_21,GERENCIA,TIPO_DE_MANTENIMIENTO"
+        f"&$orderby=ID desc&$top=500"
     )
 
-    resultados = []
-    for item in items:
-        props = item.properties
-        dia = _parse_date(props.get("field_13"))
-        # Filtro año actual (igual que el BI)
-        if dia and dia.year != año_actual:
-            continue
-        resultados.append(_map_item(props))
+    page = 0
+    while url:
+        page += 1
+        log.info("SharePoint: página %d → %s...", page, url[:80])
+        resp = requests.get(url, headers=headers, timeout=30)
+        resp.raise_for_status()
 
-    log.info("SharePoint: %d ítems del año %d descargados", len(resultados), año_actual)
+        data = resp.json()
+        # odata=verbose usa d.results; odata=nometadata usa value
+        items_raw = data.get("d", {}).get("results") or data.get("value", [])
+
+        for item in items_raw:
+            props = item if isinstance(item, dict) else {}
+            dia = _parse_date(props.get("field_13"))
+            if dia and dia.year != año_actual:
+                continue
+            resultados.append(_map_item(props))
+
+        # Paginación
+        next_link = (
+            data.get("d", {}).get("__next")
+            or data.get("odata.nextLink")
+            or data.get("@odata.nextLink")
+        )
+        url = next_link if next_link else None
+
+    log.info("SharePoint: %d ítems del año %d", len(resultados), año_actual)
     return resultados
 
 
 # ── UPSERT en MySQL ───────────────────────────────────────────────────────────
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import text
 
 _UPSERT_SQL = text("""
     INSERT INTO mantenimientos_preventivos
@@ -171,7 +235,6 @@ _UPSERT_SQL = text("""
 
 
 async def upsert_items(db: AsyncSession, items: list[dict]) -> int:
-    """UPSERT masivo en mantenimientos_preventivos. Devuelve cantidad procesada."""
     if not items:
         return 0
     for item in items:

@@ -15,16 +15,18 @@ class Settings(BaseSettings):
     JWT_SECRET: str  # REQUERIDO en .env — sin valor por defecto
     JWT_EXPIRY_HOURS: int = 24
 
-    # ── SharePoint — credenciales usuario (sin Azure AD) ─────────────────────
+    # ── SharePoint — Device Code Flow con MFA (msal) ─────────────────────────
+    # SP_PASSWORD ya NO se usa — autenticación via auth_sharepoint.py (una vez)
     SP_SITE_URL:   str = "https://permodaco.sharepoint.com/sites/CONFIABILIDAD"
-    SP_EMAIL:      str = ""    # ej: davidan@permoda.com.co
-    SP_PASSWORD:   str = ""    # contraseña O365 — NUNCA commitear
+    SP_EMAIL:      str = ""    # ej: davidan@permoda.com.co (solo informativo)
     SP_SYNC_HOURS: int = 1     # cada cuántas horas sincronizar automáticamente
 
     @property
     def sp_enabled(self) -> bool:
-        """True si las credenciales están configuradas en el .env"""
-        return bool(self.SP_EMAIL and self.SP_PASSWORD)
+        """True si el archivo de token cache existe (auth_sharepoint.py ya fue corrido)"""
+        from pathlib import Path
+        cache = Path(__file__).resolve().parent.parent / ".sharepoint_token_cache.json"
+        return cache.exists()
 
     @field_validator("JWT_SECRET")
     @classmethod
