@@ -128,7 +128,7 @@ async def _do_pull(db: AsyncSession) -> dict:
     if not settings.sp_enabled:
         raise HTTPException(
             status_code=503,
-            detail="SharePoint no configurado. Agrega SP_EMAIL y SP_PASSWORD al .env",
+            detail="SharePoint no configurado. Corre: python auth_sharepoint.py",
         )
     try:
         inicio = datetime.now()
@@ -140,8 +140,6 @@ async def _do_pull(db: AsyncSession) -> dict:
             None,
             fetch_sharepoint_items,
             settings.SP_SITE_URL,
-            settings.SP_EMAIL,
-            settings.SP_PASSWORD,
         )
 
         procesados = await upsert_items(db, items)
