@@ -17,6 +17,9 @@ SessionLocal = async_sessionmaker(
     expire_on_commit=False,
 )
 
+# Alias para que el scheduler pueda importarlo con nombre claro
+AsyncSessionLocal = SessionLocal
+
 class Base(DeclarativeBase):
     pass
 

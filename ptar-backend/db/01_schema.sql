@@ -98,3 +98,37 @@ CREATE TABLE IF NOT EXISTS ptar_registro_calidad (
   KEY idx_calidad_turno  (turno),
   KEY idx_calidad_unidad (unidad_tratamiento)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ──────────────────────────────────────────────────────────────
+--  Mantenimientos Preventivos GFT
+--  Datos sincronizados desde SharePoint CONFIABILIDAD
+--  via Office365-REST-Python-Client (Python + credenciales usuario)
+-- ──────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS mantenimientos_preventivos (
+  id                  INT            PRIMARY KEY AUTO_INCREMENT,
+  sharepoint_id       INT            NOT NULL UNIQUE,   -- ID de la lista SharePoint
+  semana              TINYINT        NULL,
+  gerencia            VARCHAR(100)   NULL,
+  area                VARCHAR(100)   NULL,
+  gft                 VARCHAR(100)   NULL,
+  objeto              VARCHAR(255)   NULL,
+  af                  VARCHAR(100)   NULL,
+  descripcion         VARCHAR(500)   NULL,
+  tipo_mantenimiento  VARCHAR(100)   NULL,
+  frecuencia          VARCHAR(50)    NULL,
+  responsable         VARCHAR(255)   NULL,
+  pedido_de_trabajo   VARCHAR(100)   NULL,
+  criticidad          VARCHAR(50)    NULL,    -- ALTA | MEDIA | BAJA
+  estado              VARCHAR(50)    NULL,    -- PENDIENTE | COMPLETADO | EN PROCESO
+  dia_programado      DATE           NULL,
+  asignado_a          VARCHAR(255)   NULL,
+  observaciones       TEXT           NULL,
+  ultima_sync         DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP
+                                     ON UPDATE CURRENT_TIMESTAMP,
+  KEY idx_mtto_semana    (semana),
+  KEY idx_mtto_estado    (estado),
+  KEY idx_mtto_area      (area),
+  KEY idx_mtto_critico   (criticidad),
+  KEY idx_mtto_dia       (dia_programado),
+  KEY idx_mtto_sync      (ultima_sync)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

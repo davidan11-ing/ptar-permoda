@@ -1,6 +1,7 @@
-import os
+import logging
+from contextlib import asynccontextmanager
 from pathlib import Path
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -10,6 +11,8 @@ from slowapi.errors import RateLimitExceeded
 from app.config import settings
 from app.routes import auth, caudales, reactivos, calidad, dashboard, reportes, equipos, mantenimientos
 
+log = logging.getLogger("ptar")
+
 # Raíz del proyecto (App_PTAR_SQL/ptar-backend/) — funciona desde cualquier CWD
 BASE_DIR = Path(__file__).resolve().parent.parent
 DIST_DIR = BASE_DIR / "dist"
@@ -17,10 +20,50 @@ DIST_DIR = BASE_DIR / "dist"
 # ── Rate limiter ──────────────────────────────────────────────────────────────
 limiter = Limiter(key_func=get_remote_address)
 
+# ── Lifespan: arranca/para el scheduler de SharePoint ─────────────────────────
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # ── Startup ──
+    if settings.sp_enabled:
+        try:
+            from apscheduler.schedulers.asyncio import AsyncIOScheduler
+            from app.routes.mantenimientos import scheduled_pull
+
+            scheduler = AsyncIOScheduler()
+            scheduler.add_job(
+                scheduled_pull,
+                trigger="interval",
+                hours=settings.SP_SYNC_HOURS,
+                id="sp_sync",
+                replace_existing=True,
+            )
+            scheduler.start()
+            app.state.scheduler = scheduler
+            log.info(
+                "Scheduler SharePoint iniciado — sync cada %dh",
+                settings.SP_SYNC_HOURS,
+            )
+            # Primer pull al arrancar (en background, no bloquea startup)
+            import asyncio
+            asyncio.create_task(scheduled_pull())
+        except ImportError:
+            log.warning("APScheduler no instalado — sync automático deshabilitado")
+    else:
+        log.info("SharePoint no configurado (SP_EMAIL/SP_PASSWORD vacíos) — scheduler omitido")
+
+    yield  # ← app corre aquí
+
+    # ── Shutdown ──
+    if hasattr(app.state, "scheduler"):
+        app.state.scheduler.shutdown(wait=False)
+        log.info("Scheduler SharePoint detenido")
+
+
 app = FastAPI(
     title="PTAR Permoda API",
     description="Backend REST para la app de gestión de la Planta de Tratamiento de Aguas Residuales",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 app.state.limiter = limiter

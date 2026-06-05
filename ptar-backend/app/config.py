@@ -15,6 +15,17 @@ class Settings(BaseSettings):
     JWT_SECRET: str  # REQUERIDO en .env — sin valor por defecto
     JWT_EXPIRY_HOURS: int = 24
 
+    # ── SharePoint — credenciales usuario (sin Azure AD) ─────────────────────
+    SP_SITE_URL:   str = "https://permodaco.sharepoint.com/sites/CONFIABILIDAD"
+    SP_EMAIL:      str = ""    # ej: davidan@permoda.com.co
+    SP_PASSWORD:   str = ""    # contraseña O365 — NUNCA commitear
+    SP_SYNC_HOURS: int = 1     # cada cuántas horas sincronizar automáticamente
+
+    @property
+    def sp_enabled(self) -> bool:
+        """True si las credenciales están configuradas en el .env"""
+        return bool(self.SP_EMAIL and self.SP_PASSWORD)
+
     @field_validator("JWT_SECRET")
     @classmethod
     def validate_jwt_secret(cls, v: str) -> str:
