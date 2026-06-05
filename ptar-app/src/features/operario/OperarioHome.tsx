@@ -169,15 +169,18 @@ function MttoPanel() {
         <div style={{ background: '#161b22', border: '1px solid #21262d', borderRadius: 8, padding: '14px 8px' }}>
           <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 4, paddingLeft: 8 }}>% CUMPLIMIENTO</div>
           <div style={{ position: 'relative', height: 140 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={donutData} cx="50%" cy="50%" innerRadius={42} outerRadius={62}
-                  dataKey="value" paddingAngle={2}>
-                  {donutData.map((d, i) => <Cell key={i} fill={d.color} />)}
-                </Pie>
-                <Tooltip {...TOOLTIP_STYLE} formatter={(v: number, n: string) => [`${v}`, n]} />
-              </PieChart>
-            </ResponsiveContainer>
+            {/* Guarda contra NaN: solo renderizar si hay datos con valor > 0 */}
+            {donutData.length > 0 && (
+              <ResponsiveContainer width="100%" height={140}>
+                <PieChart>
+                  <Pie data={donutData} cx="50%" cy="50%" innerRadius={42} outerRadius={62}
+                    dataKey="value" paddingAngle={2}>
+                    {donutData.map((d, i) => <Cell key={i} fill={d.color} />)}
+                  </Pie>
+                  <Tooltip {...TOOLTIP_STYLE} formatter={(v: number, n: string) => [`${v}`, n]} />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
             {/* Porcentaje en el centro */}
             <div style={{
               position: 'absolute', top: '50%', left: '50%',
