@@ -153,13 +153,28 @@ function MttoPanel() {
         </div>
       </div>
 
-      {/* KPI Cards */}
+      {/* KPI Cards — etiqueta explícita de la semana activa */}
+      <div style={{ marginBottom: 8 }}>
+        <span style={{
+          fontSize: 10, fontWeight: 700, color: '#58a6ff',
+          letterSpacing: '.1em', textTransform: 'uppercase',
+          background: '#58a6ff18', border: '1px solid #58a6ff44',
+          borderRadius: 4, padding: '2px 8px',
+        }}>
+          SEMANA {semana}
+        </span>
+        {semana !== semanaActual && (
+          <span style={{ fontSize: 10, color: '#6e7681', marginLeft: 8 }}>
+            (semana actual: {semanaActual})
+          </span>
+        )}
+      </div>
       <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
-        <KCard label="Total" value={kpis.total} color="#58a6ff" />
-        <KCard label="Completados" value={kpis.completados} color={C_COMPLETADO} sub={`${pct}% cumpl.`} />
-        <KCard label="Pendientes"  value={kpis.pendientes}  color={C_PENDIENTE} />
-        <KCard label="En proceso"  value={kpis.en_proceso}  color={C_PROCESO} />
-        <KCard label="Críticos"    value={kpis.criticos}    color={C_CRITICO} />
+        <KCard label="Total semana" value={kpis.total} color="#58a6ff" />
+        <KCard label="Completados"  value={kpis.completados} color={C_COMPLETADO} sub={`${pct}% cumpl.`} />
+        <KCard label="Pendientes"   value={kpis.pendientes}  color={C_PENDIENTE} />
+        <KCard label="En proceso"   value={kpis.en_proceso}  color={C_PROCESO} />
+        <KCard label="Críticos"     value={kpis.criticos}    color={C_CRITICO} />
       </div>
 
       {/* Donut + Barras */}
