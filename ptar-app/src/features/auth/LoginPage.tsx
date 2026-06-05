@@ -60,7 +60,7 @@ const INPUT_STYLE = (error?: boolean): React.CSSProperties => ({
 
 /* ── componente principal ────────────────────────────────────────────── */
 export default function LoginPage() {
-  const { loginWithCredentials, selectRole } = useAuth();
+  const { loginWithCredentials, selectRole, updateEquipo } = useAuth();
   const navigate = useNavigate();
 
   // flujo: 'select' → 'login' → 'roleselect'? → 'equipo'?
@@ -132,10 +132,14 @@ export default function LoginPage() {
   const toggleEquipo = (n: string) =>
     setEquipoChecked(prev => prev.includes(n) ? prev.filter(x => x !== n) : [...prev, n]);
 
-  const doLogin = async (equipo: string[]) => {
+  // ── doLogin: el usuario ya está autenticado — solo actualiza equipo y navega ─
+  // NO llamar loginWithCredentials de nuevo: eso sobreescribiría activeRole con
+  // el valor del backend (ej. 'administrador'), rompiendo el RoleGuard de /operario
+  const doLogin = (equipo: string[]) => {
     const equipoCompleto = [loggedNombre, ...equipo.filter(n => n !== loggedNombre)];
-    const ok = await loginWithCredentials(email.trim(), password, equipoCompleto);
-    if (ok) navigate(ROLE_HOME['operario']);
+    updateEquipo(equipoCompleto);         // guarda equipo en session sin re-auth
+    selectRole('operario');               // confirma activeRole = 'operario'
+    navigate(ROLE_HOME['operario']);
   };
 
   /* ────────────────────────────────────────────────────────────────────
@@ -390,7 +394,7 @@ export default function LoginPage() {
             >
               ← Volver
             </button>
-            <button className="login-btn" onClick={() => void doLogin(equipoChecked)}>
+            <button className="login-btn" onClick={() => doLogin(equipoChecked)}>
               {equipoChecked.length > 0
                 ? `Ingresar con equipo de ${1 + equipoChecked.length}`
                 : 'Ingresar solo'}

@@ -38,6 +38,7 @@ interface AuthContextValue {
   currentUser:         AppUser | null;
   loginWithCredentials: (email: string, password: string, equipo?: string[]) => Promise<boolean>;
   selectRole:          (role: Role) => void;
+  updateEquipo:        (equipo: string[]) => void;   // actualiza el equipo sin re-auth
   logout:              () => void;
 }
 
@@ -109,6 +110,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  // Actualiza el equipo en la sesión activa sin volver a autenticar
+  const updateEquipo = useCallback((equipo: string[]) => {
+    setCurrentUser(prev => {
+      if (!prev) return prev;
+      const updated = { ...prev, equipo };
+      localStorage.setItem(SESSION_KEY, JSON.stringify(updated));
+      return updated;
+    });
+  }, []);
+
   const logout = useCallback(() => {
     localStorage.removeItem(SESSION_KEY);
     localStorage.removeItem(TOKEN_KEY);
@@ -116,7 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ currentUser, loginWithCredentials, selectRole, logout }}>
+    <AuthContext.Provider value={{ currentUser, loginWithCredentials, selectRole, updateEquipo, logout }}>
       {children}
     </AuthContext.Provider>
   );
