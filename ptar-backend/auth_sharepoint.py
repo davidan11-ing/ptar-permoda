@@ -6,7 +6,7 @@ Compatible con MFA — NO requiere contraseña en .env.
 
 CÓMO USAR (solo una vez cada ~90 días):
   cd ptar-backend
-  .venv\Scripts\python.exe auth_sharepoint.py
+  .venv/Scripts/python.exe auth_sharepoint.py
 
 1. El script imprime una URL y un código corto.
 2. Abre la URL en cualquier navegador (puedes hacerlo en el celular).
