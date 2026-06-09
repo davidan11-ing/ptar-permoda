@@ -4,7 +4,6 @@ import { useAuth } from '../../state/AuthContext';
 import { ROUTES } from '../../lib/routes';
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend,
 } from 'recharts';
 
 /* ── helpers ──────────────────────────────────────────────────────── */
@@ -20,8 +19,9 @@ const API = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
 /* ── tipos ────────────────────────────────────────────────────────── */
 interface MttoKpis {
   total: number; completados: number; pendientes: number;
-  en_proceso: number; criticos: number; ultima_actualizacion: string;
-  por_area: { area: string; n: number; completados: number }[];
+  en_proceso: number; por_aprobacion: number; criticos: number;
+  ultima_actualizacion: string;
+  por_criticidad: { criticidad: string; n: number; completados: number; por_aprobacion: number; pendientes: number }[];
 }
 interface MttoItem {
   id: number; semana: number; area: string; gft: string;
@@ -31,10 +31,11 @@ interface MttoItem {
 }
 
 /* ── colores ──────────────────────────────────────────────────────── */
-const C_COMPLETADO = '#3fb950';
-const C_PENDIENTE  = '#f85149';
-const C_PROCESO    = '#d29922';
-const C_CRITICO    = '#f85149';
+const C_COMPLETADO   = '#3fb950';
+const C_PENDIENTE    = '#f85149';
+const C_PROCESO      = '#d29922';
+const C_APROBACION   = '#58a6ff';   // azul — "Por Aprobación"
+const C_CRITICO      = '#f85149';
 const TOOLTIP_STYLE = {
   contentStyle: { background: '#161b22', border: '1px solid #30363d', borderRadius: 8, fontSize: 11 },
   labelStyle:   { color: '#e6edf3' },
@@ -59,52 +60,52 @@ function KCard({ label, value, color, sub }: { label: string; value: number | st
 function MttoPanel() {
   const semanaActual = isoWeek();
   const [semana, setSemana]     = useState(semanaActual);
-  const [kpis, setKpis]         = useState<MttoKpis | null>(null);
-  const [items, setItems]        = useState<MttoItem[]>([]);
-  const [loading, setLoading]   = useState(true);
-  const [filtroArea, setFiltroArea] = useState('');
+  const [kpis, setKpis]     = useState<MttoKpis | null>(null);
+  const [items, setItems]   = useState<MttoItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [pagina, setPagina] = useState(0);
+  const POR_PAGINA = 8;
+
+  // Siempre filtra por PTAR BOG (gft = 'PTAR BOG') — panel exclusivo PTAR
+  const AC = '&area_code=PTAR_PT';
 
   useEffect(() => {
     setLoading(true);
     const token = localStorage.getItem('ptar_token') || '';
     const headers = { Authorization: `Bearer ${token}` };
     Promise.all([
-      fetch(`${API}/api/mantenimientos/kpis?semana=${semana}`, { headers }).then(r => r.json()),
-      fetch(`${API}/api/mantenimientos/?semana=${semana}&limit=200`, { headers }).then(r => r.json()),
+      fetch(`${API}/api/mantenimientos/kpis?semana=${semana}${AC}`, { headers }).then(r => r.json()),
+      fetch(`${API}/api/mantenimientos/?semana=${semana}&limit=200${AC}`, { headers }).then(r => r.json()),
     ]).then(([k, it]) => {
-      setKpis(k); setItems(it);
+      setKpis(k); setItems(it); setPagina(0);
     }).catch(() => {}).finally(() => setLoading(false));
   }, [semana]);
 
   /* datos para gráficas */
   const donutData = kpis ? [
-    { name: 'Completado', value: kpis.completados, color: C_COMPLETADO },
-    { name: 'Pendiente',  value: kpis.pendientes,  color: C_PENDIENTE  },
-    { name: 'En proceso', value: kpis.en_proceso,  color: C_PROCESO    },
+    { name: 'Completado',     value: kpis.completados,    color: C_COMPLETADO  },
+    { name: 'Por Aprobación', value: kpis.por_aprobacion, color: C_APROBACION  },
+    { name: 'Pendiente',      value: kpis.pendientes,     color: C_PENDIENTE   },
+    { name: 'En proceso',     value: kpis.en_proceso,     color: C_PROCESO     },
   ].filter(d => d.value > 0) : [];
 
   const pct = kpis && kpis.total > 0
     ? Math.round((kpis.completados / kpis.total) * 100) : 0;
 
-  const barData = (kpis?.por_area ?? []).map(a => ({
-    area:       a.area?.length > 12 ? a.area.slice(0, 12) + '…' : (a.area || '?'),
-    Completado: a.completados,
-    Pendiente:  a.n - a.completados,
-  }));
+  /* tabla ordenada — sin límite, paginada en el render */
+  const tablaOrdenada = useMemo(() =>
+    [...items].sort((a, b) => {
+      const crit = { ALTA: 0, MEDIA: 1, BAJA: 2 };
+      const ca = crit[a.criticidad?.toUpperCase() as keyof typeof crit] ?? 3;
+      const cb = crit[b.criticidad?.toUpperCase() as keyof typeof crit] ?? 3;
+      if (ca !== cb) return ca - cb;
+      return (a.dia_programado ?? '').localeCompare(b.dia_programado ?? '');
+    }),
+  [items]);
 
-  /* tabla filtrada */
-  const areas = useMemo(() => [...new Set(items.map(i => i.area).filter(Boolean))].sort(), [items]);
-  const tableFiltrada = useMemo(() =>
-    items.filter(i => !filtroArea || i.area === filtroArea)
-         .sort((a, b) => {
-           const crit = { ALTA: 0, MEDIA: 1, BAJA: 2 };
-           const ca = crit[a.criticidad?.toUpperCase() as keyof typeof crit] ?? 3;
-           const cb = crit[b.criticidad?.toUpperCase() as keyof typeof crit] ?? 3;
-           if (ca !== cb) return ca - cb;
-           return (a.dia_programado ?? '').localeCompare(b.dia_programado ?? '');
-         })
-         .slice(0, 20),
-  [items, filtroArea]);
+  const totalPaginas = Math.max(1, Math.ceil(tablaOrdenada.length / POR_PAGINA));
+  const paginaActual = Math.min(pagina, totalPaginas - 1);
+  const tablaVisible = tablaOrdenada.slice(paginaActual * POR_PAGINA, (paginaActual + 1) * POR_PAGINA);
 
   if (loading) {
     return (
@@ -170,21 +171,20 @@ function MttoPanel() {
         )}
       </div>
       <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
-        <KCard label="Total semana" value={kpis.total} color="#58a6ff" />
-        <KCard label="Completados"  value={kpis.completados} color={C_COMPLETADO} sub={`${pct}% cumpl.`} />
-        <KCard label="Pendientes"   value={kpis.pendientes}  color={C_PENDIENTE} />
-        <KCard label="En proceso"   value={kpis.en_proceso}  color={C_PROCESO} />
-        <KCard label="Críticos"     value={kpis.criticos}    color={C_CRITICO} />
+        <KCard label="Total semana"    value={kpis.total}            color="#8b949e" />
+        <KCard label="Completados"     value={kpis.completados}      color={C_COMPLETADO} sub={`${pct}% cumpl.`} />
+        <KCard label="Por Aprobación"  value={kpis.por_aprobacion}   color={C_APROBACION} />
+        <KCard label="Pendientes"      value={kpis.pendientes}        color={C_PENDIENTE} />
+        <KCard label="Críticos"        value={kpis.criticos}          color={C_CRITICO} />
       </div>
 
-      {/* Donut + Barras */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 12, marginBottom: 16 }}>
+      {/* Donut + Tabla paginada */}
+      <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 12, marginBottom: 16, alignItems: 'start' }}>
 
         {/* Donut — cumplimiento */}
         <div style={{ background: '#161b22', border: '1px solid #21262d', borderRadius: 8, padding: '14px 8px' }}>
           <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 4, paddingLeft: 8 }}>% CUMPLIMIENTO</div>
           <div style={{ position: 'relative', height: 140 }}>
-            {/* Guarda contra NaN: solo renderizar si hay datos con valor > 0 */}
             {donutData.length > 0 && (
               <ResponsiveContainer width="100%" height={140}>
                 <PieChart>
@@ -196,7 +196,6 @@ function MttoPanel() {
                 </PieChart>
               </ResponsiveContainer>
             )}
-            {/* Porcentaje en el centro */}
             <div style={{
               position: 'absolute', top: '50%', left: '50%',
               transform: 'translate(-50%,-50%)',
@@ -206,7 +205,6 @@ function MttoPanel() {
               <div style={{ fontSize: 9, color: '#6e7681' }}>completado</div>
             </div>
           </div>
-          {/* leyenda */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4, paddingLeft: 12, marginTop: 4 }}>
             {donutData.map(d => (
               <div key={d.name} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, color: '#8b949e' }}>
@@ -217,75 +215,74 @@ function MttoPanel() {
           </div>
         </div>
 
-        {/* Barras — por área */}
-        <div style={{ background: '#161b22', border: '1px solid #21262d', borderRadius: 8, padding: '14px 8px 8px' }}>
-          <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 4, paddingLeft: 8 }}>ESTADO POR ÁREA</div>
-          <ResponsiveContainer width="100%" height={180}>
-            <BarChart data={barData} margin={{ top: 0, right: 8, left: -10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#21262d" />
-              <XAxis dataKey="area" tick={{ fill: '#6e7681', fontSize: 9 }} />
-              <YAxis tick={{ fill: '#6e7681', fontSize: 9 }} />
-              <Tooltip {...TOOLTIP_STYLE} />
-              <Legend wrapperStyle={{ fontSize: 10, color: '#8b949e' }} />
-              <Bar dataKey="Completado" stackId="a" fill={C_COMPLETADO} radius={[0,0,0,0]} />
-              <Bar dataKey="Pendiente"  stackId="a" fill={C_PENDIENTE}  radius={[3,3,0,0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* Tabla de mantenimientos */}
-      <div style={{ background: '#161b22', border: '1px solid #21262d', borderRadius: 8, overflow: 'hidden' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px 8px', borderBottom: '1px solid #21262d' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: '#8b949e', letterSpacing: '.06em', textTransform: 'uppercase' }}>
-            Detalle semana {semana}
+        {/* Tabla paginada */}
+        <div style={{ background: '#161b22', border: '1px solid #21262d', borderRadius: 8, overflow: 'hidden' }}>
+          {/* Header + slicer */}
+          <div style={{ padding: '8px 12px', borderBottom: '1px solid #21262d', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#8b949e', letterSpacing: '.06em', textTransform: 'uppercase' }}>
+              Detalle semana {semana}
+              <span style={{ marginLeft: 8, fontSize: 10, color: '#484f58', fontWeight: 400 }}>
+                ({tablaOrdenada.length} registros)
+              </span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+              <button
+                onClick={() => setPagina(p => Math.max(0, p - 1))}
+                disabled={paginaActual === 0}
+                style={{ background: '#21262d', border: '1px solid #30363d', color: paginaActual === 0 ? '#484f58' : '#8b949e', borderRadius: 4, padding: '2px 8px', cursor: paginaActual === 0 ? 'default' : 'pointer', fontSize: 13, lineHeight: 1 }}>
+                &#8249;
+              </button>
+              <span style={{ fontSize: 10, color: '#6e7681', minWidth: 56, textAlign: 'center' }}>
+                {paginaActual + 1} / {totalPaginas}
+              </span>
+              <button
+                onClick={() => setPagina(p => Math.min(totalPaginas - 1, p + 1))}
+                disabled={paginaActual >= totalPaginas - 1}
+                style={{ background: '#21262d', border: '1px solid #30363d', color: paginaActual >= totalPaginas - 1 ? '#484f58' : '#8b949e', borderRadius: 4, padding: '2px 8px', cursor: paginaActual >= totalPaginas - 1 ? 'default' : 'pointer', fontSize: 13, lineHeight: 1 }}>
+                &#8250;
+              </button>
+            </div>
           </div>
-          <select value={filtroArea} onChange={e => setFiltroArea(e.target.value)}
-            style={{ background: '#0d1117', border: '1px solid #30363d', color: '#8b949e', borderRadius: 4, fontSize: 10, padding: '2px 6px' }}>
-            <option value="">Todas las áreas</option>
-            {areas.map(a => <option key={a} value={a}>{a}</option>)}
-          </select>
-        </div>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
-            <thead>
-              <tr style={{ background: '#0d1117' }}>
-                {['Área','Objeto','Tipo','Criticidad','Estado','Día programado','Responsable'].map(h => (
-                  <th key={h} style={{ padding: '6px 10px', textAlign: 'left', fontSize: 9, fontWeight: 700, color: '#6e7681', letterSpacing: '.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {tableFiltrada.map((item, i) => {
-                const estadoColor = item.estado?.toUpperCase().includes('COMPLET') ? C_COMPLETADO
-                  : item.estado?.toUpperCase().includes('PROCESO')  ? C_PROCESO
-                  : C_PENDIENTE;
-                const critColor = item.criticidad?.toUpperCase() === 'ALTA' ? C_CRITICO
-                  : item.criticidad?.toUpperCase() === 'MEDIA' ? C_PROCESO : '#8b949e';
-                return (
-                  <tr key={item.id} style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,.02)', borderBottom: '1px solid #21262d' }}>
-                    <td style={{ padding: '6px 10px', color: '#c9d1d9', whiteSpace: 'nowrap' }}>{item.area || '—'}</td>
-                    <td style={{ padding: '6px 10px', color: '#c9d1d9', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={item.objeto}>{item.objeto || '—'}</td>
-                    <td style={{ padding: '6px 10px', color: '#8b949e', whiteSpace: 'nowrap' }}>{item.tipo_mantenimiento || '—'}</td>
-                    <td style={{ padding: '6px 10px', whiteSpace: 'nowrap' }}>
-                      <span style={{ color: critColor, fontWeight: 600, fontSize: 10 }}>{item.criticidad || '—'}</span>
-                    </td>
-                    <td style={{ padding: '6px 10px', whiteSpace: 'nowrap' }}>
-                      <span style={{ color: estadoColor, fontWeight: 600, fontSize: 10,
-                        background: estadoColor + '18', borderRadius: 4, padding: '2px 6px' }}>
-                        {item.estado || '—'}
-                      </span>
-                    </td>
-                    <td style={{ padding: '6px 10px', color: '#8b949e', fontFamily: 'monospace', fontSize: 10, whiteSpace: 'nowrap' }}>{item.dia_programado || '—'}</td>
-                    <td style={{ padding: '6px 10px', color: '#8b949e', whiteSpace: 'nowrap' }}>{item.asignado_a || item.responsable || '—'}</td>
-                  </tr>
-                );
-              })}
-              {tableFiltrada.length === 0 && (
-                <tr><td colSpan={7} style={{ padding: 16, textAlign: 'center', color: '#484f58' }}>Sin registros</td></tr>
-              )}
-            </tbody>
-          </table>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+              <thead>
+                <tr style={{ background: '#0d1117' }}>
+                  {['Objeto','Tipo','Criticidad','Estado','Responsable'].map(h => (
+                    <th key={h} style={{ padding: '6px 10px', textAlign: 'left', fontSize: 9, fontWeight: 700, color: '#6e7681', letterSpacing: '.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {tablaVisible.map((item, i) => {
+                  const estadoColor = item.estado?.toUpperCase().includes('COMPLET') ? C_COMPLETADO
+                    : item.estado?.toUpperCase().includes('APROBAC') ? C_APROBACION
+                    : item.estado?.toUpperCase().includes('PROCESO') ? C_PROCESO
+                    : C_PENDIENTE;
+                  const critColor = item.criticidad?.toUpperCase() === 'ALTA' ? C_CRITICO
+                    : item.criticidad?.toUpperCase() === 'MEDIA' ? C_PROCESO : '#8b949e';
+                  return (
+                    <tr key={item.id} style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,.02)', borderBottom: '1px solid #21262d' }}>
+                      <td style={{ padding: '6px 10px', color: '#c9d1d9', maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={item.objeto}>{item.objeto || '—'}</td>
+                      <td style={{ padding: '6px 10px', color: '#8b949e', whiteSpace: 'nowrap' }}>{item.tipo_mantenimiento || '—'}</td>
+                      <td style={{ padding: '6px 10px', whiteSpace: 'nowrap' }}>
+                        <span style={{ color: critColor, fontWeight: 600, fontSize: 10 }}>{item.criticidad || '—'}</span>
+                      </td>
+                      <td style={{ padding: '6px 10px', whiteSpace: 'nowrap' }}>
+                        <span style={{ color: estadoColor, fontWeight: 600, fontSize: 10,
+                          background: estadoColor + '18', borderRadius: 4, padding: '2px 6px' }}>
+                          {item.estado || '—'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '6px 10px', color: '#8b949e', whiteSpace: 'nowrap' }}>{item.asignado_a || item.responsable || '—'}</td>
+                    </tr>
+                  );
+                })}
+                {tablaVisible.length === 0 && (
+                  <tr><td colSpan={5} style={{ padding: 16, textAlign: 'center', color: '#484f58' }}>Sin registros</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

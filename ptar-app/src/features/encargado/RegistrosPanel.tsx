@@ -27,7 +27,7 @@ export default function RegistrosPanel() {
   const [fechaInicio,  setFechaInicio]  = useState(inicio);
   const [fechaFin,     setFechaFin]     = useState(fin);
   const [turno,        setTurno]        = useState('');
-  const [buscar,       setBuscar]       = useState(1);
+  const [buscar,       setBuscar]       = useState(false);
 
   const tabs: { key: Tab; label: string; badge: string }[] = [
     { key: 'calidad',   label: 'Calidad del Agua',   badge: 'F-03' },
@@ -85,7 +85,7 @@ export default function RegistrosPanel() {
         </select>
 
         <button
-          onClick={() => setBuscar(b => b + 1)}
+          onClick={() => setBuscar(b => !b)}
           style={{
             background: '#1f6feb', color: '#fff', border: 'none',
             borderRadius: 6, padding: '7px 18px', cursor: 'pointer',
