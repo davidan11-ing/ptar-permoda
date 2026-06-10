@@ -142,6 +142,17 @@ public class ReactivosController(IDbConnectionFactory db) : ControllerBase
                     Horometro   = reg.horometro_inicial,
                     CaudalGem   = reg.caudal_tratado_gem,
                     HorasOp     = reg.horas_operacion,
+                    LecturaEntradaActual  = reg.lectura_entrada_actual,
+                    LecturaPermeadoActual = reg.lectura_permeado_actual,
+                    CaudalEntradaMh       = reg.caudal_entrada_mh,
+                    CaudalSalidaMh        = reg.caudal_salida_mh,
+                    VolumenEntrada        = reg.volumen_entrada_m3,
+                    VolumenPermeado       = reg.volumen_permeado_m3,
+                    HorasOpSistema        = reg.horas_operacion_sistema,
+                    CebsRealizados        = reg.cebs_realizados,
+                    CebsCantidad          = reg.cebs_cantidad,
+                    MangaCambiada         = reg.manga_cambiada,
+                    MangaCantidad         = reg.manga_cantidad,
                 };
                 grouped[key] = g;
             }
@@ -195,6 +206,58 @@ public class ReactivosController(IDbConnectionFactory db) : ControllerBase
                 p.Add("caudalMh",  caudalMh);
             }
 
+            // Contadores RO
+            if (sistema == "RO")
+            {
+                var roExtra = new Dictionary<string, object?>
+                {
+                    ["lectura_c12"]           = data.LecturaEntradaActual,
+                    ["lectura_c13"]           = data.LecturaPermeadoActual,
+                    ["caudal_entrada_mh"]     = data.CaudalEntradaMh,
+                    ["caudal_salida_mh"]      = data.CaudalSalidaMh,
+                    ["volumen_enviado_ro_m3"] = data.VolumenEntrada,
+                    ["volumen_permeado_m3"]   = data.VolumenPermeado,
+                    ["horas_operacion"]       = data.HorasOpSistema,
+                };
+                foreach (var (col, val) in roExtra)
+                {
+                    if (val is null) continue;
+                    cols.Add(col); vals.Add($"@{col}"); updates.Add($"{col} = @{col}");
+                    p.Add(col, val);
+                }
+            }
+
+            // Contadores y mantenimiento PTAP
+            if (sistema == "PTAP")
+            {
+                var ptapExtra = new Dictionary<string, object?>
+                {
+                    ["lectura_entrada"]    = data.LecturaEntradaActual,
+                    ["lectura_permeado"]   = data.LecturaPermeadoActual,
+                    ["caudal_entrada_mh"]  = data.CaudalEntradaMh,
+                    ["caudal_salida_mh"]   = data.CaudalSalidaMh,
+                    ["volumen_entrada_m3"] = data.VolumenEntrada,
+                    ["volumen_permeado_m3"]= data.VolumenPermeado,
+                    ["horas_operacion"]    = data.HorasOpSistema,
+                };
+                if (data.CebsRealizados.HasValue)
+                {
+                    ptapExtra["cebs_realizados"] = data.CebsRealizados.Value ? 1 : 0;
+                    ptapExtra["cebs_cantidad"]   = data.CebsRealizados.Value ? (data.CebsCantidad ?? 1) : 0;
+                }
+                if (data.MangaCambiada.HasValue)
+                {
+                    ptapExtra["manga_cambiada"] = data.MangaCambiada.Value ? 1 : 0;
+                    ptapExtra["manga_cantidad"] = data.MangaCambiada.Value ? (data.MangaCantidad ?? 1) : 0;
+                }
+                foreach (var (col, val) in ptapExtra)
+                {
+                    if (val is null) continue;
+                    cols.Add(col); vals.Add($"@{col}"); updates.Add($"{col} = @{col}");
+                    p.Add(col, val);
+                }
+            }
+
             if (data.Equipo != null)
             {
                 cols.Add("equipo"); vals.Add("@equipo"); updates.Add("equipo = @equipo");
@@ -239,6 +302,62 @@ public class ReactivosController(IDbConnectionFactory db) : ControllerBase
 
         await tx.CommitAsync();
         return Ok(new { inserted, updated, total = inserted + updated });
+    }
+
+    // ── GET /ultima-lectura-ro ───────────────────────────────────────────────
+    [HttpGet("ultima-lectura-ro")]
+    public async Task<IActionResult> GetUltimaLecturaRo()
+    {
+        await using var conn = db.Create();
+        try
+        {
+            var row = await conn.QueryFirstOrDefaultAsync("""
+                SELECT lectura_c12, lectura_c13,
+                       DATE_FORMAT(fecha, '%Y-%m-%d') AS fecha,
+                       CASE turno WHEN 1 THEN 'noche' WHEN 2 THEN 'mañana' WHEN 3 THEN 'tarde' ELSE NULL END AS turno
+                FROM operacion_ro_turno
+                WHERE lectura_c12 IS NOT NULL
+                ORDER BY fecha DESC, turno DESC LIMIT 1
+                """);
+            if (row is IDictionary<string, object> d)
+                return Ok(new
+                {
+                    c12   = d["lectura_c12"]   is not null ? Convert.ToDouble(d["lectura_c12"])   : (double?)null,
+                    c13   = d["lectura_c13"]   is not null ? Convert.ToDouble(d["lectura_c13"])   : (double?)null,
+                    fecha = d["fecha"]?.ToString(),
+                    turno = d["turno"]?.ToString(),
+                });
+        }
+        catch { }
+        return Ok(new { c12 = (double?)null, c13 = (double?)null, fecha = (string?)null, turno = (string?)null });
+    }
+
+    // ── GET /ultima-lectura-ptap ─────────────────────────────────────────────
+    [HttpGet("ultima-lectura-ptap")]
+    public async Task<IActionResult> GetUltimaLecturaPtap()
+    {
+        await using var conn = db.Create();
+        try
+        {
+            var row = await conn.QueryFirstOrDefaultAsync("""
+                SELECT lectura_entrada, lectura_permeado,
+                       DATE_FORMAT(fecha, '%Y-%m-%d') AS fecha,
+                       CASE turno WHEN 1 THEN 'noche' WHEN 2 THEN 'mañana' WHEN 3 THEN 'tarde' ELSE NULL END AS turno
+                FROM operacion_ptap_turno
+                WHERE lectura_entrada IS NOT NULL
+                ORDER BY fecha DESC, turno DESC LIMIT 1
+                """);
+            if (row is IDictionary<string, object> d)
+                return Ok(new
+                {
+                    entrada  = d["lectura_entrada"]  is not null ? Convert.ToDouble(d["lectura_entrada"])  : (double?)null,
+                    permeado = d["lectura_permeado"] is not null ? Convert.ToDouble(d["lectura_permeado"]) : (double?)null,
+                    fecha    = d["fecha"]?.ToString(),
+                    turno    = d["turno"]?.ToString(),
+                });
+        }
+        catch { }
+        return Ok(new { entrada = (double?)null, permeado = (double?)null, fecha = (string?)null, turno = (string?)null });
     }
 
     // ── GET /resumen ──────────────────────────────────────────────────────────
@@ -397,7 +516,20 @@ public record RegistroReactivoIn(
     double horas_operacion,
     string? observaciones,
     double? ingreso_coagulante_l,
-    double? trasegado_coagulante_ptap_l);
+    double? trasegado_coagulante_ptap_l,
+    // Contadores RO/PTAP
+    double? lectura_entrada_actual,
+    double? lectura_permeado_actual,
+    double? caudal_entrada_mh,
+    double? caudal_salida_mh,
+    double? volumen_entrada_m3,
+    double? volumen_permeado_m3,
+    double? horas_operacion_sistema,
+    // PTAP: eventos de mantenimiento
+    bool? cebs_realizados,
+    int?  cebs_cantidad,
+    bool? manga_cambiada,
+    int?  manga_cantidad);
 
 public record EdicionGemIn(
     double? caudal_total_tratado_gem_m3,
@@ -417,5 +549,18 @@ internal class GrupoReactivo
     public double Horometro  { get; set; }
     public double CaudalGem  { get; set; }
     public double HorasOp    { get; set; }
+    // Contadores RO/PTAP
+    public double? LecturaEntradaActual  { get; set; }
+    public double? LecturaPermeadoActual { get; set; }
+    public double? CaudalEntradaMh       { get; set; }
+    public double? CaudalSalidaMh        { get; set; }
+    public double? VolumenEntrada        { get; set; }
+    public double? VolumenPermeado       { get; set; }
+    public double? HorasOpSistema        { get; set; }
+    // PTAP: mantenimiento
+    public bool?   CebsRealizados        { get; set; }
+    public int?    CebsCantidad          { get; set; }
+    public bool?   MangaCambiada         { get; set; }
+    public int?    MangaCantidad         { get; set; }
     public Dictionary<string, double?> Cols { get; } = new();
 }
