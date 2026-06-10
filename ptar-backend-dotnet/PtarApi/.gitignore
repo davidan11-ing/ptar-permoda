@@ -1,0 +1,23 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+## Secretos — NUNCA commitear
+appsettings.Development.json
+appsettings.Production.json
+*.pfx
+*.p12
+
+## Token SharePoint
+.sharepoint_token_cache.json
+
+## NuGet
+packages/
+*.nupkg
+
+## OS
+.DS_Store
+Thumbs.db
