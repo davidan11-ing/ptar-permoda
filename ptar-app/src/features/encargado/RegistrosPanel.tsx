@@ -27,7 +27,7 @@ export default function RegistrosPanel() {
   const [fechaInicio,  setFechaInicio]  = useState(inicio);
   const [fechaFin,     setFechaFin]     = useState(fin);
   const [turno,        setTurno]        = useState('');
-  const [buscar,       setBuscar]       = useState(true);
+  const [buscar,       setBuscar]       = useState(false);
 
   const tabs: { key: Tab; label: string; badge: string }[] = [
     { key: 'calidad',   label: 'Calidad del Agua',   badge: 'F-03' },

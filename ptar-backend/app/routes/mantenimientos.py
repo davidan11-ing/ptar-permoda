@@ -25,6 +25,22 @@ from app.services.sharepoint import fetch_sharepoint_items, upsert_items
 router = APIRouter()
 log    = logging.getLogger("ptar.mantenimientos")
 
+# ── Mapa de códigos de área → campo GFT (igual que páginas del BI) ───────────
+# El BI filtra por GFT (field_4 de SharePoint), NO por area.
+# Valores exactos verificados contra la DB: gft es 1:1 con cada página del BI.
+AREA_CODE_SQL: dict[str, str] = {
+    "NCF":      "UPPER(gft) = 'NCF'",
+    "PTAR_PTF": "UPPER(gft) = 'PTAR FUNZA'",
+    "LO":       "UPPER(gft) = 'LO'",
+    "COF":      "UPPER(gft) = 'COF'",
+    "CO":       "UPPER(gft) = 'CO'",
+    "SF":       "UPPER(gft) = 'SF'",
+    "GTAR":     "UPPER(gft) = 'GTAR'",
+    "PTAR_PT":  "UPPER(gft) = 'PTAR BOG'",
+    "NC":       "UPPER(gft) = 'NC'",
+    "SB":       "UPPER(gft) = 'SB'",
+}
+
 
 # ── GET / — listado con filtros ───────────────────────────────────────────────
 
@@ -33,6 +49,7 @@ async def get_mantenimientos(
     semana:      Optional[int] = Query(None, description="Número de semana ISO"),
     estado:      Optional[str] = Query(None, description="COMPLETADO | PENDIENTE"),
     area:        Optional[str] = Query(None),
+    area_code:   Optional[str] = Query(None, description="Código BI: PTAR_PTF|LO|COF|CO|SF|GTAR|PTAR_PT|NC|SB"),
     responsable: Optional[str] = Query(None),
     criticidad:  Optional[str] = Query(None),
     tipo:        Optional[str] = Query(None),
@@ -44,7 +61,10 @@ async def get_mantenimientos(
         filters.append("semana = :semana");            params["semana"]  = semana
     if estado:
         filters.append("UPPER(estado) LIKE UPPER(:estado)"); params["estado"] = f"%{estado}%"
-    if area:
+    # area_code tiene prioridad sobre area genérico
+    if area_code and area_code.upper() in AREA_CODE_SQL:
+        filters.append(AREA_CODE_SQL[area_code.upper()])
+    elif area:
         filters.append("UPPER(area) LIKE UPPER(:area)");     params["area"]   = f"%{area}%"
     if responsable:
         filters.append("responsable LIKE :resp");      params["resp"]    = f"%{responsable}%"
@@ -77,34 +97,45 @@ async def get_mantenimientos(
 
 @router.get("/kpis")
 async def get_kpis(
-    semana: Optional[int] = Query(None),
+    semana:    Optional[int] = Query(None),
+    area_code: Optional[str] = Query(None, description="Código BI: PTAR_PTF|LO|COF|CO|SF|GTAR|PTAR_PT|NC|SB"),
     db: AsyncSession = Depends(get_db),
 ):
-    where  = "WHERE semana = :semana" if semana else ""
-    params = {"semana": semana} if semana else {}
+    filters, params = [], {}
+    if semana is not None:
+        filters.append("semana = :semana"); params["semana"] = semana
+    if area_code and area_code.upper() in AREA_CODE_SQL:
+        filters.append(AREA_CODE_SQL[area_code.upper()])
+
+    where = ("WHERE " + " AND ".join(filters)) if filters else ""
 
     row = (await db.execute(text(f"""
         SELECT
-            COUNT(*)                                                  AS total,
-            SUM(UPPER(estado) LIKE '%COMPLET%')                       AS completados,
-            SUM(UPPER(estado) LIKE '%PENDIENTE%')                     AS pendientes,
+            COUNT(*)                                                   AS total,
+            SUM(UPPER(estado) LIKE '%COMPLET%')                        AS completados,
+            SUM(UPPER(estado) LIKE '%PENDIENTE%')                      AS pendientes,
             SUM(UPPER(estado) LIKE '%PROCESO%'
-             OR UPPER(estado) LIKE '%PROGRESO%')                      AS en_proceso,
-            SUM(UPPER(criticidad) = 'ALTA')                           AS criticos,
-            MAX(ultima_sync)                                          AS ultima_actualizacion
+             OR UPPER(estado) LIKE '%PROGRESO%')                       AS en_proceso,
+            SUM(UPPER(estado) LIKE '%APROBAC%')                        AS por_aprobacion,
+            SUM(UPPER(criticidad) = 'ALTA')                            AS criticos,
+            MAX(ultima_sync)                                           AS ultima_actualizacion
         FROM mantenimientos_preventivos
         {where}
     """), params)).mappings().first()
 
-    areas = (await db.execute(text(f"""
-        SELECT area,
-               COUNT(*) AS n,
-               SUM(UPPER(estado) LIKE '%COMPLET%') AS completados
-        FROM   mantenimientos_preventivos
-        {where}
-        GROUP BY area
-        ORDER BY n DESC
-        LIMIT 10
+    crit_rows = (await db.execute(text(f"""
+        SELECT * FROM (
+            SELECT
+                COALESCE(UPPER(criticidad), 'SIN DEFINIR') AS criticidad,
+                COUNT(*)                                     AS n,
+                SUM(UPPER(estado) LIKE '%COMPLET%')          AS completados,
+                SUM(UPPER(estado) LIKE '%APROBAC%')          AS por_aprobacion,
+                SUM(UPPER(estado) LIKE '%PENDIENTE%')        AS pendientes
+            FROM mantenimientos_preventivos
+            {where}
+            GROUP BY COALESCE(UPPER(criticidad), 'SIN DEFINIR')
+        ) AS t
+        ORDER BY FIELD(criticidad,'ALTA','MEDIA','BAJA','SIN DEFINIR') ASC
     """), params)).mappings().all()
 
     return {
@@ -112,9 +143,10 @@ async def get_kpis(
         "completados":          int(row["completados"] or 0),
         "pendientes":           int(row["pendientes"] or 0),
         "en_proceso":           int(row["en_proceso"] or 0),
+        "por_aprobacion":       int(row["por_aprobacion"] or 0),
         "criticos":             int(row["criticos"] or 0),
         "ultima_actualizacion": str(row["ultima_actualizacion"] or ""),
-        "por_area":             [dict(r) for r in areas],
+        "por_criticidad":       [dict(r) for r in crit_rows],
     }
 
 

@@ -73,7 +73,6 @@ export default function ParamVsDosisSection({ fechaInicio, fechaFin, granularida
 
   const { data: rawData, loading, error } = useParamVsDosis(fechaInicio, fechaFin, param);
 
-  const _fmtFecha = (f: string) => { try { const [,m,d]=f.split('-'); return `${d}/${m}`; } catch { return f; } }; void _fmtFecha;
   const NULL_PPM = { ppm_acido:null, ppm_coagulante:null, ppm_decolorante:null, ppm_pol_anionico:null, ppm_pol_cationico:null };
 
   const realIdx = useMemo(() => {

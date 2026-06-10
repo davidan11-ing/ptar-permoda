@@ -1,0 +1,122 @@
+========================================================
+  PTAR API — Backend .NET 10
+  Equivalente al backend FastAPI Python
+========================================================
+
+PASO 1 — Instalar .NET 10 SDK
+──────────────────────────────
+Descarga: https://dotnet.microsoft.com/download/dotnet/10.0
+(Elige "SDK" para Windows x64)
+
+Verifica: dotnet --version  →  debe mostrar 10.x.x
+
+
+PASO 2 — Restaurar paquetes y compilar
+────────────────────────────────────────
+cd ptar-backend-dotnet
+dotnet restore
+dotnet build
+
+
+PASO 3 — Configurar credenciales
+──────────────────────────────────
+Las credenciales van en appsettings.Development.json (ya creado, NO se sube al repo).
+El archivo ya tiene las credenciales de desarrollo preconfiguradas.
+
+Para producción, usa User Secrets o variables de entorno:
+  dotnet user-secrets set "ConnectionStrings:Default" "Server=...;Password=...;"
+  dotnet user-secrets set "Jwt:Secret" "tu-secreto-aqui"
+
+
+PASO 4 — Copiar token de SharePoint
+─────────────────────────────────────
+El archivo .sharepoint_token_cache.json ya existe en ptar-backend/
+Solo copiarlo:
+  copy ptar-backend\.sharepoint_token_cache.json ptar-backend-dotnet\.sharepoint_token_cache.json
+
+(El token generado por Python MSAL es compatible con MSAL.NET)
+
+
+PASO 5 — Correr el servidor
+────────────────────────────
+cd ptar-backend-dotnet\PtarApi
+dotnet run
+
+El servidor arranca en: http://localhost:8001
+Swagger UI:            http://localhost:8001/swagger
+
+
+PASO 6 — Cambiar puerto en el frontend
+────────────────────────────────────────
+El frontend React usa la misma URL http://localhost:8001
+No necesitas cambiar nada en el frontend.
+
+
+RUTAS MIGRADAS (38 endpoints)
+══════════════════════════════
+  POST /api/auth/login
+  GET  /api/auth/me
+  GET  /api/caudales/
+  POST /api/caudales/batch
+  GET  /api/caudales/ultimas-lecturas
+  GET  /api/caudales/resumen
+  GET  /api/caudales/edicion
+  PUT  /api/caudales/edicion/{id}
+  GET  /api/reactivos/
+  POST /api/reactivos/batch
+  GET  /api/reactivos/ultimo-nivel
+  GET  /api/reactivos/ultimo-horometro
+  GET  /api/reactivos/resumen
+  GET  /api/reactivos/proyeccion
+  GET  /api/reactivos/estadisticas
+  GET  /api/reactivos/gem-eficiencia
+  GET  /api/reactivos/edicion-gem
+  PUT  /api/reactivos/edicion-gem/{id}
+  GET  /api/calidad/
+  POST /api/calidad/batch
+  GET  /api/calidad/ultimo-valor
+  GET  /api/calidad/parametros
+  GET  /api/calidad/mediciones
+  GET  /api/calidad/estadisticas
+  GET  /api/calidad/resumen
+  GET  /api/calidad/remociones
+  GET  /api/calidad/dispersion
+  GET  /api/calidad/mbr-eficiencia
+  GET  /api/calidad/edicion
+  PUT  /api/calidad/edicion/{id}
+  GET  /api/dashboard/kpis
+  GET  /api/equipos/estados-hoy
+  POST /api/equipos/estados
+  GET  /api/mantenimientos/
+  GET  /api/mantenimientos/kpis
+  POST /api/mantenimientos/pull
+  GET  /api/reportes/pdf
+  GET  /api/reportes/calidad-html
+  GET  /api/reportes/balance-html
+  GET  /api/reportes/costos-html
+  GET  /api/reportes/dashboard-html
+  GET  /api/health
+
+
+ESTRUCTURA DEL PROYECTO
+════════════════════════
+PtarApi/
+├── PtarApi.csproj          ← paquetes NuGet
+├── appsettings.json        ← config base
+├── appsettings.Dev*.json   ← credenciales locales (gitignore)
+├── Program.cs              ← startup + DI + middleware
+├── Data/
+│   └── PtarDbContext.cs    ← DbContext + IDbConnectionFactory
+├── Services/
+│   ├── JwtService.cs       ← crear/validar JWT
+│   ├── SharePointService.cs   ← MSAL + REST API SharePoint
+│   └── SharePointSyncService.cs  ← BackgroundService (sync cada 1h)
+└── Features/
+    ├── Auth/               ← login + /me
+    ├── Caudales/           ← contadores agua
+    ├── Reactivos/          ← químicos GEM/RO/PTAP
+    ├── Calidad/            ← parámetros fisicoquímicos
+    ├── Dashboard/          ← KPIs
+    ├── Equipos/            ← estados equipos
+    ├── Mantenimientos/     ← SharePoint mantenimientos
+    └── Reportes/           ← PDF + HTML (QuestPDF)
