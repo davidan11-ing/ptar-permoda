@@ -47,7 +47,22 @@ CREATE TABLE IF NOT EXISTS operacion_ptap_turno (
   costo_op_soda                   DECIMAL(14,2),
   costo_op_peroxido               DECIMAL(14,2),
 
-  observaciones                   TEXT,
+  -- Contadores y operación
+  lectura_entrada              DECIMAL(12,2),
+  lectura_permeado             DECIMAL(12,2),
+  caudal_entrada_mh            DECIMAL(10,2),
+  caudal_salida_mh             DECIMAL(10,2),
+  volumen_entrada_m3           DECIMAL(12,2),
+  volumen_permeado_m3          DECIMAL(12,2),
+  horas_operacion              DECIMAL(8,2),
+
+  -- Eventos de mantenimiento
+  cebs_realizados              TINYINT(1)  DEFAULT 0,
+  cebs_cantidad                TINYINT     DEFAULT 0,
+  manga_cambiada               TINYINT(1)  DEFAULT 0,
+  manga_cantidad               TINYINT     DEFAULT 0,
+
+  observaciones                TEXT,
 
   UNIQUE KEY uk_ptap_fecha_turno (fecha, turno),
   KEY idx_ptap_fecha (fecha)

@@ -10,7 +10,7 @@
  *   Fila superior: [Parámetro ▼] [FechaInicio] [FechaFin]  |  KPI total
  *   Gráfico ancho completo (width="100%")
  */
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   ComposedChart, Bar, Line,
   XAxis, YAxis, CartesianGrid,

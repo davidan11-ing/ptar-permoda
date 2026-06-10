@@ -52,7 +52,7 @@ export interface RegistroCosto {
   created_at?: string;
   turno: 'mañana' | 'tarde' | 'noche';
   usuario: string;
-  equipo?: string;           // JSON array de nombres del equipo en turno
+  equipo?: string;
   id_quimico: string;
   nombre_quimico: string;
   unidad: string;
@@ -70,6 +70,19 @@ export interface RegistroCosto {
   observaciones?: string;
   ingreso_coagulante_l?: number;
   trasegado_coagulante_ptap_l?: number;
+  // Contadores RO/PTAP
+  lectura_entrada_actual?:  number;
+  lectura_permeado_actual?: number;
+  caudal_entrada_mh?:       number;
+  caudal_salida_mh?:        number;
+  volumen_entrada_m3?:      number;
+  volumen_permeado_m3?:     number;
+  horas_operacion_sistema?: number;
+  // PTAP: mantenimiento
+  cebs_realizados?: boolean;
+  cebs_cantidad?:   number;
+  manga_cambiada?:  boolean;
+  manga_cantidad?:  number;
 }
 
 export interface RegistroCalidad {
@@ -136,6 +149,36 @@ export interface UltimoNivel {
 export async function getUltimoNivel(quimico_id: string): Promise<UltimoNivel> {
   const q = new URLSearchParams({ quimico_id });
   return request<UltimoNivel>(`/api/reactivos/ultimo-nivel?${q}`);
+}
+
+export interface UltimaLecturaRO {
+  c12:   number | null;
+  c13:   number | null;
+  fecha: string | null;
+  turno: number | null;
+}
+
+export async function getUltimaLecturaRO(): Promise<UltimaLecturaRO> {
+  try {
+    return await request<UltimaLecturaRO>('/api/reactivos/ultima-lectura-ro');
+  } catch {
+    return { c12: null, c13: null, fecha: null, turno: null };
+  }
+}
+
+export interface UltimaLecturaPTAP {
+  entrada:  number | null;
+  permeado: number | null;
+  fecha:    string | null;
+  turno:    number | null;
+}
+
+export async function getUltimaLecturaPTAP(): Promise<UltimaLecturaPTAP> {
+  try {
+    return await request<UltimaLecturaPTAP>('/api/reactivos/ultima-lectura-ptap');
+  } catch {
+    return { entrada: null, permeado: null, fecha: null, turno: null };
+  }
 }
 
 // ─── Calidad ──────────────────────────────────────────────────────────────────

@@ -6,8 +6,13 @@ import {
   createReactivosBatch,
   getUltimoHorometro,
   getUltimoNivel,
+  getUltimaLecturaRO,
+  getUltimaLecturaPTAP,
 } from '../../services/ptarClient';
-import type { RegistroCosto, UltimoHorometro, UltimoNivel } from '../../services/ptarClient';
+import type {
+  RegistroCosto, UltimoHorometro, UltimoNivel,
+  UltimaLecturaRO, UltimaLecturaPTAP,
+} from '../../services/ptarClient';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -29,8 +34,21 @@ const productSchema = z.object({
 });
 
 const caudalesROSchema = z.object({
-  c12_actual: z.string().optional(),
-  c13_actual: z.string().optional(),
+  c12_actual:        z.string().optional(),
+  c13_actual:        z.string().optional(),
+  caudal_entrada_mh: z.string().default('5'),
+  caudal_salida_mh:  z.string().optional(),
+});
+
+const caudalesPTAPSchema = z.object({
+  entrada_actual:    z.string().optional(),
+  salida_actual:     z.string().optional(),
+  caudal_entrada_mh: z.string().default('20'),
+  caudal_salida_mh:  z.string().optional(),
+  cebs_realizados:   z.boolean().default(false),
+  cebs_cantidad:     z.string().optional(),
+  manga_cambiada:    z.boolean().default(false),
+  manga_cantidad:    z.string().optional(),
 });
 
 const formSchema = z.object({
@@ -38,6 +56,7 @@ const formSchema = z.object({
   caudal_mh:               z.string().default('80'),
   products:                z.record(z.string(), productSchema),
   caudales_ro:             caudalesROSchema.optional(),
+  caudales_ptap:           caudalesPTAPSchema.optional(),
   observaciones_generales: z.string().optional(),
 });
 
@@ -338,6 +357,10 @@ export default function FormatoReactivos() {
   // Pre-carga de niveles anteriores: quimico_id → UltimoNivel
   const [ultimosNiveles, setUltimosNiveles] = useState<Record<string, UltimoNivel>>({});
 
+  // Últimas lecturas de contadores RO y PTAP
+  const [ultimaLectRO,   setUltimaLectRO]   = useState<UltimaLecturaRO>({ c12: null, c13: null, fecha: null, turno: null });
+  const [ultimaLectPTAP, setUltimaLectPTAP] = useState<UltimaLecturaPTAP>({ entrada: null, permeado: null, fecha: null, turno: null });
+
   // ── Modo manual de fecha / turno ──────────────────────────────────────────
   // autoTurno se recalcula cada minuto para detectar cambio de turno mientras
   // el formulario está abierto (ej: se abre en Mañana y se envía en Tarde)
@@ -365,6 +388,12 @@ export default function FormatoReactivos() {
       .then(data => setUltimoHoro(data))
       .catch(() => setUltimoHoro(null))
       .finally(() => setLoadingHoro(false));
+  }, []);
+
+  // ── Fetch últimas lecturas de contadores RO y PTAP ────────────────────────
+  useEffect(() => {
+    getUltimaLecturaRO().then(setUltimaLectRO).catch(() => {});
+    getUltimaLecturaPTAP().then(setUltimaLectPTAP).catch(() => {});
   }, []);
 
   // ── Fetch último nivel para cada químico ──────────────────────────────────
@@ -400,7 +429,12 @@ export default function FormatoReactivos() {
       horometro_actual: '',
       caudal_mh: '80',
       products: defaultProducts,
-      caudales_ro: { c12_actual: '', c13_actual: '' },
+      caudales_ro:   { c12_actual: '', c13_actual: '', caudal_entrada_mh: '5', caudal_salida_mh: '' },
+      caudales_ptap: {
+        entrada_actual: '', salida_actual: '', caudal_entrada_mh: '20', caudal_salida_mh: '',
+        cebs_realizados: false, cebs_cantidad: '1',
+        manga_cambiada: false, manga_cantidad: '1',
+      },
       observaciones_generales: '',
     }
   });
@@ -420,33 +454,50 @@ export default function FormatoReactivos() {
   const watchCaudal   = watch('caudal_mh');
   const watchProducts = watch('products');
   const watchROCauda  = watch('caudales_ro');
+  const watchPTAP     = watch('caudales_ptap');
 
-  // ── Cálculos derivados ────────────────────────────────────────────────────
-  const horoActual   = parseFloat(watchHoro) || 0;
-  const horoUltimo   = ultimoHoro?.horometro ?? 0;
-  const horasOp      = horoActual > 0 && horoUltimo > 0
+  // ── GEM ───────────────────────────────────────────────────────────────────
+  const horoActual = parseFloat(watchHoro) || 0;
+  const horoUltimo = ultimoHoro?.horometro ?? 0;
+  const horasOp    = horoActual > 0 && horoUltimo > 0
     ? Math.max(0, horoActual - horoUltimo) : null;
-  const caudal       = parseFloat(watchCaudal) || 80;
-  const volGEM       = horasOp !== null ? horasOp * caudal : 0;
+  const caudal  = parseFloat(watchCaudal) || 80;
+  const volGEM  = horasOp !== null ? horasOp * caudal : 0;
 
-  // Caudales RO registrados
-  const c12Act       = parseFloat(watchROCauda?.c12_actual ?? '') || 0;
-  const c13Act       = parseFloat(watchROCauda?.c13_actual ?? '') || 0;
+  // ── RO — contadores C-12 (Entrada) y C-13 (Permeado) ─────────────────────
+  const roC12Ant    = ultimaLectRO.c12 ?? 0;
+  const roC12Act    = parseFloat(watchROCauda?.c12_actual ?? '') || 0;
+  const roC13Ant    = ultimaLectRO.c13 ?? 0;
+  const roC13Act    = parseFloat(watchROCauda?.c13_actual ?? '') || 0;
+  const roCaudalEnt = parseFloat(watchROCauda?.caudal_entrada_mh ?? '') || 5;
+  const roCaudalSal = parseFloat(watchROCauda?.caudal_salida_mh  ?? '') || 0;
+  const volROEntrada  = roC12Act > 0 && roC12Ant > 0 ? Math.max(0, roC12Act - roC12Ant) : 0;
+  const volROSalida   = roC13Act > 0 && roC13Ant > 0 ? Math.max(0, roC13Act - roC13Ant) : 0;
+  const horasOpRO     = volROEntrada > 0 && roCaudalEnt > 0 ? volROEntrada / roCaudalEnt : null;
 
-  // ── Computed por químico ──────────────────────────────────────────────────
-  // Sin useMemo: RHF devuelve la misma referencia de watchProducts aunque
-  // cambien sus propiedades internas → Object.is siempre true → memo nunca
-  // recomputa. Con 13 químicos la operación es tan barata que no necesita cache.
+  // ── PTAP — contadores Entrada y Permeado ─────────────────────────────────
+  const ptapEntAnt      = ultimaLectPTAP.entrada  ?? 0;
+  const ptapEntAct      = parseFloat(watchPTAP?.entrada_actual ?? '') || 0;
+  const ptapSalAnt      = ultimaLectPTAP.permeado ?? 0;
+  const ptapSalAct      = parseFloat(watchPTAP?.salida_actual ?? '') || 0;
+  const ptapCaudalEnt   = parseFloat(watchPTAP?.caudal_entrada_mh ?? '') || 20;
+  const ptapCaudalSal   = parseFloat(watchPTAP?.caudal_salida_mh  ?? '') || 0;
+  const volPTAPEntrada  = ptapEntAct > 0 && ptapEntAnt > 0 ? Math.max(0, ptapEntAct - ptapEntAnt) : 0;
+  const volPTAPSalida   = ptapSalAct > 0 && ptapSalAnt > 0 ? Math.max(0, ptapSalAct - ptapSalAnt) : 0;
+  const horasOpPTAP     = volPTAPEntrada > 0 && ptapCaudalEnt > 0 ? volPTAPEntrada / ptapCaudalEnt : null;
+
+  // ── Computed por químico — usa volumen del sistema correcto ───────────────
   const computed = Object.fromEntries(
     TODOS.map(q => {
       const p = watchProducts[q.id];
       const trasL = q.id === 'Q-02' && p?.trasiego_check && p?.trasiego_l
         ? (parseFloat(p.trasiego_l) || 0) : 0;
-      const vol = volGEM;
+      const vol = q.sistema === 'RO'   ? volROEntrada
+                : q.sistema === 'PTAP' ? volPTAPEntrada
+                : volGEM;
       return [q.id, computeProduct(q, p?.nivel_inicial, p?.nivel_final, trasL, vol)];
     })
   );
-  /*adapter funciion{ formularios} computeProduct (q,p?.nivel_inicial*/
 
   const activeGEM  = QUIMICOS_GEM.filter(q => computed[q.id].active);
   const activeRO   = QUIMICOS_RO.filter(q  => computed[q.id].active);
@@ -488,6 +539,14 @@ export default function FormatoReactivos() {
           ? parseFloat(p.trasiego_l) || 0 : 0;
         const ingresoL = c.esIngreso && p.ingreso_l ? parseFloat(p.ingreso_l) || 0 : 0;
 
+        // Volumen y horas según sistema
+        const volSistema   = q.sistema === 'RO'   ? volROEntrada
+                           : q.sistema === 'PTAP' ? volPTAPEntrada
+                           : volGEM;
+        const horasSistema = q.sistema === 'RO'   ? (horasOpRO  ?? 0)
+                           : q.sistema === 'PTAP' ? (horasOpPTAP ?? 0)
+                           : (horasOp ?? 0);
+
         return {
           turno:              activeTurno,
           usuario:            currentUser?.nombre ?? 'desconocido',
@@ -501,11 +560,37 @@ export default function FormatoReactivos() {
           kg_consumidos:      parseFloat((c.kgConsumidos ?? 0).toFixed(4)),
           precio_kg:          q.precio_kg,
           horometro_inicial:  horoActual,
-          caudal_tratado_gem: volGEM,
-          horas_operacion:    horasOp ?? 0,
+          caudal_tratado_gem: volSistema,
+          horas_operacion:    horasSistema,
           observaciones:      obsArr.join(' | ') || undefined,
-          ingreso_coagulante_l:         q.id === 'Q-02' ? ingresoL || undefined : undefined,
-          trasegado_coagulante_ptap_l:  q.id === 'Q-02' && trasiegoL > 0 ? trasiegoL : undefined,
+          ingreso_coagulante_l:        q.id === 'Q-02' ? ingresoL || undefined : undefined,
+          trasegado_coagulante_ptap_l: q.id === 'Q-02' && trasiegoL > 0 ? trasiegoL : undefined,
+          // Contadores RO
+          ...(q.sistema === 'RO' && {
+            lectura_entrada_actual:  roC12Act > 0 ? roC12Act : undefined,
+            lectura_permeado_actual: roC13Act > 0 ? roC13Act : undefined,
+            caudal_entrada_mh:       roCaudalEnt,
+            caudal_salida_mh:        roCaudalSal > 0 ? roCaudalSal : undefined,
+            volumen_entrada_m3:      volROEntrada  > 0 ? volROEntrada  : undefined,
+            volumen_permeado_m3:     volROSalida   > 0 ? volROSalida   : undefined,
+            horas_operacion_sistema: horasOpRO     ?? undefined,
+          }),
+          // Contadores + mantenimiento PTAP
+          ...(q.sistema === 'PTAP' && {
+            lectura_entrada_actual:  ptapEntAct > 0 ? ptapEntAct : undefined,
+            lectura_permeado_actual: ptapSalAct > 0 ? ptapSalAct : undefined,
+            caudal_entrada_mh:       ptapCaudalEnt,
+            caudal_salida_mh:        ptapCaudalSal > 0 ? ptapCaudalSal : undefined,
+            volumen_entrada_m3:      volPTAPEntrada > 0 ? volPTAPEntrada : undefined,
+            volumen_permeado_m3:     volPTAPSalida  > 0 ? volPTAPSalida  : undefined,
+            horas_operacion_sistema: horasOpPTAP   ?? undefined,
+            cebs_realizados:   data.caudales_ptap?.cebs_realizados ?? false,
+            cebs_cantidad:     data.caudales_ptap?.cebs_realizados
+                                 ? (parseInt(data.caudales_ptap?.cebs_cantidad ?? '1') || 1) : 0,
+            manga_cambiada:    data.caudales_ptap?.manga_cambiada ?? false,
+            manga_cantidad:    data.caudales_ptap?.manga_cambiada
+                                 ? (parseInt(data.caudales_ptap?.manga_cantidad ?? '1') || 1) : 0,
+          }),
         };
       });
 
@@ -709,39 +794,110 @@ export default function FormatoReactivos() {
           color="#1f6feb"
           count={QUIMICOS_RO.length}
         >
-          {/* Sección caudales RO */}
+          {/* Contadores y caudal RO */}
           <div style={{
             background: '#1f6feb10', border: '1px solid #1f6feb33',
             borderRadius: 8, padding: '12px', marginBottom: 14,
           }}>
-            <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 10, color: '#1f6feb' }}>
-              Caudales RO
+            <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 12, color: '#1f6feb' }}>
+              Contadores y Caudal
             </div>
-            <div className="form-row-2">
-              <div className="form-group">
-                <label className="form-label">C-12 Lectura Actual (m³) — Entrada RO</label>
-                <input
-                  type="number" step="1" min="0"
-                  className="form-input"
-                  placeholder="Lectura actual"
-                  {...register('caudales_ro.c12_actual')}
-                />
+
+            {/* C-12 — Contador Entrada */}
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontWeight: 500, fontSize: 11, color: '#1f6feb', marginBottom: 6,
+                textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                C-12 — Contador Entrada RO
               </div>
-              <div className="form-group">
-                <label className="form-label">C-13 Lectura Actual (m³) — Salida RO</label>
-                <input
-                  type="number" step="1" min="0"
-                  className="form-input"
-                  placeholder="Lectura actual"
-                  {...register('caudales_ro.c13_actual')}
-                />
+              <div className="form-row-2">
+                <div className="form-group">
+                  <label className="form-label">Lectura actual (m³) *</label>
+                  <input type="number" step="1" min="0" className="form-input"
+                    placeholder="Ej: 125430"
+                    {...register('caudales_ro.c12_actual')} />
+                  {ultimaLectRO.c12 != null ? (
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
+                      Último: <strong>{ultimaLectRO.c12.toLocaleString('es-CO')} m³</strong>
+                      {ultimaLectRO.fecha && ` — ${ultimaLectRO.fecha.slice(5).replace('-', '/')}`}
+                      {ultimaLectRO.turno && ` turno ${ultimaLectRO.turno}`}
+                    </span>
+                  ) : (
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
+                      Sin registro anterior
+                    </span>
+                  )}
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Volumen entrada (m³)</label>
+                  <div className={`form-readonly${volROEntrada > 0 ? ' value-ok' : ''}`}>
+                    {volROEntrada > 0 ? `${volROEntrada.toLocaleString('es-CO')} m³` : '—'}
+                  </div>
+                </div>
               </div>
             </div>
-            {(c12Act > 0 || c13Act > 0) && (
-              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>
-                Registradas: C-12 = {c12Act.toLocaleString('es-CO')} m³ · C-13 = {c13Act.toLocaleString('es-CO')} m³
+
+            {/* C-13 — Contador Permeado */}
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontWeight: 500, fontSize: 11, color: '#1f6feb', marginBottom: 6,
+                textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                C-13 — Contador Permeado (Salida)
               </div>
-            )}
+              <div className="form-row-2">
+                <div className="form-group">
+                  <label className="form-label">Lectura actual (m³) *</label>
+                  <input type="number" step="1" min="0" className="form-input"
+                    placeholder="Ej: 118200"
+                    {...register('caudales_ro.c13_actual')} />
+                  {ultimaLectRO.c13 != null ? (
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
+                      Último: <strong>{ultimaLectRO.c13.toLocaleString('es-CO')} m³</strong>
+                      {ultimaLectRO.fecha && ` — ${ultimaLectRO.fecha.slice(5).replace('-', '/')}`}
+                      {ultimaLectRO.turno && ` turno ${ultimaLectRO.turno}`}
+                    </span>
+                  ) : (
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
+                      Sin registro anterior
+                    </span>
+                  )}
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Volumen permeado (m³)</label>
+                  <div className={`form-readonly${volROSalida > 0 ? ' value-ok' : ''}`}>
+                    {volROSalida > 0 ? `${volROSalida.toLocaleString('es-CO')} m³` : '—'}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Caudal y horas */}
+            <div className="form-row-3">
+              <div className="form-group">
+                <label className="form-label">Caudal entrada (m³/h)</label>
+                <input type="number" step="0.1" min="0" className="form-input"
+                  placeholder="Ej: 5"
+                  {...register('caudales_ro.caudal_entrada_mh')} />
+                <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3, display: 'block' }}>
+                  Por defecto: 5 m³/h
+                </span>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Caudal salida / permeado (m³/h)</label>
+                <input type="number" step="0.1" min="0" className="form-input"
+                  placeholder="Ej: 4"
+                  {...register('caudales_ro.caudal_salida_mh')} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Horas de Operación (calculado)</label>
+                <div className={`form-readonly${horasOpRO !== null ? ' value-ok' : ''}`}>
+                  {horasOpRO !== null ? `${horasOpRO.toFixed(2)} h` : '—'}
+                </div>
+                {horasOpRO !== null && (
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3, display: 'block' }}>
+                    = {volROEntrada.toLocaleString('es-CO')} m³ ÷ {roCaudalEnt} m³/h
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
 
           <div className="reactivos-list">
@@ -766,9 +922,163 @@ export default function FormatoReactivos() {
           color="#da7b11"
           count={QUIMICOS_PTAP.length}
         >
-          <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>
-            Reactivos de la Planta de Tratamiento de Agua Potable (PTAP).
-          </p>
+          {/* Contadores y caudal PTAP */}
+          <div style={{
+            background: '#da7b1110', border: '1px solid #da7b1133',
+            borderRadius: 8, padding: '12px', marginBottom: 14,
+          }}>
+            <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 12, color: '#da7b11' }}>
+              Contadores y Caudal
+            </div>
+
+            {/* Contador Entrada PTAP */}
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontWeight: 500, fontSize: 11, color: '#da7b11', marginBottom: 6,
+                textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Contador Entrada PTAP
+              </div>
+              <div className="form-row-2">
+                <div className="form-group">
+                  <label className="form-label">Lectura actual (m³) *</label>
+                  <input type="number" step="1" min="0" className="form-input"
+                    placeholder="Ej: 84200"
+                    {...register('caudales_ptap.entrada_actual')} />
+                  {ultimaLectPTAP.entrada != null ? (
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
+                      Último: <strong>{ultimaLectPTAP.entrada.toLocaleString('es-CO')} m³</strong>
+                      {ultimaLectPTAP.fecha && ` — ${ultimaLectPTAP.fecha.slice(5).replace('-', '/')}`}
+                      {ultimaLectPTAP.turno && ` turno ${ultimaLectPTAP.turno}`}
+                    </span>
+                  ) : (
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
+                      Sin registro anterior
+                    </span>
+                  )}
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Volumen entrada (m³)</label>
+                  <div className={`form-readonly${volPTAPEntrada > 0 ? ' value-ok' : ''}`}>
+                    {volPTAPEntrada > 0 ? `${volPTAPEntrada.toLocaleString('es-CO')} m³` : '—'}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Contador Permeado / Salida PTAP */}
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontWeight: 500, fontSize: 11, color: '#da7b11', marginBottom: 6,
+                textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Contador Permeado / Salida PTAP
+              </div>
+              <div className="form-row-2">
+                <div className="form-group">
+                  <label className="form-label">Lectura actual (m³) *</label>
+                  <input type="number" step="1" min="0" className="form-input"
+                    placeholder="Ej: 80100"
+                    {...register('caudales_ptap.salida_actual')} />
+                  {ultimaLectPTAP.permeado != null ? (
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
+                      Último: <strong>{ultimaLectPTAP.permeado.toLocaleString('es-CO')} m³</strong>
+                      {ultimaLectPTAP.fecha && ` — ${ultimaLectPTAP.fecha.slice(5).replace('-', '/')}`}
+                      {ultimaLectPTAP.turno && ` turno ${ultimaLectPTAP.turno}`}
+                    </span>
+                  ) : (
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
+                      Sin registro anterior
+                    </span>
+                  )}
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Volumen permeado (m³)</label>
+                  <div className={`form-readonly${volPTAPSalida > 0 ? ' value-ok' : ''}`}>
+                    {volPTAPSalida > 0 ? `${volPTAPSalida.toLocaleString('es-CO')} m³` : '—'}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Caudal y horas */}
+            <div className="form-row-3" style={{ marginBottom: 12 }}>
+              <div className="form-group">
+                <label className="form-label">Caudal entrada (m³/h)</label>
+                <input type="number" step="0.1" min="0" className="form-input"
+                  placeholder="Ej: 20"
+                  {...register('caudales_ptap.caudal_entrada_mh')} />
+                <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3, display: 'block' }}>
+                  Por defecto: 20 m³/h
+                </span>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Caudal salida / permeado (m³/h)</label>
+                <input type="number" step="0.1" min="0" className="form-input"
+                  placeholder="Ej: 18"
+                  {...register('caudales_ptap.caudal_salida_mh')} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Horas de Operación (calculado)</label>
+                <div className={`form-readonly${horasOpPTAP !== null ? ' value-ok' : ''}`}>
+                  {horasOpPTAP !== null ? `${horasOpPTAP.toFixed(2)} h` : '—'}
+                </div>
+                {horasOpPTAP !== null && (
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3, display: 'block' }}>
+                    = {volPTAPEntrada.toLocaleString('es-CO')} m³ ÷ {ptapCaudalEnt} m³/h
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Eventos de mantenimiento */}
+            <div style={{
+              padding: '10px 12px', background: 'var(--bg-secondary)',
+              borderRadius: 6, border: '1px solid var(--border)',
+            }}>
+              <div style={{ fontWeight: 600, fontSize: 11, color: '#8b949e',
+                textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 10 }}>
+                Eventos de mantenimiento
+              </div>
+
+              {/* CEBs */}
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8,
+                cursor: 'pointer', fontSize: 13, marginBottom: 6 }}>
+                <Controller name="caudales_ptap.cebs_realizados" control={control}
+                  render={({ field }) => (
+                    <input type="checkbox" checked={!!field.value}
+                      onChange={e => field.onChange(e.target.checked)} />
+                  )} />
+                ¿Se realizaron CEBs en este turno?
+              </label>
+              {watchPTAP?.cebs_realizados && (
+                <div className="form-group" style={{ marginTop: 4, marginBottom: 10, paddingLeft: 22 }}>
+                  <label className="form-label">¿Cuántos CEBs?</label>
+                  <input type="number" step="1" min="1" className="form-input"
+                    placeholder="1"
+                    style={{ maxWidth: 120 }}
+                    {...register('caudales_ptap.cebs_cantidad')} />
+                </div>
+              )}
+
+              {/* Manga */}
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8,
+                cursor: 'pointer', fontSize: 13 }}>
+                <Controller name="caudales_ptap.manga_cambiada" control={control}
+                  render={({ field }) => (
+                    <input type="checkbox" checked={!!field.value}
+                      onChange={e => field.onChange(e.target.checked)} />
+                  )} />
+                ¿Se cambió la manga en este turno?
+              </label>
+              {watchPTAP?.manga_cambiada && (
+                <div className="form-group" style={{ marginTop: 4, marginBottom: 0, paddingLeft: 22 }}>
+                  <label className="form-label">¿Cuántas veces?</label>
+                  <input type="number" step="1" min="1" className="form-input"
+                    placeholder="1"
+                    style={{ maxWidth: 120 }}
+                    {...register('caudales_ptap.manga_cantidad')} />
+                </div>
+              )}
+            </div>
+          </div>
+
           <div className="reactivos-list">
             {QUIMICOS_PTAP.map(q => (
               <ProductCard

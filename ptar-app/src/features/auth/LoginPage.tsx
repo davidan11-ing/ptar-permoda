@@ -73,7 +73,7 @@ export default function LoginPage() {
   const [equipoChecked, setEquipoChecked] = useState<string[]>([]);
   // nombre y role resueltos tras login exitoso
   const [loggedNombre, setLoggedNombre] = useState('');
-  const [loggedRole,   setLoggedRole]   = useState<Role>('operario');
+  const [_loggedRole,  setLoggedRole]   = useState<Role>('operario'); void _loggedRole;
 
   // Resolución de nombre en tiempo real desde USERS_BY_EMAIL
   const emailKey    = email.toLowerCase().trim();
@@ -214,7 +214,7 @@ export default function LoginPage() {
 
               {roleMismatch && (
                 <div style={{ fontSize: 11, color: '#d29922', marginTop: 4 }}>
-                  ⚠ Este correo corresponde al rol {ROLE_LABELS[knownUser!.role]}
+                  ⚠ Este correo corresponde al rol {ROLE_LABELS[knownUser!.roles[0]]}
                 </div>
               )}
             </div>

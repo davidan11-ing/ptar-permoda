@@ -58,6 +58,21 @@ class RegistroReactivoIn(BaseModel):
     ingreso_coagulante_l: Optional[float] = None         # solo Q-02: ingreso recibido
     trasegado_coagulante_ptap_l: Optional[float] = None  # solo Q-02: trasiego a PTAP
 
+    # ── RO/PTAP: lecturas de contadores ────────────────────────────────────────
+    lectura_entrada_actual:  Optional[float] = None   # lectura acumulada contador entrada
+    lectura_permeado_actual: Optional[float] = None   # lectura acumulada contador permeado
+    caudal_entrada_mh:       Optional[float] = None   # caudal de entrada m³/h
+    caudal_salida_mh:        Optional[float] = None   # caudal de salida/permeado m³/h
+    volumen_entrada_m3:      Optional[float] = None   # delta = actual − anterior
+    volumen_permeado_m3:     Optional[float] = None   # delta permeado
+    horas_operacion_sistema: Optional[float] = None   # vol_entrada / caudal_mh
+
+    # ── PTAP específico: eventos de mantenimiento ───────────────────────────────
+    cebs_realizados: Optional[bool] = None
+    cebs_cantidad:   Optional[int]  = None
+    manga_cambiada:  Optional[bool] = None
+    manga_cantidad:  Optional[int]  = None
+
     @field_validator('turno')
     @classmethod
     def validate_turno(cls, v):
@@ -255,6 +270,52 @@ async def get_reactivos(
     return [ConsumoQuimicoDia(**dict(r)) for r in rows]
 
 
+@router.get("/ultima-lectura-ro")
+async def get_ultima_lectura_ro(db: AsyncSession = Depends(get_db)):
+    """Devuelve la última lectura de los contadores C-12 y C-13 de la RO."""
+    try:
+        row = (await db.execute(text("""
+            SELECT lectura_c12, lectura_c13, fecha, turno
+            FROM operacion_ro_turno
+            WHERE lectura_c12 IS NOT NULL
+            ORDER BY fecha DESC, turno DESC
+            LIMIT 1
+        """))).mappings().first()
+        if row:
+            return {
+                "c12":   float(row["lectura_c12"])  if row["lectura_c12"]  is not None else None,
+                "c13":   float(row["lectura_c13"])  if row["lectura_c13"]  is not None else None,
+                "fecha": str(row["fecha"]),
+                "turno": row["turno"],
+            }
+    except Exception:
+        pass
+    return {"c12": None, "c13": None, "fecha": None, "turno": None}
+
+
+@router.get("/ultima-lectura-ptap")
+async def get_ultima_lectura_ptap(db: AsyncSession = Depends(get_db)):
+    """Devuelve la última lectura de los contadores Entrada y Permeado de la PTAP."""
+    try:
+        row = (await db.execute(text("""
+            SELECT lectura_entrada, lectura_permeado, fecha, turno
+            FROM operacion_ptap_turno
+            WHERE lectura_entrada IS NOT NULL
+            ORDER BY fecha DESC, turno DESC
+            LIMIT 1
+        """))).mappings().first()
+        if row:
+            return {
+                "entrada":  float(row["lectura_entrada"])  if row["lectura_entrada"]  is not None else None,
+                "permeado": float(row["lectura_permeado"]) if row["lectura_permeado"] is not None else None,
+                "fecha": str(row["fecha"]),
+                "turno": row["turno"],
+            }
+    except Exception:
+        pass
+    return {"entrada": None, "permeado": None, "fecha": None, "turno": None}
+
+
 @router.post("/batch", response_model=ReactivosBatchResponse)
 async def create_reactivos_batch(registros: list[RegistroReactivoIn], db: AsyncSession = Depends(get_db)):
     """
@@ -306,9 +367,22 @@ async def create_reactivos_batch(registros: list[RegistroReactivoIn], db: AsyncS
                 'turno': turno_int,
                 'usuario': reg.usuario,
                 'equipo': reg.equipo,
-                'horometro_inicial': reg.horometro_inicial,
-                'caudal_tratado_gem': reg.caudal_tratado_gem,
-                'horas_operacion': reg.horas_operacion,
+                'horometro_inicial':       reg.horometro_inicial,
+                'caudal_tratado_gem':      reg.caudal_tratado_gem,
+                'horas_operacion':         reg.horas_operacion,
+                # Contadores RO/PTAP
+                'lectura_entrada_actual':  reg.lectura_entrada_actual,
+                'lectura_permeado_actual': reg.lectura_permeado_actual,
+                'caudal_entrada_mh':       reg.caudal_entrada_mh,
+                'caudal_salida_mh':        reg.caudal_salida_mh,
+                'volumen_entrada_m3':      reg.volumen_entrada_m3,
+                'volumen_permeado_m3':     reg.volumen_permeado_m3,
+                'horas_op_sistema':        reg.horas_operacion_sistema,
+                # PTAP: mantenimiento
+                'cebs_realizados':         reg.cebs_realizados,
+                'cebs_cantidad':           reg.cebs_cantidad,
+                'manga_cambiada':          reg.manga_cambiada,
+                'manga_cantidad':          reg.manga_cantidad,
                 'columns': {}
             }
 
@@ -341,16 +415,58 @@ async def create_reactivos_batch(registros: list[RegistroReactivoIn], db: AsyncS
         params = {'fecha': fecha, 'turno': turno_int, 'usuario': data['usuario']}
         update_parts = []
 
-        # Horómetro y caudal solo para GEM
+        # Horómetro y caudal — solo para GEM
         if sistema == 'GEM' and data.get('horometro_inicial'):
             cols += ['horometro_inicial', 'caudal_total_tratado_gem_m3', 'caudal_tratamiento_m3h']
             vals += [':horometro_inicial', ':caudal_tratado_gem', ':caudal_tratamiento_m3h']
-            params['horometro_inicial']     = data['horometro_inicial']
-            params['caudal_tratado_gem']    = data['caudal_tratado_gem']
+            params['horometro_inicial']      = data['horometro_inicial']
+            params['caudal_tratado_gem']     = data['caudal_tratado_gem']
             params['caudal_tratamiento_m3h'] = caudal_m3h
             update_parts += ['horometro_inicial = :horometro_inicial',
                               'caudal_total_tratado_gem_m3 = :caudal_tratado_gem',
                               'caudal_tratamiento_m3h = :caudal_tratamiento_m3h']
+
+        # Contadores y horas — RO
+        elif sistema == 'RO':
+            ro_extra = {
+                'lectura_c12':           data.get('lectura_entrada_actual'),
+                'lectura_c13':           data.get('lectura_permeado_actual'),
+                'caudal_entrada_mh':     data.get('caudal_entrada_mh'),
+                'caudal_salida_mh':      data.get('caudal_salida_mh'),
+                'volumen_enviado_ro_m3': data.get('volumen_entrada_m3'),
+                'volumen_permeado_m3':   data.get('volumen_permeado_m3'),
+                'horas_operacion':       data.get('horas_op_sistema'),
+            }
+            for col_n, val in ro_extra.items():
+                if val is not None:
+                    cols.append(col_n); vals.append(f':{col_n}')
+                    params[col_n] = val
+                    update_parts.append(f'{col_n} = :{col_n}')
+
+        # Contadores, horas y mantenimiento — PTAP
+        elif sistema == 'PTAP':
+            ptap_extra: dict = {
+                'lectura_entrada':    data.get('lectura_entrada_actual'),
+                'lectura_permeado':   data.get('lectura_permeado_actual'),
+                'caudal_entrada_mh':  data.get('caudal_entrada_mh'),
+                'caudal_salida_mh':   data.get('caudal_salida_mh'),
+                'volumen_entrada_m3': data.get('volumen_entrada_m3'),
+                'volumen_permeado_m3': data.get('volumen_permeado_m3'),
+                'horas_operacion':    data.get('horas_op_sistema'),
+            }
+            cebs_r = data.get('cebs_realizados')
+            if cebs_r is not None:
+                ptap_extra['cebs_realizados'] = 1 if cebs_r else 0
+                ptap_extra['cebs_cantidad']   = (data.get('cebs_cantidad') or 1) if cebs_r else 0
+            manga = data.get('manga_cambiada')
+            if manga is not None:
+                ptap_extra['manga_cambiada'] = 1 if manga else 0
+                ptap_extra['manga_cantidad'] = (data.get('manga_cantidad') or 1) if manga else 0
+            for col_n, val in ptap_extra.items():
+                if val is not None:
+                    cols.append(col_n); vals.append(f':{col_n}')
+                    params[col_n] = val
+                    update_parts.append(f'{col_n} = :{col_n}')
 
         if equipo is not None:
             cols.append('equipo')
