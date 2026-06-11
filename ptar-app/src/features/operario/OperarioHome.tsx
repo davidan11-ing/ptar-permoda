@@ -384,9 +384,6 @@ export default function OperarioHome() {
         </div>
       </div>
 
-      {/* Panel de Mantenimiento Preventivo */}
-      <MttoPanel />
-
       {/* Separador */}
       <div style={{ borderTop: '1px solid #21262d', marginBottom: 22, paddingTop: 6 }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: '#8b949e', letterSpacing: '.06em', textTransform: 'uppercase' }}>
@@ -414,6 +411,11 @@ export default function OperarioHome() {
             </div>
           </Link>
         ))}
+      </div>
+
+      {/* Panel de Mantenimiento Preventivo */}
+      <div style={{ borderTop: '1px solid #21262d', marginTop: 28, paddingTop: 22 }}>
+        <MttoPanel />
       </div>
     </div>
   );
