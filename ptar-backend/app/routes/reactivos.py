@@ -277,7 +277,10 @@ async def get_reactivos(
 
 @router.get("/ultima-lectura-ro")
 async def get_ultima_lectura_ro(db: AsyncSession = Depends(get_db)):
-    """Devuelve la última lectura de los contadores C-12 y C-13 de la RO."""
+    """Devuelve la última lectura de los contadores C-12 y C-13 de la RO.
+    Primero busca en operacion_ro_turno (registros del operario); si no hay,
+    cae a contadores_lectura.entrada_ro1 / salida_ro1 (datos del balance hídrico).
+    """
     try:
         row = (await db.execute(text("""
             SELECT lectura_c12, lectura_c13, fecha, turno
@@ -295,12 +298,35 @@ async def get_ultima_lectura_ro(db: AsyncSession = Depends(get_db)):
             }
     except Exception:
         pass
+    # Fallback: contadores_lectura cargados desde Excel de balance hídrico
+    try:
+        row = (await db.execute(text("""
+            SELECT entrada_ro1 AS c12, salida_ro1 AS c13,
+                   DATE_FORMAT(fecha, '%Y-%m-%d') AS fecha,
+                   CASE turno WHEN 1 THEN 'noche' WHEN 2 THEN 'mañana' WHEN 3 THEN 'tarde' ELSE NULL END AS turno
+            FROM contadores_lectura
+            WHERE entrada_ro1 IS NOT NULL
+            ORDER BY fecha DESC, turno DESC
+            LIMIT 1
+        """))).mappings().first()
+        if row:
+            return {
+                "c12":   float(row["c12"])  if row["c12"]  is not None else None,
+                "c13":   float(row["c13"])  if row["c13"]  is not None else None,
+                "fecha": str(row["fecha"]),
+                "turno": row["turno"],
+            }
+    except Exception:
+        pass
     return {"c12": None, "c13": None, "fecha": None, "turno": None}
 
 
 @router.get("/ultima-lectura-ptap")
 async def get_ultima_lectura_ptap(db: AsyncSession = Depends(get_db)):
-    """Devuelve la última lectura de los contadores Entrada y Permeado de la PTAP."""
+    """Devuelve la última lectura de los contadores Entrada y Permeado de la PTAP.
+    Primero busca en operacion_ptap_turno (registros del operario); si no hay,
+    cae a contadores_lectura.ingreso_uf_ptap / salida_uf_ptap (balance hídrico).
+    """
     try:
         row = (await db.execute(text("""
             SELECT lectura_entrada, lectura_permeado, fecha, turno
@@ -313,6 +339,26 @@ async def get_ultima_lectura_ptap(db: AsyncSession = Depends(get_db)):
             return {
                 "entrada":  float(row["lectura_entrada"])  if row["lectura_entrada"]  is not None else None,
                 "permeado": float(row["lectura_permeado"]) if row["lectura_permeado"] is not None else None,
+                "fecha": str(row["fecha"]),
+                "turno": row["turno"],
+            }
+    except Exception:
+        pass
+    # Fallback: contadores_lectura cargados desde Excel de balance hídrico
+    try:
+        row = (await db.execute(text("""
+            SELECT ingreso_uf_ptap AS entrada, salida_uf_ptap AS permeado,
+                   DATE_FORMAT(fecha, '%Y-%m-%d') AS fecha,
+                   CASE turno WHEN 1 THEN 'noche' WHEN 2 THEN 'mañana' WHEN 3 THEN 'tarde' ELSE NULL END AS turno
+            FROM contadores_lectura
+            WHERE ingreso_uf_ptap IS NOT NULL
+            ORDER BY fecha DESC, turno DESC
+            LIMIT 1
+        """))).mappings().first()
+        if row:
+            return {
+                "entrada":  float(row["entrada"])  if row["entrada"]  is not None else None,
+                "permeado": float(row["permeado"]) if row["permeado"] is not None else None,
                 "fecha": str(row["fecha"]),
                 "turno": row["turno"],
             }

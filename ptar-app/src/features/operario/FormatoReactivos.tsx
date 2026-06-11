@@ -472,6 +472,7 @@ export default function FormatoReactivos() {
   const roC13Act    = parseFloat(watchROCauda?.c13_actual ?? '') || 0;
   const roCaudalEnt = parseFloat(watchROCauda?.caudal_entrada_mh ?? '') || 5;
   const roCaudalSal = parseFloat(watchROCauda?.caudal_salida_mh  ?? '') || 0;
+  // Delta = lectura actual − lectura anterior del contador acumulado
   const volROEntrada  = roC12Act > 0 && roC12Ant > 0 ? Math.max(0, roC12Act - roC12Ant) : 0;
   const volROSalida   = roC13Act > 0 && roC13Ant > 0 ? Math.max(0, roC13Act - roC13Ant) : 0;
   const horasOpRO     = volROEntrada > 0 && roCaudalEnt > 0 ? volROEntrada / roCaudalEnt : null;
@@ -483,6 +484,7 @@ export default function FormatoReactivos() {
   const ptapSalAct      = parseFloat(watchPTAP?.salida_actual ?? '') || 0;
   const ptapCaudalEnt   = parseFloat(watchPTAP?.caudal_entrada_mh ?? '') || 20;
   const ptapCaudalSal   = parseFloat(watchPTAP?.caudal_salida_mh  ?? '') || 0;
+  // Delta = lectura actual − lectura anterior del contador acumulado
   const volPTAPEntrada  = ptapEntAct > 0 && ptapEntAnt > 0 ? Math.max(0, ptapEntAct - ptapEntAnt) : 0;
   const volPTAPSalida   = ptapSalAct > 0 && ptapSalAnt > 0 ? Math.max(0, ptapSalAct - ptapSalAnt) : 0;
   const horasOpPTAP     = volPTAPEntrada > 0 && ptapCaudalEnt > 0 ? volPTAPEntrada / ptapCaudalEnt : null;
@@ -815,7 +817,7 @@ export default function FormatoReactivos() {
                 <div className="form-group">
                   <label className="form-label">Lectura actual (m³) *</label>
                   <input type="number" step="1" min="0" className="form-input"
-                    placeholder="Ej: 125430"
+                    placeholder="Ej: 4771000"
                     {...register('caudales_ro.c12_actual')} />
                   {ultimaLectRO.c12 != null ? (
                     <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
@@ -824,8 +826,8 @@ export default function FormatoReactivos() {
                       {ultimaLectRO.turno && ` turno ${ultimaLectRO.turno}`}
                     </span>
                   ) : (
-                    <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
-                      Sin registro anterior
+                    <span style={{ fontSize: 11, color: '#f0883e', marginTop: 4, display: 'block' }}>
+                      Sin lectura anterior — ingresa la lectura del contador (m³ acumulados)
                     </span>
                   )}
                 </div>
@@ -848,7 +850,7 @@ export default function FormatoReactivos() {
                 <div className="form-group">
                   <label className="form-label">Lectura actual (m³) *</label>
                   <input type="number" step="1" min="0" className="form-input"
-                    placeholder="Ej: 118200"
+                    placeholder="Ej: 315500"
                     {...register('caudales_ro.c13_actual')} />
                   {ultimaLectRO.c13 != null ? (
                     <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
@@ -857,8 +859,8 @@ export default function FormatoReactivos() {
                       {ultimaLectRO.turno && ` turno ${ultimaLectRO.turno}`}
                     </span>
                   ) : (
-                    <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
-                      Sin registro anterior
+                    <span style={{ fontSize: 11, color: '#f0883e', marginTop: 4, display: 'block' }}>
+                      Sin lectura anterior — ingresa la lectura del contador (m³ acumulados)
                     </span>
                   )}
                 </div>
@@ -962,7 +964,7 @@ export default function FormatoReactivos() {
                 <div className="form-group">
                   <label className="form-label">Lectura actual (m³) *</label>
                   <input type="number" step="1" min="0" className="form-input"
-                    placeholder="Ej: 84200"
+                    placeholder="Ej: 3750"
                     {...register('caudales_ptap.entrada_actual')} />
                   {ultimaLectPTAP.entrada != null ? (
                     <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
@@ -971,8 +973,8 @@ export default function FormatoReactivos() {
                       {ultimaLectPTAP.turno && ` turno ${ultimaLectPTAP.turno}`}
                     </span>
                   ) : (
-                    <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
-                      Sin registro anterior
+                    <span style={{ fontSize: 11, color: '#f0883e', marginTop: 4, display: 'block' }}>
+                      Sin lectura anterior — ingresa la lectura del contador (m³ acumulados)
                     </span>
                   )}
                 </div>
@@ -995,7 +997,7 @@ export default function FormatoReactivos() {
                 <div className="form-group">
                   <label className="form-label">Lectura actual (m³) *</label>
                   <input type="number" step="1" min="0" className="form-input"
-                    placeholder="Ej: 80100"
+                    placeholder="Ej: 3440"
                     {...register('caudales_ptap.salida_actual')} />
                   {ultimaLectPTAP.permeado != null ? (
                     <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
@@ -1004,8 +1006,8 @@ export default function FormatoReactivos() {
                       {ultimaLectPTAP.turno && ` turno ${ultimaLectPTAP.turno}`}
                     </span>
                   ) : (
-                    <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
-                      Sin registro anterior
+                    <span style={{ fontSize: 11, color: '#f0883e', marginTop: 4, display: 'block' }}>
+                      Sin lectura anterior — ingresa la lectura del contador (m³ acumulados)
                     </span>
                   )}
                 </div>

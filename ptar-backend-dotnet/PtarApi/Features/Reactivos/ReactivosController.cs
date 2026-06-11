@@ -16,9 +16,11 @@ public class ReactivosController(IDbConnectionFactory db) : ControllerBase
         ["Q-03"] = ("Decolorante",        "GEM",  "consumo_decolorante_l",   "kg_decolorante",          "ppm_decolorante",    "costo_op_decolorante","final_decolorante_l"),
         ["Q-04"] = ("Polímero Aniónico",  "GEM",  "consumo_pol_anionico_l",  "consumo_pol_anionico_kg", "ppm_pol_anionico",   "costo_op_anionico",   "final_pol_anionico_kg"),
         ["Q-05"] = ("Polímero Catiónico", "GEM",  "consumo_pol_cationico_l", "consumo_pol_cationico_kg","ppm_pol_cationico",  "costo_op_cationico",  "final_pol_cationico_kg"),
-        ["Q-06"] = ("HCL 10%",            "RO",   "consumo_l_hcl",           "consumo_kg_hcl",          "ppm_hcl",            "costo_op_hcl",        "inv_l_hcl"),
+        ["Q-06"] = ("HCL 10%",             "RO",   "consumo_l_hcl",           "consumo_kg_hcl",          "ppm_hcl",            "costo_op_hcl",        "inv_l_hcl"),
         ["Q-07"] = ("Kuriverter IK-220",  "RO",   "consumo_l_kuriverter",    "consumo_kg_kuriverter",   "ppm_kuriverter",     "costo_op_kuriverter", "inv_l_kuriverter"),
         ["Q-08"] = ("Vitec 7000",         "RO",   "consumo_l_vitec",         "consumo_kg_vitec",        "ppm_vitec",          "costo_op_vitec",      "inv_l_vitec"),
+        ["Q-14"] = ("NaOH",               "RO",   "consumo_l_naoh",          "consumo_kg_naoh",         "ppm_naoh",           "costo_op_naoh",       "inv_l_naoh"),
+        ["Q-15"] = ("Bisulfito de Sodio",  "RO",   "consumo_l_bisulfito",     "consumo_kg_bisulfito",    "ppm_bisulfito",      "costo_op_bisulfito",  "inv_l_bisulfito"),
         ["Q-09"] = ("Polímero An. PTAP",  "PTAP", "consumo_pol_anionico_ptap_l", "kg_pol_anionico_ptap", "ppm_pol_anionico_ptap", "costo_op_pol_anionico_ptap", "final_pol_anionico_ptap_l"),
         ["Q-10"] = ("Coagulante PTAP",    "PTAP", "consumo_coagulante_ptap_l",   "kg_coagulante_ptap",   "ppm_coagulante_ptap",   "costo_op_coagulante_ptap",   "final_coagulante_ptap_l"),
         ["Q-11"] = ("Ácido PTAP",         "PTAP", "consumo_acido_ptap_l",        "kg_acido_ptap",        "ppm_acido_ptap",        "costo_op_acido_ptap",        "final_acido_ptap_l"),
@@ -311,22 +313,27 @@ public class ReactivosController(IDbConnectionFactory db) : ControllerBase
         await using var conn = db.Create();
         try
         {
-            var row = await conn.QueryFirstOrDefaultAsync("""
-                SELECT lectura_c12, lectura_c13,
-                       DATE_FORMAT(fecha, '%Y-%m-%d') AS fecha,
-                       CASE turno WHEN 1 THEN 'noche' WHEN 2 THEN 'mañana' WHEN 3 THEN 'tarde' ELSE NULL END AS turno
-                FROM operacion_ro_turno
-                WHERE lectura_c12 IS NOT NULL
-                ORDER BY fecha DESC, turno DESC LIMIT 1
-                """);
-            if (row is IDictionary<string, object> d)
-                return Ok(new
-                {
-                    c12   = d["lectura_c12"]   is not null ? Convert.ToDouble(d["lectura_c12"])   : (double?)null,
-                    c13   = d["lectura_c13"]   is not null ? Convert.ToDouble(d["lectura_c13"])   : (double?)null,
-                    fecha = d["fecha"]?.ToString(),
-                    turno = d["turno"]?.ToString(),
-                });
+            // Primero: registros ingresados desde la app
+            var c12 = await conn.ExecuteScalarAsync<decimal?>(
+                "SELECT lectura_c12 FROM operacion_ro_turno WHERE lectura_c12 IS NOT NULL ORDER BY fecha DESC, turno DESC LIMIT 1");
+            if (c12 != null)
+            {
+                var c13  = await conn.ExecuteScalarAsync<decimal?>("SELECT lectura_c13 FROM operacion_ro_turno WHERE lectura_c12 IS NOT NULL ORDER BY fecha DESC, turno DESC LIMIT 1");
+                var fRO  = await conn.ExecuteScalarAsync<string?>("SELECT DATE_FORMAT(fecha,'%Y-%m-%d') FROM operacion_ro_turno WHERE lectura_c12 IS NOT NULL ORDER BY fecha DESC, turno DESC LIMIT 1");
+                var tRO  = await conn.ExecuteScalarAsync<string?>("SELECT CASE turno WHEN 1 THEN 'noche' WHEN 2 THEN 'mañana' WHEN 3 THEN 'tarde' ELSE NULL END FROM operacion_ro_turno WHERE lectura_c12 IS NOT NULL ORDER BY fecha DESC, turno DESC LIMIT 1");
+                return Ok(new { c12 = (double)c12, c13 = c13 != null ? (double?)((double)c13) : null, fecha = fRO, turno = tRO });
+            }
+
+            // Fallback: contadores_lectura (histórico Excel)
+            var fc12 = await conn.ExecuteScalarAsync<long?>(
+                "SELECT entrada_ro1 FROM contadores_lectura WHERE entrada_ro1 IS NOT NULL ORDER BY fecha DESC, turno DESC LIMIT 1");
+            if (fc12 != null)
+            {
+                var fc13 = await conn.ExecuteScalarAsync<long?>("SELECT salida_ro1 FROM contadores_lectura WHERE entrada_ro1 IS NOT NULL ORDER BY fecha DESC, turno DESC LIMIT 1");
+                var ffRO = await conn.ExecuteScalarAsync<string?>("SELECT DATE_FORMAT(fecha,'%Y-%m-%d') FROM contadores_lectura WHERE entrada_ro1 IS NOT NULL ORDER BY fecha DESC, turno DESC LIMIT 1");
+                var ftRO = await conn.ExecuteScalarAsync<string?>("SELECT CASE turno WHEN 1 THEN 'noche' WHEN 2 THEN 'mañana' WHEN 3 THEN 'tarde' ELSE NULL END FROM contadores_lectura WHERE entrada_ro1 IS NOT NULL ORDER BY fecha DESC, turno DESC LIMIT 1");
+                return Ok(new { c12 = (double)fc12, c13 = fc13 != null ? (double?)((double)fc13) : null, fecha = ffRO, turno = ftRO });
+            }
         }
         catch { }
         return Ok(new { c12 = (double?)null, c13 = (double?)null, fecha = (string?)null, turno = (string?)null });
@@ -339,22 +346,27 @@ public class ReactivosController(IDbConnectionFactory db) : ControllerBase
         await using var conn = db.Create();
         try
         {
-            var row = await conn.QueryFirstOrDefaultAsync("""
-                SELECT lectura_entrada, lectura_permeado,
-                       DATE_FORMAT(fecha, '%Y-%m-%d') AS fecha,
-                       CASE turno WHEN 1 THEN 'noche' WHEN 2 THEN 'mañana' WHEN 3 THEN 'tarde' ELSE NULL END AS turno
-                FROM operacion_ptap_turno
-                WHERE lectura_entrada IS NOT NULL
-                ORDER BY fecha DESC, turno DESC LIMIT 1
-                """);
-            if (row is IDictionary<string, object> d)
-                return Ok(new
-                {
-                    entrada  = d["lectura_entrada"]  is not null ? Convert.ToDouble(d["lectura_entrada"])  : (double?)null,
-                    permeado = d["lectura_permeado"] is not null ? Convert.ToDouble(d["lectura_permeado"]) : (double?)null,
-                    fecha    = d["fecha"]?.ToString(),
-                    turno    = d["turno"]?.ToString(),
-                });
+            // Primero: registros ingresados desde la app
+            var ent = await conn.ExecuteScalarAsync<decimal?>(
+                "SELECT lectura_entrada FROM operacion_ptap_turno WHERE lectura_entrada IS NOT NULL ORDER BY fecha DESC, turno DESC LIMIT 1");
+            if (ent != null)
+            {
+                var per  = await conn.ExecuteScalarAsync<decimal?>("SELECT lectura_permeado FROM operacion_ptap_turno WHERE lectura_entrada IS NOT NULL ORDER BY fecha DESC, turno DESC LIMIT 1");
+                var fPT  = await conn.ExecuteScalarAsync<string?>("SELECT DATE_FORMAT(fecha,'%Y-%m-%d') FROM operacion_ptap_turno WHERE lectura_entrada IS NOT NULL ORDER BY fecha DESC, turno DESC LIMIT 1");
+                var tPT  = await conn.ExecuteScalarAsync<string?>("SELECT CASE turno WHEN 1 THEN 'noche' WHEN 2 THEN 'mañana' WHEN 3 THEN 'tarde' ELSE NULL END FROM operacion_ptap_turno WHERE lectura_entrada IS NOT NULL ORDER BY fecha DESC, turno DESC LIMIT 1");
+                return Ok(new { entrada = (double)ent, permeado = per != null ? (double?)((double)per) : null, fecha = fPT, turno = tPT });
+            }
+
+            // Fallback: contadores_lectura (histórico Excel)
+            var fEnt = await conn.ExecuteScalarAsync<long?>(
+                "SELECT ingreso_uf_ptap FROM contadores_lectura WHERE ingreso_uf_ptap IS NOT NULL ORDER BY fecha DESC, turno DESC LIMIT 1");
+            if (fEnt != null)
+            {
+                var fPer = await conn.ExecuteScalarAsync<long?>("SELECT salida_uf_ptap FROM contadores_lectura WHERE ingreso_uf_ptap IS NOT NULL ORDER BY fecha DESC, turno DESC LIMIT 1");
+                var ffPT = await conn.ExecuteScalarAsync<string?>("SELECT DATE_FORMAT(fecha,'%Y-%m-%d') FROM contadores_lectura WHERE ingreso_uf_ptap IS NOT NULL ORDER BY fecha DESC, turno DESC LIMIT 1");
+                var ftPT = await conn.ExecuteScalarAsync<string?>("SELECT CASE turno WHEN 1 THEN 'noche' WHEN 2 THEN 'mañana' WHEN 3 THEN 'tarde' ELSE NULL END FROM contadores_lectura WHERE ingreso_uf_ptap IS NOT NULL ORDER BY fecha DESC, turno DESC LIMIT 1");
+                return Ok(new { entrada = (double)fEnt, permeado = fPer != null ? (double?)((double)fPer) : null, fecha = ffPT, turno = ftPT });
+            }
         }
         catch { }
         return Ok(new { entrada = (double?)null, permeado = (double?)null, fecha = (string?)null, turno = (string?)null });

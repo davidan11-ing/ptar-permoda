@@ -30,8 +30,8 @@ DB = dict(host='127.0.0.1', port=3306, user='root',
 
 # ── Carpeta con los archivos ──────────────────────────────────────────────────
 FOLDER = (r"C:\Users\lunaop\OneDrive - PERMODA LTDA\Documentos\Claude"
-          r"\Projects\App PTAR 2\BASE DE DATOS\BALANCES 2026"
-          r"\BALANCE CALIDAD DE AGUA Vs COSTOS\DASHBOARD CALIDAD")
+          r"\Projects\App PTAR 2\BASE DE DATOS\SEGUIMIENTO DIARIO PTAR 2026"
+          r"\CALIDAD DE AGUA 2026")
 
 # ── Mapeo parámetros Excel → parametro_calidad.id ────────────────────────────
 PARAM_MAP = {
@@ -218,7 +218,9 @@ def main():
 
     archivos = sorted([
         f for f in os.listdir(FOLDER)
-        if f.upper().startswith('DASHBOARD CALIDAD AGUA') and f.endswith('.xlsm')
+        if f.lower().endswith('.xlsm')
+        and 'CALIDAD' in f.upper()
+        and 'AGUA' in f.upper()
     ])
 
     if not archivos:
