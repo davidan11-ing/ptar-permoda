@@ -9,7 +9,7 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from app.config import settings
-from app.routes import auth, caudales, reactivos, calidad, dashboard, reportes, equipos, mantenimientos
+from app.routes import auth, caudales, reactivos, calidad, dashboard, reportes, equipos, mantenimientos, condiciones
 
 log = logging.getLogger("ptar")
 
@@ -88,6 +88,7 @@ app.include_router(dashboard.router, prefix="/api/dashboard", tags=["dashboard"]
 app.include_router(reportes.router,  prefix="/api/reportes",  tags=["reportes"])
 app.include_router(equipos.router,        prefix="/api/equipos",        tags=["equipos"])
 app.include_router(mantenimientos.router, prefix="/api/mantenimientos", tags=["mantenimientos"])
+app.include_router(condiciones.router,   prefix="/api/condiciones",   tags=["condiciones"])
 
 @app.get("/api/health")
 async def health():

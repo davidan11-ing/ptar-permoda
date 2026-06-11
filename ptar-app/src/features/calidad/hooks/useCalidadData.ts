@@ -4,6 +4,7 @@ import { getCalidadMediciones } from '../../../services/ptarClient';
 // ─── Orden del proceso de tratamiento ─────────────────────────────────────────
 // Nombres exactos de la tabla `unidad_tratamiento` en MySQL (sin tildes ni paréntesis)
 export const PROCESO_ORDEN: string[] = [
+  // ── PTAR ─────────────────────────────────────────────────────────
   'Tanque Pulmon',
   'Tanque Homogeneizador',
   'GEM Salida',
@@ -19,6 +20,10 @@ export const PROCESO_ORDEN: string[] = [
   'RO 2 Permeado',
   'RO Rechazo',
   'Vertimiento',
+  // ── PTAP ─────────────────────────────────────────────────────────
+  'Pozo',
+  'Salida Clarifloculador / Entrada UF',
+  'Salida UF',
 ];
 
 // Colores por posición en el proceso (claves = nombres exactos de DB)
@@ -38,6 +43,10 @@ export const UNIDAD_COLORES: Record<string, string> = {
   'RO 2 Permeado':         '#8b5cf6',
   'RO Rechazo':            '#f85149',
   'Vertimiento':           '#e6523a',
+  // ── PTAP ─────────────────────────────────────────────────────────
+  'Pozo':                                  '#06b6d4',
+  'Salida Clarifloculador / Entrada UF':   '#0ea5e9',
+  'Salida UF':                             '#38bdf8',
 };
 
 export const TURNO_COLORES: Record<string, string> = {

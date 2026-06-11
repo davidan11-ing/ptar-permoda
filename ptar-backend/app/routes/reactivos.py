@@ -23,9 +23,11 @@ QUIMICOS_MAP = {
     'Q-04': ('Polímero Aniónico', 'GEM', 'consumo_pol_anionico_l',  'consumo_pol_anionico_kg', 'ppm_pol_anionico',   'costo_op_anionico',   'final_pol_anionico_kg'),
     'Q-05': ('Polímero Catiónico','GEM', 'consumo_pol_cationico_l', 'consumo_pol_cationico_kg','ppm_pol_cationico',  'costo_op_cationico',  'final_pol_cationico_kg'),
     # ── Sistema RO — columnas reales de operacion_ro_turno ───────────────────
-    'Q-06': ('HCL 10%',          'RO', 'consumo_l_hcl',        'consumo_kg_hcl',        'ppm_hcl',        'costo_op_hcl',        'inv_l_hcl'),
-    'Q-07': ('Kuriverter IK-220','RO', 'consumo_l_kuriverter', 'consumo_kg_kuriverter', 'ppm_kuriverter', 'costo_op_kuriverter', 'inv_l_kuriverter'),
-    'Q-08': ('Vitec 7000',       'RO', 'consumo_l_vitec',      'consumo_kg_vitec',      'ppm_vitec',      'costo_op_vitec',      'inv_l_vitec'),
+    'Q-06': ('HCL 10%',                   'RO', 'consumo_l_hcl',        'consumo_kg_hcl',        'ppm_hcl',        'costo_op_hcl',        'inv_l_hcl'),
+    'Q-07': ('Kuriverter IK-220',          'RO', 'consumo_l_kuriverter', 'consumo_kg_kuriverter', 'ppm_kuriverter', 'costo_op_kuriverter', 'inv_l_kuriverter'),
+    'Q-08': ('Vitec 7000',                 'RO', 'consumo_l_vitec',      'consumo_kg_vitec',      'ppm_vitec',      'costo_op_vitec',      'inv_l_vitec'),
+    'Q-14': ('Hidróxido de Sodio (NaOH)', 'RO', 'consumo_l_naoh',       'consumo_kg_naoh',       'ppm_naoh',       'costo_op_naoh',       'inv_l_naoh'),
+    'Q-15': ('Bisulfito de Sodio',         'RO', 'consumo_l_bisulfito',  'consumo_kg_bisulfito',  'ppm_bisulfito',  'costo_op_bisulfito',  'inv_l_bisulfito'),
     # ── Sistema PTAP ──────────────────────────────────────────────────────────
     'Q-09': ('Polímero Aniónico PTAP', 'PTAP', 'consumo_pol_anionico_ptap_l', 'kg_pol_anionico_ptap', 'ppm_pol_anionico_ptap', 'costo_op_pol_anionico_ptap', 'final_pol_anionico_ptap_l'),
     'Q-10': ('Coagulante PTAP',        'PTAP', 'consumo_coagulante_ptap_l',   'kg_coagulante_ptap',   'ppm_coagulante_ptap',   'costo_op_coagulante_ptap',   'final_coagulante_ptap_l'),
@@ -66,6 +68,9 @@ class RegistroReactivoIn(BaseModel):
     volumen_entrada_m3:      Optional[float] = None   # delta = actual − anterior
     volumen_permeado_m3:     Optional[float] = None   # delta permeado
     horas_operacion_sistema: Optional[float] = None   # vol_entrada / caudal_mh
+
+    # ── RO específico ──────────────────────────────────────────────────────────
+    cartuchos_cambiados: Optional[bool] = None
 
     # ── PTAP específico: eventos de mantenimiento ───────────────────────────────
     cebs_realizados: Optional[bool] = None
@@ -378,6 +383,8 @@ async def create_reactivos_batch(registros: list[RegistroReactivoIn], db: AsyncS
                 'volumen_entrada_m3':      reg.volumen_entrada_m3,
                 'volumen_permeado_m3':     reg.volumen_permeado_m3,
                 'horas_op_sistema':        reg.horas_operacion_sistema,
+                # RO: mantenimiento
+                'cartuchos_cambiados':     reg.cartuchos_cambiados,
                 # PTAP: mantenimiento
                 'cebs_realizados':         reg.cebs_realizados,
                 'cebs_cantidad':           reg.cebs_cantidad,
@@ -428,6 +435,7 @@ async def create_reactivos_batch(registros: list[RegistroReactivoIn], db: AsyncS
 
         # Contadores y horas — RO
         elif sistema == 'RO':
+            cart = data.get('cartuchos_cambiados')
             ro_extra = {
                 'lectura_c12':           data.get('lectura_entrada_actual'),
                 'lectura_c13':           data.get('lectura_permeado_actual'),
@@ -436,6 +444,7 @@ async def create_reactivos_batch(registros: list[RegistroReactivoIn], db: AsyncS
                 'volumen_enviado_ro_m3': data.get('volumen_entrada_m3'),
                 'volumen_permeado_m3':   data.get('volumen_permeado_m3'),
                 'horas_operacion':       data.get('horas_op_sistema'),
+                'cartuchos_cambiados':   (1 if cart else 0) if cart is not None else None,
             }
             for col_n, val in ro_extra.items():
                 if val is not None:

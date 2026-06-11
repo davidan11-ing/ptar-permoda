@@ -1,111 +1,72 @@
 export type Status = 'operando' | 'advertencia' | 'alarma';
 
-/* ── Desglose de costos por fase y por equipo ─────────────────────── */
-export interface CostCategoryRow {
-  label: string;   // nombre del concepto
-  value: number;   // COP/m³
-  hex:   string;   // color para barra visual
-}
-export interface PhaseBreakdown {
-  phase:   string;          // 'PRELIMINAR' | 'PRIMARIA' | 'SECUNDARIA' | 'TERCIARIA'
-  total:   number;          // COP/m³ total de la fase
-  rows:    CostCategoryRow[];
-  note:    string;          // nota informativa
-}
-
-/** Costos directos del equipo — hoja CONS POR LINEA ($ LINEA incremental) */
+/** 7 categorías de costo por m³ por equipo */
 export interface EqCostDetail {
-  energia?:  number;  // COP/m³ energía eléctrica (COP Kw M3)
-  lavTK?:    number;  // COP/m³ mano obra + lavado de tanques ($LVTK/M3)
-  quimicos?: number;  // COP/m³ químicos/coagulantes (QUIMICOS column)
+  quimicos?:      number;
+  residuosLodos?: number;
+  consumibles?:   number;
+  calibMant?:     number;
+  nomina?:        number;
+  energia?:       number;
+  depreciacion?:  number;
 }
 
-/** Fuente: cajitas.xlsx hoja CONS POR LINEA — costo incremental por equipo */
 export const EQ_COSTS: Record<string, EqCostDetail> = {
-  /* PRELIMINAR */
-  tk15m3:     { energia: 18.44,   lavTK: 305.36 },
-  tk2m3:      { energia: 33.29,   lavTK: 535.05 },
-  tk30m3:     {                   lavTK: 488.85  },
-  tk60m3:     { energia: 118.12,  lavTK: 204.15  },
-  cribRot:    { energia: 7.02                    },
-  vibrat1:    { energia: 14.05                   },
-  vibrat2:    { energia: 14.05                   },
-  tkPulmon:   { energia: 47.89                   },
-  torre:      { energia: 71.52                   },
-  homogen:    { energia: 567.15                  },  // OZONO 312.25 + TH 254.90
-  /* PRIMARIA */
-  eqGem:      { energia: 184.69,  quimicos: 4973.00 }, // T1 142.49 + X 42.20 + químicos GEM
-  /* SECUNDARIA */
-  mbbr:       { energia: 600.00                  },  // sopladora 90 kW × 24 h
-  mbrK:       { energia: 715.56                  },  // bomba permeado + soplador MBR1
-  mbrT:       { energia: 715.56                  },  // bomba permeado + soplador MBR2
-  tkPermeado: { energia: 191.67                  },  // bomba alimentación RO 30 kW
-  /* TERCIARIA */
-  filtrosII:  { quimicos: 1080.00                },  // reactivos regeneración resinas IO
-  ro1e1:      { energia: 629.24                  },  // bomba alta presión E1 45 kW
-  ro1e2:      { energia: 419.50                  },  // bomba E2 15 kW
-  ro2:        { energia: 3076.30                 },  // bomba Bangpu RO2 121 kW ← mayor consumo
+  // PTAR Fase 2 — nomina:37.64, depreciacion:80.05, calibMant:21.77
+  rotativa:     { calibMant:21.77, nomina:37.64, depreciacion:80.05 },
+  funza:        { calibMant:21.77, nomina:37.64, depreciacion:80.05 },
+  tintoreria:   { calibMant:21.77, nomina:37.64, depreciacion:80.05 },
+  lavanderia:   { calibMant:21.77, nomina:37.64, depreciacion:80.05 },
+  tk2m3:        { residuosLodos:5.91,   calibMant:21.77, nomina:37.64, energia:1.22,   depreciacion:80.05 },
+  tk15m3:       { residuosLodos:44.30,  calibMant:21.77, nomina:37.64, energia:5.92,   depreciacion:80.05 },
+  tk30m3:       { residuosLodos:88.60,  calibMant:21.77, nomina:37.64,                 depreciacion:80.05 },
+  tk60m3:       { residuosLodos:177.20, calibMant:21.77, nomina:37.64, energia:170.14, depreciacion:80.05 },
+  cribRot:      { residuosLodos:182.70, calibMant:21.77, nomina:37.64, energia:10.12,  depreciacion:80.05 },
+  vibrat1:      { residuosLodos:39.15,  calibMant:21.77, nomina:37.64, energia:10.12,  depreciacion:80.05 },
+  vibrat2:      { residuosLodos:39.15,  calibMant:21.77, nomina:37.64, energia:10.12,  depreciacion:80.05 },
+  tkPulmon:     { quimicos:1.24,   consumibles:26.55, calibMant:21.77, nomina:37.64, energia:68.97,  depreciacion:80.05 },
+  torre:        { quimicos:1.27,   consumibles:31.00, calibMant:21.77, nomina:37.64, energia:103.00, depreciacion:80.05 },
+  carcamo:      { calibMant:21.77, nomina:37.64, depreciacion:80.05 },
+  homogen:      { consumibles:29.00, calibMant:21.77, nomina:37.64, energia:818.49, depreciacion:80.05 },
+  eqGem:        { quimicos:3582.44, residuosLodos:726.86, consumibles:31.00, calibMant:21.77, nomina:37.64, energia:266.39, depreciacion:80.05 },
+  swingmill:    { calibMant:21.77, nomina:37.64, depreciacion:80.05 },
+  anoxic:       { quimicos:0.06, consumibles:4.00,  calibMant:21.77, nomina:37.64,                depreciacion:80.05 },
+  mbbr:         { quimicos:0.06, consumibles:4.00,  calibMant:21.77, nomina:37.64, energia:863.68, depreciacion:80.05 },
+  mbrT:         { quimicos:7.11, consumibles:43.00, calibMant:21.77, nomina:37.64, energia:526.93, depreciacion:80.05 },
+  mbrK:         { quimicos:7.11, consumibles:43.00, calibMant:21.77, nomina:37.64, energia:515.01, depreciacion:80.05 },
+  tkPermeado:   { calibMant:21.77, nomina:37.64, energia:275.90, depreciacion:80.05 },
+  // RO — nomina:50.71, depreciacion:28.00, calibMant:55.71
+  filtrosII:    { consumibles:188.00, calibMant:55.71, nomina:50.71, depreciacion:28.00 },
+  filtro5:      { consumibles:389.00, calibMant:55.71, nomina:50.71, depreciacion:28.00 },
+  ro1e1:        { quimicos:479.42, consumibles:62.67, calibMant:55.71, nomina:50.71, energia:264.60, depreciacion:28.00 },
+  ro1e2:        { quimicos:479.43, consumibles:62.67, calibMant:55.71, nomina:50.71, energia:97.02,  depreciacion:28.00 },
+  tkRechazo:    { consumibles:13.00, calibMant:55.71, nomina:50.71, depreciacion:28.00 },
+  ro2:          { consumibles:62.67, calibMant:55.71, nomina:50.71, energia:549.96, depreciacion:28.00 },
+  tkRechazoRO2: { consumibles:13.00, calibMant:55.67, nomina:50.30, depreciacion:28.25 },
 };
 
-/** Datos de cajitas.xlsx — hoja CONS POR FASE.
- *  rows = costos COMPARTIDOS de la fase (excluye energía — se muestra por equipo en EQ_COSTS). */
-export const PHASE_BREAKDOWNS: Record<string, PhaseBreakdown> = {
-  PRELIMINAR: {
-    phase: 'PRELIMINAR',
-    total: 1138.16,
-    rows: [
-      { label: 'Nómina operativa',    value: 285.25,  hex: '#81c784' },
-      { label: 'M.O. lavado tanques', value: 109.21,  hex: '#ffb74d' },
-      { label: 'Residuos lav. TK',    value: 561.33,  hex: '#f06292' },
-      { label: 'Residuos canecas',    value: 28.10,   hex: '#ba68c8' },
-      { label: 'Reactivos',           value: 31.44,   hex: '#4db6ac' },
-    ],
-    note: 'Los residuos de lavado de tanques (95 t/mes a $290/kg + transporte) representan el 49 % del costo total de la fase.',
-  },
-  PRIMARIA: {
-    phase: 'PRIMARIA',
-    total: 6757.20,
-    rows: [
-      { label: 'Nómina operativa',    value: 285.25,  hex: '#81c784' },
-      { label: 'Residuos GEM',        value: 590.71,  hex: '#f06292' },
-      { label: 'Reactivos',           value: 16.34,   hex: '#4db6ac' },
-    ],
-    note: 'Residuos GEM: 127 t/mes lodo a disposición ($96/kg) + 28 viajes transporte ($600k c/u) = $28.9M/mes.',
-  },
-  SECUNDARIA: {
-    phase: 'SECUNDARIA',
-    total: 3204.38,
-    rows: [
-      { label: 'Nómina operativa',    value: 285.25,  hex: '#81c784' },
-      { label: 'Membranas MBR',       value: 1358.33, hex: '#ce93d8' },
-      { label: 'Reactivos',           value: 40.66,   hex: '#4db6ac' },
-    ],
-    note: 'Membranas TORAY (4.800 u. × $500k) + KUBOTA (2.000 u. × $800k) = $4.000M amortizadas a 5 años → $66.7M/mes.',
-  },
-  TERCIARIA: {
-    phase: 'TERCIARIA',
-    total: 2807.27,
-    rows: [
-      { label: 'Nómina operativa',    value: 285.25,  hex: '#81c784' },
-      { label: 'Membranas RO',        value: 287.93,  hex: '#ce93d8' },
-      { label: 'Cartuchos 5 µm',      value: 48.61,   hex: '#ffcc02' },
-      { label: 'Reactivos',           value: 21.10,   hex: '#4db6ac' },
-    ],
-    note: 'RO1 (72 membranas $2.8M c/u) + RO2 (42 membranas $4M c/u) = $369M amortizadas a 5 años → $6.16M/mes.',
-  },
-};
+/** Orden del proceso — define la acumulación de costos de izquierda a derecha */
+export const PROCESS_ORDER: string[] = [
+  'rotativa', 'funza', 'tintoreria', 'lavanderia',
+  'tk2m3', 'tk15m3', 'tk30m3', 'tk60m3',
+  'cribRot', 'vibrat1', 'vibrat2',
+  'tkPulmon', 'torre', 'carcamo', 'homogen',
+  'eqGem', 'swingmill',
+  'anoxic', 'mbbr', 'mbrT', 'mbrK', 'tkPermeado',
+  'filtrosII', 'filtro5', 'ro1e1', 'ro1e2', 'tkRechazo', 'ro2', 'tkRechazoRO2',
+  'cajaVert', 'tkVert', 'filtVert', 'tkRecir', 'produccion',
+];
 
 export interface EqDef {
   id:          string;
   label:       string;
   status:      Status;
   params:      [string, string][];
-  description?: string;  // descripción general del equipo para el modal
-  vb?:         string;   // viewBox crop "x y w h" para zoom en modal
-  chartParam?: number;   // índice en params[] a graficar (default 0)
-  cost?:       string;   // costo operativo, ej: "$2.158 COP/m³" o "$480k/mes"
-  costRange?:  string;   // rango aceptable del PDF, ej: "$2.000 – $2.300"
-  costPhase?:  'PRELIMINAR' | 'PRIMARIA' | 'SECUNDARIA' | 'TERCIARIA';
+  description?: string;
+  vb?:         string;
+  chartParam?: number;
+  cost?:       string;
+  costRange?:  string;
 }
 
 export const SC: Record<Status, string> = { operando: '#3fb950', advertencia: '#d29922', alarma: '#f85149' };
@@ -117,141 +78,141 @@ export const EQ: Record<string, EqDef> = {
   rotativa:    { id:'rot',     label:'Descarga Rotativa',           status:'operando',
     description:'Punto de entrada del agua residual industrial proveniente del proceso de rotativa textil. Recibe el efluente crudo y lo conduce directamente al TK Recepción 2 m³, donde se mezcla con la descarga externa de Funza antes de continuar al sistema de pretratamiento.',
     params:[['Caudal','5.2 m³/h'],['SST','640 mg/L'],['pH','7.9']],
-    vb:'0 82 155 52', chartParam:0, cost:'$0 COP/m³', costPhase:'PRELIMINAR' },
+    vb:'0 82 155 52', chartParam:0, cost:'$0 COP/m³' },
   funza:       { id:'funza',   label:'Descarga Ext. Funza',         status:'advertencia',
     description:'Descarga externa procedente de la planta de Funza. Dependiendo del caudal y condiciones operativas, puede recibirse en el TK Recepción 2 m³ o en el TK Buffer de 15 m³ antes de continuar al sistema de pretratamiento.',
     params:[['Caudal','6.0 m³/h'],['DQO','1800 mg/L'],['Color','alto']],
-    vb:'0 106 160 52', chartParam:0, cost:'$0 COP/m³', costPhase:'PRELIMINAR' },
+    vb:'0 106 160 52', chartParam:0, cost:'$0 COP/m³' },
   tintoreria:  { id:'tintor',  label:'Descarga Tintorería',         status:'operando',
     description:'Efluente proveniente del proceso de teñidos. Presenta alta temperatura, pH alcalino y concentración elevada de sales, colorantes reactivos y dispersos. Se recibe en el TK Recepción 30 m³ junto con la descarga de Lavandería. Es uno de los flujos con mayor carga de contaminantes del sistema.',
     params:[['Caudal','12.4 m³/h'],['pH','9.8'],['Temp.','42 °C']],
-    vb:'0 168 155 52', chartParam:0, cost:'$0 COP/m³', costPhase:'PRELIMINAR' },
+    vb:'0 168 155 52', chartParam:0, cost:'$0 COP/m³' },
   lavanderia:  { id:'lavand',  label:'Descarga Lavandería',         status:'operando',
     description:'Efluente proveniente de la planta de lavandería Jeans. Contiene tintes índigo, tensoactivos, lint de denim, enzimas y agentes decolorantes utilizados en los procesos de lavado, stonewashing y decoloración de jeans. Presenta alta turbidez por la presencia de fibras de denim y sólidos suspendidos elevados. Se recibe en el TK Recepción 30 m³ junto con la descarga de Tintorería.',
     params:[['Caudal','8.6 m³/h'],['Turb.','380 NTU'],['Temp.','38 °C']],
-    vb:'0 188 155 52', chartParam:0, cost:'$0 COP/m³', costPhase:'PRELIMINAR' },
+    vb:'0 188 155 52', chartParam:0, cost:'$0 COP/m³' },
   tk2m3:       { id:'tk2m3',   label:'TK Recepción 2 m³',          status:'operando',
-    description:'Tanque de recepción de 2 m³ que recibe y mezcla los efluentes de la Descarga Rotativa y la Descarga Externa de Funza. Actúa como buffer de corto plazo para homogeneizar caudales variables antes de conducirlos al Tanque de 60 m³.',
+    description:'Tanque de recepción de 2 m³ que recibe y mezcla los efluentes de la Descarga Rotativa y la Descarga Externa de Funza. Actúa como buffer de corto plazo para homogeneizar caudales variables antes de conducirlos al Tanque de 60 m³. Requiere lavado mensual para mantener su capacidad operativa.',
     params:[['Fuentes','Rotativa + Funza'],['Caudal E.','11 m³/h'],['Vol.','2 m³']],
-    vb:'80 88 100 80', chartParam:1, cost:'$602 COP/m³', costPhase:'PRELIMINAR' },
+    vb:'80 88 100 80', chartParam:1 },
   tk30m3:      { id:'tk30m3',  label:'TK Recepción 30 m³',         status:'operando',
     description:'Tanque de recepción de 30 m³ que recibe los efluentes de Tintorería y Lavandería. Su diseño con pendiente permite el flujo gravitacional continuo hacia el Tanque de 60 m³ sin necesidad de sensor de nivel. Funciona también como desarenador primario, favoreciendo la sedimentación de sólidos gruesos antes del sistema de cribado. Requiere lavado mensual para mantener su capacidad operativa.',
     params:[['Fuentes','Tintorería + Lavand.'],['Caudal E.','25 m³/h'],['Vol.','30 m³']],
-    vb:'75 172 105 95', chartParam:1, cost:'$489 COP/m³', costPhase:'PRELIMINAR' },
+    vb:'75 172 105 95', chartParam:1 },
   tk15m3:      { id:'tk15m3',  label:'TK Buffer Lav. Remota 15 m³',status:'operando',
-    description:'Tanque buffer de 15 m³ para otra vía de descarga de Lavandería. Almacena temporalmente el efluente de una línea auxiliar, nivelando caudales intermitentes antes de continuar al sistema de pretratamiento. También puede recibir la descarga externa de Funza según las condiciones operativas.',
+    description:'Tanque buffer de 15 m³ para otra vía de descarga de Lavandería. Almacena temporalmente el efluente de una línea auxiliar, nivelando caudales intermitentes antes de continuar al sistema de pretratamiento. También puede recibir la descarga externa de Funza según las condiciones operativas. Requiere lavado mensual para mantener su capacidad operativa.',
     params:[['Fuente','Lavandería (ramal E)'],['Caudal E.','3.8 m³/h'],['Vol.','15 m³']],
-    vb:'76 238 106 78', chartParam:1, cost:'$342 COP/m³', costPhase:'PRELIMINAR' },
-  tk60m3:      { id:'tk60m3',  label:'TK 60 m³',            status:'operando',
-    description:'Tanque de 60 m³ que centraliza todos los afluentes industriales de las descargas preliminares, incluyendo los retrolavados de la PTAP. En su entrada cuenta con rejillas de cribado grueso con apertura aproximada de 2×2 cm que retienen objetos de mayor tamaño. Aloja bombas autocebantes que impulsan el caudal hacia el sistema de cribado. Actúa como punto principal de amortiguación de picos de flujo y carga contaminante del proceso de pretratamiento.',
+    vb:'76 238 106 78', chartParam:1 },
+  tk60m3:      { id:'tk60m3',  label:'TK 60 m³',                   status:'operando',
+    description:'Tanque de 60 m³ que centraliza todos los afluentes industriales de las descargas preliminares, incluyendo los retrolavados de la PTAP. En su entrada cuenta con rejillas de cribado grueso con apertura aproximada de 2×2 cm que retienen objetos de mayor tamaño antes del ingreso al tanque. Aloja bombas autocebantes que impulsan el caudal hacia el sistema de cribado. Actúa como punto principal de amortiguación de picos de flujo y carga contaminante del proceso de pretratamiento. Requiere lavado mensual para mantener su capacidad operativa.',
     params:[['Nivel','72 %'],['Entrada G+H','≈ 40 m³/h'],['T. retención','1.5 h']],
-    vb:'152 132 135 158', chartParam:0, cost:'$2.158 COP/m³', costRange:'$2.000 – $2.300', costPhase:'PRELIMINAR' },
+    vb:'152 132 135 158', chartParam:0, costRange:'$2.000 – $2.300' },
   /* FASE PRIMARIA */
   cribRot:     { id:'cribRot', label:'Criba Rotativa',              status:'operando',
     description:'Criba rotativa fina con malla de 1 mm que retiene sólidos gruesos y fibras textiles del efluente crudo. El tambor giratorio conduce los sólidos capturados hacia una tolva de descarga mientras el líquido filtrado continúa al siguiente cribado. Es la primera barrera de separación sólido-líquido del sistema de pretratamiento.',
     params:[['Apertura','1 mm'],['Velocidad','4 rpm'],['Captura','35 kg/d']],
-    vb:'262 105 180 170', chartParam:2, cost:'$2.158 COP/m³', costRange:'$2.000 – $2.300', costPhase:'PRELIMINAR' },
+    vb:'262 105 180 170', chartParam:2 },
   vibrat1:     { id:'vib1',    label:'Criba Vibratoria 1 (M1)',     status:'operando',
-    description:'Primera criba vibratoria con apertura de 0.25 mm. Separa partículas finas y fibras textiles submilimétricas mediante vibración mecánica. Opera en paralelo con la segunda criba vibratoria para garantizar continuidad operativa si una requiere mantenimiento. La malla es un consumible crítico con duración aproximada de 2 meses, requiriendo reemplazo programado para mantener la eficiencia del cribado.',
+    description:'Primera criba vibratoria con apertura de 0.10 mm. Separa partículas finas y fibras textiles submilimétricas mediante vibración mecánica. Opera en paralelo con la segunda criba vibratoria para garantizar continuidad operativa si una requiere mantenimiento. La malla es un consumible crítico con duración aproximada de 2 meses, requiriendo reemplazo programado para mantener la eficiencia del cribado.',
     params:[['Apertura','0.25 mm'],['Frecuencia','50 Hz'],['Potencia','2.2 kW']],
-    vb:'370 72 175 168', chartParam:1, cost:'$28 COP/m³', costPhase:'PRELIMINAR' },
+    vb:'370 72 175 168', chartParam:1 },
   vibrat2:     { id:'vib2',    label:'Criba Vibratoria 2 (M2)',     status:'operando',
-    description:'Segunda criba vibratoria con apertura de 0.25 mm. Separa partículas finas y fibras textiles submilimétricas mediante vibración mecánica. Opera en paralelo con la primera criba vibratoria para garantizar continuidad operativa si una requiere mantenimiento. La malla es un consumible crítico con duración aproximada de 2 meses, requiriendo reemplazo programado para mantener la eficiencia del cribado.',
+    description:'Segunda criba vibratoria con apertura de 0.10 mm. Separa partículas finas y fibras textiles submilimétricas mediante vibración mecánica. Opera en paralelo con la primera criba vibratoria para garantizar continuidad operativa si una requiere mantenimiento. La malla es un consumible crítico con duración aproximada de 2 meses, requiriendo reemplazo programado para mantener la eficiencia del cribado.',
     params:[['Apertura','0.25 mm'],['Frecuencia','50 Hz'],['Potencia','2.2 kW']],
-    vb:'370 164 175 168', chartParam:1, cost:'$28 COP/m³', costPhase:'PRELIMINAR' },
+    vb:'370 164 175 168', chartParam:1 },
   tkPulmon:    { id:'tkPulm',  label:'TK Pulmón',                   status:'operando',
     description:'Tanque de alimentación que recibe el efluente ya cribado de las cribas vibratorias M1 y M2. Almacena y regula el flujo hacia la Torre de Enfriamiento de Tiro Forzado, garantizando un suministro continuo y estable a la fase de acondicionamiento térmico y al tratamiento primario. Constituye el primer punto de muestreo rutinario de calidad de agua, con seguimiento turno a turno para el control del proceso.',
     params:[['Nivel','65 %'],['Entradas','N1+N2 cribas'],['Salidas','O → Torre, R → Cárcamo']],
-    vb:'508 140 148 175', chartParam:0, cost:'$96 COP/m³', costPhase:'PRELIMINAR' },
+    vb:'508 140 148 175', chartParam:0 },
   torre:       { id:'torre',   label:'Torre de Enfriamiento',       status:'operando',
     description:'Torre de enfriamiento que reduce la temperatura del efluente textil (hasta 44 °C) a condiciones óptimas (~28 °C) para el tratamiento primario y biológico. Imprescindible para proteger los microorganismos de los biorreactores aguas abajo y garantizar la eficiencia del Sistema GEM.',
     params:[['T entrada','44 °C'],['T salida','28 °C'],['P','Pérd. vapor']],
-    vb:'622 82 132 168', chartParam:0, cost:'$143 COP/m³', costPhase:'PRELIMINAR' },
+    vb:'622 82 132 168', chartParam:0 },
   carcamo:     { id:'carc',    label:'Cárcamo',                     status:'operando',
     description:'Pozo de colecta intermedio que centraliza el efluente acondicionado proveniente del Tanque de Alimentación y la Torre de Enfriamiento, conduciéndolo por gravedad al Tanque de Homogeneización. También recibe el rebose del Tanque Pulmón, las descargas de los CIP, las purgas de los filtros de intercambio iónico y el lixiviado del Swingmill. Todo lo que llega a este cárcamo se dirige al Tanque de Homogeneización.',
     params:[['Función','Colecta efluente'],['AK1','→ Fase Secundaria'],['Rebose','→ vertimiento']],
-    vb:'626 202 120 132', chartParam:0, cost:'$0 COP/m³', costPhase:'PRELIMINAR' },
+    vb:'626 202 120 132', chartParam:0 },
   homogen:     { id:'homog',   label:'TK Homogeneizador 800 m³',   status:'operando',
     description:'Tanque de homogeneización de 800 m³ donde se controla el caudal y la concentración de contaminantes previo al Sistema GEM. El pH se regula automáticamente mediante un D-loop de control continuo. Se prepara también la inyección de ozono (O₃) para optimizar las condiciones de entrada al GEM. El agitador mecánico garantiza mezcla homogénea de caudal, concentración y temperatura. Recibe el flujo del cárcamo, las purgas de los MBR y las purgas de la PTAP. Cuenta con dos bombas sumergibles para la alimentación al Sistema GEM y una bomba centrífuga en cárcamo seco como respaldo. Es punto de muestreo de calidad de agua en la entrada al GEM.',
     params:[['Volumen','≈ 800 m³'],['pH ajust.','7.2'],['Entradas','Q + Ozono + Lixiviado']],
-    vb:'722 128 168 198', chartParam:1, cost:'$1.134 COP/m³', costPhase:'PRELIMINAR' },
+    vb:'722 128 168 198', chartParam:1 },
   eqGem:       { id:'gem',     label:'Equipo GEM',                  status:'operando',
-    description:'Sistema primario GEM basado en tecnología de Flotación de Aire Disuelto (DAF). Genera microburbujas de aire disuelto que arrastran eficientemente sólidos suspendidos totales (SST), DQO y DBO suspendida hacia la superficie para su remoción. Combina este proceso con dosificación múltiple de químicos: ácido, decolorante, coagulante, floculante catiónico y aniónico. El efluente de salida cumple con la normativa legal de vertimiento, permitiendo dirigirlo tanto a los reactores biológicos como directamente a vertimiento según las condiciones operativas. Cuenta con punto de muestreo de calidad de agua.',
+    description:'Sistema primario GEM basado en tecnología de Flotación de Aire Disuelto (DAF). Genera microburbujas de aire disuelto que arrastran eficientemente sólidos suspendidos totales (SST), DQO y DBO suspendida hacia la superficie para su remoción. Combina este proceso con dosificación múltiple de químicos: ácido, decolorante, coagulante, floculante catiónico y aniónico. El efluente de salida cumple con la normativa legal de vertimiento, lo que permite dirigirlo tanto a la alimentación de los reactores biológicos o a Vertimiento con cumplimiento a la Resolución 0631 de 2015 y 3957 de 2009 según las condiciones operativas. Cuenta con punto de muestreo de calidad de agua.',
     params:[['Tipo','Reactor fisicoquímico'],['Reactivos','5 dosificaciones'],['Salida','U → Swingmill']],
-    vb:'842 76 155 235', chartParam:0, cost:'$5.343 COP/m³', costPhase:'PRIMARIA' },
+    vb:'842 76 155 235', chartParam:0 },
   swingmill:   { id:'swing',   label:'ESPESADOR',                   status:'operando',
     description:'Deshidratador de lodos Swingmill 501D que procesa los lodos generados en el tratamiento fisicoquímico del Sistema GEM y también recepciona los lodos de la PTAP. Reduce el contenido de agua hasta niveles aptos para disposición final, disminuyendo el volumen a gestionar. La fracción líquida clarificada retorna al proceso mientras el lodo deshidratado se destina a disposición como residuo sólido.',
     params:[['Función','Espesado de lodos'],['Salida W','Lodo deshidratado'],['Caudal','5 m³/h']],
-    vb:'955 170 145 145', chartParam:2, cost:'$0 COP/m³', costPhase:'PRIMARIA' },
+    vb:'955 170 145 145', chartParam:2 },
   /* FASE SECUNDARIA */
   tkPermeado:  { id:'tkPerm',  label:'TK Permeado',                 status:'operando',
     description:'Tanque receptor del permeado producido por los Biorreactores de Membrana (MBR TORAY y MBR KUBOTA). Constituye el punto de alimentación para el sistema de Ósmosis Inversa. Cuenta con una línea de salida hacia vertimiento cuando la calidad del permeado lo permite, y con rebose hacia el cárcamo en caso de nivel alto o condiciones operativas que lo requieran.',
     params:[['Nivel','68 %'],['Entrada','AK1 desde Cárcamo'],['Rebose','AK1 → desborde']],
-    vb:'1052 128 148 168', chartParam:0, cost:'$669 COP/m³', costPhase:'SECUNDARIA' },
+    vb:'1052 128 148 168', chartParam:0 },
   mbrT:        { id:'mbrT',    label:'MBR T (Superior)',            status:'operando',
-    description:'Biorreactor de Membrana TORAY (MBR2) con módulos de ultrafiltración sumergidos de fibra hueca. Las membranas retienen bacterias, sólidos y macromoléculas produciendo permeado de alta calidad. Opera con un límite máximo de presión transmembrana (TMP) de -360 mbar. Los lodos pueden recircularse hacia el Reactor Anóxico para optimizar la desnitrificación, o purgarse hacia el Tanque de Homogeneización para mantener la concentración óptima de biomasa en el sistema biológico.',
+    description:'Biorreactor de Membrana TORAY (MBR2) con módulos de ultrafiltración sumergidos de fibra hueca (tamaño de poro 0,08 µm). Las membranas retienen bacterias, sólidos y macromoléculas produciendo permeado de alta calidad. Opera con un límite máximo de presión transmembrana (TMP) de -360 mbar. Los lodos pueden recircularse hacia el Reactor Anóxico para optimizar la desnitrificación, o purgarse hacia el Tanque de Homogeneización para mantener la concentración óptima de biomasa en el sistema biológico.',
     params:[['Flux','18 L/m²/h'],['TMP','-0.22 bar'],['Estado','en servicio']],
-    vb:'1252 92 158 152', chartParam:0, cost:'$1.431 COP/m³', costPhase:'SECUNDARIA' },
+    vb:'1252 92 158 152', chartParam:0 },
   mbrK:        { id:'mbrK',    label:'MBR K (Inferior)',            status:'advertencia',
-    description:'Biorreactor de Membrana KUBOTA (MBR1). La presión transmembrana elevada (TMP -0.38 bar) indica colmatación incipiente de las membranas, requiriendo limpieza química programada para restaurar el flujo nominal. Los lodos pueden recircularse hacia el Reactor Anóxico para optimizar la desnitrificación, o purgarse hacia el Tanque de Homogeneización cerrando el ciclo de biomasa del sistema biológico.',
+    description:'Biorreactor de Membrana KUBOTA (MBR1) con membranas de microfiltración de panel plano (tamaño de poro 0,4 µm). La presión transmembrana elevada (TMP -0.38 bar) indica colmatación incipiente de las membranas, requiriendo limpieza química programada para restaurar el flujo nominal. Los lodos pueden recircularse hacia el Reactor Anóxico para optimizar la desnitrificación, o purgarse hacia el Tanque de Homogeneización cerrando el ciclo de biomasa del sistema biológico.',
     params:[['Flux','15 L/m²/h'],['TMP','-0.38 bar'],['CIP','próximo']],
-    vb:'1252 215 158 152', chartParam:0, cost:'$1.431 COP/m³', costPhase:'SECUNDARIA' },
+    vb:'1252 215 158 152', chartParam:0 },
   mbbr:        { id:'mbbr',    label:'Reactor MBBR',                status:'operando',
-    description:'Reactor de Lecho Móvil de Biopelícula (MBBR) con bioportadores plásticos al 65% de llenado. Se alimenta del Reactor Anóxico y su efluente alimenta los Biorreactores de Membrana (MBR). Los portadores proporcionan una extensa superficie específica para la colonización de microorganismos. La biomasa adherida realiza nitrificación y degradación de materia orgánica. La aireación por burbuja fina garantiza condiciones aerobias y alta eficiencia en la reducción de DBO.',
+    description:'Reactor de Lecho Móvil de Biopelícula (MBBR) con bioportadores plásticos al 65% de llenado. Se alimenta del Reactor Anóxico y su efluente alimenta los Biorreactores de Membrana (MBR). Los portadores proporcionan una extensa superficie específica para la colonización de microorganismos, mejorando la eficiencia biológica respecto a sistemas de lodos activados convencionales. La biomasa adherida realiza nitrificación y degradación de materia orgánica. La aireación por burbuja fina garantiza condiciones aerobias y alta eficiencia en la reducción de DBO.',
     params:[['Llenado','65 %'],['MLSS','4 800 mg/L'],['OD','2.4 mg/L']],
-    vb:'1438 145 205 182', chartParam:2, cost:'$9.230 COP/m³', costRange:'$6.900 – $7.200', costPhase:'SECUNDARIA' },
+    vb:'1438 145 205 182', chartParam:2, costRange:'$6.900 – $7.200' },
   anoxic:      { id:'anox',    label:'Reactor Anóxico',             status:'operando',
     description:'Primera zona del tren biológico: reactor anóxico equipado con agitador sumergible. Sin aireación, las bacterias heterotróficas convierten los nitratos (NO₃⁻) en nitrógeno gaseoso (N₂), eliminando el nitrógeno del efluente de manera biológica, y contribuyen también a la remoción de DQO. Opera con OD < 0.2 mg/L y tiempo de retención de 4 horas.',
     params:[['OD','< 0.2 mg/L'],['NO₃⁻','8.4 mg/L'],['T. retención','4 h']],
-    vb:'1648 145 195 178', chartParam:1, cost:'$9.230 COP/m³', costRange:'$6.900 – $7.200', costPhase:'SECUNDARIA' },
+    vb:'1648 145 195 178', chartParam:1, costRange:'$6.900 – $7.200' },
   /* FASE VERTIMIENTO */
   tkVert:   { id:'tkVert',   label:'TK Permeado Vertimiento', status:'operando',
     description:'⚠️ Este tanque no existe físicamente — pendiente eliminar del diagrama.',
     params:[['Función','Almacenamiento efluente tratado'],['Vol.','10 m³'],['DBO salida','< 5 mg/L']],
-    vb:'1408 415 245 158', chartParam:1, cost:'$0 COP/m³' },
+    vb:'1408 415 245 158', chartParam:1 },
   filtVert: { id:'filtVert', label:'Filtro Carbón Activado',  status:'operando',
     description:'Filtro de carbón activado granular (GAC) para pulido final del efluente de vertimiento. Adsorbe colorantes residuales, micropoluentes emergentes y compuestos orgánicos refractarios no eliminados en etapas anteriores. Garantiza que el agua descargada cumpla la normativa ambiental vigente. Hace parte del proyecto de implementación de ozono para la optimización del sistema de vertimiento.',
     params:[['Medio','Carbón granular GAC'],['Carga hidráulica','4 m/h'],['Turb. salida','< 1 NTU']],
-    vb:'1418 522 156 168', chartParam:1, cost:'$143 COP/m³' },
+    vb:'1418 522 156 168', chartParam:1 },
   /* FASE TERCIARIA */
   filtro5:     { id:'filt5',   label:'Filtros Cartucho 5 µm',      status:'operando',
     description:'Filtros de cartucho de 5 micras que actúan como etapa de pre-filtración antes de las membranas de ósmosis inversa. Retienen partículas finas, coloides y sólidos suspendidos que podrían colmatar prematuramente los elementos de RO, extendiendo su vida útil. Contiene 40 cartuchos cuyo reemplazo se realiza aproximadamente una vez por semana, o cuando el diferencial de presión del sistema RO o la disminución de caudal lo indiquen.',
     params:[['ΔP','0.22 bar'],['Flujo','42 m³/h'],['Reemplazo','en 12 d']],
-    vb:'852 352 145 148', chartParam:1, cost:'$49 COP/m³', costPhase:'TERCIARIA' },
+    vb:'852 352 145 148', chartParam:1 },
   ro1e1:       { id:'ro1e1',   label:'Ósmosis Inversa RO1 – E1',   status:'operando',
     description:'Primera etapa del sistema de Ósmosis Inversa RO1, con alimentación total de 80 m³/h y recuperación global del 75%. Las membranas semipermeables rechazan sales, colorantes e iones con eficiencia del 98.5%, produciendo agua de alta pureza (TDS 18 mg/L, conductividad < 500 µS/cm) apta para reincorporación en procesos textiles. El rechazo concentrado (≈25%) se dirige al Tanque de Rechazo RO1.',
     params:[['Recuperación','58 %'],['TDS perm.','18 mg/L'],['Sales rej.','98.5 %']],
-    vb:'645 368 205 158', chartParam:0, cost:'$2.336 COP/m³', costPhase:'TERCIARIA' },
+    vb:'645 368 205 158', chartParam:0 },
   ro1e2:       { id:'ro1e2',   label:'Ósmosis Inversa RO1 – E2',   status:'operando',
     description:'Segunda etapa de RO1 que concentra el rechazo del E1 para maximizar la recuperación global del 75%. Produce permeado de muy alta calidad (TDS 12 mg/L, conductividad < 500 µS/cm) que se envía directamente al Tanque de Recirculación para reúso en producción textil. El rechazo puede dirigirse al Tanque de Rechazo RO1 para tratamiento en RO2, o enviarse a vertimiento previa dilución con otros efluentes para cumplir los parámetros normativos.',
     params:[['Recuperación','62 %'],['TDS perm.','12 mg/L'],['Permeado AI','→ TK Recir.']],
-    vb:'480 368 205 158', chartParam:0, cost:'$1.208 COP/m³', costPhase:'TERCIARIA' },
+    vb:'480 368 205 158', chartParam:0 },
   ro2:         { id:'ro2',     label:'Ósmosis Inversa RO2',         status:'alarma',
     description:'Sistema de Ósmosis Inversa RO2 diseñado para tratar el rechazo concentrado de RO1, con caudal de 20 m³/h y recuperación del 80%. El permeado presenta conductividad normalmente inferior a 3.000 µS/cm, adecuado para reincorporación en producción.',
     params:[['TMP','0.65 bar'],['Fouling','detectable'],['CIP','programado']],
-    vb:'648 482 205 180', chartParam:0, cost:'$6.879 COP/m³', costPhase:'TERCIARIA' },
+    vb:'648 482 205 180', chartParam:0 },
   filtrosII:   { id:'filtII',  label:'Filtros Intercambio Iónico', status:'operando',
     description:'Columnas de resinas de intercambio iónico diseñadas para reducir la dureza del agua mediante la eliminación de iones divalentes (Ca²⁺, Mg²⁺, SO₄²⁻) y metales pesados del efluente tratado. Producen agua ablandada lista para alimentar la primera etapa de Ósmosis Inversa, protegiéndola del encostramiento calcáreo.',
     params:[['Entrada','AE desde Sec.'],['Resinas','en servicio'],['Salida AF','→ RO1']],
-    vb:'988 405 218 118', chartParam:0, cost:'$13.995 COP/m³', costRange:'$4.600 – $4.900', costPhase:'TERCIARIA' },
+    vb:'988 405 218 118', chartParam:0, costRange:'$4.600 – $4.900' },
   tkRecir:     { id:'tkRecir', label:'TK Recirculación',           status:'operando',
     description:'Tanque de almacenamiento y distribución del agua de alta calidad recuperada de la ósmosis inversa, junto con aportes de acueducto, carrotanques, PTAP y agua de retorno de los intercambiadores de calor de Sclavos. Constituye el punto de entrega del agua reciclada hacia los procesos productivos textiles, cerrando el ciclo de reúso hídrico de la planta.',
     params:[['Vol.','30 m³'],['Fuentes','RO1 E2 + AQ/AR/AS'],['Salida','→ Producción']],
-    vb:'115 498 212 158', chartParam:0, cost:'$27.916 COP/m³', costPhase:'TERCIARIA' },
+    vb:'115 498 212 158', chartParam:0 },
   tkRechazo:   { id:'tkRech',  label:'TK Rechazo RO1',            status:'advertencia',
     description:'Tanque receptor del rechazo concentrado de RO1. Almacena temporalmente el caudal de alta salinidad para su posterior tratamiento en RO2 o derivación a la Caja de Vertimiento. Actualmente el flujo se dirige directamente a vertimiento debido a que RO2 se encuentra deshabilitado.',
     params:[['Entrada AJ','Rechazo RO1 E2'],['AK','→ Filtro → RO2'],['Desborde','→ Caja Vert.']],
-    vb:'452 524 162 138', chartParam:0, cost:'$0 COP/m³', costPhase:'TERCIARIA' },
+    vb:'452 524 162 138', chartParam:0 },
   tkRechazoRO2:{ id:'tkRech2', label:'TK Rechazo RO2',            status:'advertencia',
     description:'Tanque de almacenamiento del rechazo concentrado final de RO2, el flujo con mayor concentración de sales y contaminantes del sistema. Puede dirigirse a la Caja de Vertimiento para su descarga controlada, recircularse al Tanque de Homogeneización, o destinarse a tratamiento adicional según los parámetros operativos.',
     params:[['Entrada','Rechazo RO2'],['Salida','→ Caja Vertimiento'],['Caudal','6 m³/h']],
-    vb:'775 524 162 138', chartParam:2, cost:'$0 COP/m³', costPhase:'TERCIARIA' },
+    vb:'775 524 162 138', chartParam:2 },
   cajaVert:    { id:'cajaV',   label:'Caja Vertimiento.',     status:'operando',
-    description:'Estructura de colecta que centraliza todos los flujos destinados a vertimiento: el permeado de los MBR cuando la calidad lo permite, el efluente del Sistema GEM cuando cumple la normativa, el rechazo de RO1 (actualmente por deshabilitación de RO2), el rechazo de RO2, el rebose del Tanque de Permeado y cualquier exceso del sistema terciario. Canaliza todos estos flujos hacia el sistema de tratamiento final antes de la descarga regulada al cuerpo receptor.',
+    description:'Estructura de colecta que centraliza todos los flujos destinados a vertimiento: el permeado de los MBR cuando la calidad lo permite, el efluente del Sistema GEM cuando cumple la normativa, el rechazo de RO1 (actualmente por deshabilitación de RO2), el rechazo de RO2, el rebose del Tanque de Permeado y cualquier exceso o desbordamiento del sistema terciario. Canaliza todos estos flujos hacia el sistema de tratamiento final antes de la descarga regulada al cuerpo receptor.',
     params:[['Destino','Fase Vertimiento'],['Pipe AT','→ VERT.'],['Caudal','8 m³/h']],
-    vb:'985 524 162 138', chartParam:2, cost:'$0 COP/m³' },
+    vb:'985 524 162 138', chartParam:2 },
   produccion:  { id:'prod',    label:'Producción RECIRCULACIÓN',           status:'operando',
     description:'Punto de entrega final del agua recuperada y tratada hacia los procesos productivos textiles. El agua de recirculación cumple los estándares de calidad para uso en tintorería, lavandería y otros procesos, generando un ahorro significativo en el consumo de agua potable y reduciendo el impacto ambiental. Para 2026, el abastecimiento a producción tiene como fuente principal el sistema de Ósmosis Inversa (RO), conforme a la proyección establecida.',
     params:[['Flujo','22 m³/h'],['Calidad','Textil ✓'],['Ahorro','$53k COP/m³']],
-    vb:'0 342 178 178', chartParam:0, cost:'$0 COP/m³' },
+    vb:'0 342 178 178', chartParam:0 },
 };

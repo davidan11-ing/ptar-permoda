@@ -34,10 +34,11 @@ const productSchema = z.object({
 });
 
 const caudalesROSchema = z.object({
-  c12_actual:        z.string().optional(),
-  c13_actual:        z.string().optional(),
-  caudal_entrada_mh: z.string().default('5'),
-  caudal_salida_mh:  z.string().optional(),
+  c12_actual:          z.string().optional(),
+  c13_actual:          z.string().optional(),
+  caudal_entrada_mh:   z.string().default('5'),
+  caudal_salida_mh:    z.string().optional(),
+  cartuchos_cambiados: z.boolean().default(false),
 });
 
 const caudalesPTAPSchema = z.object({
@@ -429,7 +430,7 @@ export default function FormatoReactivos() {
       horometro_actual: '',
       caudal_mh: '80',
       products: defaultProducts,
-      caudales_ro:   { c12_actual: '', c13_actual: '', caudal_entrada_mh: '5', caudal_salida_mh: '' },
+      caudales_ro:   { c12_actual: '', c13_actual: '', caudal_entrada_mh: '5', caudal_salida_mh: '', cartuchos_cambiados: false },
       caudales_ptap: {
         entrada_actual: '', salida_actual: '', caudal_entrada_mh: '20', caudal_salida_mh: '',
         cebs_realizados: false, cebs_cantidad: '1',
@@ -574,6 +575,7 @@ export default function FormatoReactivos() {
             volumen_entrada_m3:      volROEntrada  > 0 ? volROEntrada  : undefined,
             volumen_permeado_m3:     volROSalida   > 0 ? volROSalida   : undefined,
             horas_operacion_sistema: horasOpRO     ?? undefined,
+            cartuchos_cambiados:     data.caudales_ro?.cartuchos_cambiados ?? false,
           }),
           // Contadores + mantenimiento PTAP
           ...(q.sistema === 'PTAP' && {
@@ -898,6 +900,25 @@ export default function FormatoReactivos() {
                 )}
               </div>
             </div>
+          </div>
+
+          {/* Mantenimiento RO */}
+          <div style={{
+            padding: '10px 12px', background: 'var(--bg-secondary)',
+            borderRadius: 6, border: '1px solid var(--border)', marginBottom: 14,
+          }}>
+            <div style={{ fontWeight: 600, fontSize: 11, color: '#8b949e',
+              textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
+              Mantenimiento
+            </div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13 }}>
+              <Controller name="caudales_ro.cartuchos_cambiados" control={control}
+                render={({ field }) => (
+                  <input type="checkbox" checked={!!field.value}
+                    onChange={e => field.onChange(e.target.checked)} />
+                )} />
+              ¿Se cambiaron cartuchos en este turno?
+            </label>
           </div>
 
           <div className="reactivos-list">
