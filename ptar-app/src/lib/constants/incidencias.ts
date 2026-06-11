@@ -30,6 +30,7 @@ export type DiarioId   = typeof PARAMS_DIARIOS[number]['id'];
 export type OcasionalId = typeof PARAMS_OCASIONALES[number]['id'];
 
 export const UNIDADES_TRATAMIENTO = [
+  // ── PTAR ──────────────────────────────────────────────────────────
   'Tanque Pulmon',
   'Tanque Homogeneizador',
   'GEM Salida',
@@ -45,6 +46,10 @@ export const UNIDADES_TRATAMIENTO = [
   'RO 1 Etapa 2',
   'RO 2 Permeado',
   'RO Rechazo',
+  // ── PTAP ──────────────────────────────────────────────────────────
+  'Pozo',
+  'Salida Clarifloculador / Entrada UF',
+  'Salida UF',
 ];
 
 export const METODOS = [

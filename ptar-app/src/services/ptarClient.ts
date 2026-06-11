@@ -78,6 +78,8 @@ export interface RegistroCosto {
   volumen_entrada_m3?:      number;
   volumen_permeado_m3?:     number;
   horas_operacion_sistema?: number;
+  // RO: mantenimiento
+  cartuchos_cambiados?: boolean;
   // PTAP: mantenimiento
   cebs_realizados?: boolean;
   cebs_cantidad?:   number;
@@ -607,4 +609,51 @@ export async function getGemEficiencia(params: {
     fecha_fin:    params.fecha_fin,
   });
   return request<GemEficienciaRow[]>(`/api/reactivos/gem-eficiencia?${q}`);
+}
+
+// ─── Condiciones de Operación ─────────────────────────────────────────────────
+
+export interface CaudalesROTurno {
+  caudal_entrada_mh: number | null;
+  caudal_salida_mh:  number | null;
+}
+
+export interface CaudalesPTAPTurno {
+  caudal_entrada_mh: number | null;
+  caudal_salida_mh:  number | null;
+  manga_cambiada:    number | null;
+  manga_cantidad:    number | null;
+  cebs_realizados:   number | null;
+  cebs_cantidad:     number | null;
+}
+
+export interface UltimaCondicionRO {
+  ultima_cip?: string | null;
+  [key: string]: unknown;
+}
+
+export async function getCaudalesROTurno(fecha: string, turno: string): Promise<CaudalesROTurno> {
+  const q = new URLSearchParams({ fecha, turno });
+  return request<CaudalesROTurno>(`/api/condiciones/caudales-ro?${q}`);
+}
+
+export async function getCaudalesPTAPTurno(fecha: string, turno: string): Promise<CaudalesPTAPTurno> {
+  const q = new URLSearchParams({ fecha, turno });
+  return request<CaudalesPTAPTurno>(`/api/condiciones/caudales-ptap?${q}`);
+}
+
+export async function getUltimaCondicionRO(): Promise<UltimaCondicionRO> {
+  return request<UltimaCondicionRO>('/api/condiciones/ultima-ro');
+}
+
+export async function saveCondicionesMbr(body: Record<string, unknown>): Promise<void> {
+  await request('/api/condiciones/mbr', { method: 'POST', body: JSON.stringify(body) });
+}
+
+export async function saveCondicionesRo(body: Record<string, unknown>): Promise<void> {
+  await request('/api/condiciones/ro', { method: 'POST', body: JSON.stringify(body) });
+}
+
+export async function saveCondicionesPtap(body: Record<string, unknown>): Promise<void> {
+  await request('/api/condiciones/ptap', { method: 'POST', body: JSON.stringify(body) });
 }

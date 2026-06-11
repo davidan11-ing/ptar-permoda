@@ -363,7 +363,7 @@ const FORMATOS = [
         <path d="M20 9v4M20 27v4M9 20h4M27 20h4" stroke="#8b949e" strokeWidth="1.5" strokeLinecap="round"/>
       </svg>
     ),
-    fields: ['Condiciones sistema RO', 'Condiciones sistema MBR', 'Próximamente disponible', ''],
+    fields: ['Presiones y caudales RO', 'Nivel TMP reactores MBR', 'Indicadores calculados E1/E2', 'Filtros y purgas PTAP'],
     color: '#8b949e', num: 'F-05',
   },
 ];
