@@ -456,6 +456,7 @@ select.form-input { cursor: pointer; }
 .param-badge-diario   { font-size: 10px; font-weight: 700; color: #d29922; background: #2d250d; padding: 2px 8px; border-radius: 20px; flex-shrink: 0; }
 .param-badge-extra    { font-size: 10px; font-weight: 700; color: #bc8cff; background: #251e2d; padding: 2px 8px; border-radius: 20px; flex-shrink: 0; }
 .param-nombre-text    { font-size: 13px; font-weight: 600; color: #e6edf3; }
+.param-descripcion    { font-size: 11px; color: #768390; margin-top: 2px; padding: 0 2px; }
 .param-rango          { font-size: 11px; color: #484f58; margin-left: auto; flex-shrink: 0; }
 .param-noapl-toggle   { display: flex; align-items: center; gap: 5px; font-size: 12px; color: #8b949e; cursor: pointer; margin-left: 4px; }
 .param-row-inputs     { display: grid; grid-template-columns: 1fr auto 1.4fr; gap: 8px; align-items: start; }

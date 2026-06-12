@@ -196,13 +196,20 @@ async def get_ultimo_nivel(
     if tabla is None:
         return {"nivel_final": None, "fecha": None, "turno": None}
 
+    # Para GEM se exige que el mismo registro también tenga horómetro,
+    # así nivel_inicial y horómetro mostrado siempre corresponden al mismo turno.
+    extra_where = (
+        " AND horometro_inicial IS NOT NULL AND horometro_inicial > 0"
+        if sistema == 'GEM' else ""
+    )
+
     try:
         row = (await db.execute(text(f"""
             SELECT {col_final} AS nivel_final,
                    DATE_FORMAT(fecha, '%Y-%m-%d') AS fecha,
                    CASE turno WHEN 1 THEN 'noche' WHEN 2 THEN 'mañana' WHEN 3 THEN 'tarde' ELSE NULL END AS turno
             FROM {tabla}
-            WHERE {col_final} IS NOT NULL
+            WHERE {col_final} IS NOT NULL{extra_where}
             ORDER BY fecha DESC, turno DESC
             LIMIT 1
         """))).mappings().first()
@@ -220,13 +227,21 @@ async def get_ultimo_nivel(
 
 @router.get("/ultimo-horometro")
 async def get_ultimo_horometro(db: AsyncSession = Depends(get_db)):
-    """Devuelve el último horómetro registrado en operacion_gem_turno."""
+    """
+    Devuelve el último horómetro que además tenga al menos un nivel de inventario
+    registrado en el mismo turno.
+    """
     row = (await db.execute(text("""
         SELECT horometro_inicial AS horometro,
                DATE_FORMAT(fecha, '%Y-%m-%d') AS fecha,
                CASE turno WHEN 1 THEN 'noche' WHEN 2 THEN 'mañana' WHEN 3 THEN 'tarde' ELSE NULL END AS turno
         FROM operacion_gem_turno
         WHERE horometro_inicial IS NOT NULL AND horometro_inicial > 0
+          AND (   final_acido_l          IS NOT NULL
+               OR final_coagulante_l     IS NOT NULL
+               OR final_decolorante_l    IS NOT NULL
+               OR final_pol_anionico_kg  IS NOT NULL
+               OR final_pol_cationico_kg IS NOT NULL)
         ORDER BY fecha DESC, turno DESC
         LIMIT 1
     """))).mappings().first()

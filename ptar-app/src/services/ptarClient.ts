@@ -157,7 +157,7 @@ export interface UltimaLecturaRO {
   c12:   number | null;
   c13:   number | null;
   fecha: string | null;
-  turno: number | null;
+  turno: string | null;
 }
 
 export async function getUltimaLecturaRO(): Promise<UltimaLecturaRO> {
@@ -172,7 +172,7 @@ export interface UltimaLecturaPTAP {
   entrada:  number | null;
   permeado: number | null;
   fecha:    string | null;
-  turno:    number | null;
+  turno:    string | null;
 }
 
 export async function getUltimaLecturaPTAP(): Promise<UltimaLecturaPTAP> {

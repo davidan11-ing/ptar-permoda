@@ -58,7 +58,7 @@ public class CaudalesController(IDbConnectionFactory db) : ControllerBase
     };
 
     private static readonly Dictionary<int, string> TurnoHoraMap = new()
-    { [1] = "06:00:00", [2] = "14:00:00", [3] = "22:00:00" };
+    { [1] = "22:00:00", [2] = "06:00:00", [3] = "14:00:00" };
 
     private static readonly Dictionary<string, int> TurnoIntMap = new(StringComparer.OrdinalIgnoreCase)
     { ["manana"] = 2, ["mañana"] = 2, ["tarde"] = 3, ["noche"] = 1 };
@@ -242,8 +242,14 @@ public class CaudalesController(IDbConnectionFactory db) : ControllerBase
     public async Task<IActionResult> GetUltimasLecturas()
     {
         await using var conn = db.Create();
-        var row = await conn.QueryFirstOrDefaultAsync<dynamic>(
-            "SELECT * FROM contadores_lectura WHERE fecha <= CURDATE() ORDER BY fecha DESC, turno DESC LIMIT 1");
+
+        // Por cada columna buscamos el último valor no-nulo independientemente,
+        // porque una fila reciente puede tener solo algunos contadores llenados.
+        var selects = ContadorMap.Values
+            .Select(col => $"(SELECT `{col}` FROM contadores_lectura WHERE `{col}` IS NOT NULL AND fecha <= CURDATE() ORDER BY fecha DESC, turno DESC LIMIT 1) AS `{col}`");
+        var sql = "SELECT " + string.Join(", ", selects);
+
+        var row = await conn.QueryFirstOrDefaultAsync<dynamic>(sql);
         if (row is null) return Ok(new { });
 
         var result = new Dictionary<string, object>();

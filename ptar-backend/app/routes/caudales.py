@@ -222,9 +222,9 @@ TURNO_INT = {"mañana": 2, "manana": 2, "tarde": 3, "noche": 1}
 
 # Mapeo turno a hora_lectura requerida por CHECK CONSTRAINT chk_hora_turno
 TURNO_HORA_MAP = {
-    1: "06:00:00",  # mañana
-    2: "14:00:00",  # tarde
-    3: "22:00:00",  # noche
+    1: "22:00:00",  # noche
+    2: "06:00:00",  # mañana
+    3: "14:00:00",  # tarde
 }
 
 

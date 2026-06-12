@@ -93,7 +93,8 @@ export default function FormatoCaudales() {
   const getPrev = (id: string) => lastReadings[id] ?? 0;
   const getDelta = (id: string, lectura?: string): number | null => {
     if (!lectura) return null;
-    return parseFloat(lectura) - getPrev(id);
+    const factor = (CONTADORES_MAP[id as ContadorId] as { factor_delta?: number }).factor_delta ?? 1;
+    return (parseFloat(lectura) - getPrev(id)) * factor;
   };
 
   // ─── Lógica de UI derivada ────────────────────────────────────────────────

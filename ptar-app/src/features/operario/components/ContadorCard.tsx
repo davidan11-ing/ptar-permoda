@@ -43,6 +43,9 @@ export function ContadorCard({
           <button type="button" className="btn-remove-param" onClick={onRemove} style={{ marginLeft: 6 }}>×</button>
         )}
       </div>
+      {(c as { descripcion?: string }).descripcion && (
+        <div className="param-descripcion">{(c as { descripcion?: string }).descripcion}</div>
+      )}
 
       <div className="param-row-inputs">
         <div className="form-group" style={{ margin: 0 }}>
