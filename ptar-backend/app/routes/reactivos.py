@@ -196,17 +196,21 @@ async def get_ultimo_nivel(
     if tabla is None:
         return {"nivel_final": None, "fecha": None, "turno": None}
 
-    # Para GEM se exige que el registro sea completo (horómetro + todos los niveles),
-    # así nivel_inicial y horómetro mostrado siempre corresponden al mismo turno.
-    extra_where = (
-        " AND horometro_inicial IS NOT NULL AND horometro_inicial > 0"
-        " AND final_acido_l IS NOT NULL"
-        " AND final_coagulante_l IS NOT NULL"
-        " AND final_decolorante_l IS NOT NULL"
-        " AND final_pol_anionico_kg IS NOT NULL"
-        " AND final_pol_cationico_kg IS NOT NULL"
-        if sistema == 'GEM' else ""
-    )
+    # Para GEM: registro completo (horómetro + todos los niveles) del mismo turno.
+    # Para RO: exige lectura_c12 en el mismo registro (mismo turno que los contadores).
+    if sistema == 'GEM':
+        extra_where = (
+            " AND horometro_inicial IS NOT NULL AND horometro_inicial > 0"
+            " AND final_acido_l IS NOT NULL"
+            " AND final_coagulante_l IS NOT NULL"
+            " AND final_decolorante_l IS NOT NULL"
+            " AND final_pol_anionico_kg IS NOT NULL"
+            " AND final_pol_cationico_kg IS NOT NULL"
+        )
+    elif sistema == 'RO':
+        extra_where = " AND lectura_c12 IS NOT NULL"
+    else:
+        extra_where = ""
 
     try:
         row = (await db.execute(text(f"""
@@ -215,7 +219,7 @@ async def get_ultimo_nivel(
                    CASE turno WHEN 1 THEN 'noche' WHEN 2 THEN 'mañana' WHEN 3 THEN 'tarde' ELSE NULL END AS turno
             FROM {tabla}
             WHERE {col_final} IS NOT NULL{extra_where}
-            ORDER BY fecha DESC, turno DESC
+            ORDER BY fecha DESC, FIELD(turno, 'noche', 'mañana', 'tarde') DESC
             LIMIT 1
         """))).mappings().first()
     except Exception:
@@ -247,7 +251,7 @@ async def get_ultimo_horometro(db: AsyncSession = Depends(get_db)):
           AND final_decolorante_l    IS NOT NULL
           AND final_pol_anionico_kg  IS NOT NULL
           AND final_pol_cationico_kg IS NOT NULL
-        ORDER BY fecha DESC, turno DESC
+        ORDER BY fecha DESC, FIELD(turno, 'noche', 'mañana', 'tarde') DESC
         LIMIT 1
     """))).mappings().first()
 
@@ -297,28 +301,10 @@ async def get_reactivos(
 
 @router.get("/ultima-lectura-ro")
 async def get_ultima_lectura_ro(db: AsyncSession = Depends(get_db)):
-    """Devuelve la última lectura de los contadores C-12 y C-13 de la RO.
-    Primero busca en operacion_ro_turno (registros del operario); si no hay,
-    cae a contadores_lectura.entrada_ro1 / salida_ro1 (datos del balance hídrico).
+    """Devuelve la última lectura de C-12 y C-13 desde contadores_lectura,
+    la misma fuente que usa el Registro de Caudales, para que ambos formularios
+    muestren siempre el mismo dato de referencia.
     """
-    try:
-        row = (await db.execute(text("""
-            SELECT lectura_c12, lectura_c13, fecha, turno
-            FROM operacion_ro_turno
-            WHERE lectura_c12 IS NOT NULL
-            ORDER BY fecha DESC, turno DESC
-            LIMIT 1
-        """))).mappings().first()
-        if row:
-            return {
-                "c12":   float(row["lectura_c12"])  if row["lectura_c12"]  is not None else None,
-                "c13":   float(row["lectura_c13"])  if row["lectura_c13"]  is not None else None,
-                "fecha": str(row["fecha"]),
-                "turno": row["turno"],
-            }
-    except Exception:
-        pass
-    # Fallback: contadores_lectura cargados desde Excel de balance hídrico
     try:
         row = (await db.execute(text("""
             SELECT entrada_ro1 AS c12, salida_ro1 AS c13,
@@ -326,7 +312,7 @@ async def get_ultima_lectura_ro(db: AsyncSession = Depends(get_db)):
                    CASE turno WHEN 1 THEN 'noche' WHEN 2 THEN 'mañana' WHEN 3 THEN 'tarde' ELSE NULL END AS turno
             FROM contadores_lectura
             WHERE entrada_ro1 IS NOT NULL
-            ORDER BY fecha DESC, turno DESC
+            ORDER BY fecha DESC, FIELD(turno, 'noche', 'mañana', 'tarde') DESC
             LIMIT 1
         """))).mappings().first()
         if row:
@@ -343,28 +329,9 @@ async def get_ultima_lectura_ro(db: AsyncSession = Depends(get_db)):
 
 @router.get("/ultima-lectura-ptap")
 async def get_ultima_lectura_ptap(db: AsyncSession = Depends(get_db)):
-    """Devuelve la última lectura de los contadores Entrada y Permeado de la PTAP.
-    Primero busca en operacion_ptap_turno (registros del operario); si no hay,
-    cae a contadores_lectura.ingreso_uf_ptap / salida_uf_ptap (balance hídrico).
+    """Devuelve la última lectura de los contadores Entrada y Permeado de la PTAP
+    desde contadores_lectura, la misma fuente que el Registro de Caudales.
     """
-    try:
-        row = (await db.execute(text("""
-            SELECT lectura_entrada, lectura_permeado, fecha, turno
-            FROM operacion_ptap_turno
-            WHERE lectura_entrada IS NOT NULL
-            ORDER BY fecha DESC, turno DESC
-            LIMIT 1
-        """))).mappings().first()
-        if row:
-            return {
-                "entrada":  float(row["lectura_entrada"])  if row["lectura_entrada"]  is not None else None,
-                "permeado": float(row["lectura_permeado"]) if row["lectura_permeado"] is not None else None,
-                "fecha": str(row["fecha"]),
-                "turno": row["turno"],
-            }
-    except Exception:
-        pass
-    # Fallback: contadores_lectura cargados desde Excel de balance hídrico
     try:
         row = (await db.execute(text("""
             SELECT ingreso_uf_ptap AS entrada, salida_uf_ptap AS permeado,
@@ -372,7 +339,7 @@ async def get_ultima_lectura_ptap(db: AsyncSession = Depends(get_db)):
                    CASE turno WHEN 1 THEN 'noche' WHEN 2 THEN 'mañana' WHEN 3 THEN 'tarde' ELSE NULL END AS turno
             FROM contadores_lectura
             WHERE ingreso_uf_ptap IS NOT NULL
-            ORDER BY fecha DESC, turno DESC
+            ORDER BY fecha DESC, FIELD(turno, 'noche', 'mañana', 'tarde') DESC
             LIMIT 1
         """))).mappings().first()
         if row:

@@ -329,10 +329,11 @@ input, select, textarea { font-family: inherit; }
 .form-label { font-size: 12px; font-weight: 500; color: #a3aab2; }
 .form-input, .form-textarea {
   padding: 9px 12px; border-radius: 6px;
-  background: #0d1117; border: 1px solid #30363d; color: #e6edf3; font-size: 13px;
+  background: #161b22; border: 1px solid #4a5568; color: #e6edf3; font-size: 13px;
+  border-left: 3px solid #00c5e360;
   transition: border-color 0.15s; outline: none; width: 100%;
 }
-.form-input:focus, .form-textarea:focus { border-color: #00c5e3; box-shadow: 0 0 0 3px #00c5e330; }
+.form-input:focus, .form-textarea:focus { border-color: #00c5e3; border-left-color: #00c5e3; box-shadow: 0 0 0 3px #00c5e330; }
 select.form-input { cursor: pointer; }
 .form-textarea { resize: vertical; min-height: 80px; }
 .level-bar-track { height: 6px; background: #21262d; border-radius: 3px; overflow: hidden; margin-top: 4px; }
@@ -373,8 +374,14 @@ select.form-input { cursor: pointer; }
 /* ─── Form readonly / locked / calculated fields ─── */
 .form-readonly {
   padding: 9px 12px; border-radius: 6px;
-  background: #0d1117; border: 1px solid #21262d; color: #8b949e;
+  background: #0a0d11; border: 1px dashed #2a3040; color: #6e7681;
   font-size: 13px; min-height: 38px; display: flex; align-items: center;
+  gap: 6px;
+}
+.form-readonly::after {
+  content: '=';
+  font-size: 11px; font-weight: 700; color: #2e3a4a;
+  margin-left: auto; flex-shrink: 0; font-family: monospace;
 }
 .form-locked {
   border-style: dashed; color: #484f58; cursor: not-allowed;
@@ -384,6 +391,7 @@ select.form-input { cursor: pointer; }
   content: '🔒'; font-size: 11px; margin-left: auto;
 }
 .value-ok    { color: #3fb950 !important; font-weight: 600; }
+.form-readonly.value-ok::after { color: #2a5a35; }
 .value-alert { color: #f85149 !important; font-weight: 600; }
 
 /* ─── Validation states ─── */

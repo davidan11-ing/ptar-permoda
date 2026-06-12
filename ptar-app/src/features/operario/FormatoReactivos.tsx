@@ -88,6 +88,7 @@ function computeProduct(
   nivelFinalStr: string | undefined,
   trasiegoL: number,
   volM3: number,
+  ingresoL: number = 0,
 ): ProductComputed {
   if (!nivelFinalStr || nivelFinalStr === '') return NULL_COMPUTED;
   if (!nivelInicialStr || nivelInicialStr === '') return NULL_COMPUTED;
@@ -95,7 +96,8 @@ function computeProduct(
   const nf = parseFloat(nivelFinalStr);
   if (isNaN(ni) || isNaN(nf)) return NULL_COMPUTED;
 
-  const consumoL   = ni - nf;
+  // consumo = lo que había + lo que ingresó - lo que quedó
+  const consumoL   = ni + ingresoL - nf;
   const consumoReal = consumoL - trasiegoL;
   const kg         = q.unidad === 'L' ? consumoReal * q.densidad : consumoReal;
   const costo = kg * q.precio_kg;
@@ -495,10 +497,11 @@ export default function FormatoReactivos() {
       const p = watchProducts[q.id];
       const trasL = q.id === 'Q-02' && p?.trasiego_check && p?.trasiego_l
         ? (parseFloat(p.trasiego_l) || 0) : 0;
+      const ingrL = p?.ingreso_l ? (parseFloat(p.ingreso_l) || 0) : 0;
       const vol = q.sistema === 'RO'   ? volROEntrada
                 : q.sistema === 'PTAP' ? volPTAPEntrada
                 : volGEM;
-      return [q.id, computeProduct(q, p?.nivel_inicial, p?.nivel_final, trasL, vol)];
+      return [q.id, computeProduct(q, p?.nivel_inicial, p?.nivel_final, trasL, vol, ingrL)];
     })
   );
 
@@ -873,6 +876,13 @@ export default function FormatoReactivos() {
               </div>
             </div>
 
+            {/* Alerta salida > entrada RO */}
+            {volROSalida > 0 && volROEntrada > 0 && volROSalida > volROEntrada && (
+              <div className="form-alert form-alert-warn" style={{ marginBottom: 12 }}>
+                ⚠️ El volumen de salida ({volROSalida.toLocaleString('es-CO')} m³) supera el volumen de entrada ({volROEntrada.toLocaleString('es-CO')} m³). Verifica las lecturas.
+              </div>
+            )}
+
             {/* Caudal y horas */}
             <div className="form-row-3">
               <div className="form-group">
@@ -913,14 +923,24 @@ export default function FormatoReactivos() {
               textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
               Mantenimiento
             </div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13 }}>
-              <Controller name="caudales_ro.cartuchos_cambiados" control={control}
-                render={({ field }) => (
+            <Controller name="caudales_ro.cartuchos_cambiados" control={control}
+              render={({ field }) => (
+                <label style={{
+                  display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
+                  padding: '10px 14px', borderRadius: 8,
+                  border: `2px solid ${field.value ? '#f0883e' : 'var(--border)'}`,
+                  background: field.value ? '#2d1a0a' : 'transparent',
+                  transition: 'all 0.15s',
+                }}>
                   <input type="checkbox" checked={!!field.value}
-                    onChange={e => field.onChange(e.target.checked)} />
-                )} />
-              ¿Se cambiaron cartuchos en este turno?
-            </label>
+                    onChange={e => field.onChange(e.target.checked)}
+                    style={{ width: 18, height: 18, accentColor: '#f0883e', cursor: 'pointer' }} />
+                  <span style={{ fontSize: 14, fontWeight: field.value ? 700 : 500,
+                    color: field.value ? '#f0883e' : 'var(--text-secondary)' }}>
+                    ¿Se cambiaron cartuchos en este turno?
+                  </span>
+                </label>
+              )} />
           </div>
 
           <div className="reactivos-list">
@@ -987,11 +1007,11 @@ export default function FormatoReactivos() {
               </div>
             </div>
 
-            {/* Contador Permeado / Salida PTAP */}
+            {/* Contador Salida PTAP */}
             <div style={{ marginBottom: 12 }}>
               <div style={{ fontWeight: 500, fontSize: 11, color: '#da7b11', marginBottom: 6,
                 textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                Contador Permeado / Salida PTAP
+                Contador Salida PTAP
               </div>
               <div className="form-row-2">
                 <div className="form-group">
@@ -1012,13 +1032,20 @@ export default function FormatoReactivos() {
                   )}
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Volumen permeado (m³)</label>
+                  <label className="form-label">Volumen Salida (m³)</label>
                   <div className={`form-readonly${volPTAPSalida > 0 ? ' value-ok' : ''}`}>
                     {volPTAPSalida > 0 ? `${volPTAPSalida.toLocaleString('es-CO')} m³` : '—'}
                   </div>
                 </div>
               </div>
             </div>
+
+            {/* Alerta: salida no puede superar entrada */}
+            {volPTAPSalida > 0 && volPTAPEntrada > 0 && volPTAPSalida > volPTAPEntrada && (
+              <div className="form-alert form-alert-warn" style={{ marginBottom: 12 }}>
+                ⚠️ El volumen de salida ({volPTAPSalida.toLocaleString('es-CO')} m³) supera el volumen de entrada ({volPTAPEntrada.toLocaleString('es-CO')} m³). Verifica las lecturas.
+              </div>
+            )}
 
             {/* Caudal y horas */}
             <div className="form-row-3" style={{ marginBottom: 12 }}>
@@ -1032,7 +1059,7 @@ export default function FormatoReactivos() {
                 </span>
               </div>
               <div className="form-group">
-                <label className="form-label">Caudal salida / permeado (m³/h)</label>
+                <label className="form-label">Caudal Salida (m³/h)</label>
                 <input type="number" step="0.1" min="0" className="form-input"
                   placeholder="Ej: 18"
                   {...register('caudales_ptap.caudal_salida_mh')} />
@@ -1154,43 +1181,58 @@ export default function FormatoReactivos() {
           </div>
         )}
 
-        {/* ── Banner $/m³ total del turno ───────────────────────────────── */}
-        {allActive.length > 0 && volGEM > 0 && (() => {
-          const costoTotal = allActive.reduce((sum, q) => {
-            const c = computed[q.id];
-            return sum + (c.costoOp ?? 0);
-          }, 0);
-          const pesosM3Total = costoTotal / volGEM;
+        {/* ── Banners de costo por sistema + total general ──────────────── */}
+        {allActive.length > 0 && (() => {
+          const costoGEM  = activeGEM.reduce((s, q)  => s + (computed[q.id].costoOp ?? 0), 0);
+          const costoRO   = activeRO.reduce((s, q)   => s + (computed[q.id].costoOp ?? 0), 0);
+          const costoPTAP = activePTAP.reduce((s, q) => s + (computed[q.id].costoOp ?? 0), 0);
+          const costoTotal = costoGEM + costoRO + costoPTAP; void costoTotal;
+
+          const sistemaRows: { label: string; color: string; bg: string; costo: number; vol: number; count: number }[] = [
+            { label: 'GEM',  color: '#7ec8c8', bg: 'linear-gradient(135deg, #0d1a1a 0%, #0a1e14 100%)', costo: costoGEM,  vol: volGEM,       count: activeGEM.length },
+            { label: 'RO',   color: '#d2a8ff', bg: 'linear-gradient(135deg, #12101a 0%, #0e0a1a 100%)', costo: costoRO,   vol: volROEntrada,  count: activeRO.length },
+            { label: 'PTAP', color: '#ffa657', bg: 'linear-gradient(135deg, #1a1208 0%, #1a1000 100%)', costo: costoPTAP, vol: volPTAPEntrada,count: activePTAP.length },
+          ].filter(r => r.count > 0);
+
           return (
-            <div style={{
-              background: 'linear-gradient(135deg, #0d1a1a 0%, #0a1e14 100%)',
-              border: '1px solid #7ec8c8',
-              borderRadius: 8,
-              padding: '12px 16px',
-              marginBottom: 12,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: 8,
-            }}>
-              <div>
-                <div style={{ fontSize: 11, color: '#8b949e', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 2 }}>
-                  Costo total del turno
-                </div>
-                <div style={{ fontSize: 12, color: '#7ec8c8' }}>
-                  {allActive.length} reactivo{allActive.length !== 1 ? 's' : ''} activo{allActive.length !== 1 ? 's' : ''}
-                  {' · '}{volGEM.toFixed(0)} m³ tratados
-                </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
+              {/* Filas por sistema */}
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {sistemaRows.map(r => (
+                  <div key={r.label} style={{
+                    flex: '1 1 140px',
+                    background: r.bg,
+                    border: `1px solid ${r.color}55`,
+                    borderRadius: 8,
+                    padding: '10px 14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 8,
+                  }}>
+                    <div>
+                      <div style={{ fontSize: 10, color: r.color, letterSpacing: '0.08em', fontWeight: 700, textTransform: 'uppercase', marginBottom: 1 }}>
+                        {r.label}
+                      </div>
+                      <div style={{ fontSize: 11, color: '#8b949e' }}>
+                        {r.count} reactivo{r.count !== 1 ? 's' : ''}
+                        {r.vol > 0 && <> · {r.vol.toFixed(0)} m³</>}
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: 16, fontWeight: 700, color: r.color, fontFamily: 'monospace', lineHeight: 1 }}>
+                        {r.vol > 0
+                          ? `${(r.costo / r.vol).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 1 })}/m³`
+                          : r.costo.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}
+                      </div>
+                      <div style={{ fontSize: 10, color: '#484f58', marginTop: 1 }}>
+                        = {r.costo.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: 22, fontWeight: 700, color: '#7ec8c8', fontFamily: 'monospace', lineHeight: 1 }}>
-                  {pesosM3Total.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 1 })}/m³
-                </div>
-                <div style={{ fontSize: 11, color: '#484f58', marginTop: 2 }}>
-                  = {costoTotal.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })} total
-                </div>
-              </div>
+
             </div>
           );
         })()}
