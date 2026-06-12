@@ -196,10 +196,15 @@ async def get_ultimo_nivel(
     if tabla is None:
         return {"nivel_final": None, "fecha": None, "turno": None}
 
-    # Para GEM se exige que el mismo registro también tenga horómetro,
+    # Para GEM se exige que el registro sea completo (horómetro + todos los niveles),
     # así nivel_inicial y horómetro mostrado siempre corresponden al mismo turno.
     extra_where = (
         " AND horometro_inicial IS NOT NULL AND horometro_inicial > 0"
+        " AND final_acido_l IS NOT NULL"
+        " AND final_coagulante_l IS NOT NULL"
+        " AND final_decolorante_l IS NOT NULL"
+        " AND final_pol_anionico_kg IS NOT NULL"
+        " AND final_pol_cationico_kg IS NOT NULL"
         if sistema == 'GEM' else ""
     )
 
@@ -237,11 +242,11 @@ async def get_ultimo_horometro(db: AsyncSession = Depends(get_db)):
                CASE turno WHEN 1 THEN 'noche' WHEN 2 THEN 'mañana' WHEN 3 THEN 'tarde' ELSE NULL END AS turno
         FROM operacion_gem_turno
         WHERE horometro_inicial IS NOT NULL AND horometro_inicial > 0
-          AND (   final_acido_l          IS NOT NULL
-               OR final_coagulante_l     IS NOT NULL
-               OR final_decolorante_l    IS NOT NULL
-               OR final_pol_anionico_kg  IS NOT NULL
-               OR final_pol_cationico_kg IS NOT NULL)
+          AND final_acido_l          IS NOT NULL
+          AND final_coagulante_l     IS NOT NULL
+          AND final_decolorante_l    IS NOT NULL
+          AND final_pol_anionico_kg  IS NOT NULL
+          AND final_pol_cationico_kg IS NOT NULL
         ORDER BY fecha DESC, turno DESC
         LIMIT 1
     """))).mappings().first()
