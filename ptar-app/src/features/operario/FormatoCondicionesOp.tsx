@@ -40,13 +40,17 @@ const formSchema = z.object({
   q_permeado_e1:             z.string().optional(),
   q_permeado_e2:             z.string().optional(),
   q_rechazo_rotametro:       z.string().optional(),
-  flujo_normalizado_e1:      z.string().optional(),
+  // caudales RO editables (pre-cargados de F-02)
+  q_entrada_ro:              z.string().optional(),
+  q_permeado_total_ro:       z.string().optional(),
   p_filtro_cartuchos:        z.string().optional(),
   p_f1:                      z.string().optional(),
   p_f2:                      z.string().optional(),
   p_f3:                      z.string().optional(),
   nueva_fecha_cip:           z.string().optional(),
   obs_ro:                    z.string().optional(),
+  // caudal PTAP editable (pre-cargado de F-02)
+  caudal_ptap_entrada:       z.string().optional(),
   tmp_pantalla:              z.string().optional(),
   tiempo_filtracion_min:     z.string().optional(),
   tiempo_purga_clarif_min:   z.string().optional(),
@@ -159,9 +163,35 @@ function MbrUnidad({
         <div className="form-group">
           <label className="form-label">TMP (mbar)</label>
           <Controller name={`${prefix}.tmp`} control={control}
-            render={({ field }) => (
-              <input {...field} type="number" step="0.1" className="form-input" placeholder="Ej: 120" />
-            )} />
+            render={({ field }) => {
+              const numVal = parseFloat(field.value ?? '');
+              const tmpNum = !isNaN(numVal) ? Math.abs(numVal) * -1 : null;
+              const alarmaTMP = tmpNum !== null && tmpNum < -390;
+              return (
+                <div>
+                  <input
+                    type="number"
+                    step="0.1"
+                    className="form-input"
+                    placeholder="Ej: 120"
+                    value={field.value ?? ''}
+                    style={alarmaTMP ? { borderColor: '#e3b341', background: '#1f1500', color: '#e3b341' } : undefined}
+                    onChange={e => {
+                      const v = e.target.value;
+                      if (v === '' || v === '-') { field.onChange(v); return; }
+                      const n = parseFloat(v);
+                      if (!isNaN(n)) field.onChange(String(Math.abs(n) * -1));
+                      else field.onChange(v);
+                    }}
+                  />
+                  {tmpNum !== null && (
+                    <span style={{ fontSize: 11, marginTop: 3, display: 'block', color: alarmaTMP ? '#e3b341' : 'var(--text-muted)' }}>
+                      {alarmaTMP ? `⚠ TMP = ${tmpNum} mbar — supera límite de -390 mbar` : `TMP: ${tmpNum} mbar`}
+                    </span>
+                  )}
+                </div>
+              );
+            }} />
         </div>
       </div>
 
@@ -287,7 +317,7 @@ export default function FormatoCondicionesOp() {
     getUltimaCondicionRO().then(d => setUltimaCIP(d.ultima_cip ?? null)).catch(() => {});
   }, [activeFecha, activeTurno]);
 
-  const { control, handleSubmit, watch, register } = useForm<FormValues>({
+  const { control, handleSubmit, watch, register, setValue } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       mbr1: { purga: false, recirculacion: false },
@@ -295,11 +325,24 @@ export default function FormatoCondicionesOp() {
     },
   });
 
+  // Pre-poblar campos editables cuando llegan datos de F-02
+  useEffect(() => {
+    if (caudalesRO.caudal_entrada_mh !== null)
+      setValue('q_entrada_ro', String(caudalesRO.caudal_entrada_mh));
+    if (caudalesRO.caudal_salida_mh !== null)
+      setValue('q_permeado_total_ro', String(caudalesRO.caudal_salida_mh));
+  }, [caudalesRO, setValue]);
+
+  useEffect(() => {
+    if (caudalesPTAP.caudal_entrada_mh !== null)
+      setValue('caudal_ptap_entrada', String(caudalesPTAP.caudal_entrada_mh));
+  }, [caudalesPTAP, setValue]);
+
   const watchAll = watch();
 
-  // ── Cálculos RO ──────────────────────────────────────────────────────────────
-  const qEntrada   = caudalesRO.caudal_entrada_mh;
-  const qPermTotal = caudalesRO.caudal_salida_mh;
+  // ── Cálculos RO — usan los valores del formulario (editables) ────────────────
+  const qEntrada   = pf(watchAll.q_entrada_ro)   ?? caudalesRO.caudal_entrada_mh;
+  const qPermTotal = pf(watchAll.q_permeado_total_ro) ?? caudalesRO.caudal_salida_mh; void qPermTotal;
   const pE1   = pf(watchAll.p_entrada_e1);
   const pS1   = pf(watchAll.p_salida_e1);
   const pE2   = pf(watchAll.p_entrada_e2);
@@ -371,7 +414,6 @@ export default function FormatoCondicionesOp() {
           q_permeado_e1:        pf(data.q_permeado_e1),
           q_permeado_e2:        pf(data.q_permeado_e2),
           q_rechazo_rotametro:  pf(data.q_rechazo_rotametro),
-          flujo_normalizado_e1: pf(data.flujo_normalizado_e1),
           p_filtro_cartuchos:   pf(data.p_filtro_cartuchos),
           p_f1:                 pf(data.p_f1),
           p_f2:                 pf(data.p_f2),
@@ -519,20 +561,22 @@ export default function FormatoCondicionesOp() {
             </div>
           </div>
 
-          {/* Caudales desde F-02 */}
+          {/* Caudales desde F-02 — editables */}
           <div style={{ background: '#1f6feb08', border: '1px solid #1f6feb22', borderRadius: 6, padding: '10px 12px', marginBottom: 14 }}>
             <div style={{ fontSize: 11, fontWeight: 600, color: '#8b949e', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 8 }}>
-              Caudales del turno (desde F-02 Reactivos — solo lectura)
+              Caudales del turno (pre-cargados de F-02, editables)
             </div>
             <div className="form-row-2">
-              <ReadonlyField
-                label="Q Entrada RO1 (m³/h)"
-                value={qEntrada !== null ? `${qEntrada.toFixed(2)} m³/h` : '— (sin registro en F-02)'}
-              />
-              <ReadonlyField
-                label="Q Permeado Total (m³/h)"
-                value={qPermTotal !== null ? `${qPermTotal.toFixed(2)} m³/h` : '— (sin registro en F-02)'}
-              />
+              <div className="form-group">
+                <label className="form-label">Q Entrada RO1 (m³/h)</label>
+                <input type="number" step="0.01" className="form-input" placeholder="m³/h"
+                  {...register('q_entrada_ro')} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Q Permeado Total (m³/h)</label>
+                <input type="number" step="0.01" className="form-input" placeholder="m³/h"
+                  {...register('q_permeado_total_ro')} />
+              </div>
             </div>
           </div>
 
@@ -579,18 +623,6 @@ export default function FormatoCondicionesOp() {
               <CalcField label="% Eficiencia E2" value={fmtVal(efE2, 1, '%')} />
               <CalcField label="Factor Concentración E2" value={fmtVal(fcE2, 3)} />
               <CalcField label="Eficiencia Global RO1" value={fmtVal(efGlobal, 1, '%')} color="#58a6ff" />
-            </div>
-          </div>
-
-          {/* Flujo normalizado */}
-          <div className="form-row-2" style={{ marginBottom: 14 }}>
-            <div className="form-group">
-              <label className="form-label">Flujo Normalizado Reducido ΔQ E1</label>
-              <input type="number" step="0.001" className="form-input" placeholder="Valor"
-                {...register('flujo_normalizado_e1')} />
-              <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3, display: 'block' }}>
-                Fórmula pendiente de definición
-              </span>
             </div>
           </div>
 
@@ -655,16 +687,17 @@ export default function FormatoCondicionesOp() {
         {/* ══ ACORDEÓN 3: PTAP ═════════════════════════════════════════════ */}
         <AccordionSection title="Sistema PTAP — Planta de Agua Potable" color="#da7b11">
 
-          {/* Caudales desde F-02 */}
+          {/* Datos del turno desde F-02 — editables */}
           <div style={{ background: '#da7b1108', border: '1px solid #da7b1122', borderRadius: 6, padding: '10px 12px', marginBottom: 14 }}>
             <div style={{ fontSize: 11, fontWeight: 600, color: '#8b949e', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 8 }}>
-              Datos del turno (desde F-02 Reactivos — solo lectura)
+              Datos del turno (pre-cargados de F-02, editables)
             </div>
             <div className="form-row-3">
-              <ReadonlyField
-                label="Caudal Filtrado Entrada (m³/h)"
-                value={caudalesPTAP.caudal_entrada_mh !== null ? `${caudalesPTAP.caudal_entrada_mh} m³/h` : '—'}
-              />
+              <div className="form-group">
+                <label className="form-label">Caudal Filtrado Entrada (m³/h)</label>
+                <input type="number" step="0.01" className="form-input" placeholder="m³/h"
+                  {...register('caudal_ptap_entrada')} />
+              </div>
               <ReadonlyField
                 label="Manga cambiada"
                 value={caudalesPTAP.manga_cambiada
