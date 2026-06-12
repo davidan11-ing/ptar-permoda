@@ -1,96 +1,285 @@
-import { memo, useRef, useState, useCallback, useEffect } from 'react';
+import { memo, useRef, useState, useCallback, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../state/AuthContext';
 import { ROUTES } from '../../lib/routes';
 import { createCalidadBatch, getUltimoValorCalidad } from '../../services/ptarClient';
 import type { RegistroCalidad, UltimoValorCalidad } from '../../services/ptarClient';
-
-import {
-  PARAMS_DIARIOS, PARAMS_OCASIONALES,
-  UNIDADES_TRATAMIENTO,
-} from '../../lib/constants/incidencias';
-import type { DiarioId, OcasionalId } from '../../lib/constants/incidencias';
 import { TURNO_LABELS, getTurno } from '../../lib/utils/time';
 
-// ─── State types ────────────────────────────────────────────────────────────
+// ─── Frecuencias de medición por PUNTO (fuente: tabla laboratorio PTAP) ───────
+// t=cada turno | d1/d2/d3=diario turno 1/2/3 | j1/j2/j3=jueves turno N
+// mj3=mar+jue turno 3 | ls=lunes t1 o sábado t2
+// Clave: ptKey = "ZONA|Punto" ej. "TB|MBR1"
 
-interface ParamInput {
-  valor: string;
-  no_aplica: boolean;
-  observaciones: string; // solo para N/A
+type FreqCode = string;
+type ZoneId = 'TB' | 'RA' | 'RO' | 'TKR' | 'PT';
+
+interface GridParam {
+  id: string;
+  nombre: string;
+  unidad: string;
+  min: number;
+  max: number;
+  decimales: number;
+  freq: Record<string, FreqCode>; // clave = ptKey
 }
 
-interface ExtraRow {
-  uid: string;
-  id_param: OcasionalId | '';
-  valor: string;
-  no_aplica: boolean;
-  observaciones: string;
+// Puntos del tablero (abreviado para no repetir)
+const TB6 = (f: FreqCode) => ({
+  'TB|Pulmon': f, 'TB|EntGEM': f, 'TB|SalGEM': f,
+  'TB|MBR1': f,  'TB|MBR2': f,   'TB|Vert': f,
+});
+const RA4 = (f: FreqCode) => ({
+  'RA|Anoxico': f, 'RA|MBBR': f, 'RA|MBR1': f, 'RA|MBR2': f,
+});
+
+const GRID_PARAMS: GridParam[] = [
+  { id:'Temperatura',     nombre:'Temperatura',     unidad:'°C',        min:15,  max:60,    decimales:1, freq:{
+    ...TB6('t'), ...RA4('d1'), 'RO|Perm':'d2','RO|Rechazo':'d2', 'TKR|Recirc':'t',
+    'PT|Pozo':'ls','PT|Clari':'t','PT|SalUF':'t' }},
+  { id:'pH',              nombre:'pH',              unidad:'pH',         min:0,   max:14,    decimales:2, freq:{
+    ...TB6('t'), ...RA4('d1'), 'RO|Perm':'d2','RO|Rechazo':'d2', 'TKR|Recirc':'t',
+    'PT|Pozo':'ls','PT|Clari':'t','PT|SalUF':'t' }},
+  { id:'TDS',             nombre:'TDS',             unidad:'mg/L',       min:0,   max:5000,  decimales:0, freq:{
+    ...TB6('t'),             'RO|Perm':'d2','RO|Rechazo':'d2', 'TKR|Recirc':'t',
+    'PT|Pozo':'ls','PT|Clari':'t','PT|SalUF':'t' }},
+  { id:'SST',             nombre:'SST',             unidad:'mg/L',       min:0,   max:1000,  decimales:0, freq:{
+    ...TB6('t'), ...RA4('d1'), 'RO|Perm':'d2','RO|Rechazo':'d2', 'TKR|Recirc':'d1',
+    'PT|Pozo':'ls','PT|Clari':'t','PT|SalUF':'t' }},
+  { id:'SolidosSediment', nombre:'Sól. Sed.',       unidad:'ml/L',       min:0,   max:500,   decimales:1, freq:{
+    ...TB6('t'), ...RA4('d1'),
+    'PT|Pozo':'ls','PT|Clari':'t' }},
+  { id:'Conductividad',   nombre:'Conductividad',   unidad:'µS/cm',      min:0,   max:10000, decimales:0, freq:{
+    ...TB6('t'),             'RO|Perm':'d2','RO|Rechazo':'d2', 'TKR|Recirc':'t',
+    'PT|Pozo':'ls','PT|Clari':'t','PT|SalUF':'t' }},
+  { id:'Color',           nombre:'Color',           unidad:'UPTCO',      min:0,   max:1500,  decimales:0, freq:{
+    ...TB6('t'),             'RO|Perm':'d2','RO|Rechazo':'d2', 'TKR|Recirc':'t',
+    'PT|Pozo':'ls','PT|Clari':'t','PT|SalUF':'t' }},
+  { id:'Hierro',          nombre:'Hierro',          unidad:'mg/L',       min:0,   max:50,    decimales:2, freq:{
+    'TKR|Recirc':'t', 'PT|Pozo':'ls','PT|Clari':'d2','PT|SalUF':'t' }},
+  { id:'DQO',             nombre:'DQO',             unidad:'mg/L',       min:0,   max:5000,  decimales:0, freq:{
+    ...TB6('mj3'),           'RO|Rechazo':'j2' }},
+  { id:'SST_Gravimetrico',nombre:'SST Grav.',       unidad:'mg/L',       min:0,   max:1000,  decimales:0, freq:{
+    ...TB6('j3'), ...RA4('j1') }},
+  { id:'Cloruros',        nombre:'Cloruros',        unidad:'mg/L',       min:0,   max:1000,  decimales:0, freq:{
+    ...TB6('mj3'),           'RO|Perm':'d2','RO|Rechazo':'d2', 'TKR|Recirc':'d1',
+    'PT|SalUF':'ls' }},
+  { id:'Sulfatos',        nombre:'Sulfatos',        unidad:'mg/L',       min:0,   max:500,   decimales:0, freq:{
+    ...TB6('j3'),            'RO|Rechazo':'j2', 'TKR|Recirc':'t', 'PT|SalUF':'ls' }},
+  { id:'Fosforo',         nombre:'Fósforo Total',   unidad:'mg/L',       min:0,   max:100,   decimales:2, freq:{
+    'TB|SalGEM':'j3' }},
+  { id:'Nitrogeno',       nombre:'Nitrógeno Total', unidad:'mg/L',       min:0,   max:200,   decimales:2, freq:{
+    'TB|SalGEM':'j3' }},
+  { id:'DurezaTotal',     nombre:'Dureza Total',    unidad:'mg CaCO₃/L', min:0,   max:1500,  decimales:0, freq:{
+    'TB|MBR1':'j3','TB|MBR2':'j3', 'RO|Perm':'j2','RO|Rechazo':'j2',
+    'TKR|Recirc':'t', 'PT|SalUF':'ls' }},
+  { id:'Silice',          nombre:'Sílice',          unidad:'mg/L',       min:0,   max:100,   decimales:2, freq:{
+    'TB|MBR1':'j3','TB|MBR2':'j3', 'RO|Perm':'j2','RO|Rechazo':'j2',
+    'PT|Pozo':'ls','PT|Clari':'ls','PT|SalUF':'ls' }},
+  { id:'Aluminio',        nombre:'Aluminio',        unidad:'mg/L',       min:0,   max:10,    decimales:2, freq:{
+    'TKR|Recirc':'t', 'PT|SalUF':'ls' }},
+  { id:'CloroResidual',   nombre:'Cloro libre',     unidad:'mg/L',       min:0,   max:5,     decimales:2, freq:{
+    'TKR|Recirc':'t', 'PT|SalUF':'ls' }},
+  { id:'Cobre',           nombre:'Cobre',           unidad:'mg/L',       min:0,   max:5,     decimales:2, freq:{
+    'TKR|Recirc':'t', 'PT|Pozo':'ls','PT|Clari':'ls','PT|SalUF':'ls' }},
+];
+
+interface GridZone {
+  id: ZoneId;
+  label: string;
+  points: { key: string; label: string; unidad: string }[];
 }
+
+const GRID_ZONES: GridZone[] = [
+  { id:'TB', label:'Tablero', points:[
+    { key:'TB|Pulmon',      label:'Pulmón',        unidad:'Tanque Pulmon' },
+    { key:'TB|EntGEM',      label:'Entrada GEM',   unidad:'Tanque Homogeneizador' },
+    { key:'TB|SalGEM',      label:'Salida GEM',    unidad:'GEM Salida' },
+    { key:'TB|MBR1',        label:'Perm. MBR1',    unidad:'MBR 1 Permeado' },
+    { key:'TB|MBR2',        label:'Perm. MBR2',    unidad:'MBR 2 Permeado' },
+    { key:'TB|Vert',        label:'Vertimiento',   unidad:'Vertimiento' },
+  ]},
+  { id:'RA', label:'Reactores', points:[
+    { key:'RA|Anoxico',     label:'Anóxico',       unidad:'Reactor Anoxico' },
+    { key:'RA|MBBR',        label:'MBBR',          unidad:'Reactor MBBR' },
+    { key:'RA|MBR1',        label:'MBR1',          unidad:'MBR 1 Interno' },
+    { key:'RA|MBR2',        label:'MBR2',          unidad:'MBR 2 Interno' },
+  ]},
+  { id:'RO', label:'RO', points:[
+    { key:'RO|Perm',        label:'Permeado RO',   unidad:'RO 2 Permeado' },
+    { key:'RO|Rechazo',     label:'Rechazo RO',    unidad:'RO Rechazo' },
+  ]},
+  { id:'TKR', label:'Recirculación', points:[
+    { key:'TKR|Recirc',     label:'Recirculación', unidad:'Tanque Recirculacion' },
+  ]},
+  { id:'PT', label:'PTAP', points:[
+    { key:'PT|Pozo',        label:'Pozo',           unidad:'Pozo' },
+    { key:'PT|Clari',       label:'Salida Clari.',  unidad:'Salida Clarifloculador / Entrada UF' },
+    { key:'PT|SalUF',       label:'Salida UF',      unidad:'Salida UF' },
+  ]},
+];
+
+// ─── Alarmas operacionales ───────────────────────────────────────────────────
+
+type AlarmLevel = 'warn' | 'error';
+
+interface AlarmRule {
+  paramId: string;
+  ptKeys?: string[];
+  check: (val: number, get: (id: string) => number | null) => AlarmLevel | null;
+  message: (val: number) => string;
+}
+
+const PARAM_LABEL: Record<string, string> = {
+  SolidosSediment: 'Sól. Sed.', SST_Gravimetrico: 'SST Grav.',
+  CloroResidual: 'Cl libre', DurezaTotal: 'Dureza T.',
+  Fosforo: 'Fósforo', Nitrogeno: 'Nitrógeno',
+};
+
+const ALARM_RULES: AlarmRule[] = [
+  // ── Temperatura (todos los puntos) ───────────────────────────────────────
+  { paramId: 'Temperatura',
+    check: v => v > 50 ? 'error' : v < 20 ? 'warn' : null,
+    message: v => v > 50 ? 'Temperatura crítica (> 50 °C)' : 'Temperatura baja (< 20 °C)' },
+
+  // ── pH: solo validar rango físico 0–14 ───────────────────────────────────
+  { paramId: 'pH',
+    check: v => (v < 0 || v > 14) ? 'error' : null,
+    message: () => 'Valor de pH imposible (debe estar entre 0 y 14)' },
+
+  // ── TDS no puede superar conductividad (mismo punto) ─────────────────────
+  { paramId: 'TDS',
+    check: (v, get) => { const c = get('Conductividad'); return c !== null && v > c ? 'warn' : null; },
+    message: () => 'TDS supera la conductividad del mismo punto' },
+
+  // ── SST permeado MBR ─────────────────────────────────────────────────────
+  { paramId: 'SST', ptKeys: ['TB|MBR1', 'TB|MBR2'],
+    check: v => v > 12 ? 'warn' : null,
+    message: () => 'SST permeado elevado (> 12 mg/L) — revisar membrana' },
+
+  // ── DQO en permeado MBR ──────────────────────────────────────────────────
+  { paramId: 'DQO', ptKeys: ['TB|MBR1', 'TB|MBR2'],
+    check: v => v > 100 ? 'warn' : null,
+    message: () => 'DQO permeado alto (> 100 mg/L)' },
+
+  // ══ VERTIMIENTO — Res. 631/2015 + Res. 3957/2009 ════════════════════════
+  // pH (Res. 631 Art. 8: 6.0–9.0 para sector textil)
+  { paramId: 'pH', ptKeys: ['TB|Vert'],
+    check: v => (v < 5.5 || v > 9.5) ? 'error' : (v < 6.0 || v > 9.0) ? 'warn' : null,
+    message: v => (v < 5.5 || v > 9.5) ? 'pH vertimiento crítico — fuera de norma (Res. 631)' : 'pH vertimiento fuera de rango normativo 6.0–9.0 (Res. 631)' },
+  // Temperatura (Res. 631: máx 40 °C)
+  { paramId: 'Temperatura', ptKeys: ['TB|Vert'],
+    check: v => v > 40 ? 'error' : v > 35 ? 'warn' : null,
+    message: v => v > 40 ? 'Temperatura vertimiento crítica — supera 40 °C (Res. 631)' : 'Temperatura vertimiento elevada (> 35 °C, límite 40 °C Res. 631)' },
+  // SST (Res. 631 sector textil: 90 mg/L; Res. 3957: 50 mg/L)
+  { paramId: 'SST', ptKeys: ['TB|Vert'],
+    check: v => v > 90 ? 'error' : v > 50 ? 'warn' : null,
+    message: v => v > 90 ? 'SST vertimiento crítico — supera 90 mg/L (Res. 631)' : 'SST vertimiento alto (> 50 mg/L, Res. 3957)' },
+  // DQO (Res. 631 sector textil: 400 mg/L)
+  { paramId: 'DQO', ptKeys: ['TB|Vert'],
+    check: v => v > 400 ? 'error' : v > 250 ? 'warn' : null,
+    message: v => v > 400 ? 'DQO vertimiento crítico — supera 400 mg/L (Res. 631)' : 'DQO vertimiento elevado (> 250 mg/L, alerta preventiva)' },
+  // Cloruros (Res. 3957: 500 mg/L)
+  { paramId: 'Cloruros', ptKeys: ['TB|Vert'],
+    check: v => v > 500 ? 'error' : v > 400 ? 'warn' : null,
+    message: v => v > 500 ? 'Cloruros vertimiento críticos — supera 500 mg/L (Res. 3957)' : 'Cloruros vertimiento altos (> 400 mg/L, límite 500 Res. 3957)' },
+  // Sulfatos (Res. 3957: 500 mg/L)
+  { paramId: 'Sulfatos', ptKeys: ['TB|Vert'],
+    check: v => v > 500 ? 'error' : v > 400 ? 'warn' : null,
+    message: v => v > 500 ? 'Sulfatos vertimiento críticos — supera 500 mg/L (Res. 3957)' : 'Sulfatos vertimiento altos (> 400 mg/L, límite 500 Res. 3957)' },
+];
+
+const ACTIVE_ALARM_RULES = ALARM_RULES;
+
+function getAlarm(
+  paramId: string,
+  ptKey: string,
+  val: number,
+  gridVals: Record<string, string>,
+): { level: AlarmLevel; message: string } | null {
+  const get = (id: string) => {
+    const v = parseFloat(gridVals[`${ptKey}|${id}`] ?? '');
+    return isNaN(v) ? null : v;
+  };
+  let worst: { level: AlarmLevel; message: string } | null = null;
+  for (const rule of ACTIVE_ALARM_RULES) {
+    if (rule.paramId !== paramId) continue;
+    if (rule.ptKeys && !rule.ptKeys.includes(ptKey)) continue;
+    const level = rule.check(val, get);
+    if (!level) continue;
+    const msg = rule.message(val);
+    if (!worst || (level === 'error' && worst.level === 'warn')) {
+      worst = { level, message: msg };
+    }
+  }
+  return worst;
+}
+
+// ─── Frecuencia helpers ───────────────────────────────────────────────────────
+
+// ct=cada turno (activo) | cd=diario este turno (activo) | ch=solo hoy (activo)
+// opt=tiene frecuencia pero no corresponde a este turno/día (disponible, no obligatorio)
+type FreqClass = 'ct' | 'cd' | 'ch' | 'opt' | null;
+
+function getTurnoNum(t: string): number {
+  return t === 'noche' ? 1 : t === 'mañana' ? 2 : 3;
+}
+
+function getDayCode(): string {
+  const d = new Date().getDay();
+  return ['D','L','M','W','J','V','S'][d] ?? 'L';
+}
+
+function freqClass(f: FreqCode | undefined, tNum: number, day: string): FreqClass {
+  if (!f) return null;
+  if (f === 't') return 'ct';
+  if (f === `d${tNum}`) return 'cd';
+  if (f === `j${tNum}` && day === 'J') return 'ch';
+  if (f === `mj${tNum}` && (day === 'M' || day === 'J')) return 'ch';
+  if (f === 'ls' && ((day === 'L' && tNum === 1) || (day === 'S' && tNum === 2))) return 'ch';
+  // Tiene frecuencia pero no toca ahora — disponible igualmente
+  return 'opt';
+}
+
+// ─── State types ─────────────────────────────────────────────────────────────
 
 interface FormState {
-  unidad_tratamiento: string;
   novedad_quimico: boolean;
   novedad_procesos: boolean;
   observaciones_generales: string;
-  daily: Record<DiarioId, ParamInput>;
-  extras: ExtraRow[];
 }
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
+// ─── AlarmBanner ─────────────────────────────────────────────────────────────
 
-const makeParamInput = (): ParamInput => ({
-  valor: '', no_aplica: false, observaciones: '',
-});
-
-const INITIAL_DAILY = Object.fromEntries(
-  PARAMS_DIARIOS.map(p => [p.id, makeParamInput()])
-) as Record<DiarioId, ParamInput>;
-
-let uidCounter = 0;
-const newUid = () => `extra-${++uidCounter}`;
-
-// step por decimales
-const stepForDecimals = (d: number) => d === 0 ? '1' : d === 1 ? '0.1' : '0.01';
-
-// ─── Validaciones especiales ─────────────────────────────────────────────────
-
-function getParamWarning(
-  paramId: string,
-  valor: string,
-  daily: Record<DiarioId, ParamInput>
-): { level: 'warn' | 'error'; msg: string } | null {
-  if (!valor) return null;
-  const v = parseFloat(valor);
-  if (isNaN(v)) return null;
-
-  if (paramId === 'pH') {
-    if (v > 14) return { level: 'error', msg: 'pH no puede superar 14' };
-    if (v > 11) return { level: 'warn', msg: `pH > 11 — valor alto, verifica la medición` };
-  }
-  if (paramId === 'Temperatura') {
-    if (v < 15) return { level: 'error', msg: 'Temperatura por debajo del mínimo permitido (15 °C)' };
-    if (v > 60) return { level: 'error', msg: 'Temperatura por encima del máximo permitido (60 °C)' };
-  }
-  if (paramId === 'TDS') {
-    const condVal = daily['Conductividad']?.valor;
-    if (condVal) {
-      const cond = parseFloat(condVal);
-      if (!isNaN(cond) && v > cond) {
-        return { level: 'error', msg: `TDS (${v}) no puede superar Conductividad (${cond})` };
-      }
-    }
-  }
-  if (paramId === 'Conductividad') {
-    const tdsVal = daily['TDS']?.valor;
-    if (tdsVal) {
-      const tds = parseFloat(tdsVal);
-      if (!isNaN(tds) && tds > v) {
-        return { level: 'error', msg: `TDS (${tds}) supera Conductividad (${v}) — revisa ambos valores` };
-      }
-    }
-  }
-  return null;
+function AlarmBanner({ alarms }: { alarms: { level: AlarmLevel; message: string; label: string }[] }) {
+  if (!alarms.length) return null;
+  const errors = alarms.filter(a => a.level === 'error');
+  const warns  = alarms.filter(a => a.level === 'warn');
+  return (
+    <div style={{ marginBottom: 16, borderRadius: 8, overflow: 'hidden', border: `1px solid ${errors.length ? '#f85149' : '#e3b341'}` }}>
+      <div style={{
+        padding: '8px 14px', fontSize: 12, fontWeight: 600,
+        background: errors.length ? '#2d0f0f' : '#1f1500',
+        color: errors.length ? '#f85149' : '#e3b341',
+        display: 'flex', alignItems: 'center', gap: 8,
+      }}>
+        <span>{errors.length ? '✕' : '!'}</span>
+        <span>
+          {errors.length > 0 && `${errors.length} alarma${errors.length > 1 ? 's' : ''} crítica${errors.length > 1 ? 's' : ''}`}
+          {errors.length > 0 && warns.length > 0 && '  ·  '}
+          {warns.length > 0 && `${warns.length} advertencia${warns.length > 1 ? 's' : ''}`}
+        </span>
+      </div>
+      <div style={{ padding: '6px 14px 8px', display: 'flex', flexDirection: 'column', gap: 3, background: '#161b22' }}>
+        {alarms.map((a, i) => (
+          <div key={i} style={{ fontSize: 11, color: a.level === 'error' ? '#f85149' : '#e3b341', display: 'flex', gap: 8 }}>
+            <span style={{ opacity: 0.6, minWidth: 130, flexShrink: 0 }}>{a.label}</span>
+            <span>{a.message}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -99,164 +288,138 @@ const FormatoCalidad = memo(function FormatoCalidad() {
   const { currentUser } = useAuth();
   const navigate        = useNavigate();
 
-  const [form, setForm]           = useState<FormState>({
-    unidad_tratamiento: '',
+  const [turno, setTurno]     = useState<string>(getTurno());
+  const turnoNum              = getTurnoNum(turno);
+  const [fecha, setFecha]     = useState<string>(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  });
+
+  // dayCode se sincroniza con fecha cuando esta cambia
+  const [dayCode, setDayCode] = useState<string>(getDayCode);
+
+  const handleFechaChange = (val: string) => {
+    setFecha(val);
+    if (val) {
+      // new Date('YYYY-MM-DD') interpreta como UTC — sumamos offset local
+      const d = new Date(val + 'T12:00:00');
+      setDayCode(['D','L','M','W','J','V','S'][d.getDay()] ?? 'L');
+    }
+  };
+
+  const [form, setForm] = useState<FormState>({
     novedad_quimico: false,
     novedad_procesos: false,
     observaciones_generales: '',
-    daily: INITIAL_DAILY,
-    extras: [],
   });
+
+  // gridVals: "ptKey|paramId" → valor string
+  const [gridVals, setGridVals] = useState<Record<string, string>>({});
+
+  // prevVals: "unidad||paramNombre" → UltimoValorCalidad
+  const [prevVals, setPrevVals] = useState<Record<string, UltimoValorCalidad>>({});
+
+  const [optOpen, setOptOpen]     = useState<Set<ZoneId>>(new Set());
   const [submitted, setSubmitted] = useState(false);
   const [saving, setSaving]       = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [submitErrors, setSubmitErrors] = useState<Record<string, boolean>>({});
   const savedCountRef = useRef(0);
 
-  // Valores turno anterior por parámetro
-  const [prevValues, setPrevValues] = useState<Record<string, UltimoValorCalidad>>({});
-  const [loadingPrev, setLoadingPrev] = useState(false);
+  const now = new Date(); void now;
 
-  const now   = new Date();
-  const turno = getTurno();
+  // Lista de alarmas activas — recalcula cuando cambian los valores de la grilla
+  const activeAlarms = useMemo(() => {
+    const result: { level: AlarmLevel; message: string; label: string }[] = [];
+    GRID_ZONES.forEach(z => z.points.forEach(pt => {
+      GRID_PARAMS.forEach(p => {
+        const val = parseFloat(gridVals[`${pt.key}|${p.id}`] ?? '');
+        if (isNaN(val)) return;
+        const a = getAlarm(p.id, pt.key, val, gridVals);
+        if (a) result.push({ ...a, label: `${pt.label} — ${PARAM_LABEL[p.id] ?? p.nombre}` });
+      });
+    }));
+    return result;
+  }, [gridVals]);
 
-  // Fetch turno anterior cuando cambia la unidad
+  // Cargar valores anteriores para todos los puntos/parámetros con frecuencia
   useEffect(() => {
-    if (!form.unidad_tratamiento) { setPrevValues({}); return; }
-    setLoadingPrev(true);
-    const allParams = [...PARAMS_DIARIOS, ...PARAMS_OCASIONALES];
+    const allUnidades = new Set<string>();
+    const allParams   = new Set<string>();
+
+    GRID_ZONES.forEach(z => {
+      const visP = GRID_PARAMS.filter(p => p.freq[z.id]);
+      if (!visP.length) return;
+      z.points.forEach(pt => {
+        allUnidades.add(pt.unidad);
+        visP.forEach(p => allParams.add(p.nombre));
+      });
+    });
+
+    const pairs: [string, string][] = [];
+    allUnidades.forEach(u => allParams.forEach(p => pairs.push([u, p])));
+
     Promise.allSettled(
-      allParams.map(p =>
-        getUltimoValorCalidad(form.unidad_tratamiento, p.nombre)
-          .then(res => [p.nombre, res] as [string, UltimoValorCalidad])
+      pairs.map(([u, p]) =>
+        getUltimoValorCalidad(u, p).then(res => [`${u}||${p}`, res] as [string, UltimoValorCalidad])
       )
     ).then(results => {
       const map: Record<string, UltimoValorCalidad> = {};
       results.forEach(r => {
         if (r.status === 'fulfilled') map[r.value[0]] = r.value[1];
       });
-      setPrevValues(map);
-    }).finally(() => setLoadingPrev(false));
-  }, [form.unidad_tratamiento]);
-
-  // ─── Derived values ────────────────────────────────────────────────────────
-
-  const activeDailyIds = PARAMS_DIARIOS
-    .filter(p => form.daily[p.id].valor !== '' || form.daily[p.id].no_aplica)
-    .map(p => p.id);
-
-  const activeExtras = form.extras.filter(
-    e => e.id_param !== '' && (e.valor !== '' || e.no_aplica)
-  );
-
-  // Check for special validation errors that block submission
-  const specialErrors = PARAMS_DIARIOS
-    .filter(p => form.daily[p.id].valor !== '')
-    .map(p => getParamWarning(p.id, form.daily[p.id].valor, form.daily))
-    .filter(w => w?.level === 'error');
-
-  const totalActive = activeDailyIds.length + activeExtras.length;
-  const canSubmit   = form.unidad_tratamiento !== '' && totalActive > 0 && specialErrors.length === 0;
-
-  const addedExtraIds = new Set(form.extras.map(e => e.id_param).filter(Boolean));
-  const availableOcasionales = PARAMS_OCASIONALES.filter(p => !addedExtraIds.has(p.id));
-
-  // ─── Setters ───────────────────────────────────────────────────────────────
-
-  const setDaily = (id: DiarioId, field: keyof ParamInput, value: string | boolean) => {
-    setSubmitErrors(prev => { const n = { ...prev }; delete n[id]; return n; });
-    setForm(prev => ({
-      ...prev,
-      daily: { ...prev.daily, [id]: { ...prev.daily[id], [field]: value } },
-    }));
-  };
-
-  const setExtra = (uid: string, field: keyof Omit<ExtraRow, 'uid'>, value: string | boolean) => {
-    setSubmitErrors(prev => { const n = { ...prev }; delete n[uid]; return n; });
-    setForm(prev => ({
-      ...prev,
-      extras: prev.extras.map(e => e.uid === uid ? { ...e, [field]: value } : e),
-    }));
-  };
-
-  const addExtra = () => {
-    if (availableOcasionales.length === 0) return;
-    setForm(prev => ({
-      ...prev,
-      extras: [...prev.extras, {
-        uid: newUid(), id_param: '', valor: '',
-        no_aplica: false, observaciones: '',
-      }],
-    }));
-  };
-
-  const removeExtra = (uid: string) => {
-    setForm(prev => ({ ...prev, extras: prev.extras.filter(e => e.uid !== uid) }));
-  };
-
-  // ─── Validation ────────────────────────────────────────────────────────────
-
-  const validate = (): boolean => {
-    const errors: Record<string, boolean> = {};
-    PARAMS_DIARIOS.forEach(p => {
-      const inp = form.daily[p.id];
-      if (inp.no_aplica && !inp.observaciones.trim()) errors[p.id] = true;
+      setPrevVals(map);
     });
-    form.extras.forEach(e => {
-      if (e.no_aplica && !e.observaciones.trim()) errors[e.uid] = true;
+  }, [turnoNum, dayCode]);
+
+  // ─── Cell helpers ──────────────────────────────────────────────────────────
+
+  const setCellVal = (ptKey: string, paramId: string, val: string) => {
+    const k = `${ptKey}|${paramId}`;
+    setGridVals(prev => {
+      const next = { ...prev };
+      if (val === '') delete next[k]; else next[k] = val;
+      return next;
     });
-    setSubmitErrors(errors);
-    return Object.keys(errors).length === 0;
   };
+
+  const totalFilled = Object.keys(gridVals).length;
 
   // ─── Save ──────────────────────────────────────────────────────────────────
 
   const doSave = useCallback(async () => {
-    if (!canSubmit) return;
-    if (!validate()) return;
+    if (totalFilled === 0) return;
     setSaving(true); setSaveError(null);
 
-    const obsArr: string[] = [];
-    if (form.novedad_quimico) obsArr.push('[Novedad consumo químico]');
-    if (form.novedad_procesos) obsArr.push('[Novedad procesos de producción]');
-    if (form.observaciones_generales.trim()) obsArr.push(form.observaciones_generales.trim());
-    const obsGenerales = obsArr.join(' | ') || undefined;
+    const obsGenerales = [
+      form.novedad_quimico   ? '[Novedad consumo químico]'         : '',
+      form.novedad_procesos  ? '[Novedad procesos de producción]'  : '',
+      form.observaciones_generales.trim(),
+    ].filter(Boolean).join(' | ') || undefined;
 
-    const shared = {
-      turno,
-      usuario:            currentUser?.nombre ?? 'desconocido',
-      equipo:             currentUser?.equipo ? JSON.stringify(currentUser.equipo) : undefined,
-      unidad_tratamiento: form.unidad_tratamiento,
-    };
+    const rows: Omit<RegistroCalidad, 'id' | 'created_at'>[] = [];
 
-    const dailyRows: Omit<RegistroCalidad, 'id' | 'created_at'>[] =
-      activeDailyIds.map(id => {
-        const p = PARAMS_DIARIOS.find(x => x.id === id)!;
-        const inp = form.daily[id];
-        return {
-          ...shared,
-          parametro:    p.nombre,
-          unidad_medida: p.unidad,
-          valor:        inp.no_aplica ? undefined : parseFloat(inp.valor),
-          no_aplica:    inp.no_aplica,
-          observaciones: [inp.observaciones.trim(), obsGenerales].filter(Boolean).join(' | ') || undefined,
-        };
+    GRID_ZONES.forEach(z => {
+      z.points.forEach(pt => {
+        GRID_PARAMS.forEach(p => {
+          const k = `${pt.key}|${p.id}`;
+          const val = gridVals[k];
+          if (val === undefined || val === '') return;
+          rows.push({
+            fecha,
+            turno:              turno as 'mañana' | 'tarde' | 'noche',
+            usuario:            currentUser?.nombre ?? 'desconocido',
+            equipo:             currentUser?.equipo ? JSON.stringify(currentUser.equipo) : undefined,
+            unidad_tratamiento: pt.unidad,
+            parametro:          p.nombre,
+            unidad_medida:      p.unidad,
+            valor:              parseFloat(val),
+            no_aplica:          false,
+            observaciones:      obsGenerales,
+          });
+        });
       });
+    });
 
-    const extraRows: Omit<RegistroCalidad, 'id' | 'created_at'>[] =
-      activeExtras.map(e => {
-        const p = PARAMS_OCASIONALES.find(x => x.id === e.id_param)!;
-        return {
-          ...shared,
-          parametro:    p.nombre,
-          unidad_medida: p.unidad,
-          valor:        e.no_aplica ? undefined : parseFloat(e.valor),
-          no_aplica:    e.no_aplica,
-          observaciones: [e.observaciones.trim(), obsGenerales].filter(Boolean).join(' | ') || undefined,
-        };
-      });
-
-    const rows = [...dailyRows, ...extraRows];
     try {
       await createCalidadBatch(rows);
     } catch (err) {
@@ -268,7 +431,7 @@ const FormatoCalidad = memo(function FormatoCalidad() {
     savedCountRef.current = rows.length;
     setSubmitted(true);
     setTimeout(() => navigate(ROUTES.OPERARIO_HOME), 2000);
-  }, [canSubmit, validate, saving, turno, currentUser, form, activeDailyIds, activeExtras, navigate]);
+  }, [totalFilled, gridVals, form, turno, currentUser, navigate]);
 
   // ─── Success screen ────────────────────────────────────────────────────────
 
@@ -283,17 +446,10 @@ const FormatoCalidad = memo(function FormatoCalidad() {
     );
   }
 
-  // ─── Render helpers ────────────────────────────────────────────────────────
-
-  const submitLabel = (() => {
-    if (saving) return 'Guardando...';
-    if (totalActive === 0) return 'Completa al menos una medición';
-    if (specialErrors.length > 0) return `Corrige los errores de validación (${specialErrors.length})`;
-    return `Enviar ${totalActive} Medición${totalActive !== 1 ? 'es' : ''}`;
-  })();
+  const DAY_LABELS: Record<string, string> = { L:'Lun', M:'Mar', W:'Mié', J:'Jue', V:'Vie', S:'Sáb' };
 
   return (
-    <div className="formato-page">
+    <div className="formato-page-wide">
       <div className="formato-header" style={{ borderColor: '#d29922' }}>
         <h1 className="formato-title">
           <span className="formato-num" style={{ background: '#d29922' }}>F-03</span>
@@ -309,11 +465,24 @@ const FormatoCalidad = memo(function FormatoCalidad() {
         <div className="form-row-3">
           <div className="form-group">
             <label className="form-label">Fecha</label>
-            <div className="form-readonly">{now.toLocaleDateString('es-CO')}</div>
+            <input
+              type="date"
+              className="form-input"
+              value={fecha}
+              onChange={e => handleFechaChange(e.target.value)}
+            />
           </div>
           <div className="form-group">
             <label className="form-label">Turno</label>
-            <div className="form-readonly">{TURNO_LABELS[turno]}</div>
+            <select
+              className="form-input"
+              value={turno}
+              onChange={e => setTurno(e.target.value)}
+            >
+              {Object.entries(TURNO_LABELS).map(([k, v]) => (
+                <option key={k} value={k}>{v}</option>
+              ))}
+            </select>
           </div>
           <div className="form-group">
             <label className="form-label">Operario</label>
@@ -321,7 +490,236 @@ const FormatoCalidad = memo(function FormatoCalidad() {
           </div>
         </div>
 
+        {/* ── Día de la semana ──────────────────────────────────────────── */}
+        <div className="form-group" style={{ marginBottom: 4 }}>
+          <label className="form-label">Día de hoy</label>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {(['L','M','W','J','V','S'] as const).map(d => (
+              <button
+                key={d} type="button"
+                onClick={() => setDayCode(d)}
+                style={{
+                  padding: '5px 12px', borderRadius: 6, fontSize: 13,
+                  border: dayCode === d ? '1px solid #d29922' : '1px solid #30363d',
+                  background: dayCode === d ? '#d2992220' : 'transparent',
+                  color: dayCode === d ? '#d29922' : '#8b949e',
+                  cursor: 'pointer', fontWeight: dayCode === d ? 600 : 400,
+                }}
+              >{DAY_LABELS[d]}</button>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Leyenda ───────────────────────────────────────────────────── */}
+        <div style={{ display: 'flex', gap: 14, marginBottom: 16, flexWrap: 'wrap', fontSize: 11, color: '#8b949e' }}>
+          <span style={{ display:'flex', alignItems:'center', gap:4 }}>
+            <span style={{ width:7, height:7, borderRadius:'50%', background:'#1D9E75', display:'inline-block' }}/>
+            Cada turno
+          </span>
+          <span style={{ display:'flex', alignItems:'center', gap:4 }}>
+            <span style={{ width:7, height:7, borderRadius:'50%', background:'#185FA5', display:'inline-block' }}/>
+            Diario (este turno)
+          </span>
+          <span style={{ display:'flex', alignItems:'center', gap:4 }}>
+            <span style={{ width:7, height:7, borderRadius:'50%', background:'#BA7517', display:'inline-block' }}/>
+            Solo hoy
+          </span>
+        </div>
+
+        {/* ── Banner de alarmas (arriba de la grilla) ───────────────────── */}
+        <AlarmBanner alarms={activeAlarms} />
+
+        {/* ── Grilla de mediciones ──────────────────────────────────────── */}
+        {GRID_ZONES.map(zone => {
+          // Columnas: parámetros que tienen freq en AL MENOS UN punto de esta zona
+          const zoneParams = GRID_PARAMS.filter(p =>
+            zone.points.some(pt => p.freq[pt.key])
+          );
+          if (!zoneParams.length) return null;
+
+          // Zona colapsable si ningún punto×param tiene frecuencia activa ahora
+          const hasActiveCell = zone.points.some(pt =>
+            zoneParams.some(p => {
+              const fc = freqClass(p.freq[pt.key], turnoNum, dayCode);
+              return fc === 'ct' || fc === 'cd' || fc === 'ch';
+            })
+          );
+          const isCollapsible = !hasActiveCell;
+          const isOpen = !isCollapsible || optOpen.has(zone.id);
+
+          // Dot color del encabezado de columna: tomar el "peor caso activo" entre los puntos
+          const colFreqClass = (p: GridParam): FreqClass => {
+            const classes = zone.points.map(pt => freqClass(p.freq[pt.key], turnoNum, dayCode));
+            if (classes.includes('ct')) return 'ct';
+            if (classes.includes('cd')) return 'cd';
+            if (classes.includes('ch')) return 'ch';
+            if (classes.some(c => c === 'opt')) return 'opt';
+            return null;
+          };
+
+
+          return (
+            <div key={zone.id} style={{ marginBottom: 20 }}>
+              {isCollapsible ? (
+                <button
+                  type="button"
+                  onClick={() => setOptOpen(prev => {
+                    const next = new Set(prev);
+                    next.has(zone.id) ? next.delete(zone.id) : next.add(zone.id);
+                    return next;
+                  })}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8,
+                    background: 'transparent', border: 'none', cursor: 'pointer', padding: 0,
+                    width: '100%', textAlign: 'left',
+                  }}
+                >
+                  <span className="form-section-title" style={{ margin: 0, color: '#484f58' }}>{zone.label}</span>
+                  <span style={{ fontSize: 11, color: '#484f58' }}>— no aplica este turno</span>
+                  <span style={{ marginLeft: 'auto', fontSize: 11, color: '#484f58', display:'flex', alignItems:'center', gap:4 }}>
+                    {isOpen ? 'ocultar' : 'registrar de todas formas'}
+                    <span style={{ fontSize:10, transform: isOpen ? 'rotate(90deg)':'rotate(0deg)', transition:'transform 0.15s', display:'inline-block' }}>▶</span>
+                  </span>
+                </button>
+              ) : (
+                <div className="form-section-title" style={{ marginBottom: 8 }}>{zone.label}</div>
+              )}
+
+              {!isOpen ? null : <div style={{ borderRadius: 8, border: '1px solid #21262d', opacity: isCollapsible ? 0.75 : 1 }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, tableLayout: 'fixed' }}>
+                  <colgroup>
+                    <col style={{ width: '14%' }} />
+                    {zoneParams.map(p => <col key={p.id} />)}
+                  </colgroup>
+                  <thead>
+                    <tr style={{ background: '#161b22', borderBottom: '1px solid #21262d' }}>
+                      <th style={{
+                        padding: '7px 12px', textAlign: 'left', fontWeight: 500,
+                        fontSize: 11, color: '#8b949e',
+                      }}>Punto</th>
+                      {zoneParams.map(p => {
+                        const fc = colFreqClass(p);
+                        const dotColor = fc === 'ct' ? '#1D9E75' : fc === 'cd' ? '#185FA5' : fc === 'ch' ? '#BA7517' : '#30363d';
+                        return (
+                          <th key={p.id} style={{
+                            padding: '7px 4px', textAlign: 'center', fontWeight: 500,
+                            fontSize: 11, color: fc === 'opt' || !fc ? '#484f58' : '#8b949e',
+                          }}>
+                            <span style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:2 }}>
+                              <span style={{ display:'flex', alignItems:'center', gap:3, justifyContent:'center' }}>
+                                <span style={{ width:6, height:6, borderRadius:'50%', background:dotColor, display:'inline-block', flexShrink:0 }}/>
+                                <span style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                                  {PARAM_LABEL[p.id] ?? p.nombre}
+                                </span>
+                              </span>
+                              <span style={{ fontSize:10, color:'#2e3a4a' }}>{p.unidad}</span>
+                            </span>
+                          </th>
+                        );
+                      })}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {zone.points.map((pt, ri) => (
+                      <tr key={pt.key} style={{ borderBottom: ri < zone.points.length - 1 ? '1px solid #21262d' : 'none' }}>
+                        <td style={{
+                          padding: '5px 12px', fontWeight: 500, color: '#e6edf3',
+                          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                          background: '#0d1117', fontSize: 12,
+                        }}>{pt.label}</td>
+                        {zoneParams.map(p => {
+                          const ptFreq = p.freq[pt.key];
+                          const fc = freqClass(ptFreq, turnoNum, dayCode);
+                          const k = `${pt.key}|${p.id}`;
+                          const val = gridVals[k] ?? '';
+                          const prev = prevVals[`${pt.unidad}||${p.nombre}`];
+                          const num = parseFloat(val);
+                          const hasVal = val !== '' && !isNaN(num);
+                          const outOfRange = hasVal && (num < p.min || num > p.max);
+                          const alarm = hasVal ? getAlarm(p.id, pt.key, num, gridVals) : null;
+
+                          if (!ptFreq) {
+                            return (
+                              <td key={p.id} style={{ padding: '5px 4px', background: '#0d1117', textAlign: 'center' }}>
+                                <span style={{ color: '#1c2128', fontSize: 14 }}>—</span>
+                              </td>
+                            );
+                          }
+
+                          // Fondo sutil según frecuencia cuando la celda está vacía
+                          const freqBg = fc === 'ct' ? '#0d1f18' : fc === 'cd' ? '#0d1526' : fc === 'ch' ? '#1a1505' : '#0d1117';
+
+                          const alarmLevel = outOfRange ? 'error' : alarm?.level ?? null;
+                          const alarmMsg   = alarm?.message ?? (outOfRange ? `Fuera de rango (${p.min}–${p.max} ${p.unidad})` : '');
+
+                          const borderColor =
+                            alarmLevel === 'error' ? '#f85149' :
+                            alarmLevel === 'warn'  ? '#e3b341' :
+                            hasVal                 ? '#238636' : '#30363d';
+
+                          const inputBg =
+                            alarmLevel === 'error' ? '#2d0f0f' :
+                            alarmLevel === 'warn'  ? '#1f1500' :
+                            hasVal                 ? '#0a1e0a' : freqBg;
+
+                          return (
+                            <td key={p.id} style={{ padding: '4px 3px', background: '#0d1117' }}>
+                              <div style={{ position: 'relative' }}>
+                                <input
+                                  type="number"
+                                  step={p.decimales === 0 ? '1' : p.decimales === 1 ? '0.1' : '0.01'}
+                                  value={val}
+                                  onChange={e => setCellVal(pt.key, p.id, e.target.value)}
+                                  placeholder="—"
+                                  title={alarmMsg || undefined}
+                                  style={{
+                                    width: '100%', boxSizing: 'border-box',
+                                    padding: '5px 6px',
+                                    paddingBottom: prev?.valor != null ? 16 : 5,
+                                    borderRadius: 5, fontSize: 13, textAlign: 'right',
+                                    border: `1px solid ${borderColor}`,
+                                    background: inputBg,
+                                    color: alarmLevel === 'error' ? '#ff7b72' : alarmLevel === 'warn' ? '#e3b341' : '#e6edf3',
+                                    outline: 'none', minWidth: 0,
+                                  }}
+                                  onWheel={e => (e.target as HTMLInputElement).blur()}
+                                />
+                                {/* Ícono de alarma superpuesto arriba izquierda */}
+                                {alarmLevel && (
+                                  <span style={{
+                                    position: 'absolute', top: 3, left: 4,
+                                    fontSize: 9, lineHeight: 1, pointerEvents: 'none',
+                                    color: alarmLevel === 'error' ? '#f85149' : '#e3b341',
+                                  }}>
+                                    {alarmLevel === 'error' ? '✕' : '!'}
+                                  </span>
+                                )}
+                                {prev?.valor != null && (
+                                  <span style={{
+                                    position: 'absolute', bottom: 4, right: 6,
+                                    fontSize: 9, color: '#484f58', pointerEvents: 'none',
+                                    fontFamily: 'monospace', lineHeight: 1,
+                                  }}>
+                                    ↑{prev.valor}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>}
+            </div>
+          );
+        })}
+
         {/* ── Novedades y Observaciones ─────────────────────────────────── */}
+        {/* ── Banner de alarmas (antes de observaciones) ────────────────── */}
+        <AlarmBanner alarms={activeAlarms} />
+
         <div className="form-section-title">Novedades del Turno</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 12 }}>
           <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 14 }}>
@@ -354,222 +752,6 @@ const FormatoCalidad = memo(function FormatoCalidad() {
           />
         </div>
 
-        {/* ── Unidad de Tratamiento ─────────────────────────────────────── */}
-        <div className="form-group">
-          <label className="form-label">
-            Unidad de Tratamiento *
-            <span style={{ color: '#484f58', fontWeight: 400, marginLeft: 8 }}>
-              ({UNIDADES_TRATAMIENTO.length} puntos disponibles)
-            </span>
-          </label>
-          <select
-            className="form-input"
-            value={form.unidad_tratamiento}
-            onChange={e => setForm(prev => ({ ...prev, unidad_tratamiento: e.target.value }))}
-            required
-          >
-            <option value="">Selecciona la unidad de tratamiento...</option>
-            {UNIDADES_TRATAMIENTO.map(u => <option key={u} value={u}>{u}</option>)}
-          </select>
-          {loadingPrev && (
-            <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
-              Cargando valores turno anterior…
-            </span>
-          )}
-        </div>
-
-        {/* ── Parámetros Diarios ────────────────────────────────────────── */}
-        <div className="form-section-title">
-          Parámetros Diarios
-          <span style={{ color: '#484f58', fontWeight: 400, marginLeft: 8 }}>
-            — completa los que apliquen en este turno
-          </span>
-        </div>
-
-        <div className="params-list">
-          {PARAMS_DIARIOS.map(p => {
-            const inp      = form.daily[p.id];
-            const valorNum = parseFloat(inp.valor);
-            const fueraRango = inp.valor !== '' && !inp.no_aplica && (valorNum < p.min || valorNum > p.max);
-            const warning  = inp.valor !== '' && !inp.no_aplica
-              ? getParamWarning(p.id, inp.valor, form.daily)
-              : null;
-            const active   = inp.valor !== '' || inp.no_aplica;
-            const hasErr   = submitErrors[p.id];
-            const prev     = prevValues[p.nombre];
-
-            const rowClass = `param-row${inp.no_aplica ? ' is-noapl' : active ? ' has-value' : ''}${(fueraRango || warning?.level === 'error' || hasErr) ? ' has-error' : warning?.level === 'warn' ? ' has-warn' : ''}`;
-            const step     = stepForDecimals((p as { decimales?: number }).decimales ?? 2);
-
-            return (
-              <div key={p.id} className={rowClass}>
-                <div className="param-row-header">
-                  <span className="param-badge-diario">DIARIO</span>
-                  <span className="param-nombre-text">{p.nombre}</span>
-                  <span className="param-rango">{p.min} – {p.max} {p.unidad}</span>
-                  {prev?.valor != null && (
-                    <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 'auto', marginRight: 8 }}>
-                      Ant.: <strong>{prev.valor}</strong>
-                      {prev.turno && ` (${prev.turno})`}
-                    </span>
-                  )}
-                  <label className="param-noapl-toggle" title="No aplica / No fue posible medir">
-                    <input
-                      type="checkbox"
-                      checked={inp.no_aplica}
-                      onChange={e => {
-                        setDaily(p.id, 'no_aplica', e.target.checked);
-                        if (e.target.checked) setDaily(p.id, 'valor', '');
-                      }}
-                    />
-                    <span>N/A</span>
-                  </label>
-                </div>
-
-                {!inp.no_aplica && (
-                  <div className="param-row-inputs">
-                    <input
-                      type="number"
-                      step={step}
-                      className={`form-input${fueraRango || warning?.level === 'error' ? ' input-warning' : ''}`}
-                      placeholder="Valor medido"
-                      value={inp.valor}
-                      onChange={e => setDaily(p.id, 'valor', e.target.value)}
-                    />
-                    <span className="param-unidad-badge">{p.unidad}</span>
-                  </div>
-                )}
-
-                {warning && (
-                  <span className={warning.level === 'error' ? 'field-error' : 'field-warning'}>
-                    {warning.level === 'warn' ? '⚠ ' : ''}{warning.msg}
-                  </span>
-                )}
-
-                {fueraRango && !warning && (
-                  <span className="field-warning">
-                    Fuera del rango técnico ({p.min} – {p.max} {p.unidad})
-                  </span>
-                )}
-
-                {inp.no_aplica && (
-                  <>
-                    <textarea
-                      className={`form-textarea${hasErr ? ' input-error' : ''}`}
-                      rows={2}
-                      placeholder="Explica por qué no fue posible realizar esta medición..."
-                      value={inp.observaciones}
-                      onChange={e => setDaily(p.id, 'observaciones', e.target.value)}
-                    />
-                    {hasErr && <span className="field-error">La observación es obligatoria cuando N/A está marcado.</span>}
-                  </>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* ── Mediciones Adicionales ────────────────────────────────────── */}
-        <div className="form-section-title">
-          Mediciones Adicionales
-          <span style={{ color: '#484f58', fontWeight: 400, marginLeft: 8 }}>
-            — parámetros de laboratorio o periódicos
-          </span>
-        </div>
-
-        <div className="extras-section">
-          {form.extras.map(extra => {
-            const selectedParam = PARAMS_OCASIONALES.find(p => p.id === extra.id_param);
-            const valorNum      = parseFloat(extra.valor);
-            const fuera         = selectedParam && extra.valor !== '' && !extra.no_aplica
-              && (valorNum < selectedParam.min || valorNum > selectedParam.max);
-            const hasErr        = submitErrors[extra.uid];
-            const prev          = selectedParam ? prevValues[selectedParam.nombre] : undefined;
-            const step          = stepForDecimals((selectedParam as { decimales?: number } | undefined)?.decimales ?? 2);
-
-            return (
-              <div key={extra.uid} className="extra-row">
-                <div className="extra-row-fields">
-                  <select
-                    className="form-input"
-                    value={extra.id_param}
-                    onChange={e => setExtra(extra.uid, 'id_param', e.target.value)}
-                  >
-                    <option value="">Parámetro...</option>
-                    {PARAMS_OCASIONALES
-                      .filter(p => !addedExtraIds.has(p.id) || p.id === extra.id_param)
-                      .map(p => <option key={p.id} value={p.id}>{p.nombre}</option>)
-                    }
-                  </select>
-
-                  <input
-                    type="number"
-                    step={step}
-                    className={`form-input${fuera ? ' input-warning' : ''}`}
-                    placeholder="Valor"
-                    value={extra.valor}
-                    disabled={!extra.id_param || extra.no_aplica}
-                    onChange={e => setExtra(extra.uid, 'valor', e.target.value)}
-                  />
-
-                  <span className="param-unidad-badge" style={{ minWidth: 60 }}>
-                    {selectedParam?.unidad ?? '—'}
-                  </span>
-
-                  {prev?.valor != null && (
-                    <span style={{ fontSize: 11, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
-                      Ant.: <strong>{prev.valor}</strong>
-                    </span>
-                  )}
-
-                  <button type="button" className="btn-remove-param" onClick={() => removeExtra(extra.uid)}>×</button>
-                </div>
-
-                <label className="checkbox-label" style={{ fontSize: 13 }}>
-                  <input
-                    type="checkbox"
-                    className="form-checkbox"
-                    checked={extra.no_aplica}
-                    onChange={e => {
-                      setExtra(extra.uid, 'no_aplica', e.target.checked);
-                      if (e.target.checked) setExtra(extra.uid, 'valor', '');
-                    }}
-                  />
-                  <span>No aplica / No fue posible realizar la medición</span>
-                </label>
-
-                {extra.no_aplica && (
-                  <>
-                    <textarea
-                      className={`form-textarea${hasErr ? ' input-error' : ''}`}
-                      rows={2}
-                      placeholder="Explica por qué no fue posible..."
-                      value={extra.observaciones}
-                      onChange={e => setExtra(extra.uid, 'observaciones', e.target.value)}
-                    />
-                    {hasErr && <span className="field-error">La observación es obligatoria cuando N/A está marcado.</span>}
-                  </>
-                )}
-
-                {fuera && (
-                  <span className="field-warning">
-                    Fuera del rango técnico ({selectedParam?.min} – {selectedParam?.max} {selectedParam?.unidad})
-                  </span>
-                )}
-              </div>
-            );
-          })}
-
-          {availableOcasionales.length > 0 && (
-            <button type="button" className="btn-add-param" onClick={addExtra}>
-              + Agregar medición adicional
-              <span style={{ color: '#484f58', marginLeft: 8, fontSize: 11 }}>
-                ({availableOcasionales.length} parámetros disponibles)
-              </span>
-            </button>
-          )}
-        </div>
-
         {saveError && <div className="form-alert form-alert-error">{saveError}</div>}
 
         {/* ── Acciones ──────────────────────────────────────────────────── */}
@@ -579,8 +761,10 @@ const FormatoCalidad = memo(function FormatoCalidad() {
             Cancelar
           </button>
           <button type="submit" className="btn-primary" style={{ background: '#d29922' }}
-            disabled={saving || !canSubmit}>
-            {submitLabel}
+            disabled={saving || totalFilled === 0}>
+            {saving ? 'Guardando...' : totalFilled === 0
+              ? 'Completa al menos una medición'
+              : `Enviar ${totalFilled} medición${totalFilled !== 1 ? 'es' : ''}`}
           </button>
         </div>
 
