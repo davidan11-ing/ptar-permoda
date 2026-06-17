@@ -3,7 +3,7 @@ import {
   Bar, Line,
   ComposedChart, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer,
-  PieChart, Pie, Cell,
+  PieChart, Pie, Cell, ReferenceLine,
 } from 'recharts';
 import { useBalanceData } from './hooks/useBalanceData';
 import { getReporteBalanceHtmlUrl, getGemEficiencia, type BalanceHidricoRow, type GemEficienciaRow } from '../../services/ptarClient';
@@ -968,7 +968,33 @@ export default function BalanceHidricoDashboard() {
       <section className="dash-section">
         <SeccionHeader numero={10} titulo="INDICADOR OSMOSIS INVERSA" color="#FFD966" textColor="#1c2128" />
         <div className="dash-row-2col">
-          <ChartPending titulo="Indicador RO — $m³ vs Volumen enviado a RO (datos de costo pendientes)" alto={220} />
+          {/* Volumen RO + eficiencia (proxy hasta tener datos de costo) */}
+          <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
+            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
+              Indicador RO — Volumen enviado vs eficiencia (%)
+            </div>
+            <ResponsiveContainer width="100%" height={220}>
+              <ComposedChart data={agrupado} margin={{ top: 4, right: 56, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#21262d" />
+                <XAxis dataKey="fecha" tickFormatter={fmt} tick={AXIS_TICK} interval="preserveStartEnd" />
+                <YAxis yAxisId="left" tick={AXIS_TICK} width={50}
+                  label={{ value: 'm³', angle: -90, position: 'insideLeft', fill: '#484f58', fontSize: 10, dx: -4 }} />
+                <YAxis yAxisId="right" orientation="right" tick={{ fill: '#ED7D31', fontSize: 10 }} width={44}
+                  domain={[0, 100]} tickFormatter={(v: number) => `${v}%`}
+                  label={{ value: '%', angle: 90, position: 'insideRight', fill: '#ED7D3180', fontSize: 10, dx: 6 }} />
+                <Tooltip {...TOOLTIP_STYLE} labelFormatter={(v: string) => `Fecha: ${v}`}
+                  formatter={(val: number, name: string) => [
+                    name.includes('%') ? `${(val as number).toFixed(1)}%` : `${(val as number).toFixed(1)} m³`, name,
+                  ]} />
+                <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
+                <ReferenceLine yAxisId="right" y={75} stroke="#70AD47" strokeDasharray="4 2" label={{ value: 'Meta 75%', fill: '#70AD47', fontSize: 9, position: 'right' }} />
+                <Bar  yAxisId="left"  dataKey="entrada_ro1"      name="Enviado a RO (m³)"  fill="#BDD7EE" radius={[3,3,0,0]} />
+                <Bar  yAxisId="left"  dataKey="permeado_ro1"     name="Permeado RO (m³)"   fill="#A9D18E" radius={[3,3,0,0]} />
+                <Line yAxisId="right" dataKey="eficiencia_ro_pct" name="% Eficiencia RO"
+                  stroke="#ED7D31" strokeWidth={2} dot={{ fill: '#ED7D31', r: 3 }} connectNulls />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
 
           {/* Tabla estática formulación RO */}
           <div className="dash-card" style={{ padding: '12px' }}>
@@ -1015,8 +1041,63 @@ export default function BalanceHidricoDashboard() {
       <section className="dash-section">
         <SeccionHeader numero={11} titulo="BALANCE DE LODOS" color="#DAE3F3" />
         <div className="dash-row-2col">
-          <ChartPending titulo="Indicador $/m³ — Volumen tratado vs costo unitario" alto={220} />
-          <ChartPending titulo="Indicador $/Kg — Kg generados vs costo por kg" alto={220} />
+
+          {/* $/m³ Lodos — estructura lista, datos pendientes de endpoint /api/lodos/ */}
+          <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
+            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
+              Indicador $/m³ — Volumen tratado vs costo unitario
+            </div>
+            <ResponsiveContainer width="100%" height={220}>
+              <ComposedChart data={[]} margin={{ top: 4, right: 60, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#21262d" />
+                <XAxis dataKey="fecha" tick={AXIS_TICK} />
+                <YAxis yAxisId="left"  tick={AXIS_TICK} width={54}
+                  label={{ value: 'm³', angle: -90, position: 'insideLeft', fill: '#484f58', fontSize: 10, dx: -4 }} />
+                <YAxis yAxisId="right" orientation="right" tick={{ fill: '#C00000', fontSize: 10 }} width={56}
+                  tickFormatter={(v: number) => `$${fmtM3(v)}`}
+                  label={{ value: '$/m³', angle: 90, position: 'insideRight', fill: '#C0000080', fontSize: 10, dx: 6 }} />
+                <Tooltip {...TOOLTIP_STYLE} />
+                <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
+                <ReferenceLine yAxisId="right" y={0} stroke="#70AD47" strokeDasharray="4 2"
+                  label={{ value: 'Meta', fill: '#70AD47', fontSize: 9, position: 'right' }} />
+                <Bar  yAxisId="left"  dataKey="volumen_m3"  name="Volumen tratado (m³)" fill="#BDD7EE" radius={[3,3,0,0]} />
+                <Line yAxisId="right" dataKey="costo_m3"   name="Costo $/m³"
+                  stroke="#C00000" strokeWidth={2} dot={{ fill: '#C00000', r: 3 }} connectNulls />
+              </ComposedChart>
+            </ResponsiveContainer>
+            <div style={{ fontSize: 9, color: '#484f58', textAlign: 'center', paddingBottom: 4 }}>
+              Pendiente endpoint <code>/api/lodos/</code>
+            </div>
+          </div>
+
+          {/* $/Kg Lodos — estructura lista, datos pendientes de endpoint /api/lodos/ */}
+          <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
+            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
+              Indicador $/Kg — Kg generados vs costo por kg
+            </div>
+            <ResponsiveContainer width="100%" height={220}>
+              <ComposedChart data={[]} margin={{ top: 4, right: 60, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#21262d" />
+                <XAxis dataKey="fecha" tick={AXIS_TICK} />
+                <YAxis yAxisId="left"  tick={AXIS_TICK} width={54}
+                  label={{ value: 'Kg', angle: -90, position: 'insideLeft', fill: '#484f58', fontSize: 10, dx: -4 }} />
+                <YAxis yAxisId="right" orientation="right" tick={{ fill: '#C00000', fontSize: 10 }} width={56}
+                  tickFormatter={(v: number) => `$${fmtM3(v)}`}
+                  label={{ value: '$/Kg', angle: 90, position: 'insideRight', fill: '#C0000080', fontSize: 10, dx: 6 }} />
+                <Tooltip {...TOOLTIP_STYLE} />
+                <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
+                <ReferenceLine yAxisId="right" y={0} stroke="#70AD47" strokeDasharray="4 2"
+                  label={{ value: 'Meta', fill: '#70AD47', fontSize: 9, position: 'right' }} />
+                <Bar  yAxisId="left"  dataKey="kg_generados" name="Kg generados" fill="#F4B183" radius={[3,3,0,0]} />
+                <Line yAxisId="right" dataKey="costo_kg"     name="Costo $/Kg"
+                  stroke="#C00000" strokeWidth={2} dot={{ fill: '#C00000', r: 3 }} connectNulls />
+              </ComposedChart>
+            </ResponsiveContainer>
+            <div style={{ fontSize: 9, color: '#484f58', textAlign: 'center', paddingBottom: 4 }}>
+              Pendiente endpoint <code>/api/lodos/</code>
+            </div>
+          </div>
+
         </div>
       </section>
 
