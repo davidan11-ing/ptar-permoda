@@ -414,21 +414,21 @@ export default function BalanceHidricoDashboard() {
                 <Tooltip {...TOOLTIP_STYLE} labelFormatter={(v: string) => `Fecha: ${v}`}
                   formatter={(val: number, name: string) => [`${val.toFixed(1)} m³`, name]} />
                 <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
-                <Bar dataKey="carrotanques_m3" name="Carrotanques" fill="#4472C4" radius={[3,3,0,0]}>
-                  <LabelList dataKey="carrotanques_m3" position="top" style={{ fill: '#4472C4', fontSize: 8, fontFamily: 'monospace' }}
-                    formatter={(v: number) => v > 0 ? v.toFixed(0) : ''} />
+                <Bar dataKey="carrotanques_m3" name="Carrotanques" fill="#4472C4" stackId="s">
+                  <LabelList dataKey="carrotanques_m3" position="insideTop" style={{ fill: '#fff', fontSize: 8, fontFamily: 'monospace' }}
+                    formatter={(v: number) => v > 20 ? v.toFixed(0) : ''} />
                 </Bar>
-                <Bar dataKey="permeado_ro1" name="Permeado RO" fill="#5B9BD5">
-                  <LabelList dataKey="permeado_ro1" position="top" style={{ fill: '#5B9BD5', fontSize: 8, fontFamily: 'monospace' }}
-                    formatter={(v: number) => v > 0 ? v.toFixed(0) : ''} />
+                <Bar dataKey="permeado_ro1" name="Permeado RO" fill="#5B9BD5" stackId="s">
+                  <LabelList dataKey="permeado_ro1" position="insideTop" style={{ fill: '#fff', fontSize: 8, fontFamily: 'monospace' }}
+                    formatter={(v: number) => v > 20 ? v.toFixed(0) : ''} />
                 </Bar>
-                <Bar dataKey="acueducto_m3" name="Acueducto" fill="#70AD47">
-                  <LabelList dataKey="acueducto_m3" position="top" style={{ fill: '#70AD47', fontSize: 8, fontFamily: 'monospace' }}
-                    formatter={(v: number) => v > 0 ? v.toFixed(0) : ''} />
+                <Bar dataKey="acueducto_m3" name="Acueducto" fill="#70AD47" stackId="s">
+                  <LabelList dataKey="acueducto_m3" position="insideTop" style={{ fill: '#fff', fontSize: 8, fontFamily: 'monospace' }}
+                    formatter={(v: number) => v > 20 ? v.toFixed(0) : ''} />
                 </Bar>
-                <Bar dataKey="potable_ptap" name="PTAP Potable" fill="#ED7D31">
-                  <LabelList dataKey="potable_ptap" position="top" style={{ fill: '#ED7D31', fontSize: 8, fontFamily: 'monospace' }}
-                    formatter={(v: number) => v > 0 ? v.toFixed(0) : ''} />
+                <Bar dataKey="potable_ptap" name="PTAP Potable" fill="#ED7D31" stackId="s" radius={[3,3,0,0]}>
+                  <LabelList dataKey="potable_ptap" position="insideTop" style={{ fill: '#fff', fontSize: 8, fontFamily: 'monospace' }}
+                    formatter={(v: number) => v > 20 ? v.toFixed(0) : ''} />
                 </Bar>
                 <Line dataKey="total_agua_limpia_m3" name="Total Agua Limpia"
                   stroke="#203864" strokeWidth={2}
