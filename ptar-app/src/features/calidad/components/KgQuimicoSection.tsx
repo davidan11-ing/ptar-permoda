@@ -152,7 +152,7 @@ export default function KgQuimicoSection({ fechaInicio, fechaFin, granularidad: 
         <div className="cal-loading">Cargando…</div>
       ) : error ? (
         <div className="cal-empty" style={{ color: '#f85149' }}>{error}</div>
-      ) : !data.length ? (
+      ) : (mostrarVacios ? !chartData.length : !data.length) ? (
         <div className="cal-empty">Sin datos para el período seleccionado</div>
       ) : (
         <div className="dash-card" style={{ padding: '12px 4px 0px' }}>

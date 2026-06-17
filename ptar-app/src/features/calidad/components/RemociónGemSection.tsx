@@ -233,7 +233,7 @@ export default function RemociónGemSection({fechaInicio,fechaFin,parametro:para
       </div>
 
       {loading ? <div className="cal-loading">Cargando…</div>
-       : !data.length ? (
+       : (mostrarVacios ? !chartData.length : !data.length) ? (
         <div className="cal-empty">Sin datos para <strong>{param}</strong></div>
        ) : (
         <div>
