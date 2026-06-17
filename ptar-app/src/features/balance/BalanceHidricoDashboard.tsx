@@ -1043,58 +1043,72 @@ export default function BalanceHidricoDashboard() {
         <div className="dash-row-2col">
 
           {/* $/m³ Lodos — estructura lista, datos pendientes de endpoint /api/lodos/ */}
-          <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
+          <div className="dash-card" style={{ padding: '16px 8px 8px', position: 'relative' }}>
             <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
               Indicador $/m³ — Volumen tratado vs costo unitario
             </div>
-            <ResponsiveContainer width="100%" height={220}>
-              <ComposedChart data={[]} margin={{ top: 4, right: 60, left: 0, bottom: 0 }}>
+            <ResponsiveContainer width="100%" height={200}>
+              <ComposedChart
+                data={[{ fecha: '' }]}
+                margin={{ top: 4, right: 60, left: 0, bottom: 0 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke="#21262d" />
                 <XAxis dataKey="fecha" tick={AXIS_TICK} />
-                <YAxis yAxisId="left"  tick={AXIS_TICK} width={54}
+                <YAxis yAxisId="left"  tick={AXIS_TICK} width={54} domain={[0, 1000]}
                   label={{ value: 'm³', angle: -90, position: 'insideLeft', fill: '#484f58', fontSize: 10, dx: -4 }} />
                 <YAxis yAxisId="right" orientation="right" tick={{ fill: '#C00000', fontSize: 10 }} width={56}
-                  tickFormatter={(v: number) => `$${fmtM3(v)}`}
+                  domain={[0, 5000]} tickFormatter={(v: number) => `$${fmtM3(v)}`}
                   label={{ value: '$/m³', angle: 90, position: 'insideRight', fill: '#C0000080', fontSize: 10, dx: 6 }} />
-                <Tooltip {...TOOLTIP_STYLE} />
                 <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
-                <ReferenceLine yAxisId="right" y={0} stroke="#70AD47" strokeDasharray="4 2"
+                <ReferenceLine yAxisId="right" y={2500} stroke="#70AD47" strokeDasharray="4 2"
                   label={{ value: 'Meta', fill: '#70AD47', fontSize: 9, position: 'right' }} />
                 <Bar  yAxisId="left"  dataKey="volumen_m3"  name="Volumen tratado (m³)" fill="#BDD7EE" radius={[3,3,0,0]} />
                 <Line yAxisId="right" dataKey="costo_m3"   name="Costo $/m³"
                   stroke="#C00000" strokeWidth={2} dot={{ fill: '#C00000', r: 3 }} connectNulls />
               </ComposedChart>
             </ResponsiveContainer>
-            <div style={{ fontSize: 9, color: '#484f58', textAlign: 'center', paddingBottom: 4 }}>
-              Pendiente endpoint <code>/api/lodos/</code>
+            <div style={{
+              position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              pointerEvents: 'none',
+            }}>
+              <div style={{ fontSize: 11, color: '#484f58', fontStyle: 'italic' }}>Sin datos — pendiente endpoint</div>
+              <code style={{ fontSize: 9, color: '#30363d', marginTop: 4 }}>/api/lodos/</code>
             </div>
           </div>
 
           {/* $/Kg Lodos — estructura lista, datos pendientes de endpoint /api/lodos/ */}
-          <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
+          <div className="dash-card" style={{ padding: '16px 8px 8px', position: 'relative' }}>
             <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
               Indicador $/Kg — Kg generados vs costo por kg
             </div>
-            <ResponsiveContainer width="100%" height={220}>
-              <ComposedChart data={[]} margin={{ top: 4, right: 60, left: 0, bottom: 0 }}>
+            <ResponsiveContainer width="100%" height={200}>
+              <ComposedChart
+                data={[{ fecha: '' }]}
+                margin={{ top: 4, right: 60, left: 0, bottom: 0 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke="#21262d" />
                 <XAxis dataKey="fecha" tick={AXIS_TICK} />
-                <YAxis yAxisId="left"  tick={AXIS_TICK} width={54}
+                <YAxis yAxisId="left"  tick={AXIS_TICK} width={54} domain={[0, 5000]}
                   label={{ value: 'Kg', angle: -90, position: 'insideLeft', fill: '#484f58', fontSize: 10, dx: -4 }} />
                 <YAxis yAxisId="right" orientation="right" tick={{ fill: '#C00000', fontSize: 10 }} width={56}
-                  tickFormatter={(v: number) => `$${fmtM3(v)}`}
+                  domain={[0, 2000]} tickFormatter={(v: number) => `$${fmtM3(v)}`}
                   label={{ value: '$/Kg', angle: 90, position: 'insideRight', fill: '#C0000080', fontSize: 10, dx: 6 }} />
-                <Tooltip {...TOOLTIP_STYLE} />
                 <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
-                <ReferenceLine yAxisId="right" y={0} stroke="#70AD47" strokeDasharray="4 2"
+                <ReferenceLine yAxisId="right" y={800} stroke="#70AD47" strokeDasharray="4 2"
                   label={{ value: 'Meta', fill: '#70AD47', fontSize: 9, position: 'right' }} />
                 <Bar  yAxisId="left"  dataKey="kg_generados" name="Kg generados" fill="#F4B183" radius={[3,3,0,0]} />
                 <Line yAxisId="right" dataKey="costo_kg"     name="Costo $/Kg"
                   stroke="#C00000" strokeWidth={2} dot={{ fill: '#C00000', r: 3 }} connectNulls />
               </ComposedChart>
             </ResponsiveContainer>
-            <div style={{ fontSize: 9, color: '#484f58', textAlign: 'center', paddingBottom: 4 }}>
-              Pendiente endpoint <code>/api/lodos/</code>
+            <div style={{
+              position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              pointerEvents: 'none',
+            }}>
+              <div style={{ fontSize: 11, color: '#484f58', fontStyle: 'italic' }}>Sin datos — pendiente endpoint</div>
+              <code style={{ fontSize: 9, color: '#30363d', marginTop: 4 }}>/api/lodos/</code>
             </div>
           </div>
 
