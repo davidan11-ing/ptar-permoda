@@ -81,6 +81,9 @@ function ChartPending({ titulo, alto = 200 }: { titulo: string; alto?: number })
 
 const TURNO_NUM: Record<string, number> = { noche: 1, 'mañana': 2, tarde: 3 };
 
+// Meta indicador $/m³ tratamiento GEM — actualizar cuando se defina el objetivo 2026
+const GEM_META_M3 = 1800;
+
 function SquareDot(props: any) {
   const { cx, cy, fill } = props;
   if (cx == null || cy == null) return null;
@@ -957,6 +960,8 @@ export default function BalanceHidricoDashboard() {
                     name === 'Indicador $/m³' ? `$${(val as number).toFixed(0)}/m³` : `${(val as number).toFixed(1)} m³`, name,
                   ]} />
                 <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
+                <ReferenceLine yAxisId="right" y={GEM_META_M3} stroke="#70AD47" strokeDasharray="4 2"
+                  label={{ value: `Meta $${GEM_META_M3}/m³`, fill: '#70AD47', fontSize: 9, position: 'right' }} />
                 <Bar  yAxisId="left"  dataKey="caudal_m3"    name="Caudal GEM (m³)" fill="#BDD7EE" radius={[3,3,0,0]} />
                 <Line yAxisId="right" dataKey="pesos_por_m3" name="Indicador $/m³"
                   stroke="#ED7D31" strokeWidth={2} dot={{ fill: '#ED7D31', r: 3 }} connectNulls />
