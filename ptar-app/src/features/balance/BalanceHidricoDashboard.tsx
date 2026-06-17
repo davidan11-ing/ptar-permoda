@@ -7,6 +7,7 @@ import {
 } from 'recharts';
 import { useBalanceData } from './hooks/useBalanceData';
 import { getReporteBalanceHtmlUrl, getGemEficiencia, type BalanceHidricoRow, type GemEficienciaRow } from '../../services/ptarClient';
+import InformeBalanceModal from './InformeBalanceModal';
 import GranularidadSelector from '../../components/shared/GranularidadSelector';
 import { useGranularidad } from '../../hooks/useGranularidad';
 import { agruparPorGranularidad } from '../../lib/utils/agruparTemporal';
@@ -184,6 +185,8 @@ export default function BalanceHidricoDashboard() {
 
   const [turnoFiltro,    setTurnoFiltro]    = useState('');
   const [quitarSinDatos, setQuitarSinDatos] = useState(true);
+  const [informeAbierto,  setInformeAbierto]  = useState(false);
+  const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
 
   const turnoNum = turnoFiltro ? Number(turnoFiltro) : undefined;
   const { data, loading, error } = useBalanceData(fechaInicio, fechaFin, turnoNum);
@@ -321,6 +324,7 @@ export default function BalanceHidricoDashboard() {
   }
 
   return (
+    <>
     <div className="cal-page">
 
       {/* ── Encabezado ── */}
@@ -329,52 +333,63 @@ export default function BalanceHidricoDashboard() {
           <h1 className="cal-title">Dashboard Balance Hídrico</h1>
           <p className="cal-subtitle">Volúmenes, eficiencia RO e indicadores de consumo por proceso</p>
         </div>
-        <a
-          href={getReporteBalanceHtmlUrl({ fecha_inicio: fechaInicio, fecha_fin: fechaFin })}
-          target="_blank" rel="noopener noreferrer"
-          style={{ background: '#1f6feb', textDecoration: 'none', alignSelf: 'center', padding: '8px 16px', borderRadius: 6, fontSize: 13, fontWeight: 600, color: '#fff' }}
-        >
-          💧 Informe Balance
-        </a>
+        <div style={{ display: 'flex', gap: 8, alignSelf: 'center' }}>
+          <button
+            onClick={() => setFiltrosAbiertos(v => !v)}
+            style={{ background: filtrosAbiertos ? '#21262d' : '#161b22', border: '1px solid #30363d', padding: '7px 14px', borderRadius: 6, fontSize: 12, fontWeight: 600, color: '#8b949e', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+          >
+            <span style={{ fontSize: 13 }}>⚙</span>
+            Filtros
+            <span style={{ fontSize: 10, opacity: 0.7 }}>{filtrosAbiertos ? '▲' : '▼'}</span>
+          </button>
+          <button
+            onClick={() => setInformeAbierto(true)}
+            style={{ background: '#1a6b3c', border: 'none', padding: '7px 14px', borderRadius: 6, fontSize: 12, fontWeight: 600, color: '#fff', cursor: 'pointer' }}
+          >
+            💧 Informe
+          </button>
+        </div>
       </div>
 
-      {/* ── Filtros ── */}
-      <div className="cal-filters" style={{ marginBottom: 16 }}>
-        <GranularidadSelector value={granularidad} onChange={setGranularidad} />
-        <div className="cal-filter-group">
-          <label className="cal-filter-label">Turno</label>
-          <select className="cal-filter-select" value={turnoFiltro}
-            onChange={e => setTurnoFiltro(e.target.value)}>
-            <option value="">Todos</option>
-            <option value="1">Mañana</option>
-            <option value="2">Tarde</option>
-            <option value="3">Noche</option>
-          </select>
+      {/* ── Filtros (colapsables) ── */}
+      {filtrosAbiertos && (
+        <div className="cal-filters" style={{ marginBottom: 16 }}>
+          <GranularidadSelector value={granularidad} onChange={setGranularidad} />
+          <div className="cal-filter-group">
+            <label className="cal-filter-label">Turno</label>
+            <select className="cal-filter-select" value={turnoFiltro}
+              onChange={e => setTurnoFiltro(e.target.value)}>
+              <option value="">Todos</option>
+              <option value="1">Mañana</option>
+              <option value="2">Tarde</option>
+              <option value="3">Noche</option>
+            </select>
+          </div>
+          <div className="cal-filter-group">
+            <label className="cal-filter-label">Fecha inicio</label>
+            <input type="date" className="cal-filter-input" value={draftInicio}
+              onChange={e => handleFechaInicio(e.target.value)}
+              onBlur={e  => commitFechaInicio(e.target.value)} />
+          </div>
+          <div className="cal-filter-group">
+            <label className="cal-filter-label">Fecha fin</label>
+            <input type="date" className="cal-filter-input" value={draftFin}
+              onChange={e => handleFechaFin(e.target.value)}
+              onBlur={e  => commitFechaFin(e.target.value)} />
+          </div>
+          <div className="cal-filter-group" style={{ alignSelf: 'flex-end' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 12, color: '#8b949e' }}>
+              <input
+                type="checkbox"
+                checked={quitarSinDatos}
+                onChange={e => setQuitarSinDatos(e.target.checked)}
+                style={{ accentColor: '#1f6feb' }}
+              />
+              Quitar días sin datos
+            </label>
+          </div>
         </div>
-        <div className="cal-filter-group">
-          <label className="cal-filter-label">Fecha inicio</label>
-          <input type="date" className="cal-filter-input" value={draftInicio}
-            onChange={e => handleFechaInicio(e.target.value)}
-            onBlur={e  => commitFechaInicio(e.target.value)} />
-        </div>
-        <div className="cal-filter-group">
-          <label className="cal-filter-label">Fecha fin</label>
-          <input type="date" className="cal-filter-input" value={draftFin}
-            onChange={e => handleFechaFin(e.target.value)}
-            onBlur={e  => commitFechaFin(e.target.value)} />
-        </div>
-        <div className="cal-filter-group" style={{ alignSelf: 'flex-end' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 12, color: '#8b949e' }}>
-            <input
-              type="checkbox"
-              checked={quitarSinDatos}
-              onChange={e => setQuitarSinDatos(e.target.checked)}
-              style={{ accentColor: '#1f6feb' }}
-            />
-            Quitar días sin datos
-          </label>
-        </div>
-      </div>
+      )}
 
       {error && (
         <div style={{ padding: 12, background: '#2d1214', border: '1px solid #f85149', borderRadius: 6, color: '#f85149', marginBottom: 16, fontSize: 12 }}>
@@ -437,9 +452,9 @@ export default function BalanceHidricoDashboard() {
                     formatter={(v: number) => v > 20 ? v.toFixed(0) : ''} />
                 </Bar>
                 <Line dataKey="total_agua_limpia_m3" name="Total Agua Limpia"
-                  stroke="#203864" strokeWidth={2}
-                  dot={<SquareDot fill="#203864" />}
-                  activeDot={{ r: 5, fill: '#203864' }}
+                  stroke="#FFFFFF" strokeWidth={2.5}
+                  dot={<SquareDot fill="#FFFFFF" />}
+                  activeDot={{ r: 5, fill: '#FFFFFF' }}
                   connectNulls />
               </ComposedChart>
             </ResponsiveContainer>
@@ -885,13 +900,11 @@ export default function BalanceHidricoDashboard() {
       ════════════════════════════════════════════════════════════════════════ */}
       <section className="dash-section">
         <SeccionHeader numero={7} titulo="OPERACIÓN RO — EFICIENCIAS" color="#A9CE91" />
-        <div className="dash-row-2col">
-
-          <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
-            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
-              Balance Global RO — Volúmenes y eficiencia (m³/día)
-            </div>
-            <ResponsiveContainer width="100%" height={220}>
+        <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
+          <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
+            Balance Global RO — Volúmenes y eficiencia (m³/día)
+          </div>
+          <ResponsiveContainer width="100%" height={260}>
               <ComposedChart data={agrupado} margin={{ top: 4, right: 56, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#21262d" />
                 <XAxis dataKey="fecha" tickFormatter={fmt} tick={AXIS_TICK} interval="preserveStartEnd" />
@@ -909,31 +922,7 @@ export default function BalanceHidricoDashboard() {
                 <Line yAxisId="right" dataKey="eficiencia_ro_pct" name="% Eficiencia global"
                   stroke="#FFC000" strokeWidth={2} strokeDasharray="4 2" dot={false} connectNulls />
               </ComposedChart>
-            </ResponsiveContainer>
-          </div>
-
-          <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
-            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
-              Permeados MBR y tendencia eficiencia RO (%)
-            </div>
-            <ResponsiveContainer width="100%" height={220}>
-              <ComposedChart data={agrupado} margin={{ top: 4, right: 56, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#21262d" />
-                <XAxis dataKey="fecha" tickFormatter={fmt} tick={AXIS_TICK} interval="preserveStartEnd" />
-                <YAxis yAxisId="left"  tick={AXIS_TICK} width={50}
-                  label={{ value: 'm³', angle: -90, position: 'insideLeft', fill: '#484f58', fontSize: 10, dx: -4 }} />
-                <YAxis yAxisId="right" orientation="right" tick={AXIS_TICK} width={44}
-                  domain={[0, 100]} tickFormatter={(v: number) => `${v}%`} />
-                <Tooltip {...TOOLTIP_STYLE} labelFormatter={(v: string) => `Fecha: ${v}`} />
-                <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
-                <Bar  yAxisId="left"  dataKey="permeado_mbr1" name="Permeado MBR1" fill="#58a6ff" radius={[3,3,0,0]} />
-                <Bar  yAxisId="left"  dataKey="permeado_mbr2" name="Permeado MBR2" fill="#00c5e3" radius={[3,3,0,0]} />
-                <Line yAxisId="right" dataKey="eficiencia_ro_pct" name="Eficiencia RO %"
-                  stroke="#70AD47" strokeWidth={2} strokeDasharray="4 2" dot={{ fill: '#70AD47', r: 3 }} connectNulls />
-              </ComposedChart>
-            </ResponsiveContainer>
-          </div>
-
+          </ResponsiveContainer>
         </div>
       </section>
 
@@ -942,9 +931,7 @@ export default function BalanceHidricoDashboard() {
       ════════════════════════════════════════════════════════════════════════ */}
       <section className="dash-section">
         <SeccionHeader numero={9} titulo="INDICADOR TRATAMIENTO FQ GEM" color="#FFD966" textColor="#1c2128" />
-        <div className="dash-row-2col">
-
-          {/* $m³ GEM — caudal vs indicador costo */}
+        {/* $m³ GEM — caudal vs indicador costo — ancho completo */}
           <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
             <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
               $m³ Tratamiento GEM — Caudal tratado vs indicador costo
@@ -971,27 +958,6 @@ export default function BalanceHidricoDashboard() {
               </ComposedChart>
             </ResponsiveContainer>
           </div>
-
-          {/* PTAP — ingreso y agua potable producida */}
-          <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
-            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
-              Ingreso PTAP y agua potable producida (m³/día)
-            </div>
-            <ResponsiveContainer width="100%" height={220}>
-              <ComposedChart data={agrupado} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#21262d" />
-                <XAxis dataKey="fecha" tickFormatter={fmt} tick={AXIS_TICK} interval="preserveStartEnd" />
-                <YAxis tick={AXIS_TICK} width={50}
-                  label={{ value: 'm³', angle: -90, position: 'insideLeft', fill: '#484f58', fontSize: 10, dx: -4 }} />
-                <Tooltip {...TOOLTIP_STYLE} labelFormatter={(v: string) => `Fecha: ${v}`}
-                  formatter={(val: number, name: string) => [`${(val as number).toFixed(1)} m³`, name]} />
-                <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
-                <Bar dataKey="ingreso_ptap" name="Ingreso PTAP"            fill="#4472C4" radius={[3,3,0,0]} />
-                <Bar dataKey="potable_ptap" name="Agua Potable Producida"  fill="#70AD47" radius={[3,3,0,0]} />
-              </ComposedChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
       </section>
 
       {/* ═══════════════════════════════════════════════════════════════════════
@@ -1148,5 +1114,14 @@ export default function BalanceHidricoDashboard() {
       </section>
 
     </div>
+
+    {informeAbierto && (
+      <InformeBalanceModal
+        fechaInicio={fechaInicio}
+        fechaFin={fechaFin}
+        onClose={() => setInformeAbierto(false)}
+      />
+    )}
+    </>
   );
 }
