@@ -179,6 +179,7 @@ export default function BalanceHidricoDashboard() {
     granularidad, setGranularidad,
     fechaInicio, fechaFin,
     handleFechaInicio, handleFechaFin,
+    draftInicio, draftFin, commitFechaInicio, commitFechaFin,
   } = useGranularidad();
 
   const [turnoFiltro,    setTurnoFiltro]    = useState('');
@@ -352,13 +353,15 @@ export default function BalanceHidricoDashboard() {
         </div>
         <div className="cal-filter-group">
           <label className="cal-filter-label">Fecha inicio</label>
-          <input type="date" className="cal-filter-input" value={fechaInicio}
-            onChange={e => handleFechaInicio(e.target.value)} />
+          <input type="date" className="cal-filter-input" value={draftInicio}
+            onChange={e => handleFechaInicio(e.target.value)}
+            onBlur={e  => commitFechaInicio(e.target.value)} />
         </div>
         <div className="cal-filter-group">
           <label className="cal-filter-label">Fecha fin</label>
-          <input type="date" className="cal-filter-input" value={fechaFin}
-            onChange={e => handleFechaFin(e.target.value)} />
+          <input type="date" className="cal-filter-input" value={draftFin}
+            onChange={e => handleFechaFin(e.target.value)}
+            onBlur={e  => commitFechaFin(e.target.value)} />
         </div>
         <div className="cal-filter-group" style={{ alignSelf: 'flex-end' }}>
           <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 12, color: '#8b949e' }}>

@@ -19,7 +19,9 @@ export default function CalidadDashboardPage() {
   const {
     granularidad, setGranularidad,
     fechaInicio, fechaFin,
+    draftInicio, draftFin,
     handleFechaInicio, handleFechaFin,
+    commitFechaInicio, commitFechaFin,
   } = useGranularidad();
 
   // ── Estado de filtros ─────────────────────────────────────────
@@ -124,13 +126,15 @@ export default function CalidadDashboardPage() {
         </div>
         <div className="cal-filter-group">
           <label className="cal-filter-label">Fecha inicio</label>
-          <input type="date" className="cal-filter-input" value={fechaInicio}
-            onChange={e => handleFechaInicio(e.target.value)} />
+          <input type="date" className="cal-filter-input" value={draftInicio}
+            onChange={e => handleFechaInicio(e.target.value)}
+            onBlur={e  => commitFechaInicio(e.target.value)} />
         </div>
         <div className="cal-filter-group">
           <label className="cal-filter-label">Fecha fin</label>
-          <input type="date" className="cal-filter-input" value={fechaFin}
-            onChange={e => handleFechaFin(e.target.value)} />
+          <input type="date" className="cal-filter-input" value={draftFin}
+            onChange={e => handleFechaFin(e.target.value)}
+            onBlur={e  => commitFechaFin(e.target.value)} />
         </div>
       </div>
 
