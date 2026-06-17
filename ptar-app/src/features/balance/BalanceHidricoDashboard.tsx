@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import {
-  Bar, Line,
+  Bar, Line, LabelList,
   ComposedChart, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell, ReferenceLine,
@@ -414,10 +414,22 @@ export default function BalanceHidricoDashboard() {
                 <Tooltip {...TOOLTIP_STYLE} labelFormatter={(v: string) => `Fecha: ${v}`}
                   formatter={(val: number, name: string) => [`${val.toFixed(1)} m³`, name]} />
                 <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
-                <Bar dataKey="carrotanques_m3"      name="Carrotanques"          fill="#4472C4" radius={[3,3,0,0]} />
-                <Bar dataKey="permeado_ro1"         name="Permeado RO"           fill="#5B9BD5" />
-                <Bar dataKey="acueducto_m3"         name="Acueducto"             fill="#70AD47" />
-                <Bar dataKey="potable_ptap"         name="PTAP Potable"          fill="#ED7D31" />
+                <Bar dataKey="carrotanques_m3" name="Carrotanques" fill="#4472C4" radius={[3,3,0,0]}>
+                  <LabelList dataKey="carrotanques_m3" position="top" style={{ fill: '#4472C4', fontSize: 8, fontFamily: 'monospace' }}
+                    formatter={(v: number) => v > 0 ? v.toFixed(0) : ''} />
+                </Bar>
+                <Bar dataKey="permeado_ro1" name="Permeado RO" fill="#5B9BD5">
+                  <LabelList dataKey="permeado_ro1" position="top" style={{ fill: '#5B9BD5', fontSize: 8, fontFamily: 'monospace' }}
+                    formatter={(v: number) => v > 0 ? v.toFixed(0) : ''} />
+                </Bar>
+                <Bar dataKey="acueducto_m3" name="Acueducto" fill="#70AD47">
+                  <LabelList dataKey="acueducto_m3" position="top" style={{ fill: '#70AD47', fontSize: 8, fontFamily: 'monospace' }}
+                    formatter={(v: number) => v > 0 ? v.toFixed(0) : ''} />
+                </Bar>
+                <Bar dataKey="potable_ptap" name="PTAP Potable" fill="#ED7D31">
+                  <LabelList dataKey="potable_ptap" position="top" style={{ fill: '#ED7D31', fontSize: 8, fontFamily: 'monospace' }}
+                    formatter={(v: number) => v > 0 ? v.toFixed(0) : ''} />
+                </Bar>
                 <Line dataKey="total_agua_limpia_m3" name="Total Agua Limpia"
                   stroke="#203864" strokeWidth={2}
                   dot={<SquareDot fill="#203864" />}
@@ -731,10 +743,22 @@ export default function BalanceHidricoDashboard() {
                 <Tooltip {...TOOLTIP_STYLE} labelFormatter={(v: string) => `Fecha: ${v}`}
                   formatter={(val: number, name: string) => [`${val.toFixed(1)} m³`, name]} />
                 <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
-                <Bar dataKey="acueducto_m3"   name="Acueducto"   fill="#4472C4" stackId="t" />
-                <Bar dataKey="rotativa_m3"    name="Rotativa"    fill="#5B9BD5" stackId="t" />
-                <Bar dataKey="tintoreria_m3"  name="Tintorería"  fill="#FFC000" stackId="t" />
-                <Bar dataKey="lavanderia_m3"  name="Lavandería"  fill="#ED7D31" stackId="t" radius={[3,3,0,0]} />
+                <Bar dataKey="acueducto_m3"  name="Acueducto"  fill="#4472C4" stackId="t">
+                  <LabelList dataKey="acueducto_m3" position="insideTop" style={{ fill: '#fff', fontSize: 8, fontFamily: 'monospace' }}
+                    formatter={(v: number) => v > 20 ? v.toFixed(0) : ''} />
+                </Bar>
+                <Bar dataKey="rotativa_m3"   name="Rotativa"   fill="#5B9BD5" stackId="t">
+                  <LabelList dataKey="rotativa_m3" position="insideTop" style={{ fill: '#fff', fontSize: 8, fontFamily: 'monospace' }}
+                    formatter={(v: number) => v > 20 ? v.toFixed(0) : ''} />
+                </Bar>
+                <Bar dataKey="tintoreria_m3" name="Tintorería" fill="#FFC000" stackId="t">
+                  <LabelList dataKey="tintoreria_m3" position="insideTop" style={{ fill: '#1c2128', fontSize: 8, fontFamily: 'monospace' }}
+                    formatter={(v: number) => v > 20 ? v.toFixed(0) : ''} />
+                </Bar>
+                <Bar dataKey="lavanderia_m3" name="Lavandería" fill="#ED7D31" stackId="t" radius={[3,3,0,0]}>
+                  <LabelList dataKey="lavanderia_m3" position="insideTop" style={{ fill: '#fff', fontSize: 8, fontFamily: 'monospace' }}
+                    formatter={(v: number) => v > 20 ? v.toFixed(0) : ''} />
+                </Bar>
                 <Line dataKey="total_tratado_osmosis" name="Total Tratado Osmosis"
                   stroke="#375623" strokeWidth={2}
                   dot={<SquareDot fill="#375623" />} activeDot={{ r: 5, fill: '#375623' }} connectNulls />
