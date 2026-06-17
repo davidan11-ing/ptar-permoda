@@ -1,11 +1,12 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
-  AreaChart, Area, BarChart, Bar, LineChart, Line,
+  Bar, Line,
   ComposedChart, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer,
+  PieChart, Pie, Cell,
 } from 'recharts';
 import { useBalanceData } from './hooks/useBalanceData';
-import { getReporteBalanceHtmlUrl, type BalanceHidricoRow } from '../../services/ptarClient';
+import { getReporteBalanceHtmlUrl, getGemEficiencia, type BalanceHidricoRow, type GemEficienciaRow } from '../../services/ptarClient';
 import GranularidadSelector from '../../components/shared/GranularidadSelector';
 import { useGranularidad } from '../../hooks/useGranularidad';
 import { agruparPorGranularidad } from '../../lib/utils/agruparTemporal';
@@ -15,29 +16,155 @@ const TOOLTIP_STYLE = {
   labelStyle:   { color: '#e6edf3', marginBottom: 4 },
 };
 const AXIS_TICK = { fill: '#8b949e', fontSize: 10 };
-
-// El label ya viene formateado desde agruparPorGranularidad — solo lo devolvemos
 const fmt = (v: string) => v;
 
-// Campos del balance hídrico
 const BALANCE_SUM_FIELDS: (keyof BalanceHidricoRow)[] = [
   'ingreso_ptap', 'potable_ptap', 'carrotanques_m3', 'mulas_funza_m3',
   'entrada_ro1', 'permeado_ro1', 'rechazo_ro1',
   'permeado_mbr1', 'permeado_mbr2', 'envio_th',
   'acueducto_m3', 'total_agua_limpia_m3', 'consumo_gem_m3',
   'lavanderia_m3', 'tintoreria_m3', 'rotativa_m3',
+  'und_efectivas', 'kg_tela', 'm_tela',
 ];
 const BALANCE_AVG_FIELDS: (keyof BalanceHidricoRow)[] = [
   'eficiencia_ro_pct', 'indicador_lav_l_und', 'indicador_tin_l_kg', 'indicador_rot_l_m',
 ];
 
-// ── KPI Card ──────────────────────────────────────────────────────────────────
+const DATOS_CAMPOS: (keyof BalanceHidricoRow)[] = [
+  'total_agua_limpia_m3', 'acueducto_m3', 'entrada_ro1',
+];
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+const fmtM3     = (v: number) => v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v.toFixed(0);
+const fmtFull   = (v: number) => v.toLocaleString('es-CO', { maximumFractionDigits: 0 });
+const fmtDec1   = (v: number | null) => v != null ? v.toFixed(1) : '—';
+
 function KpiCard({ label, value, unit, color }: { label: string; value: string; unit: string; color: string }) {
   return (
     <div className="dash-card" style={{ padding: '14px 18px', textAlign: 'center', borderTop: `3px solid ${color}` }}>
       <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 4 }}>{label}</div>
       <div style={{ fontSize: 22, fontWeight: 700, color }}>{value}</div>
       <div style={{ fontSize: 10, color: '#484f58', marginTop: 2 }}>{unit}</div>
+    </div>
+  );
+}
+
+function SeccionHeader({ numero, titulo, color, textColor = '#1c2128' }: {
+  numero: number; titulo: string; color: string; textColor?: string;
+}) {
+  return (
+    <div style={{
+      background: color, color: textColor,
+      fontWeight: 700, fontSize: 13,
+      padding: '7px 16px', marginBottom: 16, borderRadius: 4,
+      display: 'flex', alignItems: 'center', gap: 10,
+    }}>
+      <span style={{ opacity: 0.5, fontSize: 11, fontWeight: 400 }}>S{numero}</span>
+      {titulo}
+    </div>
+  );
+}
+
+function ChartPending({ titulo, alto = 200 }: { titulo: string; alto?: number }) {
+  return (
+    <div className="dash-card" style={{
+      padding: '16px', height: alto + 40,
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      border: '1px dashed #30363d', opacity: 0.6,
+    }}>
+      <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 8 }}>{titulo}</div>
+      <div style={{ fontSize: 10, color: '#484f58' }}>En construcción</div>
+    </div>
+  );
+}
+
+const TURNO_NUM: Record<string, number> = { noche: 1, 'mañana': 2, tarde: 3 };
+
+function SquareDot(props: any) {
+  const { cx, cy, fill } = props;
+  if (cx == null || cy == null) return null;
+  return <rect x={cx - 3} y={cy - 3} width={6} height={6} fill={fill || '#000'} />;
+}
+
+function TablaResumen({ titulo, cabeceras, filas, colorHead = '#DAE3F3' }: {
+  titulo?: string;
+  cabeceras: string[];
+  filas: (string | number | null)[][];
+  colorHead?: string;
+}) {
+  return (
+    <div className="dash-card" style={{ padding: '8px 12px', overflow: 'auto' }}>
+      {titulo && (
+        <div style={{
+          fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em',
+          background: colorHead, color: '#1c2128', padding: '3px 8px', marginBottom: 6, borderRadius: 3,
+        }}>
+          {titulo}
+        </div>
+      )}
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10 }}>
+        <thead>
+          <tr>
+            {cabeceras.map((h, i) => (
+              <th key={i} style={{
+                padding: '3px 8px', textAlign: i === 0 ? 'left' : 'center',
+                color: '#8b949e', fontWeight: 600, borderBottom: '1px solid #30363d',
+                whiteSpace: 'nowrap',
+              }}>
+                {h}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {filas.map((fila, ri) => (
+            <tr key={ri} style={{ borderBottom: '1px solid #21262d30' }}>
+              {fila.map((celda, ci) => (
+                <td key={ci} style={{
+                  padding: '3px 8px', textAlign: ci === 0 ? 'left' : 'center',
+                  color: '#e6edf3', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums',
+                }}>
+                  {celda ?? '—'}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// ── Benchmark estático Tintorería ─────────────────────────────────────────────
+
+function BenchmarkTintoreria() {
+  const rows: { nivel: string; desc: string; rango: string; color: string }[] = [
+    { nivel: 'Muy Ineficiente',        desc: 'Práctica obsoleta',  rango: '> 150 L/Kg', color: '#5f1010' },
+    { nivel: 'Promedio Industria',     desc: 'Convencional',       rango: '100 – 150',   color: '#3d3010' },
+    { nivel: 'Buen Desempeño',         desc: 'Planta Moderna',     rango: '80 – 100',    color: '#2a3a10' },
+    { nivel: 'Proceso Optimizado',     desc: 'Best Practice',      rango: '50 – 80',     color: '#1a3a15' },
+    { nivel: 'Excelencia Mundial',     desc: 'Top Performers',     rango: '< 50 L/Kg',   color: '#0e3d0e' },
+  ];
+  return (
+    <div className="dash-card" style={{ padding: '10px 12px' }}>
+      <div style={{ fontSize: 10, fontWeight: 700, color: '#8b949e', marginBottom: 8, textTransform: 'uppercase' }}>
+        Benchmark Mundial Tintorería
+      </div>
+      {rows.map((r, i) => (
+        <div key={i} style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          padding: '4px 8px', marginBottom: 3, borderRadius: 4, background: r.color,
+        }}>
+          <div>
+            <div style={{ fontSize: 10, fontWeight: 700, color: '#e6edf3' }}>{r.nivel}</div>
+            <div style={{ fontSize: 9, color: '#8b949e' }}>{r.desc}</div>
+          </div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#70AD47', fontVariantNumeric: 'tabular-nums' }}>
+            {r.rango}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -51,41 +178,135 @@ export default function BalanceHidricoDashboard() {
     handleFechaInicio, handleFechaFin,
   } = useGranularidad();
 
-  const [turnoFiltro, setTurnoFiltro] = useState('');
+  const [turnoFiltro,    setTurnoFiltro]    = useState('');
+  const [quitarSinDatos, setQuitarSinDatos] = useState(true);
 
   const turnoNum = turnoFiltro ? Number(turnoFiltro) : undefined;
   const { data, loading, error } = useBalanceData(fechaInicio, fechaFin, turnoNum);
 
-  const agrupado = useMemo(
-    () => agruparPorGranularidad(data, {
+  const agrupado = useMemo(() => {
+    const base = agruparPorGranularidad(data, {
       gran: granularidad,
       getFecha:  r => r.fecha,
       getTurno:  r => r.turno,
       sumFields: BALANCE_SUM_FIELDS,
       avgFields: BALANCE_AVG_FIELDS,
-    }),
-    [data, granularidad],
-  );
+    });
+    if (!quitarSinDatos) return base;
+    return base.filter(r =>
+      DATOS_CAMPOS.some(k => (r as Record<string, unknown>)[k as string] as number > 0)
+    );
+  }, [data, granularidad, quitarSinDatos]);
 
-  // ── KPIs globales del período ──────────────────────────────────────────────
+  // S5 — agrupado extendido con totales calculados
+  const agrupadoS5 = useMemo(() => agrupado.map(r => {
+    const n = (k: string) => (r as Record<string, unknown>)[k] as number || 0;
+    return {
+      ...r,
+      total_a_tratar:
+        n('acueducto_m3') + n('rotativa_m3') + n('tintoreria_m3') + n('lavanderia_m3'),
+      total_tratado_osmosis:
+        n('permeado_ro1') + n('permeado_mbr1') + n('permeado_mbr2'),
+    };
+  }), [agrupado]);
+
+  // S6 — agrupado con permeado_mbr combinado
+  const agrupadoS6 = useMemo(() => agrupadoS5.map(r => {
+    const n = (k: string) => (r as Record<string, unknown>)[k] as number || 0;
+    return { ...r, permeado_mbr: n('permeado_mbr1') + n('permeado_mbr2') };
+  }), [agrupadoS5]);
+
+  // S6 — pie distribución tratabilidad (totales período)
+  const pieS6 = useMemo(() => {
+    const sum = (k: keyof BalanceHidricoRow) =>
+      data.reduce((acc, r) => acc + (Number(r[k]) || 0), 0);
+    return [
+      { name: 'Tratado GEM',   value: sum('consumo_gem_m3'),                        color: '#9DC3E6' },
+      { name: 'Permeado MBRs', value: sum('permeado_mbr1') + sum('permeado_mbr2'),  color: '#FFE699' },
+      { name: 'Salida RO',     value: sum('permeado_ro1')  + sum('rechazo_ro1'),     color: '#A9D18E' },
+    ].filter(d => d.value > 0);
+  }, [data]);
+
+  // S9 — datos GEM eficiencia (pesos_por_m3)
+  const [gemRows, setGemRows] = useState<GemEficienciaRow[]>([]);
+  useEffect(() => {
+    if (!fechaInicio || !fechaFin) return;
+    getGemEficiencia({ fecha_inicio: fechaInicio, fecha_fin: fechaFin })
+      .then(setGemRows)
+      .catch(() => {});
+  }, [fechaInicio, fechaFin]);
+
+  const gemAgrupado = useMemo(() => agruparPorGranularidad(gemRows, {
+    gran:      granularidad,
+    getFecha:  r => r.fecha,
+    getTurno:  r => TURNO_NUM[r.turno ?? ''] ?? 1,
+    sumFields: ['caudal_m3'] as (keyof GemEficienciaRow)[],
+    avgFields: ['pesos_por_m3'] as (keyof GemEficienciaRow)[],
+  }), [gemRows, granularidad]);
+
   const kpis = useMemo(() => {
     const sum = (k: keyof BalanceHidricoRow) =>
       data.reduce((acc, r) => acc + (Number(r[k]) || 0), 0);
-    const avgEf = (() => {
-      const vals = data.filter(r => r.eficiencia_ro_pct != null).map(r => r.eficiencia_ro_pct as number);
+    const avgField = (k: keyof BalanceHidricoRow) => {
+      const vals = data.filter(r => r[k] != null).map(r => Number(r[k]));
       return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
-    })();
-    return {
-      totalAgua:   sum('total_agua_limpia_m3'),
-      totalTH:     sum('envio_th'),
-      totalAcu:    sum('acueducto_m3'),
-      eficRo:      avgEf,
-      totalGem:    sum('consumo_gem_m3'),
-      totalRoIn:   sum('entrada_ro1'),
     };
-  }, [data]);
 
-  const fmtM3 = (v: number) => v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v.toFixed(0);
+    const totalAcu   = sum('acueducto_m3');
+    const totalRo    = sum('permeado_ro1');
+    const totalCarrot = sum('carrotanques_m3') + sum('mulas_funza_m3');
+    const totalPtap  = sum('potable_ptap');
+    const totalSuministro = totalAcu + totalRo + totalCarrot + totalPtap;
+
+    // Daily stats from agrupado (respeta el filtro "quitar sin datos")
+    const dailyAgua = agrupado
+      .map(r => (r.total_agua_limpia_m3 as number) || 0)
+      .filter(v => v > 0);
+    const minAgua = dailyAgua.length ? Math.min(...dailyAgua) : 0;
+    const maxAgua = dailyAgua.length ? Math.max(...dailyAgua) : 0;
+    const avgAgua = dailyAgua.length
+      ? dailyAgua.reduce((a, b) => a + b, 0) / dailyAgua.length : 0;
+    const diasEfectivos = dailyAgua.length;
+
+    return {
+      totalAgua:  sum('total_agua_limpia_m3'),
+      totalTH:    sum('envio_th'),
+      totalAcu,
+      eficRo:     avgField('eficiencia_ro_pct'),
+      totalGem:   sum('consumo_gem_m3'),
+      totalRoIn:  sum('entrada_ro1'),
+      totalRo, totalCarrot, totalPtap, totalSuministro,
+      minAgua, maxAgua, avgAgua, diasEfectivos,
+      // Tintorería
+      totalTin:    sum('tintoreria_m3'),
+      totalKgTela: sum('kg_tela'),
+      avgIndTin:   avgField('indicador_tin_l_kg'),
+      // Lavandería
+      totalLav:    sum('lavanderia_m3'),
+      totalUndEf:  sum('und_efectivas'),
+      avgIndLav:   avgField('indicador_lav_l_und'),
+      // Rotativa
+      totalRot:    sum('rotativa_m3'),
+      totalMTela:  sum('m_tela'),
+      avgIndRot:   avgField('indicador_rot_l_m'),
+    };
+  }, [data, agrupado]);
+
+  // Pie S1 — distribución de fuentes de suministro
+  const pieS1 = useMemo(() => {
+    const { totalAcu, totalRo, totalCarrot, totalPtap } = kpis;
+    return [
+      { name: 'Acueducto H40',  value: totalAcu,   color: '#4472C4' },
+      { name: '% Pluvial RO',   value: totalRo,    color: '#5B9BD5' },
+      { name: 'Carrotanques',   value: totalCarrot, color: '#A5A5A5' },
+      { name: '% PTAP',         value: totalPtap,  color: '#FFC000' },
+    ].filter(d => d.value > 0);
+  }, [kpis]);
+
+  const pct = (v: number) =>
+    kpis.totalSuministro > 0
+      ? `${(v / kpis.totalSuministro * 100).toFixed(1)}%`
+      : '—';
 
   if (loading) {
     return (
@@ -107,15 +328,13 @@ export default function BalanceHidricoDashboard() {
         <a
           href={getReporteBalanceHtmlUrl({ fecha_inicio: fechaInicio, fecha_fin: fechaFin })}
           target="_blank" rel="noopener noreferrer"
-          className="btn-primary btn-sm"
           style={{ background: '#1f6feb', textDecoration: 'none', alignSelf: 'center', padding: '8px 16px', borderRadius: 6, fontSize: 13, fontWeight: 600, color: '#fff' }}
-          title="Abre el informe en una nueva pestaña — usa Ctrl+P para guardar como PDF"
         >
           💧 Informe Balance
         </a>
       </div>
 
-      {/* ── Filtros + granularidad integrada ── */}
+      {/* ── Filtros ── */}
       <div className="cal-filters" style={{ marginBottom: 16 }}>
         <GranularidadSelector value={granularidad} onChange={setGranularidad} />
         <div className="cal-filter-group">
@@ -138,6 +357,17 @@ export default function BalanceHidricoDashboard() {
           <input type="date" className="cal-filter-input" value={fechaFin}
             onChange={e => handleFechaFin(e.target.value)} />
         </div>
+        <div className="cal-filter-group" style={{ alignSelf: 'flex-end' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 12, color: '#8b949e' }}>
+            <input
+              type="checkbox"
+              checked={quitarSinDatos}
+              onChange={e => setQuitarSinDatos(e.target.checked)}
+              style={{ accentColor: '#1f6feb' }}
+            />
+            Quitar días sin datos
+          </label>
+        </div>
       </div>
 
       {error && (
@@ -146,43 +376,37 @@ export default function BalanceHidricoDashboard() {
         </div>
       )}
 
-      {/* ── KPI Cards ── */}
+      {/* ═══════════════════════════════════════════════════════════════════════
+          S8 — KPIS
+      ════════════════════════════════════════════════════════════════════════ */}
       <section className="dash-section">
-        <div className="section-title">Resumen del Período</div>
+        <SeccionHeader numero={8} titulo="KPIs — Resumen del Período" color="#DEEBF7" />
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 12 }}>
-          <KpiCard label="Agua limpia total" value={fmtM3(kpis.totalAgua)} unit="m³" color="#3fb950" />
-          <KpiCard label="Enviado a producción" value={fmtM3(kpis.totalTH)} unit="m³" color="#00c5e3" />
-          <KpiCard label="Acueducto consumido" value={fmtM3(kpis.totalAcu)} unit="m³" color="#d29922" />
-          <KpiCard label="Eficiencia RO prom." value={kpis.eficRo != null ? kpis.eficRo.toFixed(1) + '%' : '—'} unit="% recuperación" color="#9e7aff" />
-          <KpiCard label="Caudal GEM tratado" value={fmtM3(kpis.totalGem)} unit="m³" color="#f85149" />
-          <KpiCard label="Entrada a RO" value={fmtM3(kpis.totalRoIn)} unit="m³" color="#58a6ff" />
+          <KpiCard label="Agua limpia total"    value={fmtM3(kpis.totalAgua)}  unit="m³"              color="#3fb950" />
+          <KpiCard label="Enviado a producción" value={fmtM3(kpis.totalTH)}    unit="m³"              color="#00c5e3" />
+          <KpiCard label="Acueducto consumido"  value={fmtM3(kpis.totalAcu)}   unit="m³"              color="#d29922" />
+          <KpiCard label="Eficiencia RO prom."  value={kpis.eficRo != null ? kpis.eficRo.toFixed(1) + '%' : '—'} unit="% recuperación" color="#9e7aff" />
+          <KpiCard label="Caudal GEM tratado"   value={fmtM3(kpis.totalGem)}   unit="m³"              color="#f85149" />
+          <KpiCard label="Entrada a RO"         value={fmtM3(kpis.totalRoIn)}  unit="m³"              color="#58a6ff" />
         </div>
       </section>
 
-      {/* ── Flujos principales ── */}
+      {/* ═══════════════════════════════════════════════════════════════════════
+          S1 — BALANCE HÍDRICO
+      ════════════════════════════════════════════════════════════════════════ */}
       <section className="dash-section">
-        <div className="section-title">Flujos Hídricos Diarios</div>
-        <div className="dash-row-2col">
+        <SeccionHeader numero={1} titulo="BALANCE HÍDRICO" color="#DAE3F3" />
+
+        {/* Gráfica Balance Global + Pie distribución */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 260px', gap: 12, marginBottom: 12 }}>
+
+          {/* Combo barras agrupadas + línea total */}
           <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
             <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
-              Agua limpia total y enviada a producción (m³/día)
+              Balance Hídrico Global — Fuentes de suministro (m³/día)
             </div>
-            <ResponsiveContainer width="100%" height={220}>
-              <AreaChart data={agrupado} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="gradTH" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#00c5e3" stopOpacity={0.4}/>
-                    <stop offset="95%" stopColor="#00c5e3" stopOpacity={0}/>
-                  </linearGradient>
-                  <linearGradient id="gradLimpia" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3fb950" stopOpacity={0.4}/>
-                    <stop offset="95%" stopColor="#3fb950" stopOpacity={0}/>
-                  </linearGradient>
-                  <linearGradient id="gradAcu" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#d29922" stopOpacity={0.4}/>
-                    <stop offset="95%" stopColor="#d29922" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
+            <ResponsiveContainer width="100%" height={230}>
+              <ComposedChart data={agrupado} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#21262d" />
                 <XAxis dataKey="fecha" tickFormatter={fmt} tick={AXIS_TICK} interval="preserveStartEnd" />
                 <YAxis tick={AXIS_TICK} width={50}
@@ -190,19 +414,316 @@ export default function BalanceHidricoDashboard() {
                 <Tooltip {...TOOLTIP_STYLE} labelFormatter={(v: string) => `Fecha: ${v}`}
                   formatter={(val: number, name: string) => [`${val.toFixed(1)} m³`, name]} />
                 <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
-                <Area type="monotone" dataKey="total_agua_limpia_m3" name="Total agua limpia" stroke="#3fb950" fill="url(#gradLimpia)" strokeWidth={2} connectNulls />
-                <Area type="monotone" dataKey="envio_th" name="Enviado TH" stroke="#00c5e3" fill="url(#gradTH)" strokeWidth={2} connectNulls />
-                <Area type="monotone" dataKey="acueducto_m3" name="Acueducto" stroke="#d29922" fill="url(#gradAcu)" strokeWidth={1.5} connectNulls />
-              </AreaChart>
+                <Bar dataKey="carrotanques_m3"      name="Carrotanques"          fill="#4472C4" radius={[3,3,0,0]} />
+                <Bar dataKey="permeado_ro1"         name="Permeado RO"           fill="#5B9BD5" />
+                <Bar dataKey="acueducto_m3"         name="Acueducto"             fill="#70AD47" />
+                <Bar dataKey="potable_ptap"         name="PTAP Potable"          fill="#ED7D31" />
+                <Line dataKey="total_agua_limpia_m3" name="Total Agua Limpia"
+                  stroke="#203864" strokeWidth={2}
+                  dot={<SquareDot fill="#203864" />}
+                  activeDot={{ r: 5, fill: '#203864' }}
+                  connectNulls />
+              </ComposedChart>
             </ResponsiveContainer>
           </div>
 
+          {/* Pie distribución de consumo — fondo azul marino */}
+          <div style={{
+            background: '#1F3864', borderRadius: 6, padding: '12px 8px',
+            display: 'flex', flexDirection: 'column',
+          }}>
+            <div style={{ color: '#fff', fontWeight: 700, fontSize: 11, textAlign: 'center', marginBottom: 2 }}>
+              Distribución de Consumo
+            </div>
+            <div style={{ color: '#9DC3E6', fontSize: 10, textAlign: 'center', marginBottom: 4 }}>
+              Total: {fmtFull(kpis.totalSuministro)} m³
+            </div>
+            <ResponsiveContainer width="100%" height={150}>
+              <PieChart>
+                <Pie
+                  data={pieS1}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={62}
+                  dataKey="value"
+                  labelLine={false}
+                  label={({ percent }: any) =>
+                    percent > 0.03 ? `${(percent * 100).toFixed(1)}%` : ''
+                  }
+                >
+                  {pieS1.map((entry, i) => (
+                    <Cell key={i} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{ background: '#0d1117', border: '1px solid #30363d', fontSize: 10 }}
+                  formatter={(val: number, name: string) => [`${fmtFull(val)} m³`, name]}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+            {/* Leyenda manual */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 4, padding: '0 8px' }}>
+              {pieS1.map((d, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <div style={{ width: 10, height: 10, borderRadius: 2, background: d.color, flexShrink: 0 }} />
+                  <div style={{ fontSize: 9, color: '#e6edf3', flexGrow: 1 }}>{d.name}</div>
+                  <div style={{ fontSize: 9, color: '#9DC3E6', fontVariantNumeric: 'tabular-nums' }}>
+                    {pct(d.value)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Tablas de resumen S1 */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <TablaResumen
+            titulo="Consumo Diario (m³)"
+            colorHead="#DAE3F3"
+            cabeceras={['MÍNIMO', 'MÁXIMO', 'PROMEDIO', 'DÍAS EFECTIVOS']}
+            filas={[[
+              fmtFull(kpis.minAgua),
+              fmtFull(kpis.maxAgua),
+              fmtDec1(kpis.avgAgua),
+              String(kpis.diasEfectivos),
+            ]]}
+          />
+          <TablaResumen
+            titulo="Fuentes de Suministro"
+            colorHead="#DAE3F3"
+            cabeceras={['FUENTE', 'CONSUMO (m³)', '% CONSUMO']}
+            filas={[
+              ['Acueducto H40',    fmtFull(kpis.totalAcu),    pct(kpis.totalAcu)],
+              ['% Pluvial RO',     fmtFull(kpis.totalRo),     pct(kpis.totalRo)],
+              ['Suministro Ext.',  fmtFull(kpis.totalCarrot), pct(kpis.totalCarrot)],
+              ['PTAP',             fmtFull(kpis.totalPtap),   pct(kpis.totalPtap)],
+              ['TOTAL',            fmtFull(kpis.totalSuministro), '100.0%'],
+            ]}
+          />
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════════
+          S2 — INDICADOR TINTORERÍA
+      ════════════════════════════════════════════════════════════════════════ */}
+      <section className="dash-section">
+        <SeccionHeader numero={2} titulo="INDICADOR TINTORERÍA" color="#DAE3F3" />
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+
+          {/* Panel Izq — m³ consumo vs indicador L/Kg */}
           <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
             <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
-              Ingreso PTAP y agua potable producida (m³/día)
+              Tintorería: L/Kg vs Volumen Consumo de Agua (m³/día)
             </div>
             <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={agrupado} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
+              <ComposedChart data={agrupado} margin={{ top: 4, right: 56, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#21262d" />
+                <XAxis dataKey="fecha" tickFormatter={fmt} tick={AXIS_TICK} interval="preserveStartEnd" />
+                <YAxis yAxisId="left"  tick={AXIS_TICK} width={50}
+                  label={{ value: 'm³', angle: -90, position: 'insideLeft', fill: '#484f58', fontSize: 10, dx: -4 }} />
+                <YAxis yAxisId="right" orientation="right" tick={AXIS_TICK} width={44}
+                  label={{ value: 'L/Kg', angle: 90, position: 'insideRight', fill: '#484f58', fontSize: 10, dx: 6 }} />
+                <Tooltip {...TOOLTIP_STYLE} labelFormatter={(v: string) => `Fecha: ${v}`} />
+                <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
+                <Bar  yAxisId="left"  dataKey="tintoreria_m3"     name="Consumo Tintorería (m³)" fill="#5B9BD5" radius={[3,3,0,0]} />
+                <Line yAxisId="right" dataKey="indicador_tin_l_kg" name="Indicador L/Kg"
+                  stroke="#000000" strokeWidth={2}
+                  dot={<SquareDot fill="#000" />} activeDot={{ r: 5, fill: '#000' }} connectNulls />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Panel Der — kg tela vs indicador L/Kg */}
+          <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
+            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
+              Tintorería: L/Kg vs Kg Producidos
+            </div>
+            <ResponsiveContainer width="100%" height={220}>
+              <ComposedChart data={agrupado} margin={{ top: 4, right: 56, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#21262d" />
+                <XAxis dataKey="fecha" tickFormatter={fmt} tick={AXIS_TICK} interval="preserveStartEnd" />
+                <YAxis yAxisId="left"  tick={AXIS_TICK} width={54}
+                  label={{ value: 'Kg', angle: -90, position: 'insideLeft', fill: '#484f58', fontSize: 10, dx: -4 }} />
+                <YAxis yAxisId="right" orientation="right" tick={AXIS_TICK} width={44}
+                  label={{ value: 'L/Kg', angle: 90, position: 'insideRight', fill: '#484f58', fontSize: 10, dx: 6 }} />
+                <Tooltip {...TOOLTIP_STYLE} labelFormatter={(v: string) => `Fecha: ${v}`} />
+                <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
+                <Bar  yAxisId="left"  dataKey="kg_tela"            name="Kg Tela" fill="#ED7D31" radius={[3,3,0,0]} />
+                <Line yAxisId="right" dataKey="indicador_tin_l_kg" name="Indicador L/Kg"
+                  stroke="#000000" strokeWidth={2}
+                  dot={<SquareDot fill="#000" />} activeDot={{ r: 5, fill: '#000' }} connectNulls />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Tabla consolidado + benchmark */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 12 }}>
+          <TablaResumen
+            titulo="Consolidado Tintorería"
+            colorHead="#DAE3F3"
+            cabeceras={['MÉTRICA', 'VALOR', 'UNIDAD']}
+            filas={[
+              ['Consumo total período',            fmtFull(kpis.totalTin),    'm³'],
+              ['Kg Tela procesados',               fmtFull(kpis.totalKgTela), 'Kg'],
+              ['Indicador promedio período',       fmtDec1(kpis.avgIndTin),   'L/Kg'],
+            ]}
+          />
+          <BenchmarkTintoreria />
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════════
+          S3 — INDICADOR LAVANDERÍA
+      ════════════════════════════════════════════════════════════════════════ */}
+      <section className="dash-section">
+        <SeccionHeader numero={3} titulo="INDICADOR LAVANDERÍA" color="#DAE3F3" />
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+
+          {/* Panel Izq — m³ consumo vs indicador L/Und */}
+          <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
+            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
+              Lavandería: L/Und vs Volumen Consumo de Agua (m³/día)
+            </div>
+            <ResponsiveContainer width="100%" height={220}>
+              <ComposedChart data={agrupado} margin={{ top: 4, right: 56, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#21262d" />
+                <XAxis dataKey="fecha" tickFormatter={fmt} tick={AXIS_TICK} interval="preserveStartEnd" />
+                <YAxis yAxisId="left"  tick={AXIS_TICK} width={50}
+                  label={{ value: 'm³', angle: -90, position: 'insideLeft', fill: '#484f58', fontSize: 10, dx: -4 }} />
+                <YAxis yAxisId="right" orientation="right" tick={AXIS_TICK} width={44}
+                  label={{ value: 'L/Und', angle: 90, position: 'insideRight', fill: '#484f58', fontSize: 10, dx: 6 }} />
+                <Tooltip {...TOOLTIP_STYLE} labelFormatter={(v: string) => `Fecha: ${v}`} />
+                <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
+                <Bar  yAxisId="left"  dataKey="lavanderia_m3"       name="Consumo Lavandería (m³)" fill="#FFC000" radius={[3,3,0,0]} />
+                <Line yAxisId="right" dataKey="indicador_lav_l_und" name="Indicador L/Und"
+                  stroke="#000000" strokeWidth={2}
+                  dot={<SquareDot fill="#000" />} activeDot={{ r: 5, fill: '#000' }} connectNulls />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Panel Der — Unidades efectivas vs indicador */}
+          <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
+            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
+              Lavandería: L/Und vs Unidades Efectivas
+            </div>
+            <ResponsiveContainer width="100%" height={220}>
+              <ComposedChart data={agrupado} margin={{ top: 4, right: 56, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#21262d" />
+                <XAxis dataKey="fecha" tickFormatter={fmt} tick={AXIS_TICK} interval="preserveStartEnd" />
+                <YAxis yAxisId="left"  tick={AXIS_TICK} width={58}
+                  label={{ value: 'Und', angle: -90, position: 'insideLeft', fill: '#484f58', fontSize: 10, dx: -4 }} />
+                <YAxis yAxisId="right" orientation="right" tick={AXIS_TICK} width={44}
+                  label={{ value: 'L/Und', angle: 90, position: 'insideRight', fill: '#484f58', fontSize: 10, dx: 6 }} />
+                <Tooltip {...TOOLTIP_STYLE} labelFormatter={(v: string) => `Fecha: ${v}`} />
+                <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
+                <Bar  yAxisId="left"  dataKey="und_efectivas"        name="Unidades Efectivas" fill="#FFC000" radius={[3,3,0,0]} />
+                <Line yAxisId="right" dataKey="indicador_lav_l_und"  name="Indicador L/Und"
+                  stroke="#000000" strokeWidth={2}
+                  dot={<SquareDot fill="#000" />} activeDot={{ r: 5, fill: '#000' }} connectNulls />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <TablaResumen
+          titulo="Consolidado Lavandería"
+          colorHead="#DAE3F3"
+          cabeceras={['MÉTRICA', 'VALOR', 'UNIDAD']}
+          filas={[
+            ['Consumo total período',       fmtFull(kpis.totalLav),   'm³'],
+            ['Unidades efectivas',          fmtFull(kpis.totalUndEf), 'Und'],
+            ['Indicador promedio período',  fmtDec1(kpis.avgIndLav),  'L/Und'],
+          ]}
+        />
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════════
+          S4 — INDICADOR ROTATIVA
+      ════════════════════════════════════════════════════════════════════════ */}
+      <section className="dash-section">
+        <SeccionHeader numero={4} titulo="INDICADOR ROTATIVA" color="#DAE3F3" />
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+
+          {/* Panel Izq — m³ consumo vs indicador L/m */}
+          <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
+            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
+              Rotativa: L/m vs Volumen Consumo de Agua (m³/día)
+            </div>
+            <ResponsiveContainer width="100%" height={220}>
+              <ComposedChart data={agrupado} margin={{ top: 4, right: 56, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#21262d" />
+                <XAxis dataKey="fecha" tickFormatter={fmt} tick={AXIS_TICK} interval="preserveStartEnd" />
+                <YAxis yAxisId="left"  tick={AXIS_TICK} width={50}
+                  label={{ value: 'm³', angle: -90, position: 'insideLeft', fill: '#484f58', fontSize: 10, dx: -4 }} />
+                <YAxis yAxisId="right" orientation="right" tick={AXIS_TICK} width={44}
+                  label={{ value: 'L/m', angle: 90, position: 'insideRight', fill: '#484f58', fontSize: 10, dx: 6 }} />
+                <Tooltip {...TOOLTIP_STYLE} labelFormatter={(v: string) => `Fecha: ${v}`} />
+                <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
+                <Bar  yAxisId="left"  dataKey="rotativa_m3"         name="Consumo Rotativa (m³)" fill="#A5A5A5" radius={[3,3,0,0]} />
+                <Line yAxisId="right" dataKey="indicador_rot_l_m"   name="Indicador L/m"
+                  stroke="#000000" strokeWidth={2}
+                  dot={<SquareDot fill="#000" />} activeDot={{ r: 5, fill: '#000' }} connectNulls />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Panel Der — m de tela vs indicador L/m */}
+          <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
+            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
+              Rotativa: L/m vs Metros de Tela
+            </div>
+            <ResponsiveContainer width="100%" height={220}>
+              <ComposedChart data={agrupado} margin={{ top: 4, right: 56, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#21262d" />
+                <XAxis dataKey="fecha" tickFormatter={fmt} tick={AXIS_TICK} interval="preserveStartEnd" />
+                <YAxis yAxisId="left"  tick={AXIS_TICK} width={54}
+                  label={{ value: 'm tela', angle: -90, position: 'insideLeft', fill: '#484f58', fontSize: 10, dx: -4 }} />
+                <YAxis yAxisId="right" orientation="right" tick={AXIS_TICK} width={44}
+                  label={{ value: 'L/m', angle: 90, position: 'insideRight', fill: '#484f58', fontSize: 10, dx: 6 }} />
+                <Tooltip {...TOOLTIP_STYLE} labelFormatter={(v: string) => `Fecha: ${v}`} />
+                <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
+                <Bar  yAxisId="left"  dataKey="m_tela"              name="m de Tela" fill="#A5A5A5" radius={[3,3,0,0]} />
+                <Line yAxisId="right" dataKey="indicador_rot_l_m"   name="Indicador L/m"
+                  stroke="#000000" strokeWidth={2}
+                  dot={<SquareDot fill="#000" />} activeDot={{ r: 5, fill: '#000' }} connectNulls />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <TablaResumen
+          titulo="Consolidado Rotativa"
+          colorHead="#DAE3F3"
+          cabeceras={['MÉTRICA', 'VALOR', 'UNIDAD']}
+          filas={[
+            ['Consumo total período',       fmtFull(kpis.totalRot),   'm³'],
+            ['Metros de tela procesados',   fmtFull(kpis.totalMTela), 'm'],
+            ['Indicador promedio período',  fmtDec1(kpis.avgIndRot),  'L/m'],
+          ]}
+        />
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════════
+          S5 — BALANCE DE TRATABILIDAD I
+      ════════════════════════════════════════════════════════════════════════ */}
+      <section className="dash-section">
+        <SeccionHeader numero={5} titulo="BALANCE DE TRATABILIDAD I" color="#A9CE91" />
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+
+          {/* Barras apiladas por proceso + líneas totales */}
+          <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
+            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
+              Balance de Tratabilidad — Consumo por proceso (m³/día)
+            </div>
+            <ResponsiveContainer width="100%" height={240}>
+              <ComposedChart data={agrupadoS5} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#21262d" />
                 <XAxis dataKey="fecha" tickFormatter={fmt} tick={AXIS_TICK} interval="preserveStartEnd" />
                 <YAxis tick={AXIS_TICK} width={50}
@@ -210,22 +731,135 @@ export default function BalanceHidricoDashboard() {
                 <Tooltip {...TOOLTIP_STYLE} labelFormatter={(v: string) => `Fecha: ${v}`}
                   formatter={(val: number, name: string) => [`${val.toFixed(1)} m³`, name]} />
                 <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
-                <Bar dataKey="ingreso_ptap"  name="Ingreso PTAP"    fill="#1f6feb" radius={[3,3,0,0]} />
-                <Bar dataKey="potable_ptap"  name="Potable PTAP"    fill="#3fb950" radius={[3,3,0,0]} />
-                <Bar dataKey="consumo_gem_m3" name="Caudal GEM"     fill="#f85149" radius={[3,3,0,0]} />
-              </BarChart>
+                <Bar dataKey="acueducto_m3"   name="Acueducto"   fill="#4472C4" stackId="t" />
+                <Bar dataKey="rotativa_m3"    name="Rotativa"    fill="#5B9BD5" stackId="t" />
+                <Bar dataKey="tintoreria_m3"  name="Tintorería"  fill="#FFC000" stackId="t" />
+                <Bar dataKey="lavanderia_m3"  name="Lavandería"  fill="#ED7D31" stackId="t" radius={[3,3,0,0]} />
+                <Line dataKey="total_tratado_osmosis" name="Total Tratado Osmosis"
+                  stroke="#375623" strokeWidth={2}
+                  dot={<SquareDot fill="#375623" />} activeDot={{ r: 5, fill: '#375623' }} connectNulls />
+                <Line dataKey="total_a_tratar" name="Total Vol. a Tratar"
+                  stroke="#ED7D31" strokeWidth={2} strokeDasharray="4 2"
+                  dot={false} connectNulls />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Seguimiento vertimiento — rechazo RO + GEM */}
+          <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
+            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
+              Seguimiento y Control de Vertimiento (m³/día)
+            </div>
+            <ResponsiveContainer width="100%" height={240}>
+              <ComposedChart data={agrupado} margin={{ top: 4, right: 56, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#21262d" />
+                <XAxis dataKey="fecha" tickFormatter={fmt} tick={AXIS_TICK} interval="preserveStartEnd" />
+                <YAxis yAxisId="left"  tick={AXIS_TICK} width={50}
+                  label={{ value: 'm³', angle: -90, position: 'insideLeft', fill: '#484f58', fontSize: 10, dx: -4 }} />
+                <YAxis yAxisId="right" orientation="right" tick={AXIS_TICK} width={44}
+                  domain={[0, 100]} tickFormatter={(v: number) => `${v}%`}
+                  label={{ value: '%', angle: 90, position: 'insideRight', fill: '#484f58', fontSize: 10, dx: 6 }} />
+                <Tooltip {...TOOLTIP_STYLE} labelFormatter={(v: string) => `Fecha: ${v}`} />
+                <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
+                <Bar  yAxisId="left"  dataKey="rechazo_ro1"      name="Rechazo RO"     fill="#7B3F00" stackId="v" />
+                <Bar  yAxisId="left"  dataKey="consumo_gem_m3"   name="Tratado GEM"    fill="#9DC3E6" stackId="v" radius={[3,3,0,0]} />
+                <Line yAxisId="left"  dataKey="envio_th"          name="Enviado TH"
+                  stroke="#70AD47" strokeWidth={2}
+                  dot={<SquareDot fill="#70AD47" />} activeDot={{ r: 5 }} connectNulls />
+                <Line yAxisId="right" dataKey="eficiencia_ro_pct" name="% Eficiencia RO"
+                  stroke="#FFC000" strokeWidth={1.5} strokeDasharray="4 2" dot={false} connectNulls />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <TablaResumen
+          titulo="Resumen Tratabilidad I"
+          colorHead="#A9CE91"
+          cabeceras={['PROCESO', 'CONSUMO (m³)', '% DEL TOTAL']}
+          filas={(() => {
+            const total = kpis.totalTin + kpis.totalLav + kpis.totalRot + kpis.totalAcu;
+            const p = (v: number) => total > 0 ? `${(v / total * 100).toFixed(1)}%` : '—';
+            return [
+              ['Acueducto',  fmtFull(kpis.totalAcu), p(kpis.totalAcu)],
+              ['Rotativa',   fmtFull(kpis.totalRot), p(kpis.totalRot)],
+              ['Tintorería', fmtFull(kpis.totalTin), p(kpis.totalTin)],
+              ['Lavandería', fmtFull(kpis.totalLav), p(kpis.totalLav)],
+              ['TOTAL',      fmtFull(total),          '100.0%'],
+            ];
+          })()}
+        />
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════════
+          S6 — BALANCE DE TRATABILIDAD II
+      ════════════════════════════════════════════════════════════════════════ */}
+      <section className="dash-section">
+        <SeccionHeader numero={6} titulo="BALANCE DE TRATABILIDAD II" color="#A9CE91" />
+        <div className="dash-row-2col">
+
+          {/* Pie — distribución agua tratada por sistema */}
+          <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
+            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
+              Tratabilidad Total — Distribución de agua tratada
+            </div>
+            <ResponsiveContainer width="100%" height={240}>
+              <PieChart>
+                <Pie
+                  data={pieS6}
+                  cx="50%" cy="48%"
+                  outerRadius={85}
+                  dataKey="value"
+                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
+                  labelLine
+                >
+                  {pieS6.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                </Pie>
+                <Tooltip
+                  contentStyle={{ background: '#161b22', border: '1px solid #30363d', borderRadius: 8, fontSize: 11 }}
+                  formatter={(val: number) => [`${fmtFull(val)} m³`]}
+                />
+                <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Barras agrupadas Balance en Planta */}
+          <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
+            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
+              Balance en Planta (m³/día)
+            </div>
+            <ResponsiveContainer width="100%" height={240}>
+              <ComposedChart data={agrupadoS6} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#21262d" />
+                <XAxis dataKey="fecha" tickFormatter={fmt} tick={AXIS_TICK} interval="preserveStartEnd" />
+                <YAxis tick={AXIS_TICK} width={50}
+                  label={{ value: 'm³', angle: -90, position: 'insideLeft', fill: '#484f58', fontSize: 10, dx: -4 }} />
+                <Tooltip {...TOOLTIP_STYLE} labelFormatter={(v: string) => `Fecha: ${v}`}
+                  formatter={(val: number, name: string) => [`${val.toFixed(1)} m³`, name]} />
+                <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
+                <Bar dataKey="total_a_tratar"       name="Total a Tratar"    fill="#1F3864" radius={[3,3,0,0]} maxBarSize={20} />
+                <Bar dataKey="total_agua_limpia_m3" name="Agua Limpia"       fill="#4472C4" radius={[3,3,0,0]} maxBarSize={20} />
+                <Bar dataKey="envio_th"             name="Envío TH"          fill="#5B9BD5" radius={[3,3,0,0]} maxBarSize={20} />
+                <Bar dataKey="consumo_gem_m3"       name="Tratado GEM"       fill="#A9D18E" radius={[3,3,0,0]} maxBarSize={20} />
+                <Bar dataKey="permeado_mbr"         name="Permeado MBRs"     fill="#ED7D31" radius={[3,3,0,0]} maxBarSize={20} />
+                <Bar dataKey="entrada_ro1"          name="Enviado a RO"      fill="#FFC000" radius={[3,3,0,0]} maxBarSize={20} />
+              </ComposedChart>
             </ResponsiveContainer>
           </div>
         </div>
       </section>
 
-      {/* ── Sistema RO ── */}
+      {/* ═══════════════════════════════════════════════════════════════════════
+          S7 — OPERACIÓN RO — EFICIENCIAS
+      ════════════════════════════════════════════════════════════════════════ */}
       <section className="dash-section">
-        <div className="section-title">Sistema de Ósmosis Inversa (RO)</div>
+        <SeccionHeader numero={7} titulo="OPERACIÓN RO — EFICIENCIAS" color="#A9CE91" />
         <div className="dash-row-2col">
+
           <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
             <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
-              Entrada, permeado y rechazo RO1 (m³/día)
+              Balance Global RO — Volúmenes y eficiencia (m³/día)
             </div>
             <ResponsiveContainer width="100%" height={220}>
               <ComposedChart data={agrupado} margin={{ top: 4, right: 56, left: 0, bottom: 0 }}>
@@ -238,141 +872,151 @@ export default function BalanceHidricoDashboard() {
                   label={{ value: '%', angle: 90, position: 'insideRight', fill: '#484f58', fontSize: 10, dx: 4 }} />
                 <Tooltip {...TOOLTIP_STYLE} labelFormatter={(v: string) => `Fecha: ${v}`} />
                 <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
-                <Bar yAxisId="left" dataKey="entrada_ro1"   name="Entrada RO1"   fill="#1f6feb" radius={[3,3,0,0]} />
-                <Bar yAxisId="left" dataKey="permeado_ro1"  name="Permeado RO1"  fill="#3fb950" radius={[3,3,0,0]} />
-                <Bar yAxisId="left" dataKey="rechazo_ro1"   name="Rechazo RO1"   fill="#f85149" radius={[3,3,0,0]} />
-                <Line yAxisId="right" type="monotone" dataKey="eficiencia_ro_pct" name="Eficiencia %"
-                  stroke="#9e7aff" strokeWidth={2} dot={false} connectNulls />
+                <Bar  yAxisId="left"  dataKey="permeado_ro1"      name="Permeado RO"  fill="#A9D18E" radius={[3,3,0,0]} stackId="ro" />
+                <Bar  yAxisId="left"  dataKey="rechazo_ro1"       name="Rechazo RO"   fill="#7B3F00" stackId="ro" />
+                <Line yAxisId="left"  dataKey="entrada_ro1" name="Ingreso total RO"
+                  stroke="#ED7D31" strokeWidth={2} dot={{ fill: '#ED7D31', r: 3 }} connectNulls />
+                <Line yAxisId="right" dataKey="eficiencia_ro_pct" name="% Eficiencia global"
+                  stroke="#FFC000" strokeWidth={2} strokeDasharray="4 2" dot={false} connectNulls />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
 
           <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
             <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
-              Tendencia eficiencia RO (%) y permeados MBR (m³/día)
+              Permeados MBR y tendencia eficiencia RO (%)
             </div>
             <ResponsiveContainer width="100%" height={220}>
               <ComposedChart data={agrupado} margin={{ top: 4, right: 56, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#21262d" />
                 <XAxis dataKey="fecha" tickFormatter={fmt} tick={AXIS_TICK} interval="preserveStartEnd" />
-                <YAxis yAxisId="left" tick={AXIS_TICK} width={50}
+                <YAxis yAxisId="left"  tick={AXIS_TICK} width={50}
                   label={{ value: 'm³', angle: -90, position: 'insideLeft', fill: '#484f58', fontSize: 10, dx: -4 }} />
                 <YAxis yAxisId="right" orientation="right" tick={AXIS_TICK} width={44}
                   domain={[0, 100]} tickFormatter={(v: number) => `${v}%`} />
                 <Tooltip {...TOOLTIP_STYLE} labelFormatter={(v: string) => `Fecha: ${v}`} />
                 <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
-                <Bar yAxisId="left" dataKey="permeado_mbr1" name="Permeado MBR1" fill="#58a6ff" radius={[3,3,0,0]} />
-                <Bar yAxisId="left" dataKey="permeado_mbr2" name="Permeado MBR2" fill="#00c5e3" radius={[3,3,0,0]} />
-                <Line yAxisId="right" type="monotone" dataKey="eficiencia_ro_pct" name="Eficiencia RO %"
-                  stroke="#9e7aff" strokeWidth={2} dot={{ fill: '#9e7aff', r: 3 }} connectNulls />
+                <Bar  yAxisId="left"  dataKey="permeado_mbr1" name="Permeado MBR1" fill="#58a6ff" radius={[3,3,0,0]} />
+                <Bar  yAxisId="left"  dataKey="permeado_mbr2" name="Permeado MBR2" fill="#00c5e3" radius={[3,3,0,0]} />
+                <Line yAxisId="right" dataKey="eficiencia_ro_pct" name="Eficiencia RO %"
+                  stroke="#70AD47" strokeWidth={2} strokeDasharray="4 2" dot={{ fill: '#70AD47', r: 3 }} connectNulls />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════════
+          S9 — INDICADOR TRATAMIENTO FQ GEM
+      ════════════════════════════════════════════════════════════════════════ */}
+      <section className="dash-section">
+        <SeccionHeader numero={9} titulo="INDICADOR TRATAMIENTO FQ GEM" color="#FFD966" textColor="#1c2128" />
+        <div className="dash-row-2col">
+
+          {/* $m³ GEM — caudal vs indicador costo */}
+          <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
+            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
+              $m³ Tratamiento GEM — Caudal tratado vs indicador costo
+            </div>
+            <ResponsiveContainer width="100%" height={220}>
+              <ComposedChart data={gemAgrupado} margin={{ top: 4, right: 60, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#21262d" />
+                <XAxis dataKey="fecha" tickFormatter={fmt} tick={AXIS_TICK} interval="preserveStartEnd" />
+                <YAxis yAxisId="left"  tick={AXIS_TICK} width={54}
+                  label={{ value: 'm³', angle: -90, position: 'insideLeft', fill: '#484f58', fontSize: 10, dx: -4 }} />
+                <YAxis yAxisId="right" orientation="right" tick={{ fill: '#ED7D31', fontSize: 10 }} width={56}
+                  tickFormatter={(v: number) => `$${fmtM3(v)}`}
+                  label={{ value: '$/m³', angle: 90, position: 'insideRight', fill: '#ED7D3180', fontSize: 10, dx: 6 }} />
+                <Tooltip {...TOOLTIP_STYLE} labelFormatter={(v: string) => `Fecha: ${v}`}
+                  formatter={(val: number, name: string) => [
+                    name === 'Indicador $/m³' ? `$${(val as number).toFixed(0)}/m³` : `${(val as number).toFixed(1)} m³`, name,
+                  ]} />
+                <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
+                <Bar  yAxisId="left"  dataKey="caudal_m3"    name="Caudal GEM (m³)" fill="#BDD7EE" radius={[3,3,0,0]} />
+                <Line yAxisId="right" dataKey="pesos_por_m3" name="Indicador $/m³"
+                  stroke="#ED7D31" strokeWidth={2} dot={{ fill: '#ED7D31', r: 3 }} connectNulls />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* PTAP — ingreso y agua potable producida */}
+          <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
+            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
+              Ingreso PTAP y agua potable producida (m³/día)
+            </div>
+            <ResponsiveContainer width="100%" height={220}>
+              <ComposedChart data={agrupado} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#21262d" />
+                <XAxis dataKey="fecha" tickFormatter={fmt} tick={AXIS_TICK} interval="preserveStartEnd" />
+                <YAxis tick={AXIS_TICK} width={50}
+                  label={{ value: 'm³', angle: -90, position: 'insideLeft', fill: '#484f58', fontSize: 10, dx: -4 }} />
+                <Tooltip {...TOOLTIP_STYLE} labelFormatter={(v: string) => `Fecha: ${v}`}
+                  formatter={(val: number, name: string) => [`${(val as number).toFixed(1)} m³`, name]} />
+                <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
+                <Bar dataKey="ingreso_ptap" name="Ingreso PTAP"            fill="#4472C4" radius={[3,3,0,0]} />
+                <Bar dataKey="potable_ptap" name="Agua Potable Producida"  fill="#70AD47" radius={[3,3,0,0]} />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
         </div>
       </section>
 
-      {/* ── Consumo por proceso ── */}
+      {/* ═══════════════════════════════════════════════════════════════════════
+          S10 — INDICADOR OSMOSIS INVERSA
+      ════════════════════════════════════════════════════════════════════════ */}
       <section className="dash-section">
-        <div className="section-title">Consumo de Agua por Proceso</div>
+        <SeccionHeader numero={10} titulo="INDICADOR OSMOSIS INVERSA" color="#FFD966" textColor="#1c2128" />
         <div className="dash-row-2col">
-          <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
-            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
-              Consumo diario por área productiva (m³/día)
-            </div>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={agrupado} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#21262d" />
-                <XAxis dataKey="fecha" tickFormatter={fmt} tick={AXIS_TICK} interval="preserveStartEnd" />
-                <YAxis tick={AXIS_TICK} width={50}
-                  label={{ value: 'm³', angle: -90, position: 'insideLeft', fill: '#484f58', fontSize: 10, dx: -4 }} />
-                <Tooltip {...TOOLTIP_STYLE} labelFormatter={(v: string) => `Fecha: ${v}`}
-                  formatter={(val: number, name: string) => [`${val.toFixed(1)} m³`, name]} />
-                <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
-                <Bar dataKey="lavanderia_m3"  name="Lavandería"  fill="#3fb950" radius={[3,3,0,0]} stackId="p" />
-                <Bar dataKey="tintoreria_m3"  name="Tintorería"  fill="#1f6feb" radius={[0,0,0,0]} stackId="p" />
-                <Bar dataKey="rotativa_m3"    name="Rotativa"    fill="#d29922" radius={[3,3,0,0]} stackId="p" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          <ChartPending titulo="Indicador RO — $m³ vs Volumen enviado a RO (datos de costo pendientes)" alto={220} />
 
-          <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
-            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
-              Indicadores de consumo específico por proceso
+          {/* Tabla estática formulación RO */}
+          <div className="dash-card" style={{ padding: '12px' }}>
+            <div style={{
+              fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em',
+              background: '#FFD966', color: '#1c2128', padding: '3px 8px', marginBottom: 10, borderRadius: 3,
+            }}>
+              Formulación Seguimiento RO
             </div>
-            <ResponsiveContainer width="100%" height={220}>
-              <LineChart data={agrupado} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#21262d" />
-                <XAxis dataKey="fecha" tickFormatter={fmt} tick={AXIS_TICK} interval="preserveStartEnd" />
-                <YAxis tick={AXIS_TICK} width={56}
-                  label={{ value: 'L/und·kg·m', angle: -90, position: 'insideLeft', fill: '#484f58', fontSize: 9, dx: -4 }} />
-                <Tooltip {...TOOLTIP_STYLE} labelFormatter={(v: string) => `Fecha: ${v}`}
-                  formatter={(val: number, name: string) => [`${val.toFixed(1)}`, name]} />
-                <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
-                <Line type="monotone" dataKey="indicador_lav_l_und" name="Lav. L/und"
-                  stroke="#3fb950" strokeWidth={2} dot={false} connectNulls />
-                <Line type="monotone" dataKey="indicador_tin_l_kg" name="Tin. L/kg tela"
-                  stroke="#1f6feb" strokeWidth={2} dot={false} connectNulls />
-                <Line type="monotone" dataKey="indicador_rot_l_m" name="Rot. L/m tela"
-                  stroke="#d29922" strokeWidth={2} dot={false} connectNulls />
-              </LineChart>
-            </ResponsiveContainer>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+              <thead>
+                <tr>
+                  {['INDICADOR', 'FÓRMULA', 'UNIDAD'].map((h, i) => (
+                    <th key={i} style={{
+                      padding: '4px 8px', textAlign: i === 0 ? 'left' : 'center',
+                      color: '#8b949e', fontWeight: 600, borderBottom: '1px solid #30363d', whiteSpace: 'nowrap',
+                    }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {([
+                  ['Recuperación RO',      '(Permeado RO ÷ Entrada RO) × 100',       '%'],
+                  ['Factor Concentración', 'Entrada RO ÷ Rechazo RO',                 'FC'],
+                  ['Rechazo de Sales',     '(1 − TDS perm ÷ TDS alim) × 100',        '%'],
+                  ['Indicador Costo RO',   'Costo Químicos RO ÷ Permeado RO',         '$/m³'],
+                ] as [string, string, string][]).map(([ind, formula, unit], i) => (
+                  <tr key={i} style={{ borderBottom: '1px solid #21262d50' }}>
+                    <td style={{ padding: '6px 8px', color: '#e6edf3', fontWeight: 600 }}>{ind}</td>
+                    <td style={{ padding: '6px 8px', color: '#8b949e', textAlign: 'center',
+                      fontFamily: 'monospace', fontSize: 10 }}>{formula}</td>
+                    <td style={{ padding: '6px 8px', color: '#70AD47', textAlign: 'center' }}>{unit}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </section>
 
-      {/* ── Distribución del agua ── */}
+      {/* ═══════════════════════════════════════════════════════════════════════
+          S11 — BALANCE DE LODOS
+      ════════════════════════════════════════════════════════════════════════ */}
       <section className="dash-section">
-        <div className="section-title">Distribución y Fuentes de Agua</div>
+        <SeccionHeader numero={11} titulo="BALANCE DE LODOS" color="#DAE3F3" />
         <div className="dash-row-2col">
-          <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
-            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
-              Fuentes de suministro: PTAP + Acueducto + Carrotanques (m³/día)
-            </div>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={agrupado} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#21262d" />
-                <XAxis dataKey="fecha" tickFormatter={fmt} tick={AXIS_TICK} interval="preserveStartEnd" />
-                <YAxis tick={AXIS_TICK} width={50}
-                  label={{ value: 'm³', angle: -90, position: 'insideLeft', fill: '#484f58', fontSize: 10, dx: -4 }} />
-                <Tooltip {...TOOLTIP_STYLE} labelFormatter={(v: string) => `Fecha: ${v}`}
-                  formatter={(val: number, name: string) => [`${val.toFixed(1)} m³`, name]} />
-                <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
-                <Bar dataKey="potable_ptap"     name="Potable PTAP"    fill="#00c5e3" radius={[3,3,0,0]} stackId="f" />
-                <Bar dataKey="acueducto_m3"     name="Acueducto"       fill="#d29922" radius={[0,0,0,0]} stackId="f" />
-                <Bar dataKey="carrotanques_m3"  name="Carrotanques"    fill="#9e7aff" radius={[0,0,0,0]} stackId="f" />
-                <Bar dataKey="mulas_funza_m3"   name="Mulas Funza"     fill="#58a6ff" radius={[3,3,0,0]} stackId="f" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-
-          <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
-            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
-              Tendencia acueducto vs agua limpia producida (m³/día)
-            </div>
-            <ResponsiveContainer width="100%" height={200}>
-              <AreaChart data={agrupado} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="gradTotalL" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3fb950" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#3fb950" stopOpacity={0}/>
-                  </linearGradient>
-                  <linearGradient id="gradAcuL" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#d29922" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#d29922" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#21262d" />
-                <XAxis dataKey="fecha" tickFormatter={fmt} tick={AXIS_TICK} interval="preserveStartEnd" />
-                <YAxis tick={AXIS_TICK} width={50}
-                  label={{ value: 'm³', angle: -90, position: 'insideLeft', fill: '#484f58', fontSize: 10, dx: -4 }} />
-                <Tooltip {...TOOLTIP_STYLE} labelFormatter={(v: string) => `Fecha: ${v}`}
-                  formatter={(val: number, name: string) => [`${val.toFixed(1)} m³`, name]} />
-                <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
-                <Area type="monotone" dataKey="total_agua_limpia_m3" name="Agua limpia total" stroke="#3fb950" fill="url(#gradTotalL)" strokeWidth={2} connectNulls />
-                <Area type="monotone" dataKey="acueducto_m3" name="Acueducto" stroke="#d29922" fill="url(#gradAcuL)" strokeWidth={2} connectNulls />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+          <ChartPending titulo="Indicador $/m³ — Volumen tratado vs costo unitario" alto={220} />
+          <ChartPending titulo="Indicador $/Kg — Kg generados vs costo por kg" alto={220} />
         </div>
       </section>
 
