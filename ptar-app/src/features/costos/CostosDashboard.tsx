@@ -11,8 +11,11 @@ import {
 import {
   getReporteCostosHtmlUrl,
   getCalidadRemociones,
+  getRoEficiencia,
   type RemocionCalidad,
+  type RoEficienciaRow,
 } from '../../services/ptarClient';
+import InformeCostosModal from './InformeCostosModal';
 import GranularidadSelector from '../../components/shared/GranularidadSelector';
 import { useGranularidad } from '../../hooks/useGranularidad';
 import { xLabel, sortKey } from '../../lib/utils/agruparTemporal';
@@ -26,20 +29,40 @@ const TOOLTIP_STYLE = {
 const AXIS_TICK_SM = { fill: '#6e7681', fontSize: 9 };
 const MESES = ['', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
-const PRODUCT_COLORS: Record<string, string> = {
-  'Ácido':              '#f85149',
-  'Coagulante':         '#3fb950',
-  'Decolorante':        '#d29922',
-  'Polímero Aniónico':  '#9e7aff',
-  'Polímero Catiónico': '#58a6ff',
-  'Anti-incrustante':   '#00c5e3',
-  'Biocida / Desinfectante': '#ff7d31',
-  'Limpiador Químico':  '#e6a829',
+const PRECIOS_COP_KG: Record<string, number> = {
+  'Ácido / Acidificante': 830,
+  'Coagulante':           2900,
+  'Decolorante':          6295,
+  'Pol. Aniónico':        19050,
+  'Pol. Catiónico':       22050,
 };
-function colorFor(nombre: string): string {
-  for (const [key, col] of Object.entries(PRODUCT_COLORS)) {
-    if (nombre.toLowerCase().includes(key.toLowerCase().split(' ')[0])) return col;
-  }
+
+function _mq(n: string, f: string) { return n.toLowerCase().includes(f); }
+function colorPPM(nombre: string): string {
+  const n = nombre.toLowerCase();
+  if (_mq(n, 'cati'))                    return '#4472C4';
+  if (_mq(n, 'anio') || _mq(n, 'anió')) return '#ED7D31';
+  if (_mq(n, 'acid') || _mq(n, 'ácid')) return '#FFE599';
+  if (_mq(n, 'coag'))                    return '#F4B183';
+  if (_mq(n, 'decol'))                   return '#BFBFBF';
+  return '#8b949e';
+}
+function colorKG(nombre: string): string {
+  const n = nombre.toLowerCase();
+  if (_mq(n, 'cati'))                    return '#4472C4';
+  if (_mq(n, 'anio') || _mq(n, 'anió')) return '#ED7D31';
+  if (_mq(n, 'acid') || _mq(n, 'ácid')) return '#FFD966';
+  if (_mq(n, 'coag'))                    return '#F4B183';
+  if (_mq(n, 'decol'))                   return '#C9C9C9';
+  return '#8b949e';
+}
+function colorM3(nombre: string): string {
+  const n = nombre.toLowerCase();
+  if (_mq(n, 'cati'))                    return '#8EAADB';
+  if (_mq(n, 'anio') || _mq(n, 'anió')) return '#ED7D31';
+  if (_mq(n, 'acid') || _mq(n, 'ácid')) return '#FFE599';
+  if (_mq(n, 'coag'))                    return '#F4B183';
+  if (_mq(n, 'decol'))                   return '#C9C9C9';
   return '#8b949e';
 }
 
@@ -47,7 +70,7 @@ function colorFor(nombre: string): string {
 function byGranularidad(rows: ConsumoQuimicoDiaRow[], gran: Granularidad | null) {
   type Bucket = {
     sk: string; label: string;
-    productos: Record<string, { kg: number; costo: number; ppm: number[]; caudal: number }>;
+    productos: Record<string, { kg: number; L: number; costo: number; ppm: number[]; caudal: number }>;
     caudalTotal: number;
   };
   const map = new Map<string, Bucket>();
@@ -58,9 +81,10 @@ function byGranularidad(rows: ConsumoQuimicoDiaRow[], gran: Granularidad | null)
     if (!map.has(sk)) map.set(sk, { sk, label, productos: {}, caudalTotal: 0 });
     const bucket = map.get(sk)!;
     const p = r.producto_nombre;
-    if (!bucket.productos[p]) bucket.productos[p] = { kg: 0, costo: 0, ppm: [], caudal: 0 };
+    if (!bucket.productos[p]) bucket.productos[p] = { kg: 0, L: 0, costo: 0, ppm: [], caudal: 0 };
     const pe = bucket.productos[p];
     if (r.kg_dia        != null) pe.kg     += r.kg_dia;
+    if (r.L_dia         != null) pe.L      += r.L_dia;
     if (r.costo_dia     != null) pe.costo  += r.costo_dia;
     if (r.ppm_promedio_dia != null) pe.ppm.push(r.ppm_promedio_dia);
     if (r.caudal_m3_dia != null) { pe.caudal += r.caudal_m3_dia; bucket.caudalTotal += r.caudal_m3_dia; }
@@ -78,6 +102,7 @@ function byGranularidad(rows: ConsumoQuimicoDiaRow[], gran: Granularidad | null)
       for (const p of productos) {
         const pe = bucket.productos[p];
         row[`kg_${p}`]       = pe ? +(pe.kg.toFixed(2))    : 0;
+        row[`L_${p}`]        = pe && pe.L > 0 ? +(pe.L.toFixed(1)) : null;
         row[`costo_${p}`]    = pe ? +(pe.costo.toFixed(0))  : 0;
         row[`ppm_${p}`]      = pe ? avg(pe.ppm)             : null;
         row[`costo_m3_${p}`] = (pe && caudalTotal > 0)
@@ -144,7 +169,10 @@ export default function CostosDashboard() {
   const [sistema,        setSistema]        = useState('GEM');
   const [mesProyec,      setMesProyec]      = useState(String(new Date().getMonth() + 1));
   const [reactivosFiltro, setReactivosFiltro] = useState<string[]>([]);
-  const [remociones,     setRemociones]     = useState<RemocionCalidad[]>([]);
+  const [remociones,    setRemociones]    = useState<RemocionCalidad[]>([]);
+  const [roEficiencia,  setRoEficiencia]  = useState<RoEficienciaRow[]>([]);
+  const [informeAbierto,  setInformeAbierto]  = useState(false);
+  const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
 
   const { consumoDiario, proyeccion, estadisticas, gemEficiencia, loading, error } =
     useCostosData(fechaInicio, fechaFin, sistema);
@@ -157,11 +185,96 @@ export default function CostosDashboard() {
       .catch(() => setRemociones([]));
   }, [fechaInicio, fechaFin]);
 
+  /* fetch RO eficiencia operacional */
+  useEffect(() => {
+    if (!fechaInicio || !fechaFin) return;
+    getRoEficiencia({ fecha_inicio: fechaInicio, fecha_fin: fechaFin })
+      .then(setRoEficiencia)
+      .catch(() => setRoEficiencia([]));
+  }, [fechaInicio, fechaFin]);
+
   /* agrupación temporal */
   const { result: datosFecha, productos } = useMemo(
     () => byGranularidad(consumoDiario, granularidad),
     [consumoDiario, granularidad],
   );
+
+  /* GEM — caudal + indicador $m³ + caudal_mh agrupado */
+  const gemAgrupado = useMemo(() => {
+    type B = { sk: string; label: string; caudal: number; pesos: number[]; mh: number[] };
+    const map = new Map<string, B>();
+    const TURNO_N: Record<string, number> = { noche: 1, 'mañana': 2, tarde: 3 };
+    for (const r of gemEficiencia) {
+      const t     = TURNO_N[r.turno ?? ''];
+      const sk    = sortKey(r.fecha, t, granularidad);
+      const label = xLabel(r.fecha, t, granularidad);
+      if (!map.has(sk)) map.set(sk, { sk, label, caudal: 0, pesos: [], mh: [] });
+      const b = map.get(sk)!;
+      if (r.caudal_m3    != null) b.caudal += r.caudal_m3;
+      if (r.pesos_por_m3 != null) b.pesos.push(r.pesos_por_m3);
+      if (r.caudal_mh    != null) b.mh.push(r.caudal_mh);
+    }
+    const avg = (arr: number[]) => arr.length ? +(arr.reduce((a, v) => a + v, 0) / arr.length).toFixed(1) : null;
+    return Array.from(map.values())
+      .sort((a, b) => a.sk.localeCompare(b.sk))
+      .map(b => ({
+        fecha: b.label,
+        caudal_m3:    +b.caudal.toFixed(1),
+        pesos_por_m3: avg(b.pesos),
+        caudal_mh:    avg(b.mh),
+      }));
+  }, [gemEficiencia, granularidad]);
+
+  /* RO — agrupado desde operacion_ro_turno */
+  const roAgrupado = useMemo(() => {
+    if (!roEficiencia.length) return [];
+    type B = { sk: string; label: string; caudal: number; pesos: number[]; horas: number[]; costo: number };
+    const map = new Map<string, B>();
+    const TURNO_N: Record<string, number> = { noche: 1, 'mañana': 2, tarde: 3 };
+    for (const r of roEficiencia) {
+      const t     = TURNO_N[r.turno ?? ''];
+      const sk    = sortKey(r.fecha, t, granularidad);
+      const label = xLabel(r.fecha, t, granularidad);
+      if (!map.has(sk)) map.set(sk, { sk, label, caudal: 0, pesos: [], horas: [], costo: 0 });
+      const b = map.get(sk)!;
+      if (r.caudal_m3          != null) b.caudal += r.caudal_m3;
+      if (r.pesos_por_m3       != null) b.pesos.push(r.pesos_por_m3);
+      if (r.horas_operacion    != null) b.horas.push(r.horas_operacion);
+      if (r.costo_quimica_turno != null) b.costo += r.costo_quimica_turno;
+    }
+    const avg = (arr: number[]) => arr.length ? +(arr.reduce((a, v) => a + v, 0) / arr.length).toFixed(1) : null;
+    return Array.from(map.values())
+      .sort((a, b) => a.sk.localeCompare(b.sk))
+      .map(b => ({
+        fecha:        b.label,
+        caudal_m3:    +b.caudal.toFixed(1),
+        pesos_por_m3: avg(b.pesos),
+        horas_op:     avg(b.horas),
+        costo_total:  +b.costo.toFixed(0),
+      }));
+  }, [roEficiencia, granularidad]);
+
+  /* estadísticas L/día por producto */
+  const lDiaStats = useMemo(() => {
+    const map = new Map<string, number[]>();
+    for (const r of consumoDiario) {
+      if (r.L_dia != null && r.L_dia > 0) {
+        if (!map.has(r.producto_nombre)) map.set(r.producto_nombre, []);
+        map.get(r.producto_nombre)!.push(r.L_dia);
+      }
+    }
+    const result: Record<string, { min: number; max: number; avg: number; total: number }> = {};
+    for (const [p, vals] of map) {
+      const sum = vals.reduce((a, b) => a + b, 0);
+      result[p] = {
+        min:   Math.min(...vals),
+        max:   Math.max(...vals),
+        avg:   sum / vals.length,
+        total: sum,
+      };
+    }
+    return result;
+  }, [consumoDiario]);
 
   /* reactivos filtrados para gráficas */
   const productosFiltrados = reactivosFiltro.length > 0
@@ -209,29 +322,43 @@ export default function CostosDashboard() {
       { cod: 'SST',   label: 'SST',   unidad: 'mg/L' },
       { cod: 'COLOR', label: 'Color', unidad: 'UC'   },
     ];
+    const m3_total  = gemEficiencia.reduce((s, r) => s + (r.caudal_m3 ?? 0), 0);
+    const costoTotal = kpis.total_costo;
     return PARAMS.map(({ cod, label, unidad }) => {
       const rows = remociones.filter(r =>
         r.parametro_codigo?.toUpperCase().includes(cod) ||
         r.parametro?.toUpperCase().includes(cod),
       );
-      if (!rows.length) return { label, unidad, noData: true };
+      if (!rows.length) return { label, unidad, noData: true, m3_total: null, removida: null, kg_m3: null, total_kg: null, costo_kg: null };
 
       const ent = rows.map(r => r.pulmon).filter((v): v is number => v != null);
       const sal = rows.map(r => r.gem_salida).filter((v): v is number => v != null);
       const pct = rows.map(r => r.pct_remocion_gem).filter((v): v is number => v != null);
 
+      const avg_ent_val = numAvg(ent);
+      const avg_sal_val = numAvg(sal);
+      const removida = (avg_ent_val != null && avg_sal_val != null) ? avg_ent_val - avg_sal_val : null;
+      const kg_m3    = removida != null ? removida / 1000 : null;
+      const total_kg = (kg_m3 != null && m3_total > 0) ? +(kg_m3 * m3_total).toFixed(1) : null;
+      const costo_kg = (total_kg != null && total_kg > 0) ? Math.round(costoTotal / total_kg) : null;
+
       return {
         label, unidad, noData: false,
-        ent_avg:  numAvg(ent),
-        sal_avg:  numAvg(sal),
+        ent_avg:  avg_ent_val,
+        sal_avg:  avg_sal_val,
         ent_p90:  numP90(ent),
         sal_p90:  numP90(sal),
         ent_ie:   numIE(ent),
         sal_ie:   numIE(sal),
         pct_rem:  numAvg(pct),
+        m3_total,
+        removida,
+        kg_m3,
+        total_kg,
+        costo_kg,
       };
     });
-  }, [remociones]);
+  }, [remociones, gemEficiencia, kpis]);
 
   if (loading) {
     return (
@@ -253,7 +380,7 @@ export default function CostosDashboard() {
     idx === productosFiltrados.length - 1 ? [3, 3, 0, 0] : [0, 0, 0, 0];
   const lineM3 = (
     <Line yAxisId="right" type="monotone" dataKey="indicador_m3" name="$/m³ total"
-      stroke="#3fb950" strokeWidth={2} dot={false} connectNulls />
+      stroke="#70AD47" strokeWidth={2.25} dot={false} connectNulls />
   );
 
   /* estilos de tabla */
@@ -269,6 +396,7 @@ export default function CostosDashboard() {
   const tdNum: React.CSSProperties = { ...tdStyle, textAlign: 'right', fontFamily: 'monospace' };
 
   return (
+    <>
     <div className="cal-page">
 
       {/* ── Encabezado ── */}
@@ -277,52 +405,63 @@ export default function CostosDashboard() {
           <h1 className="cal-title">Dashboard Costos Químicos</h1>
           <p className="cal-subtitle">Consumo, PPM, costos operativos y proyección vs real por sistema y reactivo</p>
         </div>
-        <a
-          href={getReporteCostosHtmlUrl({ anio: anioActual, mes: mesProyec ? Number(mesProyec) : undefined, sistema: sistema || undefined })}
-          target="_blank" rel="noopener noreferrer"
-          style={{ background: '#3fb950', textDecoration: 'none', alignSelf: 'center', padding: '8px 16px', borderRadius: 6, fontSize: 13, fontWeight: 600, color: '#fff' }}
-        >
-          ⚗️ Informe Costos
-        </a>
-      </div>
-
-      {/* ── Filtros principales ── */}
-      <div className="cal-filters" style={{ marginBottom: 8 }}>
-        <GranularidadSelector value={granularidad} onChange={setGranularidad} />
-        <div className="cal-filter-group">
-          <label className="cal-filter-label">Sistema</label>
-          <select className="cal-filter-select" value={sistema} onChange={e => setSistema(e.target.value)}>
-            <option value="">Todos</option>
-            <option value="GEM">GEM</option>
-            <option value="RO">RO</option>
-            <option value="PTAP">PTAP</option>
-          </select>
-        </div>
-        <div className="cal-filter-group">
-          <label className="cal-filter-label">Fecha inicio</label>
-          <input type="date" className="cal-filter-input" value={draftInicio}
-            onChange={e => handleFechaInicio(e.target.value)}
-            onBlur={e  => commitFechaInicio(e.target.value)} />
-        </div>
-        <div className="cal-filter-group">
-          <label className="cal-filter-label">Fecha fin</label>
-          <input type="date" className="cal-filter-input" value={draftFin}
-            onChange={e => handleFechaFin(e.target.value)}
-            onBlur={e  => commitFechaFin(e.target.value)} />
-        </div>
-        <div className="cal-filter-group">
-          <label className="cal-filter-label">Mes proyección</label>
-          <select className="cal-filter-select" value={mesProyec} onChange={e => setMesProyec(e.target.value)}>
-            <option value="">Todos</option>
-            {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
-              <option key={m} value={m}>{MESES[m]}</option>
-            ))}
-          </select>
+        <div style={{ display: 'flex', gap: 8, alignSelf: 'center' }}>
+          <button
+            onClick={() => setFiltrosAbiertos(v => !v)}
+            style={{ background: filtrosAbiertos ? '#21262d' : '#161b22', border: '1px solid #30363d', padding: '7px 14px', borderRadius: 6, fontSize: 12, fontWeight: 600, color: '#8b949e', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+          >
+            <span style={{ fontSize: 13 }}>⚙</span>
+            Filtros
+            <span style={{ fontSize: 10, opacity: 0.7 }}>{filtrosAbiertos ? '▲' : '▼'}</span>
+          </button>
+          <button
+            onClick={() => setInformeAbierto(true)}
+            style={{ background: '#8a4000', border: 'none', padding: '7px 14px', borderRadius: 6, fontSize: 12, fontWeight: 600, color: '#fff', cursor: 'pointer' }}
+          >
+            ⚗️ Informe
+          </button>
         </div>
       </div>
 
-      {/* ── Filtro por reactivo (chips) ── */}
-      {productos.length > 0 && (
+      {/* ── Filtros principales (colapsables) ── */}
+      {filtrosAbiertos && (
+        <div className="cal-filters" style={{ marginBottom: 8 }}>
+          <GranularidadSelector value={granularidad} onChange={setGranularidad} />
+          <div className="cal-filter-group">
+            <label className="cal-filter-label">Sistema</label>
+            <select className="cal-filter-select" value={sistema} onChange={e => setSistema(e.target.value)}>
+              <option value="">Todos</option>
+              <option value="GEM">GEM</option>
+              <option value="RO">RO</option>
+              <option value="PTAP">PTAP</option>
+            </select>
+          </div>
+          <div className="cal-filter-group">
+            <label className="cal-filter-label">Fecha inicio</label>
+            <input type="date" className="cal-filter-input" value={draftInicio}
+              onChange={e => handleFechaInicio(e.target.value)}
+              onBlur={e  => commitFechaInicio(e.target.value)} />
+          </div>
+          <div className="cal-filter-group">
+            <label className="cal-filter-label">Fecha fin</label>
+            <input type="date" className="cal-filter-input" value={draftFin}
+              onChange={e => handleFechaFin(e.target.value)}
+              onBlur={e  => commitFechaFin(e.target.value)} />
+          </div>
+          <div className="cal-filter-group">
+            <label className="cal-filter-label">Mes proyección</label>
+            <select className="cal-filter-select" value={mesProyec} onChange={e => setMesProyec(e.target.value)}>
+              <option value="">Todos</option>
+              {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+                <option key={m} value={m}>{MESES[m]}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      )}
+
+      {/* ── Filtro por reactivo (chips) — visible solo cuando filtros están abiertos ── */}
+      {filtrosAbiertos && productos.length > 0 && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 16, padding: '8px 0' }}>
           <span style={{ fontSize: 10, fontWeight: 700, color: '#6e7681', letterSpacing: '.08em', textTransform: 'uppercase', marginRight: 4 }}>
             Reactivos:
@@ -336,9 +475,9 @@ export default function CostosDashboard() {
                 )}
                 style={{
                   padding: '4px 12px', borderRadius: 14, cursor: 'pointer', fontSize: 11,
-                  border: `1px solid ${activo ? colorFor(p) : '#30363d'}`,
-                  background: activo ? colorFor(p) + '22' : 'transparent',
-                  color: activo ? colorFor(p) : '#484f58',
+                  border: `1px solid ${activo ? colorKG(p) : '#30363d'}`,
+                  background: activo ? colorKG(p) + '22' : 'transparent',
+                  color: activo ? colorKG(p) : '#484f58',
                   transition: 'all .15s',
                 }}
               >
@@ -372,12 +511,123 @@ export default function CostosDashboard() {
         </div>
       </section>
 
+      {/* ── Sección GEM — 2 gráficos ── */}
+      {gemAgrupado.length > 0 && (
+        <section className="dash-section">
+          <div className="section-title">GEM — $m³ TRATAMIENTO</div>
+          <div className="dash-row-2col">
+            <ChartCard title="$m³ TRATAMIENTO GEM" subtitle="Barras: m³ tratados · Línea: COP/m³">
+              <ResponsiveContainer width="100%" height={240}>
+                <ComposedChart data={gemAgrupado} margin={{ top: 6, right: 52, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#21262d" />
+                  <XAxis dataKey="fecha" tick={AXIS_TICK_SM} interval="preserveStartEnd" />
+                  <YAxis yAxisId="left" tick={AXIS_TICK_SM} width={46} domain={[0, 'auto']}
+                    label={{ value: 'm³', angle: -90, position: 'insideLeft', fill: '#484f58', fontSize: 9, dx: -4 }} />
+                  <YAxis yAxisId="right" orientation="right" tick={AXIS_TICK_SM} width={52}
+                    tickFormatter={fmtM3}
+                    label={{ value: '$/m³', angle: 90, position: 'insideRight', fill: '#484f58', fontSize: 9, dx: 6 }} />
+                  <Tooltip {...TOOLTIP_STYLE}
+                    formatter={(val: number, name: string) =>
+                      name === 'INDICADOR $m³'
+                        ? [`$${Number(val).toLocaleString('es-CO')}/m³`, name]
+                        : [`${Number(val).toFixed(0)} m³`, name]} />
+                  <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
+                  <Bar yAxisId="left" dataKey="caudal_m3" name="CAUDAL TOTAL TRATADO GEM"
+                    fill="#B4C6E7" radius={[3, 3, 0, 0]} />
+                  <Line yAxisId="right" type="monotone" dataKey="pesos_por_m3" name="INDICADOR $m³"
+                    stroke="#ED7D31" strokeWidth={2.25} dot={{ r: 3, fill: '#ED7D31' }} connectNulls />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </ChartCard>
+
+            <ChartCard title="TIEMPO DE OPERACIÓN — SISTEMA GEM" subtitle="Barras: m³ tratados · Línea: caudal m³/h">
+              <ResponsiveContainer width="100%" height={240}>
+                <ComposedChart data={gemAgrupado} margin={{ top: 6, right: 52, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#21262d" />
+                  <XAxis dataKey="fecha" tick={AXIS_TICK_SM} interval="preserveStartEnd" />
+                  <YAxis yAxisId="left" tick={AXIS_TICK_SM} width={46} domain={[0, 'auto']}
+                    label={{ value: 'm³', angle: -90, position: 'insideLeft', fill: '#484f58', fontSize: 9, dx: -4 }} />
+                  <YAxis yAxisId="right" orientation="right" tick={AXIS_TICK_SM} width={46}
+                    label={{ value: 'm³/h', angle: 90, position: 'insideRight', fill: '#484f58', fontSize: 9, dx: 10 }} />
+                  <Tooltip {...TOOLTIP_STYLE}
+                    formatter={(val: number, name: string) =>
+                      name === 'Caudal m³/h'
+                        ? [`${Number(val).toFixed(1)} m³/h`, name]
+                        : [`${Number(val).toFixed(0)} m³`, name]} />
+                  <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
+                  <Bar yAxisId="left" dataKey="caudal_m3" name="VOLUMEN TRATADO GEM (m³)"
+                    fill="#B4C6E7" radius={[3, 3, 0, 0]} />
+                  <Line yAxisId="right" type="monotone" dataKey="caudal_mh" name="Caudal m³/h"
+                    stroke="#ED7D31" strokeWidth={2.25} dot={{ r: 3, fill: '#ED7D31' }} connectNulls />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </ChartCard>
+          </div>
+        </section>
+      )}
+
+      {/* ── Sección RO — 2 gráficos ── */}
+      <section className="dash-section">
+          <div className="section-title">OSMOSIS INVERSA — INDICADOR RO</div>
+          <div className="dash-row-2col">
+            <ChartCard title="INDICADOR RO" subtitle="Barras: m³ enviados a RO · Línea verde: límite · Línea naranja: $/m³">
+              <ResponsiveContainer width="100%" height={240}>
+                <ComposedChart data={roAgrupado} margin={{ top: 6, right: 52, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#21262d" />
+                  <XAxis dataKey="fecha" tick={AXIS_TICK_SM} interval="preserveStartEnd" />
+                  <YAxis yAxisId="left" tick={AXIS_TICK_SM} width={46} domain={[0, 'auto']}
+                    label={{ value: 'm³', angle: -90, position: 'insideLeft', fill: '#484f58', fontSize: 9, dx: -4 }} />
+                  <YAxis yAxisId="right" orientation="right" tick={AXIS_TICK_SM} width={52}
+                    tickFormatter={fmtM3}
+                    label={{ value: '$/m³', angle: 90, position: 'insideRight', fill: '#484f58', fontSize: 9, dx: 6 }} />
+                  <Tooltip {...TOOLTIP_STYLE}
+                    formatter={(val: number, name: string) =>
+                      name === 'INDICADOR $m³ RO'
+                        ? [`$${Number(val).toLocaleString('es-CO')}/m³`, name]
+                        : name === 'LIMITE INDICADOR M3'
+                        ? [`$${Number(val).toLocaleString('es-CO')}/m³`, name]
+                        : [`${Number(val).toFixed(0)} m³`, name]} />
+                  <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
+                  <Bar yAxisId="left" dataKey="caudal_m3" name="VOLUMEN ENVIADO A RO (m³)"
+                    fill="#B4C6E7" radius={[3, 3, 0, 0]} />
+                  <Line yAxisId="right" type="monotone" dataKey="pesos_por_m3" name="INDICADOR $m³ RO"
+                    stroke="#ED7D31" strokeWidth={2.25} dot={{ r: 3, fill: '#ED7D31' }} connectNulls />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </ChartCard>
+
+            <ChartCard title="TIEMPO DE OPERACIÓN — SISTEMA OSMOSIS INVERSA" subtitle="Barras: m³ enviados · Línea: costo total COP">
+              <ResponsiveContainer width="100%" height={240}>
+                <ComposedChart data={roAgrupado} margin={{ top: 6, right: 52, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#21262d" />
+                  <XAxis dataKey="fecha" tick={AXIS_TICK_SM} interval="preserveStartEnd" />
+                  <YAxis yAxisId="left" tick={AXIS_TICK_SM} width={46} domain={[0, 'auto']}
+                    label={{ value: 'm³', angle: -90, position: 'insideLeft', fill: '#484f58', fontSize: 9, dx: -4 }} />
+                  <YAxis yAxisId="right" orientation="right" tick={AXIS_TICK_SM} width={60}
+                    tickFormatter={(v: number) => v >= 1_000_000 ? `${(v/1_000_000).toFixed(1)}M` : v >= 1000 ? `${(v/1000).toFixed(0)}k` : String(v)}
+                    label={{ value: 'COP', angle: 90, position: 'insideRight', fill: '#484f58', fontSize: 9, dx: 14 }} />
+                  <Tooltip {...TOOLTIP_STYLE}
+                    formatter={(val: number, name: string) =>
+                      name === 'Costo Químico RO'
+                        ? [`$${Number(val).toLocaleString('es-CO')}`, name]
+                        : [`${Number(val).toFixed(0)} m³`, name]} />
+                  <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
+                  <Bar yAxisId="left" dataKey="caudal_m3" name="VOLUMEN ENVIADO A RO (m³)"
+                    fill="#B4C6E7" radius={[3, 3, 0, 0]} />
+                  <Line yAxisId="right" type="monotone" dataKey="costo_total" name="Costo Químico RO"
+                    stroke="#ED7D31" strokeWidth={2.25} dot={{ r: 3, fill: '#ED7D31' }} connectNulls />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </ChartCard>
+          </div>
+        </section>
+
       {/* ── 4 Gráficas (2 × 2) ── */}
       <section className="dash-section">
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
 
           {/* Chart 1: PPM Vs $/m³ */}
-          <ChartCard title="CONSUMO PPM Vs $/m³" subtitle="Dosificación diaria por reactivo (PPM) · línea: $/m³">
+          <ChartCard title="COONSUMO PPM Vs $M3" subtitle="Dosificación diaria por reactivo (PPM) · línea: $/m³">
             <ResponsiveContainer width="100%" height={260}>
               <ComposedChart data={datosFecha} margin={{ top: 6, right: 52, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#21262d" />
@@ -390,7 +640,7 @@ export default function CostosDashboard() {
                 <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} formatter={(v: string) => v.replace('ppm_', '')} />
                 {productosFiltrados.map((p, i) => (
                   <Bar key={p} yAxisId="left" dataKey={`ppm_${p}`} name={`ppm_${p}`}
-                    stackId="ppm" fill={colorFor(p)} radius={topRadius(i)} />
+                    stackId="ppm" fill={colorPPM(p)} radius={topRadius(i)} />
                 ))}
                 {lineM3}
               </ComposedChart>
@@ -398,7 +648,7 @@ export default function CostosDashboard() {
           </ChartCard>
 
           {/* Chart 2: KG Vs $/m³ */}
-          <ChartCard title="CONSUMO KG Vs $/m³" subtitle="Kg consumidos por reactivo · línea: $/m³">
+          <ChartCard title="CONSUMO KG Vs $M3" subtitle="Kg consumidos por reactivo · línea: $/m³">
             <ResponsiveContainer width="100%" height={260}>
               <ComposedChart data={datosFecha} margin={{ top: 6, right: 52, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#21262d" />
@@ -411,30 +661,30 @@ export default function CostosDashboard() {
                 <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} formatter={(v: string) => v.replace('kg_', '')} />
                 {productosFiltrados.map((p, i) => (
                   <Bar key={p} yAxisId="left" dataKey={`kg_${p}`} name={`kg_${p}`}
-                    stackId="kg" fill={colorFor(p)} radius={topRadius(i)} />
+                    stackId="kg" fill={colorKG(p)} radius={topRadius(i)} />
                 ))}
                 {lineM3}
               </ComposedChart>
             </ResponsiveContainer>
           </ChartCard>
 
-          {/* Chart 3: COSTO $ Vs $/m³ */}
-          <ChartCard title="COSTO $ Vs $/m³" subtitle="Costo COP diario por reactivo · línea: $/m³">
+          {/* Chart 3: Consumo Litros Vs $/m³ — PT-02 TablaDinámica6 */}
+          <ChartCard title="CONSUMO (L) Vs $M3" subtitle="Litros consumidos por reactivo · línea: $/m³ (polímeros sólidos muestran null)">
             <ResponsiveContainer width="100%" height={260}>
               <ComposedChart data={datosFecha} margin={{ top: 6, right: 52, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#21262d" />
                 <XAxis dataKey="fecha" tick={AXIS_TICK_SM} interval="preserveStartEnd" />
                 <YAxis yAxisId="left" tick={AXIS_TICK_SM} width={52}
-                  tickFormatter={(v: number) => v >= 1_000_000 ? `${(v/1_000_000).toFixed(1)}M` : v >= 1000 ? `${(v/1000).toFixed(0)}k` : String(v)} />
+                  label={{ value: 'L', angle: -90, position: 'insideLeft', fill: '#484f58', fontSize: 9, dx: -4 }} />
                 {yRight}
                 <Tooltip {...TOOLTIP_STYLE}
                   formatter={(val: number, name: string) => name === '$/m³ total'
                     ? [`$${Number(val).toLocaleString('es-CO')}/m³`, name]
-                    : [`$${Number(val).toLocaleString('es-CO')}`, name.replace('costo_', '')]} />
-                <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} formatter={(v: string) => v.replace('costo_', '')} />
+                    : [`${Number(val).toFixed(1)} L`, name.replace('L_', '')]} />
+                <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} formatter={(v: string) => v.replace('L_', '')} />
                 {productosFiltrados.map((p, i) => (
-                  <Bar key={p} yAxisId="left" dataKey={`costo_${p}`} name={`costo_${p}`}
-                    stackId="costo" fill={colorFor(p)} radius={topRadius(i)} />
+                  <Bar key={p} yAxisId="left" dataKey={`L_${p}`} name={`L_${p}`}
+                    stackId="L" fill={colorKG(p)} radius={topRadius(i)} />
                 ))}
                 {lineM3}
               </ComposedChart>
@@ -442,7 +692,7 @@ export default function CostosDashboard() {
           </ChartCard>
 
           {/* Chart 4: $/m³ por reactivo */}
-          <ChartCard title="$/m³ POR REACTIVO" subtitle="Composición del costo operativo en $/m³ · línea: total">
+          <ChartCard title="$ QUIMICO / M3" subtitle="Composición del costo operativo en $/m³ · línea: total">
             <ResponsiveContainer width="100%" height={260}>
               <ComposedChart data={datosFecha} margin={{ top: 6, right: 52, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#21262d" />
@@ -456,10 +706,10 @@ export default function CostosDashboard() {
                 <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} formatter={(v: string) => v.replace('costo_m3_', '')} />
                 {productosFiltrados.map((p, i) => (
                   <Bar key={p} yAxisId="left" dataKey={`costo_m3_${p}`} name={`costo_m3_${p}`}
-                    stackId="m3" fill={colorFor(p)} radius={topRadius(i)} />
+                    stackId="m3" fill={colorM3(p)} radius={topRadius(i)} />
                 ))}
                 <Line yAxisId="right" type="monotone" dataKey="indicador_m3" name="$/m³ total"
-                  stroke="#3fb950" strokeWidth={2} dot={false} connectNulls />
+                  stroke="#70AD47" strokeWidth={2.25} dot={false} connectNulls />
               </ComposedChart>
             </ResponsiveContainer>
           </ChartCard>
@@ -495,7 +745,7 @@ export default function CostosDashboard() {
                     <tr key={row.nombre}
                       style={{ background: idx % 2 === 0 ? 'transparent' : 'rgba(255,255,255,.02)' }}>
                       <td style={{ ...tdStyle, fontWeight: 700 }}>
-                        <span style={{ color: colorFor(row.nombre), marginRight: 6 }}>●</span>
+                        <span style={{ color: colorKG(row.nombre), marginRight: 6 }}>●</span>
                         {row.nombre}
                       </td>
                       <td style={tdNum}>{fmtNum(row.ppm_min)}</td>
@@ -524,6 +774,99 @@ export default function CostosDashboard() {
         </section>
       )}
 
+      {/* ── Estadísticas detalladas por reactivo PPM · L/Día · KG/Día · $ ── */}
+      {tablaReactivos.length > 0 && (
+        <section className="dash-section">
+          <div className="section-title">ESTADÍSTICAS DETALLADAS POR REACTIVO — PPM · L/Día · KG/Día · $</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 12 }}>
+            {tablaReactivos.map(row => {
+              const lStat = lDiaStats[row.nombre];
+              const color = colorKG(row.nombre);
+              return (
+                <div key={row.nombre} className="dash-card" style={{ padding: 0, overflow: 'hidden' }}>
+                  <div style={{ background: color + '22', borderBottom: `2px solid ${color}`, padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ color, fontSize: 14 }}>●</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: '#c9d1d9' }}>{row.nombre}</span>
+                  </div>
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                      <tr>
+                        {['', 'PPM', 'L/Día', 'KG/Día', '$'].map(h => (
+                          <th key={h} style={{ ...thStyle, fontSize: 9, padding: '5px 8px', textAlign: h === '' ? 'left' : 'right' }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        { label: 'MÍNIMO',   ppm: row.ppm_min, l: lStat?.min,   kg: row.kg_min,   costo: null },
+                        { label: 'MÁXIMO',   ppm: row.ppm_max, l: lStat?.max,   kg: row.kg_max,   costo: null },
+                        { label: 'PROMEDIO', ppm: row.ppm_avg, l: lStat?.avg,   kg: row.kg_avg,   costo: null },
+                        { label: 'TOTAL',    ppm: null,        l: lStat?.total, kg: row.kg_total, costo: row.costo_total },
+                      ].map((r, i) => (
+                        <tr key={r.label} style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,.02)' }}>
+                          <td style={{ ...tdStyle, fontSize: 10, fontWeight: 600, color: '#6e7681', padding: '5px 8px' }}>{r.label}</td>
+                          <td style={{ ...tdNum, fontSize: 10, padding: '5px 8px' }}>{r.ppm != null ? r.ppm.toFixed(1) : '—'}</td>
+                          <td style={{ ...tdNum, fontSize: 10, padding: '5px 8px' }}>{r.l != null ? r.l.toFixed(0) : '—'}</td>
+                          <td style={{ ...tdNum, fontSize: 10, padding: '5px 8px', color }}>{r.kg != null ? r.kg.toFixed(1) : '—'}</td>
+                          <td style={{ ...tdNum, fontSize: 10, padding: '5px 8px', color: '#f85149' }}>{r.costo != null ? fmtCOP(r.costo) : '—'}</td>
+                        </tr>
+                      ))}
+                      <tr style={{ background: 'rgba(255,255,255,.04)' }}>
+                        <td style={{ ...tdStyle, fontSize: 10, fontWeight: 600, color: '#6e7681', padding: '5px 8px' }}>REAL Kg/m³</td>
+                        <td style={{ ...tdNum, fontSize: 10, padding: '5px 8px' }} colSpan={2}>—</td>
+                        <td style={{ ...tdNum, fontSize: 10, padding: '5px 8px', color: '#70AD47' }}>{row.real_kg_m3 != null ? row.real_kg_m3.toFixed(4) : '—'}</td>
+                        <td style={{ ...tdNum, fontSize: 10, padding: '5px 8px' }}>—</td>
+                      </tr>
+                      <tr>
+                        <td style={{ ...tdStyle, fontSize: 10, fontWeight: 600, color: '#6e7681', padding: '5px 8px' }}>PROY Kg/m³</td>
+                        <td style={{ ...tdNum, fontSize: 10, padding: '5px 8px' }} colSpan={2}>—</td>
+                        <td style={{ ...tdNum, fontSize: 10, padding: '5px 8px', color: '#FFC000' }}>{row.proy_kg_m3 != null ? row.proy_kg_m3.toFixed(4) : '—'}</td>
+                        <td style={{ ...tdNum, fontSize: 10, padding: '5px 8px' }}>—</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* ── Tabla Remoción DQO/SST con Costos ── */}
+      {tablaRemocion.some(r => !r.noData) && (
+        <section className="dash-section">
+          <div className="section-title">REMOCIÓN DQO · SST — Carga Removida y Costo</div>
+          <div className="dash-card" style={{ padding: 0, overflow: 'hidden' }}>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr>
+                    {['Parámetro', 'Inicial (mg/L)', 'Salida (mg/L)', 'Removida (mg/L)', 'KG Rem./m³', 'M³ Tratados', 'Total KG Rem.', '$ Tratamiento', '$/KG Removido'].map(h => (
+                      <th key={h} style={{ ...thStyle, textAlign: h === 'Parámetro' ? 'left' : 'right' }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {tablaRemocion.filter(r => !r.noData && r.removida != null).map((row, idx) => (
+                    <tr key={row.label} style={{ background: idx % 2 === 0 ? 'transparent' : 'rgba(255,255,255,.02)' }}>
+                      <td style={{ ...tdStyle, fontWeight: 700 }}>{row.label} <span style={{ fontSize: 9, color: '#484f58' }}>{row.unidad}</span></td>
+                      <td style={tdNum}>{row.ent_avg != null ? row.ent_avg.toFixed(0) : '—'}</td>
+                      <td style={tdNum}>{row.sal_avg != null ? row.sal_avg.toFixed(0) : '—'}</td>
+                      <td style={{ ...tdNum, color: '#70AD47' }}>{row.removida != null ? row.removida.toFixed(0) : '—'}</td>
+                      <td style={tdNum}>{row.kg_m3 != null ? row.kg_m3.toFixed(4) : '—'}</td>
+                      <td style={tdNum}>{row.m3_total != null ? row.m3_total.toFixed(0) : '—'}</td>
+                      <td style={{ ...tdNum, color: '#4472C4' }}>{row.total_kg != null ? row.total_kg.toFixed(0) : '—'}</td>
+                      <td style={{ ...tdNum, color: '#f85149' }}>{row.costo_kg != null ? fmtCOP(kpis.total_costo) : '—'}</td>
+                      <td style={{ ...tdNum, color: '#ED7D31', fontWeight: 700 }}>{row.costo_kg != null ? fmtCOP(row.costo_kg) : '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ── Tabla remoción GEM: DQO · SST · Color ── */}
       <section className="dash-section">
         <div className="section-title">Remoción GEM — DQO · SST · Color</div>
@@ -537,6 +880,7 @@ export default function CostosDashboard() {
                   <th style={{ ...thStyle, color: '#3fb950' }}>Salida Prom</th>
                   <th style={{ ...thStyle, color: '#f85149' }}>Entrada P90</th>
                   <th style={{ ...thStyle, color: '#3fb950' }}>Salida P90</th>
+                  <th style={{ ...thStyle, color: '#4472C4' }}>Carga Rem. KG/día</th>
                   <th style={{ ...thStyle, color: '#d29922' }}>% Remoción</th>
                   <th style={{ ...thStyle, color: '#9e7aff' }}>IE Entrada</th>
                   <th style={{ ...thStyle, color: '#9e7aff' }}>IE Salida</th>
@@ -551,7 +895,7 @@ export default function CostosDashboard() {
                       <span style={{ fontSize: 9, color: '#484f58', marginLeft: 5 }}>{row.unidad}</span>
                     </td>
                     {row.noData ? (
-                      <td colSpan={7} style={{ ...tdStyle, color: '#484f58', fontStyle: 'italic' }}>
+                      <td colSpan={8} style={{ ...tdStyle, color: '#484f58', fontStyle: 'italic' }}>
                         Sin datos en el período
                       </td>
                     ) : (
@@ -560,6 +904,7 @@ export default function CostosDashboard() {
                         <td style={{ ...tdNum, color: '#3fb950' }}>{fmtNum(row.sal_avg, 0)}</td>
                         <td style={{ ...tdNum, color: '#f85149' }}>{fmtNum(row.ent_p90, 0)}</td>
                         <td style={{ ...tdNum, color: '#3fb950' }}>{fmtNum(row.sal_p90, 0)}</td>
+                        <td style={{ ...tdNum, color: '#4472C4' }}>{row.total_kg != null && kpis.n_dias > 0 ? (row.total_kg / kpis.n_dias).toFixed(0) : '—'}</td>
                         <td style={{ ...tdNum, color: '#d29922', fontWeight: 700 }}>
                           {row.pct_rem != null ? `${row.pct_rem.toFixed(1)}%` : '—'}
                         </td>
@@ -579,5 +924,14 @@ export default function CostosDashboard() {
       </section>
 
     </div>
+
+    {informeAbierto && (
+      <InformeCostosModal
+        fechaInicio={fechaInicio}
+        fechaFin={fechaFin}
+        onClose={() => setInformeAbierto(false)}
+      />
+    )}
+    </>
   );
 }
