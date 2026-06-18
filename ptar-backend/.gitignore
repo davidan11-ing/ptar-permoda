@@ -2,6 +2,9 @@
 .env
 .env.local
 .env.*.local
+# Cache de tokens OAuth (SharePoint, Microsoft) — contiene tokens de acceso activos
+*_token_cache.json
+*.sharepoint_token_cache.json
 
 # ── Python ────────────────────────────────────────────────────────────────────
 .venv/
