@@ -1,4 +1,5 @@
 using Dapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PtarApi.Data;
 
@@ -6,6 +7,7 @@ namespace PtarApi.Features.Dashboard;
 
 [ApiController]
 [Route("api/dashboard")]
+[Authorize]
 public class DashboardController(IDbConnectionFactory db) : ControllerBase
 {
     // ── GET /kpis ────────────────────────────────────────────────────────────

@@ -1,4 +1,5 @@
 using Dapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PtarApi.Data;
 using PtarApi.Services;
@@ -7,6 +8,7 @@ namespace PtarApi.Features.Mantenimientos;
 
 [ApiController]
 [Route("api/mantenimientos")]
+[Authorize]
 public class MantenimientosController(
     IDbConnectionFactory db,
     SharePointService sharePoint,

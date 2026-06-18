@@ -1,4 +1,5 @@
 using Dapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PtarApi.Data;
 
@@ -6,6 +7,7 @@ namespace PtarApi.Features.Calidad;
 
 [ApiController]
 [Route("api/calidad")]
+[Authorize]
 public class CalidadController(IDbConnectionFactory db) : ControllerBase
 {
     private static readonly Dictionary<string, int> TurnoMap = new(StringComparer.OrdinalIgnoreCase)

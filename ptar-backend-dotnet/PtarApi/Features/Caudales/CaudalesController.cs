@@ -1,4 +1,5 @@
 using Dapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PtarApi.Data;
 
@@ -6,6 +7,7 @@ namespace PtarApi.Features.Caudales;
 
 [ApiController]
 [Route("api/caudales")]
+[Authorize]
 public class CaudalesController(IDbConnectionFactory db) : ControllerBase
 {
     // Mapeo id_contador → columna en contadores_lectura

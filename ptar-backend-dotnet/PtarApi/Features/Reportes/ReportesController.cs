@@ -1,4 +1,5 @@
 ﻿using Dapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PtarApi.Data;
 using QuestPDF.Fluent;
@@ -9,6 +10,7 @@ namespace PtarApi.Features.Reportes;
 
 [ApiController]
 [Route("api/reportes")]
+[Authorize(Roles = "encargado,administrador")]
 public class ReportesController(IDbConnectionFactory db) : ControllerBase
 {
     // ── GET /pdf ─────────────────────────────────────────────────────────────

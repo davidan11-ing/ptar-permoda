@@ -1,4 +1,5 @@
 using Dapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PtarApi.Data;
 
@@ -6,6 +7,7 @@ namespace PtarApi.Features.Reactivos;
 
 [ApiController]
 [Route("api/reactivos")]
+[Authorize]
 public class ReactivosController(IDbConnectionFactory db) : ControllerBase
 {
     // (nombre, sistema, col_L, col_kg, col_ppm, col_costo, col_final)
@@ -151,6 +153,7 @@ public class ReactivosController(IDbConnectionFactory db) : ControllerBase
                     VolumenEntrada        = reg.volumen_entrada_m3,
                     VolumenPermeado       = reg.volumen_permeado_m3,
                     HorasOpSistema        = reg.horas_operacion_sistema,
+                    CartuchosCambiados    = reg.cartuchos_cambiados,
                     CebsRealizados        = reg.cebs_realizados,
                     CebsCantidad          = reg.cebs_cantidad,
                     MangaCambiada         = reg.manga_cambiada,
@@ -220,6 +223,7 @@ public class ReactivosController(IDbConnectionFactory db) : ControllerBase
                     ["volumen_enviado_ro_m3"] = data.VolumenEntrada,
                     ["volumen_permeado_m3"]   = data.VolumenPermeado,
                     ["horas_operacion"]       = data.HorasOpSistema,
+                    ["cartuchos_cambiados"]   = data.CartuchosCambiados.HasValue ? (data.CartuchosCambiados.Value ? 1 : 0) : (object?)null,
                 };
                 foreach (var (col, val) in roExtra)
                 {
@@ -459,6 +463,29 @@ public class ReactivosController(IDbConnectionFactory db) : ControllerBase
         return Ok(rows);
     }
 
+    // ── GET /ro-eficiencia ────────────────────────────────────────────────────
+    [HttpGet("ro-eficiencia")]
+    public async Task<IActionResult> GetRoEficiencia(
+        [FromQuery] string fecha_inicio,
+        [FromQuery] string fecha_fin)
+    {
+        await using var conn = db.Create();
+        var rows = await conn.QueryAsync("""
+            SELECT DATE_FORMAT(fecha,'%Y-%m-%d') AS fecha,
+                   CASE turno WHEN 1 THEN 'noche' WHEN 2 THEN 'mañana' WHEN 3 THEN 'tarde' END AS turno,
+                   volumen_enviado_ro_m3 AS caudal_m3,
+                   horas_operacion,
+                   caudal_entrada_mh,
+                   caudal_salida_mh,
+                   costo_quimica_turno,
+                   pesos_m3_enviado_ro AS pesos_por_m3
+            FROM operacion_ro_turno
+            WHERE fecha BETWEEN @fi AND @ff
+            ORDER BY fecha, turno
+            """, new { fi = fecha_inicio, ff = fecha_fin });
+        return Ok(rows);
+    }
+
     // ── GET /edicion-gem ──────────────────────────────────────────────────────
     [HttpGet("edicion-gem")]
     public async Task<IActionResult> GetEdicionGem(
@@ -537,6 +564,8 @@ public record RegistroReactivoIn(
     double? volumen_entrada_m3,
     double? volumen_permeado_m3,
     double? horas_operacion_sistema,
+    // RO: mantenimiento
+    bool? cartuchos_cambiados,
     // PTAP: eventos de mantenimiento
     bool? cebs_realizados,
     int?  cebs_cantidad,
@@ -569,6 +598,8 @@ internal class GrupoReactivo
     public double? VolumenEntrada        { get; set; }
     public double? VolumenPermeado       { get; set; }
     public double? HorasOpSistema        { get; set; }
+    // RO: mantenimiento
+    public bool?   CartuchosCambiados    { get; set; }
     // PTAP: mantenimiento
     public bool?   CebsRealizados        { get; set; }
     public int?    CebsCantidad          { get; set; }

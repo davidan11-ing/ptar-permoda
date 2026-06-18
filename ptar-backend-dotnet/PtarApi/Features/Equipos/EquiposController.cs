@@ -1,4 +1,5 @@
 using Dapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PtarApi.Data;
 
@@ -6,6 +7,7 @@ namespace PtarApi.Features.Equipos;
 
 [ApiController]
 [Route("api/equipos")]
+[Authorize]
 public class EquiposController(IDbConnectionFactory db) : ControllerBase
 {
     // ── GET /estados-hoy ─────────────────────────────────────────────────────
