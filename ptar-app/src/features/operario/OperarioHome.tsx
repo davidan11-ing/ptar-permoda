@@ -71,11 +71,10 @@ function MttoPanel() {
 
   useEffect(() => {
     setLoading(true);
-    const token = localStorage.getItem('ptar_token') || '';
-    const headers = { Authorization: `Bearer ${token}` };
+    const opts = { credentials: 'include' as const };
     Promise.all([
-      fetch(`${API}/api/mantenimientos/kpis?semana=${semana}${AC}`, { headers }).then(r => r.json()),
-      fetch(`${API}/api/mantenimientos/?semana=${semana}&limit=200${AC}`, { headers }).then(r => r.json()),
+      fetch(`${API}/api/mantenimientos/kpis?semana=${semana}${AC}`, opts).then(r => r.json()),
+      fetch(`${API}/api/mantenimientos/?semana=${semana}&limit=200${AC}`, opts).then(r => r.json()),
     ]).then(([k, it]) => {
       setKpis(k); setItems(it); setPagina(0);
     }).catch(() => {}).finally(() => setLoading(false));

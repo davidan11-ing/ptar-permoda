@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../state/AuthContext';
 import { ROLE_HOME, ROUTES } from '../../lib/routes';
 import { useLocation } from 'react-router-dom';
 import type { Role } from '../../models';
+import ChangePasswordModal from './ChangePasswordModal';
 
 // Etiqueta corta para el badge del navbar
 const ROLE_LABELS: Record<Role, string> = {
@@ -28,6 +30,7 @@ export default function Navbar() {
   const { currentUser, selectRole, logout } = useAuth();
   const navigate  = useNavigate();
   const location  = useLocation();
+  const [showPwModal, setShowPwModal] = useState(false);
 
   if (!currentUser) return null;
 
@@ -98,6 +101,12 @@ export default function Navbar() {
             >
               🔧 Mantenimientos
             </Link>
+            <Link
+              to={ROUTES.ENCARGADO_ANALISIS}
+              className={`nav-link${location.pathname.startsWith(ROUTES.ENCARGADO_ANALISIS) ? ' active' : ''}`}
+            >
+              📊 Análisis
+            </Link>
           </>
         )}
       </nav>
@@ -123,8 +132,18 @@ export default function Navbar() {
           {ROLE_LABELS[currentUser.activeRole]}
         </span>
         <span className="user-name">{currentUser.nombre}</span>
+        <button
+          className="logout-btn"
+          style={{ background: 'none', border: '1px solid #30363d', color: '#8b949e', marginRight: 4 }}
+          onClick={() => setShowPwModal(true)}
+          title="Cambiar contraseña"
+        >
+          🔑
+        </button>
         <button className="logout-btn" onClick={handleLogout}>Salir</button>
       </div>
+
+      {showPwModal && <ChangePasswordModal onClose={() => setShowPwModal(false)} />}
     </header>
   );
 }

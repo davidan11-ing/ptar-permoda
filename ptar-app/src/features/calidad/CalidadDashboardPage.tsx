@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
-import { getCalidadParametros, getReporteCalidadHtmlUrl } from '../../services/ptarClient';
+import { getCalidadParametros } from '../../services/ptarClient';
+import InformeCalidadModal from './InformeCalidadModal';
 import { useCalidadData, PROCESO_ORDEN } from './hooks/useCalidadData';
 import GranularidadSelector from '../../components/shared/GranularidadSelector';
 import { useGranularidad } from '../../hooks/useGranularidad';
@@ -31,6 +32,8 @@ export default function CalidadDashboardPage() {
   const [unidadPrincipal, setUnidadPrincipal] = useState('');
   const [turno,           setTurno]           = useState('');
   const [remGemParam,     setRemGemParam]     = useState('');
+  const [informeAbierto,  setInformeAbierto]  = useState(false);
+  const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
 
   // ── Cargar parámetros desde la BD ─────────────────────────────
   useEffect(() => {
@@ -73,6 +76,7 @@ export default function CalidadDashboardPage() {
   );
 
   return (
+    <>
     <div className="cal-page">
 
       {/* ── Encabezado ── */}
@@ -81,62 +85,69 @@ export default function CalidadDashboardPage() {
           <h1 className="cal-title">Dashboard de Calidad del Agua</h1>
           <p className="cal-subtitle">Análisis de parámetros fisicoquímicos por etapa de tratamiento</p>
         </div>
-        <a
-          href={getReporteCalidadHtmlUrl({ fecha_inicio: fechaInicio, fecha_fin: fechaFin })}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn-primary btn-sm"
-          style={{ background: '#d29922', textDecoration: 'none', alignSelf: 'center', padding: '8px 16px', borderRadius: 6, fontSize: 13, fontWeight: 600, color: '#fff' }}
-          title="Abre el informe en una nueva pestaña — usa Ctrl+P para guardar como PDF"
-        >
-          📄 Informe de Calidad
-        </a>
+        <div style={{ display: 'flex', gap: 8, alignSelf: 'center' }}>
+          <button
+            onClick={() => setFiltrosAbiertos(v => !v)}
+            style={{ background: filtrosAbiertos ? '#21262d' : '#161b22', border: '1px solid #30363d', padding: '7px 14px', borderRadius: 6, fontSize: 12, fontWeight: 600, color: '#8b949e', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+          >
+            <span style={{ fontSize: 13 }}>⚙</span>
+            Filtros
+            <span style={{ fontSize: 10, opacity: 0.7 }}>{filtrosAbiertos ? '▲' : '▼'}</span>
+          </button>
+          <button
+            onClick={() => setInformeAbierto(true)}
+            style={{ background: '#d29922', border: 'none', padding: '7px 14px', borderRadius: 6, fontSize: 12, fontWeight: 600, color: '#fff', cursor: 'pointer' }}
+          >
+            📄 Informe
+          </button>
+        </div>
       </div>
 
-      {/* ── Filtros + selector de granularidad integrado ── */}
-      <div className="cal-filters" style={{ marginBottom: 16 }}>
-        {/* Granularidad — primera posición en la barra */}
-        <GranularidadSelector value={granularidad} onChange={setGranularidad} />
-        <div className="cal-filter-group">
-          <label className="cal-filter-label">Unidad</label>
-          <select className="cal-filter-select" value={unidadPrincipal}
-            onChange={e => setUnidadPrincipal(e.target.value)}>
-            <option value="">Todas las unidades</option>
-            {PROCESO_ORDEN.filter(u => unidades.includes(u)).map(u => (
-              <option key={u} value={u}>{u}</option>
-            ))}
-          </select>
+      {/* ── Filtros (colapsables) ── */}
+      {filtrosAbiertos && (
+        <div className="cal-filters" style={{ marginBottom: 16 }}>
+          <GranularidadSelector value={granularidad} onChange={setGranularidad} />
+          <div className="cal-filter-group">
+            <label className="cal-filter-label">Unidad</label>
+            <select className="cal-filter-select" value={unidadPrincipal}
+              onChange={e => setUnidadPrincipal(e.target.value)}>
+              <option value="">Todas las unidades</option>
+              {PROCESO_ORDEN.filter(u => unidades.includes(u)).map(u => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+          </div>
+          <div className="cal-filter-group">
+            <label className="cal-filter-label">Parámetro</label>
+            <select className="cal-filter-select" value={parametro}
+              onChange={e => setParametro(e.target.value)}>
+              {parametros.map(p => <option key={p} value={p}>{p}</option>)}
+            </select>
+          </div>
+          <div className="cal-filter-group">
+            <label className="cal-filter-label">Turno</label>
+            <select className="cal-filter-select" value={turno}
+              onChange={e => setTurno(e.target.value)}>
+              <option value="">Todos</option>
+              <option value="noche">Noche</option>
+              <option value="mañana">Mañana</option>
+              <option value="tarde">Tarde</option>
+            </select>
+          </div>
+          <div className="cal-filter-group">
+            <label className="cal-filter-label">Fecha inicio</label>
+            <input type="date" className="cal-filter-input" value={draftInicio}
+              onChange={e => handleFechaInicio(e.target.value)}
+              onBlur={e  => commitFechaInicio(e.target.value)} />
+          </div>
+          <div className="cal-filter-group">
+            <label className="cal-filter-label">Fecha fin</label>
+            <input type="date" className="cal-filter-input" value={draftFin}
+              onChange={e => handleFechaFin(e.target.value)}
+              onBlur={e  => commitFechaFin(e.target.value)} />
+          </div>
         </div>
-        <div className="cal-filter-group">
-          <label className="cal-filter-label">Parámetro</label>
-          <select className="cal-filter-select" value={parametro}
-            onChange={e => setParametro(e.target.value)}>
-            {parametros.map(p => <option key={p} value={p}>{p}</option>)}
-          </select>
-        </div>
-        <div className="cal-filter-group">
-          <label className="cal-filter-label">Turno</label>
-          <select className="cal-filter-select" value={turno}
-            onChange={e => setTurno(e.target.value)}>
-            <option value="">Todos</option>
-            <option value="noche">Noche</option>
-            <option value="mañana">Mañana</option>
-            <option value="tarde">Tarde</option>
-          </select>
-        </div>
-        <div className="cal-filter-group">
-          <label className="cal-filter-label">Fecha inicio</label>
-          <input type="date" className="cal-filter-input" value={draftInicio}
-            onChange={e => handleFechaInicio(e.target.value)}
-            onBlur={e  => commitFechaInicio(e.target.value)} />
-        </div>
-        <div className="cal-filter-group">
-          <label className="cal-filter-label">Fecha fin</label>
-          <input type="date" className="cal-filter-input" value={draftFin}
-            onChange={e => handleFechaFin(e.target.value)}
-            onBlur={e  => commitFechaFin(e.target.value)} />
-        </div>
-      </div>
+      )}
 
       {/* ── Distribución y Comportamiento Multiparámetro ── */}
       <section className="dash-section">
@@ -237,5 +248,15 @@ export default function CalidadDashboardPage() {
       <KgQuimicoSection fechaInicio={fechaInicio} fechaFin={fechaFin} granularidad={granularidad} />
 
     </div>
+
+    {/* ── Modal Informe de Calidad ── */}
+    {informeAbierto && (
+      <InformeCalidadModal
+        fechaInicio={fechaInicio}
+        fechaFin={fechaFin}
+        onClose={() => setInformeAbierto(false)}
+      />
+    )}
+    </>
   );
 }

@@ -13,6 +13,7 @@ export const ROUTES = {
   ENCARGADO_BALANCE:    '/encargado/balance',
   ENCARGADO_COSTOS:     '/encargado/costos',
   ENCARGADO_REGISTROS:  '/encargado/registros',
+  ENCARGADO_ANALISIS:   '/encargado/analisis',
   // Administrador
   ADMIN_DASHBOARD: '/admin/dashboard',
   // Mantenimientos (SharePoint)

@@ -18,6 +18,10 @@ const BalanceHidricoDashboard  = lazy(() => import('../features/balance/BalanceH
 const CostosDashboard          = lazy(() => import('../features/costos/CostosDashboard'));
 const RegistrosPanel           = lazy(() => import('../features/encargado/RegistrosPanel'));
 const MantenimientosDashboard  = lazy(() => import('../features/mantenimientos/MantenimientosDashboard'));
+const AnalisSheet              = lazy(() => import('../features/analista/AnalisSheet'));
+const InformeCalidadPage       = lazy(() => import('../features/calidad/InformeCalidadPage'));
+const InformeBalancePage       = lazy(() => import('../features/balance/InformeBalancePage'));
+const InformeCostosPage        = lazy(() => import('../features/costos/InformeCostosPage'));
 
 const Spinner = () => (
   <div className="page-loading">
@@ -94,6 +98,12 @@ export default function AppRouter() {
               </RoleGuard>
             }/>
 
+            <Route path="/encargado/analisis" element={
+              <RoleGuard allowedRoles={['encargado', 'administrador']}>
+                <AnalisSheet />
+              </RoleGuard>
+            }/>
+
             {/* Mantenimientos — accesible por encargado y administrador */}
             <Route path="/mantenimientos" element={
               <RoleGuard allowedRoles={['encargado', 'administrador']}>
@@ -108,6 +118,23 @@ export default function AppRouter() {
               </RoleGuard>
             }/>
           </Route>
+
+          {/* Informes standalone — sin navbar, con auth */}
+          <Route path="/informe/calidad" element={
+            <RoleGuard allowedRoles={['encargado', 'administrador']}>
+              <InformeCalidadPage />
+            </RoleGuard>
+          }/>
+          <Route path="/informe/balance" element={
+            <RoleGuard allowedRoles={['encargado', 'administrador']}>
+              <InformeBalancePage />
+            </RoleGuard>
+          }/>
+          <Route path="/informe/costos" element={
+            <RoleGuard allowedRoles={['encargado', 'administrador']}>
+              <InformeCostosPage />
+            </RoleGuard>
+          }/>
 
           <Route path="/" element={<SplashScreen />} />
           <Route path="*" element={<Navigate to="/" replace />} />
