@@ -11,7 +11,8 @@ export const TURNO_LABEL: Record<number, string> = { 1: 'Noc', 2: 'Mañ', 3: 'Ta
 
 // ── ISO week number (ISO 8601) ─────────────────────────────────────────────────
 function isoWeek(dateStr: string): number {
-  const d = new Date(dateStr + 'T12:00:00Z');
+  // Recortar a YYYY-MM-DD por si el backend entrega datetime con hora
+  const d = new Date(dateStr.slice(0, 10) + 'T12:00:00Z');
   d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
   const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
   return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
@@ -28,7 +29,8 @@ export function xLabel(
   turno: number | undefined,
   gran: Granularidad | null,
 ): string {
-  const [y, m, d] = fecha.split('-');
+  const f = fecha.slice(0, 10); // normalizar a YYYY-MM-DD
+  const [y, m, d] = f.split('-');
   switch (gran ?? 'dia') {
     case 'turno': {
       const tLabel = TURNO_LABEL[turno ?? 0] ?? '';
@@ -37,7 +39,7 @@ export function xLabel(
     case 'dia':
       return `${d}/${MESES[+m]}`;
     case 'semana':
-      return `Sem ${isoWeek(fecha)}`;
+      return `Sem ${isoWeek(f)}`;
     case 'mes':
       return `${MESES[+m]} ${y.slice(2)}`;
   }
@@ -52,17 +54,18 @@ export function sortKey(
   turno: number | undefined,
   gran: Granularidad | null,
 ): string {
+  const f = fecha.slice(0, 10); // normalizar a YYYY-MM-DD
   switch (gran ?? 'dia') {
     case 'turno':
-      return `${fecha}_${String(turno ?? 0).padStart(1, '0')}`;
+      return `${f}_${String(turno ?? 0).padStart(1, '0')}`;
     case 'dia':
-      return fecha;
+      return f;
     case 'semana': {
-      const w = isoWeek(fecha);
-      return `${fecha.slice(0, 4)}-W${String(w).padStart(2, '0')}`;
+      const w = isoWeek(f);
+      return `${f.slice(0, 4)}-W${String(w).padStart(2, '0')}`;
     }
     case 'mes':
-      return fecha.slice(0, 7); // YYYY-MM
+      return f.slice(0, 7); // YYYY-MM
   }
 }
 

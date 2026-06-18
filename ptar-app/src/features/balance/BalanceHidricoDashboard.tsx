@@ -360,9 +360,9 @@ export default function BalanceHidricoDashboard() {
             <select className="cal-filter-select" value={turnoFiltro}
               onChange={e => setTurnoFiltro(e.target.value)}>
               <option value="">Todos</option>
-              <option value="1">Mañana</option>
-              <option value="2">Tarde</option>
-              <option value="3">Noche</option>
+              <option value="1">Noche</option>
+              <option value="2">Mañana</option>
+              <option value="3">Tarde</option>
             </select>
           </div>
           <div className="cal-filter-group">
