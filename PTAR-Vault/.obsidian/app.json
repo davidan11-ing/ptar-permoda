@@ -1,0 +1,25 @@
+{
+  "promptDelete": false,
+  "defaultViewMode": "preview",
+  "foldIndent": true,
+  "showLineNumber": true,
+  "readableLineLength": true,
+  "strictLineBreaks": false,
+  "showFrontmatter": false,
+  "smartIndentList": true,
+  "spellcheck": false,
+  "spellcheckLanguages": [
+    "es"
+  ],
+  "vimMode": false,
+  "legacyEditor": false,
+  "livePreview": true,
+  "newFileLocation": "current",
+  "attachmentFolderPath": "Recursos/Adjuntos",
+  "alwaysUpdateLinks": true,
+  "userIgnoreFilters": [
+    ".git",
+    "node_modules"
+  ],
+  "useMarkdownLinks": false
+}

@@ -1,0 +1,93 @@
+{
+  "collapse-filter": false,
+  "search": "",
+  "showTags": true,
+  "showAttachments": false,
+  "hideUnresolved": false,
+  "showOrphans": true,
+  "collapse-color-groups": false,
+  "colorGroups": [
+    {
+      "query": "path:01 N",
+      "color": {
+        "a": 1,
+        "rgb": 5089023
+      }
+    },
+    {
+      "query": "path:02 Features",
+      "color": {
+        "a": 1,
+        "rgb": 16347926
+      }
+    },
+    {
+      "query": "path:03 Servicios",
+      "color": {
+        "a": 1,
+        "rgb": 3462041
+      }
+    },
+    {
+      "query": "path:04 Componentes",
+      "color": {
+        "a": 1,
+        "rgb": 10980346
+      }
+    },
+    {
+      "query": "path:01 - Proyecto",
+      "color": {
+        "a": 1,
+        "rgb": 5089023
+      }
+    },
+    {
+      "query": "path:02 - Arquitectura",
+      "color": {
+        "a": 1,
+        "rgb": 10980346
+      }
+    },
+    {
+      "query": "path:03 - Base",
+      "color": {
+        "a": 1,
+        "rgb": 3462041
+      }
+    },
+    {
+      "query": "path:04 - Frontend",
+      "color": {
+        "a": 1,
+        "rgb": 16347926
+      }
+    },
+    {
+      "query": "path:05 - Migracion",
+      "color": {
+        "a": 1,
+        "rgb": 16007006
+      }
+    },
+    {
+      "query": "path:06 - Operacion",
+      "color": {
+        "a": 1,
+        "rgb": 2282478
+      }
+    }
+  ],
+  "collapse-display": false,
+  "showArrow": true,
+  "textFadeMultiplier": 0,
+  "nodeSizeMultiplier": 1.4,
+  "lineSizeMultiplier": 1,
+  "collapse-forces": false,
+  "centerStrength": 0.518,
+  "repelStrength": 10,
+  "linkStrength": 1,
+  "linkDistance": 250,
+  "scale": 0.3052571313475534,
+  "close": true
+}
