@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth, OPERARIOS_LISTA, USERS_BY_EMAIL } from '../../state/AuthContext';
+import { useAuth, OPERARIOS_LISTA } from '../../state/AuthContext';
 import { ROLE_HOME } from '../../lib/routes';
 import type { Role } from '../../models';
 
@@ -63,35 +63,15 @@ export default function LoginPage() {
   const { loginWithCredentials, selectRole, updateEquipo } = useAuth();
   const navigate = useNavigate();
 
-  // flujo: 'select' → 'login' → 'roleselect'? → 'equipo'?
-  const [step, setStep]             = useState<'select' | 'login' | 'roleselect' | 'equipo'>('select');
-  const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+  // flujo: 'login' → 'roleselect'? → 'equipo'?
+  const [step, setStep]             = useState<'login' | 'roleselect' | 'equipo'>('login');
   const [email, setEmail]           = useState('');
   const [password, setPassword]     = useState('');
   const [loginError, setLoginError] = useState('');
   const [loggingIn, setLoggingIn]   = useState(false);
   const [equipoChecked, setEquipoChecked] = useState<string[]>([]);
-  // nombre resuelto tras login exitoso
   const [loggedNombre, setLoggedNombre] = useState('');
-
-  // Resolución de nombre en tiempo real desde USERS_BY_EMAIL
-  const emailKey    = email.toLowerCase().trim();
-  const knownUser   = USERS_BY_EMAIL[emailKey];
-  const resolvedName = knownUser?.nombre ?? '';
-  // Rol principal (primer rol del perfil, o el seleccionado)
-  const resolvedRole = knownUser?.roles[0] ?? selectedRole;
-  // El email tiene roles que no coinciden con el rol seleccionado en paso 1
-  const roleMismatch = knownUser && selectedRole && !knownUser.roles.includes(selectedRole);
-
-  const resetLogin = () => {
-    setEmail(''); setPassword(''); setLoginError(''); setLoggingIn(false);
-  };
-
-  const handleSelectRole = (role: Role) => {
-    setSelectedRole(role);
-    resetLogin();
-    setStep('login');
-  };
+  const [loggedRoles, setLoggedRoles] = useState<Role[]>([]);
 
   /* ── Paso 2: submit email + contraseña ── */
   const handleLoginSubmit = async () => {
@@ -99,25 +79,23 @@ export default function LoginPage() {
     setLoggingIn(true);
     setLoginError('');
 
-    const nombre = resolvedName || email.split('@')[0];
-    const ok = await loginWithCredentials(email.trim(), password, [nombre]);
+    const user = await loginWithCredentials(email.trim(), password);
     setLoggingIn(false);
 
-    if (!ok) {
+    if (!user) {
       setLoginError('Correo o contraseña incorrectos. Inténtalo de nuevo.');
       return;
     }
 
-    setLoggedNombre(nombre);
+    setLoggedNombre(user.nombre);
+    setLoggedRoles(user.roles);
 
-    // ¿Usuario multi-rol? → mostrar selector de rol
-    const userRoles = knownUser?.roles ?? [resolvedRole ?? selectedRole ?? 'operario'] as Role[];
-    if (userRoles.length > 1) {
+    if (user.roles.length > 1) {
       setStep('roleselect');
       return;
     }
 
-    const finalRole = (userRoles[0] ?? 'operario') as Role;
+    const finalRole = user.roles[0] ?? 'operario';
 
     if (finalRole === 'operario') {
       setEquipoChecked([]);
@@ -152,9 +130,7 @@ export default function LoginPage() {
           <div className="login-header">
             <div className="login-logo">{LOGO_SVG}</div>
             <h1 className="login-title">Iniciar Sesión</h1>
-            <p className="login-subtitle">
-              {selectedRole ? ROLE_LABELS[selectedRole] : 'Ingresa tus credenciales'}
-            </p>
+            <p className="login-subtitle">Ingresa tus credenciales para continuar</p>
           </div>
 
           <div className="login-body" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -174,45 +150,9 @@ export default function LoginPage() {
                 style={INPUT_STYLE(!!loginError && !password)}
               />
 
-              {/* Resolución de nombre en tiempo real */}
               {email.length > 5 && (
-                <div style={{ marginTop: 6, minHeight: 22 }}>
-                  {resolvedName ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <div style={{
-                        width: 28, height: 28, borderRadius: '50%',
-                        background: '#00c5e322', border: '1px solid #00c5e3',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 13, fontWeight: 700, color: '#00c5e3',
-                      }}>
-                        {resolvedName.charAt(0)}
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: '#e6edf3' }}>{resolvedName}</div>
-                        {knownUser && (
-                          <div style={{ fontSize: 10, color: '#8b949e' }}>
-                            {knownUser.roles.length > 1
-                              ? `${knownUser.roles.length} roles disponibles`
-                              : ROLE_LABELS[knownUser.roles[0]]}
-                          </div>
-                        )}
-                      </div>
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ marginLeft: 'auto' }}>
-                        <circle cx="8" cy="8" r="8" fill="#3fb95022"/>
-                        <path d="M4.5 8l2.5 2.5 4.5-4.5" stroke="#3fb950" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </div>
-                  ) : (
-                    <div style={{ fontSize: 11, color: '#6e7681', fontStyle: 'italic' }}>
-                      Correo no registrado — ingresa de todas formas si tienes acceso
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {roleMismatch && (
-                <div style={{ fontSize: 11, color: '#d29922', marginTop: 4 }}>
-                  ⚠ Este correo corresponde al rol {ROLE_LABELS[knownUser!.roles[0]]}
+                <div style={{ marginTop: 6, minHeight: 22, fontSize: 11, color: '#6e7681', fontStyle: 'italic' }}>
+                  Ingresa tu contraseña para continuar
                 </div>
               )}
             </div>
@@ -241,7 +181,7 @@ export default function LoginPage() {
             <button
               className="login-btn"
               style={{ background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-muted)', flex: 0 }}
-              onClick={() => { setStep('select'); resetLogin(); }}
+              onClick={() => navigate('/')}
             >
               ← Volver
             </button>
@@ -263,7 +203,7 @@ export default function LoginPage() {
      PASO 3 — Selección de rol (usuarios multi-rol)
   ──────────────────────────────────────────────────────────────────── */
   if (step === 'roleselect') {
-    const userRoles = (knownUser?.roles ?? ['administrador']) as Role[];
+    const userRoles = loggedRoles.length > 0 ? loggedRoles : (['administrador'] as Role[]);
     const handlePickRole = (role: Role) => {
       selectRole(role);
       if (role === 'operario') {
@@ -402,48 +342,5 @@ export default function LoginPage() {
     );
   }
 
-  /* ────────────────────────────────────────────────────────────────────
-     PASO 1 — Selección de rol
-  ──────────────────────────────────────────────────────────────────── */
-  const ROLES: Role[] = ['operario', 'encargado', 'administrador'];
-
-  return (
-    <div className="login-page">
-      <div className="login-bg" />
-
-      <div className="login-container">
-        <div className="login-header">
-          <div className="login-logo">{LOGO_SVG}</div>
-          <h1 className="login-title">PTAR</h1>
-          <p className="login-subtitle">Sistema de Gestión de Planta de<br/>Tratamiento de Aguas Residuales</p>
-        </div>
-
-        <div className="login-body">
-          <p className="login-instruction">Selecciona tu perfil para continuar</p>
-
-          <div className="role-cards">
-            {ROLES.map(role => (
-              <button
-                key={role}
-                className={`role-group role-group-btn`}
-                onClick={() => handleSelectRole(role)}
-                style={{ textAlign: 'left', cursor: 'pointer', width: '100%', background: 'none', border: 'none', padding: 0 }}
-              >
-                <div className={`role-card-header role-header-${role}`} style={{ pointerEvents: 'none' }}>
-                  <span className="role-card-icon">{ROLE_ICONS[role]}</span>
-                  <div>
-                    <span className="role-card-title">{ROLE_LABELS[role]}</span>
-                    <span className="role-card-desc">{ROLE_DESCS[role]}</span>
-                  </div>
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ marginLeft: 'auto', opacity: .4 }}>
-                    <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  return null;
 }

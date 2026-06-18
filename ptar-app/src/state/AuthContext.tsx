@@ -1,6 +1,8 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
 import type { AppUser, Role } from '../models';
-import { TOKEN_KEY } from '../services/ptarClient';
+
+const SESSION_KEY = 'ptar_session';
+const API = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
 
 // Lista de operarios disponibles para el checklist de equipo en turno
 export const OPERARIOS_LISTA = [
@@ -19,27 +21,19 @@ export const OPERARIOS_LISTA = [
   'Luna Sofía Osorio Parra',
 ];
 
-const SESSION_KEY = 'ptar_session';
-const API = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
-
-// ── Mapa email → perfil (nombre + roles que puede usar en la app) ─────────────
-// Si un usuario tiene más de 1 rol, el login mostrará un selector de rol.
-export const USERS_BY_EMAIL: Record<string, { nombre: string; roles: Role[] }> = {
-  // Multi-rol — elige con qué rol entrar cada vez
-  'davidan@permoda.com.co':   { nombre: 'David Arévalo',           roles: ['operario', 'encargado', 'administrador'] },
-  // Analistas (encargado)
-  'lunaop@permoda.com.co':    { nombre: 'Luna Sofía Osorio Parra', roles: ['operario', 'encargado', 'administrador'] },
-  'encargado@permoda.com.co': { nombre: 'Encargado',               roles: ['encargado'] },
-  // Operarios de planta (registro)
-  'operario@permoda.com.co':  { nombre: 'Operario',                roles: ['operario']  },
-};
+// Roles disponibles según jerarquía del backend
+function rolesForBackendRole(role: Role): Role[] {
+  if (role === 'administrador') return ['operario', 'encargado', 'administrador'];
+  if (role === 'encargado')     return ['operario', 'encargado'];
+  return ['operario'];
+}
 
 interface AuthContextValue {
-  currentUser:         AppUser | null;
-  loginWithCredentials: (email: string, password: string, equipo?: string[]) => Promise<boolean>;
-  selectRole:          (role: Role) => void;
-  updateEquipo:        (equipo: string[]) => void;   // actualiza el equipo sin re-auth
-  logout:              () => void;
+  currentUser:          AppUser | null;
+  loginWithCredentials: (email: string, password: string) => Promise<AppUser | null>;
+  selectRole:           (role: Role) => void;
+  updateEquipo:         (equipo: string[]) => void;
+  logout:               () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -48,9 +42,7 @@ function loadSession(): AppUser | null {
   try {
     const raw = localStorage.getItem(SESSION_KEY);
     if (!raw) return null;
-    const user = JSON.parse(raw) as AppUser;
-    if (!localStorage.getItem(TOKEN_KEY)) return null;
-    return user;
+    return JSON.parse(raw) as AppUser;
   } catch {
     return null;
   }
@@ -59,43 +51,54 @@ function loadSession(): AppUser | null {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<AppUser | null>(loadSession);
 
-  // ── Login real con email + contraseña ───────────────────────────────────────
+  // Limpia sesión local sin llamar al backend (usado en 401 y expiración)
+  const clearSession = useCallback(() => {
+    localStorage.removeItem(SESSION_KEY);
+    setCurrentUser(null);
+  }, []);
+
+  // Validar que la cookie sigue activa al cargar la app
+  useEffect(() => {
+    if (!currentUser) return;
+    fetch(`${API}/api/auth/me`, { credentials: 'include' })
+      .then(res => { if (res.status === 401) clearSession(); })
+      .catch(() => {});
+  // Solo al montar — no re-ejecutar si clearSession cambia referencia
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Escuchar 401 emitidos por ptarClient desde cualquier llamada API
+  useEffect(() => {
+    window.addEventListener('ptar:unauthorized', clearSession);
+    return () => window.removeEventListener('ptar:unauthorized', clearSession);
+  }, [clearSession]);
+
   const loginWithCredentials = useCallback(
-    async (email: string, password: string, equipo?: string[]): Promise<boolean> => {
+    async (email: string, password: string): Promise<AppUser | null> => {
       try {
         const res = await fetch(`${API}/api/auth/login`, {
           method: 'POST',
+          credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password }),
         });
-        if (!res.ok) return false;
+        if (!res.ok) return null;
 
         const data = await res.json();
-        localStorage.setItem(TOKEN_KEY, data.access_token);
-
-        // Verificar si el email tiene override de roles en USERS_BY_EMAIL
-        const emailKey    = email.toLowerCase().trim();
-        const knownProfile = USERS_BY_EMAIL[emailKey];
-        const roles: Role[] = knownProfile?.roles ?? [data.role as Role];
-        const nombre: string = knownProfile?.nombre ?? data.nombre ?? email.split('@')[0];
-
-        // activeRole se fijará en el selector de rol si hay más de 1;
-        // provisionalmente usamos el rol que devuelve el backend.
+        // El JWT llega como cookie httpOnly — no se almacena en JS
         const backendRole = data.role as Role;
-        const activeRole  = roles.includes(backendRole) ? backendRole : roles[0];
-
         const session: AppUser = {
           id:         data.id,
-          nombre,
-          roles,
-          activeRole,
-          equipo: equipo ?? [nombre],
+          nombre:     data.nombre ?? email.split('@')[0],
+          roles:      rolesForBackendRole(backendRole),
+          activeRole: backendRole,
+          equipo:     [data.nombre ?? email.split('@')[0]],
         };
         localStorage.setItem(SESSION_KEY, JSON.stringify(session));
         setCurrentUser(session);
-        return true;
+        return session;
       } catch {
-        return false;
+        return null;
       }
     },
     [],
@@ -110,7 +113,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  // Actualiza el equipo en la sesión activa sin volver a autenticar
   const updateEquipo = useCallback((equipo: string[]) => {
     setCurrentUser(prev => {
       if (!prev) return prev;
@@ -121,10 +123,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
-    localStorage.removeItem(SESSION_KEY);
-    localStorage.removeItem(TOKEN_KEY);
-    setCurrentUser(null);
-  }, []);
+    fetch(`${API}/api/auth/logout`, { method: 'POST', credentials: 'include' }).catch(() => {});
+    clearSession();
+  }, [clearSession]);
 
   return (
     <AuthContext.Provider value={{ currentUser, loginWithCredentials, selectRole, updateEquipo, logout }}>

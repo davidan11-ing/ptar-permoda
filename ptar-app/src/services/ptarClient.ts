@@ -1,32 +1,80 @@
-// Cliente HTTP para el backend FastAPI de PTAR.
-// Reemplaza todas las llamadas directas a `supabase.from(...)`.
+// Cliente HTTP para el backend .NET de PTAR.
+// Autenticación via cookie httpOnly — no se maneja token en JS.
 
-// En producción (dist servido desde FastAPI) VITE_API_URL debe estar vacío
-// para que todas las llamadas usen rutas relativas (/api/...).
-// En desarrollo, VITE_API_URL=http://localhost:8001 desde .env.development.
+// En producción VITE_API_URL debe estar vacío (rutas relativas /api/...).
+// En desarrollo: VITE_API_URL=http://localhost:8001 desde .env.development.
 const API = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
 
-export const TOKEN_KEY = 'ptar_access_token';
+// Singleton de refresh: múltiples requests 401 simultáneos comparten UNA sola llamada
+let _refreshPromise: Promise<boolean> | null = null;
 
-function getAuthHeaders(): Record<string, string> {
-  const token = localStorage.getItem(TOKEN_KEY);
-  return token ? { 'Authorization': `Bearer ${token}` } : {};
+function tryRefresh(): Promise<boolean> {
+  if (!_refreshPromise) {
+    _refreshPromise = fetch(`${API}/api/auth/refresh`, {
+      method: 'POST',
+      credentials: 'include',
+    })
+      .then(r => r.ok)
+      .catch(() => false)
+      .finally(() => { _refreshPromise = null; });
+  }
+  return _refreshPromise;
+}
+
+async function doFetch(path: string, init?: RequestInit): Promise<Response> {
+  return fetch(`${API}${path}`, {
+    ...init,
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json', ...init?.headers },
+  });
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API}${path}`, {
-    ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      ...getAuthHeaders(),
-      ...init?.headers,
-    },
-  });
+  const res = await doFetch(path, init);
+
+  if (res.status === 401 && path !== '/api/auth/refresh') {
+    const refreshed = await tryRefresh();
+    if (refreshed) {
+      // Reintentar la petición original una sola vez
+      const retry = await doFetch(path, init);
+      if (retry.ok) return retry.json() as Promise<T>;
+      if (retry.status === 401) {
+        window.dispatchEvent(new CustomEvent('ptar:unauthorized'));
+        throw new Error('401 Unauthorized');
+      }
+      const retryBody = await retry.text().catch(() => '');
+      throw new Error(`${retry.status} ${retry.statusText}${retryBody ? ': ' + retryBody : ''}`);
+    }
+    // Refresh falló — sesión expirada
+    window.dispatchEvent(new CustomEvent('ptar:unauthorized'));
+    throw new Error('401 Unauthorized');
+  }
+
+  if (res.status === 401) {
+    window.dispatchEvent(new CustomEvent('ptar:unauthorized'));
+    throw new Error('401 Unauthorized');
+  }
+
   if (!res.ok) {
     const body = await res.text().catch(() => '');
     throw new Error(`${res.status} ${res.statusText}${body ? ': ' + body : ''}`);
   }
   return res.json() as Promise<T>;
+}
+
+// ─── Auth ─────────────────────────────────────────────────────────────────────
+
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  const res = await fetch(`${API}/api/auth/change-password`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({})) as { detail?: string };
+    throw new Error(data.detail ?? `Error ${res.status}`);
+  }
 }
 
 // ─── Interfaces (espejo exacto de las tablas) ─────────────────────────────────
@@ -323,6 +371,36 @@ export async function getCalidadRemociones(params: {
 
 // ─── Reportes / PDF ───────────────────────────────────────────────────────────
 
+// ─── Calidad — Resumen estadístico ───────────────────────────────────────────
+
+export interface CalidadResumenRow {
+  anio: number;
+  mes: number;
+  parametro_codigo: string;
+  parametro: string;
+  parametro_unidad: string;
+  unidad_codigo: string;
+  unidad: string;
+  orden_tren: number;
+  n_mediciones: number;
+  minimo: number | null;
+  maximo: number | null;
+  promedio: number | null;
+  desv_estandar: number | null;
+  cv_pct: number | null;
+  limite_vertimiento_min: number | null;
+  limite_vertimiento_max: number | null;
+  pct_fuera_limite_vert: number | null;
+}
+
+export async function getCalidadResumen(params: {
+  fecha_inicio: string;
+  fecha_fin: string;
+}): Promise<CalidadResumenRow[]> {
+  const q = new URLSearchParams({ fecha_inicio: params.fecha_inicio, fecha_fin: params.fecha_fin });
+  return request<CalidadResumenRow[]>(`/api/calidad/resumen?${q}`);
+}
+
 /** Informe de Calidad HTML completo (abre en nueva pestaña, imprime como PDF con Ctrl+P) */
 export function getReporteCalidadHtmlUrl(params: {
   fecha_inicio: string;
@@ -423,6 +501,9 @@ export interface BalanceHidricoRow {
   indicador_lav_l_und: number | null;
   indicador_tin_l_kg: number | null;
   indicador_rot_l_m: number | null;
+  und_efectivas: number | null;
+  kg_tela: number | null;
+  m_tela: number | null;
 }
 
 export async function getBalanceHidrico(params: {
@@ -609,6 +690,30 @@ export async function getGemEficiencia(params: {
     fecha_fin:    params.fecha_fin,
   });
   return request<GemEficienciaRow[]>(`/api/reactivos/gem-eficiencia?${q}`);
+}
+
+// ─── Reactivos — RO Eficiencia ────────────────────────────────────────────────
+
+export interface RoEficienciaRow {
+  fecha: string;
+  turno: string;
+  caudal_m3: number | null;
+  horas_operacion: number | null;
+  caudal_entrada_mh: number | null;
+  caudal_salida_mh: number | null;
+  costo_quimica_turno: number | null;
+  pesos_por_m3: number | null;
+}
+
+export async function getRoEficiencia(params: {
+  fecha_inicio: string;
+  fecha_fin: string;
+}): Promise<RoEficienciaRow[]> {
+  const q = new URLSearchParams({
+    fecha_inicio: params.fecha_inicio,
+    fecha_fin:    params.fecha_fin,
+  });
+  return request<RoEficienciaRow[]>(`/api/reactivos/ro-eficiencia?${q}`);
 }
 
 // ─── Condiciones de Operación ─────────────────────────────────────────────────
