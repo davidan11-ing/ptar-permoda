@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Informe Balance Hídrico — PTAR PERMODA | Enero–Mayo 2026</title>
+<style>
+  :root {
+    --verde:#16a34a;--verde-bg:#dcfce7;--verde-borde:#86efac;
+    --amarillo:#d97706;--amarillo-bg:#fef3c7;--amarillo-borde:#fcd34d;
+    --rojo:#dc2626;--rojo-bg:#fee2e2;--rojo-borde:#fca5a5;
+    --azul:#2563eb;--azul-bg:#dbeafe;--azul-borde:#93c5fd;
+    --gris:#6b7280;--gris-bg:#f3f4f6;--gris-borde:#d1d5db;
+    --primario:#1e3a5f;--acento:#0ea5e9;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:#f8fafc;color:#1e293b;font-size:14px;line-height:1.6;}
+  .header{background:linear-gradient(135deg,#1e3a5f 0%,#0ea5e9 100%);color:white;padding:32px 40px;}
+  .header h1{font-size:26px;font-weight:700;letter-spacing:-0.5px;}
+  .header .sub{font-size:14px;opacity:.85;margin-top:6px;}
+  .header .meta{display:flex;flex-wrap:wrap;gap:20px;margin-top:14px;font-size:13px;opacity:.9;}
+  .header .badge-nuevo{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;}
+  .container{max-width:1200px;margin:0 auto;padding:32px 24px;}
+  .exec-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:20px 0;}
+  .exec-card{border-radius:10px;padding:16px;border-left:4px solid;}
+  .exec-card.verde{background:var(--verde-bg);border-color:var(--verde);}
+  .exec-card.amarillo{background:var(--amarillo-bg);border-color:var(--amarillo);}
+  .exec-card.rojo{background:var(--rojo-bg);border-color:var(--rojo);}
+  .exec-card.azul{background:var(--azul-bg);border-color:var(--azul);}
+  .exec-card .label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--gris);}
+  .exec-card .valor{font-size:21px;font-weight:700;margin:4px 0;}
+  .exec-card .desc{font-size:12px;color:#475569;}
+  .exec-card.verde .valor{color:var(--verde);}
+  .exec-card.amarillo .valor{color:var(--amarillo);}
+  .exec-card.rojo .valor{color:var(--rojo);}
+  .exec-card.azul .valor{color:var(--azul);}
+  .seccion{background:white;border-radius:12px;padding:24px;margin-bottom:24px;box-shadow:0 1px 3px rgba(0,0,0,.08);}
+  .seccion h2{font-size:17px;font-weight:700;color:var(--primario);border-bottom:2px solid #e2e8f0;padding-bottom:12px;margin-bottom:18px;display:flex;align-items:center;gap:8px;}
+  .seccion h3{font-size:14px;font-weight:600;color:#334155;margin:18px 0 10px;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{background:#f1f5f9;color:#475569;font-weight:600;padding:10px 12px;text-align:left;font-size:12px;border-bottom:2px solid #e2e8f0;}
+  td{padding:9px 12px;border-bottom:1px solid #f1f5f9;}
+  tr:hover td{background:#fafafa;}
+  .num{text-align:right;font-variant-numeric:tabular-nums;}
+  .badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;}
+  .badge.conforme{background:var(--verde-bg);color:var(--verde);}
+  .badge.alerta{background:var(--amarillo-bg);color:var(--amarillo);}
+  .badge.critico{background:var(--rojo-bg);color:var(--rojo);}
+  .badge.info{background:var(--azul-bg);color:var(--azul);}
+  .badge.neutro{background:var(--gris-bg);color:var(--gris);}
+  .alerta-box{border-radius:8px;padding:14px 16px;margin:12px 0;display:flex;gap:12px;align-items:flex-start;}
+  .alerta-box.rojo{background:var(--rojo-bg);border:1px solid var(--rojo-borde);}
+  .alerta-box.amarillo{background:var(--amarillo-bg);border:1px solid var(--amarillo-borde);}
+  .alerta-box.verde{background:var(--verde-bg);border:1px solid var(--verde-borde);}
+  .alerta-box.azul{background:var(--azul-bg);border:1px solid var(--azul-borde);}
+  .alerta-box .icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+  .alerta-box .content strong{display:block;font-size:13px;margin-bottom:3px;}
+  .alerta-box .content p{font-size:12px;color:#475569;margin:0;}
+  .param-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media(max-width:700px){.param-grid{grid-template-columns:1fr;}}
+  .param-card{border:1px solid #e2e8f0;border-radius:8px;padding:16px;}
+  .param-card h4{font-size:13px;font-weight:700;color:var(--primario);margin-bottom:10px;}
+  .stat-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #f1f5f9;font-size:12px;}
+  .stat-row:last-child{border:none;}
+  .stat-label{color:var(--gris);}
+  .stat-val{font-weight:600;color:#1e293b;}
+  .stat-val.warn{color:var(--amarillo);}
+  .stat-val.ok{color:var(--verde);}
+  .stat-val.bad{color:var(--rojo);}
+  .rem-bar-wrap{background:#f1f5f9;border-radius:6px;height:8px;width:100%;overflow:hidden;margin-top:4px;}
+  .rem-bar{height:100%;border-radius:6px;}
+  .rem-bar.alta{background:var(--verde);}
+  .rem-bar.media{background:var(--amarillo);}
+  .rem-bar.baja{background:var(--rojo);}
+  .costo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px;margin:12px 0;}
+  .costo-card{border:1px solid #e2e8f0;border-radius:8px;padding:14px;text-align:center;}
+  .costo-card .lbl{font-size:11px;color:var(--gris);text-transform:uppercase;font-weight:600;}
+  .costo-card .val{font-size:20px;font-weight:700;color:var(--primario);margin:6px 0 2px;}
+  .costo-card .sub{font-size:11px;color:#64748b;}
+  tr.total td{background:#eff6ff!important;font-weight:700;color:var(--primario);}
+  tr.avg td{background:#fef9c3!important;font-style:italic;}
+  tr.parcial td{background:#fff7ed!important;}
+  .tren-flow{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin:12px 0;font-size:12px;}
+  .tren-box{background:#e0f2fe;color:#0369a1;padding:5px 10px;border-radius:6px;font-weight:600;white-space:nowrap;}
+  .tren-arrow{color:#94a3b8;font-weight:700;}
+  .tren-box.ro{background:#f3e8ff;color:#7c3aed;}
+  .tren-box.vert{background:#fef9c3;color:#a16207;}
+  .tren-box.reuso{background:#dcfce7;color:#16a34a;}
+  .evento-list{display:flex;flex-direction:column;gap:8px;}
+  .evento{display:flex;gap:12px;padding:12px 14px;border-radius:8px;border:1px solid #e2e8f0;align-items:flex-start;}
+  .evento-fecha{font-size:12px;font-weight:700;min-width:72px;color:var(--primario);}
+  .evento-desc{font-size:13px;flex:1;}
+  .evento-desc small{display:block;color:#64748b;font-size:11px;margin-top:2px;}
+  .evento.critico{border-color:var(--rojo-borde);background:#fff5f5;}
+  .evento.alerta{border-color:var(--amarillo-borde);background:#fffbeb;}
+  .evento.info{border-color:var(--azul-borde);background:#eff6ff;}
+  .nuevo-tag{background:#dcfce7;color:#16a34a;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:6px;vertical-align:middle;}
+  .fuente{font-size:11px;color:#94a3b8;font-style:italic;margin-top:6px;}
+  .pie{text-align:center;padding:24px;color:#94a3b8;font-size:12px;border-top:1px solid #e2e8f0;margin-top:32px;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>💧 Informe de Balance Hídrico — PTAR PERMODA</h1>
+  <div class="sub">Planta de Tratamiento de Agua Residual Textil — Sede Bogotá D.C.</div>
+  <div class="meta">
+    <span>📅 Período: <strong>1 de enero al 26 de mayo de 2026</strong></span>
+    <span class="badge-nuevo">✅ Datos reales — 5 meses</span>
+    <span>👤 Moon | lunaop@permoda.com.co</span>
+    <span>📋 Generado: 29 de mayo de 2026</span>
+    <span>📂 Fuentes: DASHBOARD BH 2026 · BALANCE BH BOGOTÁ 2026 · PLANTILLA KPI 2026</span>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- RESUMEN EJECUTIVO -->
+<div class="seccion">
+  <h2>🔎 Resumen Ejecutivo — Acumulado Enero–Mayo 2026</h2>
+  <div class="exec-grid">
+    <div class="exec-card azul">
+      <div class="label">Agua Limpia Total</div>
+      <div class="valor">139.323 m³</div>
+      <div class="desc">Ene–May acumulado<br>Acued + PTAP + RO + Carro + Mulas</div>
+    </div>
+    <div class="exec-card verde">
+      <div class="label">Reúso Acumulado</div>
+      <div class="valor">75.599 m³</div>
+      <div class="desc">Permeado RO: 61.052 m³ + Retorno: 14.547 m³<br>% reúso: <strong>54,3%</strong></div>
+    </div>
+    <div class="exec-card verde">
+      <div class="label">Indicador Tintorería</div>
+      <div class="valor">51,7 L/kg</div>
+      <div class="desc">Acumulado Ene–May · Meta: ≤ 65 L/kg<br>✓ Todos los meses cumplen</div>
+    </div>
+    <div class="exec-card verde">
+      <div class="label">Indicador Lavandería</div>
+      <div class="valor">47,0 L/und</div>
+      <div class="desc">Acumulado Ene–May · Meta: ≤ 50 L/und<br>Mayo (49,4) just al límite</div>
+    </div>
+    <div class="exec-card amarillo">
+      <div class="label">Indicador Rotativa</div>
+      <div class="valor">23,8 L/m</div>
+      <div class="desc">Acumulado Ene–May · Meta: ≤ 30 L/m<br>Mayo (45,8) supera meta ⚠</div>
+    </div>
+    <div class="exec-card amarillo">
+      <div class="label">Eficiencia RO promedio</div>
+      <div class="valor">76,9%</div>
+      <div class="desc">Meta ≥ 75% — Abr (74,8%) y May (73,5%)<br>⚠ Tendencia a la baja</div>
+    </div>
+    <div class="exec-card azul">
+      <div class="label">GEM tratado</div>
+      <div class="valor">153.529 m³</div>
+      <div class="desc">Ene–May acumulado<br>Promedio: 30.706 m³/mes</div>
+    </div>
+    <div class="exec-card verde">
+      <div class="label">Producción tintorería</div>
+      <div class="valor">1.015.539 kg</div>
+      <div class="desc">Ene–May acumulado<br>Promedio: 203.108 kg/mes</div>
+    </div>
+  </div>
+
+  <div class="alerta-box azul">
+    <div class="icon">📋</div>
+    <div class="content">
+      <strong>Fuentes y método de extracción</strong>
+      <p>Los datos de enero a mayo se extrajeron de la hoja <strong>BASE DE DATOS</strong> del Dashboard Balance Hídrico Bogotá 2026 (3 turnos diarios). Mayo depura el día 27 que presenta rollover de contadores (valores negativos extremos). Los indicadores mensuales se cruzan con la hoja <strong>INDICADORES DE CONSUMO</strong> y se complementan con <strong>BALANCE HIDRICO BOGOTA 2026.xlsx</strong> (hojas ENERO–MAYO) y <strong>PLANTILLA KPI 2026.xlsx</strong>. Los valores de lodos, costos químicos y DQO provienen de las hojas de informe mensual.</p>
+    </div>
+  </div>
+</div>
+
+<!-- TREN HÍDRICO -->
+<div class="seccion">
+  <h2>🏭 Diagrama del Ciclo del Agua — PTAR PERMODA</h2>
+  <div class="tren-flow">
+    <div class="tren-box">Acueducto</div><div class="tren-arrow">→</div>
+    <div class="tren-box">PTAP (Pozo)</div><div class="tren-arrow">+</div>
+    <div class="tren-box">Carrotanques</div><div class="tren-arrow">→</div>
+    <div class="tren-box">Tanque TH</div><div class="tren-arrow">→</div>
+    <div class="tren-box">Lavandería</div><div class="tren-arrow">+</div>
+    <div class="tren-box">Tintorería</div><div class="tren-arrow">+</div>
+    <div class="tren-box">Rotativa</div><div class="tren-arrow">→</div>
+    <div class="tren-box ro">GEM → PTAR (MBR)</div><div class="tren-arrow">→</div>
+    <div class="tren-box ro">RO</div><div class="tren-arrow">↻</div>
+    <div class="tren-box reuso">Reúso</div>
+  </div>
+  <p style="font-size:12px;color:#64748b;margin-top:8px;">
+    <strong>Agua limpia = Acueducto + PTAP potable + Carrotanques + Mulas Funza + Permeado RO</strong><br>
+    El retorno verde (agua de rechazo retornada a producción) constituye el segundo componente de reúso junto con el permeado RO.
+  </p>
+</div>
+
+<!-- SECCIÓN 1: CONSUMOS GLOBALES -->
+<div class="seccion">
+  <h2>📊 1. Consumos Globales — Fuentes de Agua (m³)</h2>
+  <p style="color:#64748b;font-size:13px;margin-bottom:16px;">
+    Volúmenes mensuales consolidados (suma de los 3 turnos diarios). Mayo: días 1 al 26, excluido día 27 por rollover de contadores.
+  </p>
+  <table>
+    <tr>
+      <th>Mes</th>
+      <th class="num">Acueducto</th>
+      <th class="num">PTAP potable</th>
+      <th class="num">Carrotanques</th>
+      <th class="num">Mulas Funza</th>
+      <th class="num">Permeado RO</th>
+      <th class="num">Envío TH</th>
+      <th class="num">Agua limpia total</th>
+    </tr>
+    <tr>
+      <td>Enero</td>
+      <td class="num">9.944</td><td class="num">5.662</td><td class="num">180</td><td class="num">0</td>
+      <td class="num">11.443</td><td class="num">29.051</td><td class="num">27.229</td>
+    </tr>
+    <tr>
+      <td>Febrero</td>
+      <td class="num">10.099</td><td class="num">4.456</td><td class="num">308</td><td class="num">90</td>
+      <td class="num">11.281</td><td class="num">27.750</td><td class="num">26.234</td>
+    </tr>
+    <tr>
+      <td>Marzo</td>
+      <td class="num">10.521</td><td class="num">5.368</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">14.663</td><td class="num">31.968</td><td class="num">30.552</td>
+    </tr>
+    <tr>
+      <td>Abril</td>
+      <td class="num">13.581</td><td class="num">2.491</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">13.229</td><td class="num">30.783</td><td class="num">29.301</td>
+    </tr>
+    <tr class="parcial">
+      <td>Mayo (1–26) ⚠</td>
+      <td class="num">13.234</td><td class="num">2.337</td><td class="num">0</td><td class="num">0</td>
+      <td class="num">10.436</td><td class="num">26.349</td><td class="num">26.007</td>
+    </tr>
+    <tr class="total">
+      <td>TOTAL Ene–May</td>
+      <td class="num">57.379</td><td class="num">20.314</td><td class="num">488</td><td class="num">90</td>
+      <td class="num">61.052</td><td class="num">145.901</td><td class="num">139.323</td>
+    </tr>
+    <tr class="avg">
+      <td>Promedio mensual</td>
+      <td class="num">11.476</td><td class="num">4.063</td><td class="num">98</td><td class="num">18</td>
+      <td class="num">12.210</td><td class="num">29.180</td><td class="num">27.865</td>
+    </tr>
+  </table>
+  <p class="fuente">⚠ Mayo: día 27 excluido por rollover de contadores (valores negativos de −308.318 m³ en RO, −389.222 m³ en lavandería). Días 28–31 sin operación registrada.</p>
+
+  <div class="alerta-box amarillo">
+    <div class="icon">⚠️</div>
+    <div class="content">
+      <strong>Abril–Mayo: mayor dependencia del acueducto que Ene–Mar</strong>
+      <p>En Enero, Febrero y Marzo el acueducto representaba ~37% del agua limpia. En Abril subió al 46% (13.581 m³) y en Mayo al 51% (13.234 m³) por la caída de PTAP en abril y menor permeado RO en mayo. El costo de abastecimiento de acueducto es $10.763/m³ vs. $3.406/m³ del permeado RO, lo que tiene impacto en costo operativo.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SECCIÓN 2: PTAP -->
+<div class="seccion">
+  <h2>🚰 2. PTAP — Planta de Tratamiento de Agua Potable</h2>
+  <p style="color:#64748b;font-size:13px;margin-bottom:16px;">
+    Producción mensual de agua potable a partir del pozo propio. Costo referencial: <strong>$4.805/m³</strong> (OPEX sin depreciación).
+  </p>
+  <table>
+    <tr>
+      <th>Mes</th>
+      <th class="num">Ingreso PTAP (m³)</th>
+      <th class="num">Salida potable (m³)</th>
+      <th class="num">Rechazo (m³)</th>
+      <th class="num">Eficiencia (%)</th>
+      <th>Estado</th>
+    </tr>
+    <tr>
+      <td>Enero</td>
+      <td class="num">7.484</td><td class="num">5.662</td><td class="num">1.822</td><td class="num">75,7%</td>
+      <td><span class="badge conforme">✓ Normal</span></td>
+    </tr>
+    <tr>
+      <td>Febrero</td>
+      <td class="num">5.972</td><td class="num">4.456</td><td class="num">1.516</td><td class="num">74,6%</td>
+      <td><span class="badge alerta">⚠ Ligeramente baja</span></td>
+    </tr>
+    <tr>
+      <td>Marzo</td>
+      <td class="num">6.963</td><td class="num">5.368</td><td class="num">1.595</td><td class="num">77,1%</td>
+      <td><span class="badge conforme">✓ Normal</span></td>
+    </tr>
+    <tr>
+      <td>Abril</td>
+      <td class="num">3.906</td><td class="num">2.491</td><td class="num">1.415</td><td class="num">63,8%</td>
+      <td><span class="badge critico">🚨 Eficiencia crítica</span></td>
+    </tr>
+    <tr class="parcial">
+      <td>Mayo (1–26)</td>
+      <td class="num">2.679</td><td class="num">2.337</td><td class="num">342</td><td class="num">87,2%</td>
+      <td><span class="badge conforme">✓ Recuperada</span></td>
+    </tr>
+    <tr class="total">
+      <td>TOTAL Ene–May</td>
+      <td class="num">27.004</td><td class="num">20.314</td><td class="num">6.690</td><td class="num">75,2%</td>
+      <td><span class="badge conforme">✓ Promedio cumple</span></td>
+    </tr>
+  </table>
+  <div class="alerta-box rojo">
+    <div class="icon">🚨</div>
+    <div class="content">
+      <strong>Abril: eficiencia PTAP cayó a 63,8% — mínimo del año</strong>
+      <p>La salida potable se redujo a solo 2.491 m³ (vs. promedio Ene–Mar de 5.162 m³/mes). Esto forzó al sistema a depender más del acueducto (13.581 m³ en abril = máximo del año). La eficiencia se recuperó en mayo a 87,2%, lo que sugiere que la causa fue transitoria (posible taponamiento o problema puntual en filtros). Verificar si se realizó mantenimiento correctivo.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SECCIÓN 3: OSMOSIS INVERSA -->
+<div class="seccion">
+  <h2>🧪 3. Ósmosis Inversa (RO)</h2>
+  <p style="color:#64748b;font-size:13px;margin-bottom:16px;">
+    Balance mensual del sistema RO. Meta de eficiencia global: <strong>≥ 75%</strong>. Costo referencial permeado: <strong>$3.406/m³</strong> (OPEX sin depreciación).
+  </p>
+  <table>
+    <tr>
+      <th>Mes</th>
+      <th class="num">Entrada RO (m³)</th>
+      <th class="num">Permeado (m³)</th>
+      <th class="num">Rechazo (m³)</th>
+      <th class="num">Eficiencia (%)</th>
+      <th>Estado</th>
+    </tr>
+    <tr>
+      <td>Enero</td>
+      <td class="num">14.633</td><td class="num">11.443</td><td class="num">3.190</td><td class="num">78,2%</td>
+      <td><span class="badge conforme">✓ Sobre meta</span></td>
+    </tr>
+    <tr>
+      <td>Febrero</td>
+      <td class="num">14.053</td><td class="num">11.281</td><td class="num">2.772</td><td class="num">80,3%</td>
+      <td><span class="badge conforme">✓ Mejor del año</span></td>
+    </tr>
+    <tr>
+      <td>Marzo</td>
+      <td class="num">18.998</td><td class="num">14.663</td><td class="num">4.336</td><td class="num">77,2%</td>
+      <td><span class="badge conforme">✓ Sobre meta</span></td>
+    </tr>
+    <tr>
+      <td>Abril</td>
+      <td class="num">17.695</td><td class="num">13.229</td><td class="num">4.466</td><td class="num">74,8%</td>
+      <td><span class="badge alerta">⚠ Bajo meta</span></td>
+    </tr>
+    <tr class="parcial">
+      <td>Mayo (1–26)</td>
+      <td class="num">14.207</td><td class="num">10.436</td><td class="num">3.771</td><td class="num">73,5%</td>
+      <td><span class="badge critico">⚠ Bajo meta 2.° mes</span></td>
+    </tr>
+    <tr class="total">
+      <td>TOTAL Ene–May</td>
+      <td class="num">79.586</td><td class="num">61.052</td><td class="num">18.535</td><td class="num">76,7%</td>
+      <td><span class="badge conforme">✓ Promedio cumple</span></td>
+    </tr>
+  </table>
+  <div class="alerta-box rojo">
+    <div class="icon">📉</div>
+    <div class="content">
+      <strong>Eficiencia RO en caída progresiva: 80,3% (Feb) → 73,5% (Mayo) — 2° mes consecutivo bajo la meta</strong>
+      <p>La tendencia negativa (80,3 → 77,2 → 74,8 → 73,5%) indica posible ensuciamiento de membranas, aumento de sólidos en el permeado MBR o reducción de presión transmembrana. Mayo registró 14 días operativos con eficiencia ≥75% y 7 días por debajo. <strong>Acción urgente:</strong> programar CIP (limpieza química in-situ) antes de junio. Los comentarios de los informes mensuales registran intervenciones en membranas los días 29–31 de cada mes (lavado con hipoclorito 0,2%).</p>
+    </div>
+  </div>
+
+  <h3>Eficiencia diaria RO — Mayo 2026 (datos BALANCE RO)</h3>
+  <table>
+    <tr><th>Día</th><th class="num">Entrada (m³)</th><th class="num">Permeado (m³)</th><th class="num">Rechazo (m³)</th><th class="num">Eficiencia (%)</th><th>Estado</th></tr>
+    <tr><td>01-may</td><td class="num">173,4</td><td class="num">139</td><td class="num">34,4</td><td class="num">80,2%</td><td><span class="badge conforme">✓</span></td></tr>
+    <tr><td>04-may</td><td class="num">499,7</td><td class="num">378</td><td class="num">121,7</td><td class="num">75,6%</td><td><span class="badge conforme">✓</span></td></tr>
+    <tr><td>05-may</td><td class="num">735,5</td><td class="num">573</td><td class="num">162,5</td><td class="num">77,9%</td><td><span class="badge conforme">✓</span></td></tr>
+    <tr><td>06-may</td><td class="num">786,2</td><td class="num">586</td><td class="num">200,2</td><td class="num">74,5%</td><td><span class="badge alerta">⚠</span></td></tr>
+    <tr><td>07-may</td><td class="num">780,4</td><td class="num">576</td><td class="num">204,4</td><td class="num">73,8%</td><td><span class="badge alerta">⚠</span></td></tr>
+    <tr><td>08-may</td><td class="num">790,2</td><td class="num">603</td><td class="num">187,2</td><td class="num">76,3%</td><td><span class="badge conforme">✓</span></td></tr>
+    <tr><td>09-may</td><td class="num">602,1</td><td class="num">437</td><td class="num">165,1</td><td class="num">72,6%</td><td><span class="badge critico">⚠ Bajo meta</span></td></tr>
+    <tr><td>11-may</td><td class="num">605,2</td><td class="num">436</td><td class="num">169,2</td><td class="num">72,0%</td><td><span class="badge critico">⚠ Bajo meta</span></td></tr>
+    <tr><td>12-may</td><td class="num">807,7</td><td class="num">576</td><td class="num">231,7</td><td class="num">71,3%</td><td><span class="badge critico">⚠ Bajo meta</span></td></tr>
+    <tr><td>13-may</td><td class="num">758,1</td><td class="num">556</td><td class="num">202,1</td><td class="num">73,3%</td><td><span class="badge alerta">⚠</span></td></tr>
+    <tr><td>14-may</td><td class="num">840,4</td><td class="num">617</td><td class="num">223,4</td><td class="num">73,4%</td><td><span class="badge alerta">⚠</span></td></tr>
+    <tr><td>15-may</td><td class="num">736,6</td><td class="num">530</td><td class="num">206,6</td><td class="num">71,9%</td><td><span class="badge critico">⚠ Bajo meta</span></td></tr>
+    <tr><td>16-may</td><td class="num">717,9</td><td class="num">469</td><td class="num">248,9</td><td class="num">65,3%</td><td><span class="badge critico">⚠ Mínimo mayo</span></td></tr>
+    <tr><td>18-may</td><td class="num">267,9</td><td class="num">202</td><td class="num">65,9</td><td class="num">75,4%</td><td><span class="badge conforme">✓</span></td></tr>
+  </table>
+  <p class="fuente">Datos del 19 al 26 de mayo disponibles en hoja BASE DE DATOS. Días 2, 3, 10, 17, 24, 28–31 sin operación RO.</p>
+</div>
+
+<!-- SECCIÓN 4: MBR -->
+<div class="seccion">
+  <h2>⚙️ 4. Biorreactores de Membrana (MBR1 / MBR2) y Caudal GEM</h2>
+  <table>
+    <tr>
+      <th>Mes</th>
+      <th class="num">MBR1 (m³)</th>
+      <th class="num">MBR2 (m³)</th>
+      <th class="num">Total MBR (m³)</th>
+      <th class="num">GEM tratado (m³)</th>
+      <th class="num">Retorno verde (m³)</th>
+    </tr>
+    <tr><td>Enero</td>   <td class="num">7.324</td> <td class="num">11.927</td><td class="num">19.251</td><td class="num">29.325</td><td class="num">3.743</td></tr>
+    <tr><td>Febrero</td> <td class="num">10.388</td><td class="num">9.700</td> <td class="num">20.088</td><td class="num">30.080</td><td class="num">2.267</td></tr>
+    <tr><td>Marzo</td>   <td class="num">11.717</td><td class="num">11.122</td><td class="num">22.839</td><td class="num">32.829</td><td class="num">4.251</td></tr>
+    <tr><td>Abril</td>   <td class="num">10.855</td><td class="num">10.402</td><td class="num">21.257</td><td class="num">32.414</td><td class="num">4.286</td></tr>
+    <tr class="parcial">
+      <td>Mayo (1–26)</td><td class="num">9.257</td><td class="num">6.472</td><td class="num">15.729</td><td class="num">28.881</td><td class="num">0</td>
+    </tr>
+    <tr class="total">
+      <td>TOTAL Ene–May</td><td class="num">49.541</td><td class="num">49.623</td><td class="num">99.164</td><td class="num">153.529</td><td class="num">14.547</td>
+    </tr>
+  </table>
+  <p class="fuente">GEM mayo = INDICADORES DE CONSUMO (días 1–18: 19.206 m³) + BASE DE DATOS (días 19–26: 9.675 m³). MBR mayo excluye día 27 (rollover de contadores).</p>
+  <div class="alerta-box amarillo">
+    <div class="icon">⚠️</div>
+    <div class="content">
+      <strong>MBR2 mayo (6.472 m³) — mínimo del año, 38% por debajo del promedio Ene–Abr</strong>
+      <p>El promedio mensual de MBR2 en Ene–Abr fue de 10.787 m³. En mayo cayó a 6.472 m³. Esto puede reflejar menor caudal tratado, paros operativos o el efecto de días sin operación (días 2, 3, 10, 17, 24). Verificar si hubo intervenciones en MBR2 durante mayo.</p>
+    </div>
+  </div>
+  <div class="alerta-box azul">
+    <div class="icon">ℹ️</div>
+    <div class="content">
+      <strong>Retorno verde mayo = 0 — sin retorno de agua de rechazo a producción</strong>
+      <p>En Ene–Abr el retorno verde sumó 14.547 m³ (promedio 3.637 m³/mes). En mayo no se registra retorno verde, lo que reduce el porcentaje de reúso del mes. Confirmar si esta situación corresponde a una decisión operativa o a un error de registro.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SECCIÓN 5: PRODUCCIÓN -->
+<div class="seccion">
+  <h2>🏗️ 5. Consumo por Área de Producción</h2>
+  <table>
+    <tr>
+      <th>Mes</th>
+      <th class="num">Lavandería (m³)</th>
+      <th class="num">Und efectivas</th>
+      <th class="num">Tintorería (m³)</th>
+      <th class="num">kg tela</th>
+      <th class="num">Rotativa (m³)</th>
+      <th class="num">m tela</th>
+      <th class="num">Agua caliente (m³)</th>
+    </tr>
+    <tr><td>Enero</td>   <td class="num">16.476</td><td class="num">361.783</td><td class="num">10.753</td><td class="num">206.773</td><td class="num">1.138</td><td class="num">34.113</td><td class="num">5.030</td></tr>
+    <tr><td>Febrero</td> <td class="num">20.569</td><td class="num">450.288</td><td class="num">5.575</td> <td class="num">130.962</td><td class="num">52</td>   <td class="num">26.986</td><td class="num">477</td></tr>
+    <tr><td>Marzo</td>   <td class="num">18.633</td><td class="num">397.881</td><td class="num">11.919</td><td class="num">229.502</td><td class="num">939</td>  <td class="num">33.169</td><td class="num">275</td></tr>
+    <tr><td>Abril</td>   <td class="num">17.180</td><td class="num">353.945</td><td class="num">12.121</td><td class="num">230.217</td><td class="num">1.495</td><td class="num">76.750</td><td class="num">260</td></tr>
+    <tr class="parcial">
+      <td>Mayo (1–26)</td><td class="num">13.909</td><td class="num">281.640</td><td class="num">12.099</td><td class="num">218.085</td><td class="num">945</td>  <td class="num">20.638</td><td class="num">1.038</td>
+    </tr>
+    <tr class="total">
+      <td>TOTAL Ene–May</td><td class="num">86.767</td><td class="num">1.845.537</td><td class="num">52.467</td><td class="num">1.015.539</td><td class="num">4.569</td><td class="num">191.656</td><td class="num">7.080</td>
+    </tr>
+    <tr class="avg">
+      <td>Promedio mensual</td><td class="num">17.353</td><td class="num">369.107</td><td class="num">10.493</td><td class="num">203.108</td><td class="num">914</td><td class="num">38.331</td><td class="num">1.416</td>
+    </tr>
+  </table>
+  <p class="fuente">Mayo excluye día 27. Agua caliente enero (5.030 m³) es 5× el promedio del resto; verificar si es real o error de lectura de contador.</p>
+
+  <h3>Notas operativas por mes</h3>
+  <div class="evento-list">
+    <div class="evento info">
+      <div class="evento-fecha">Enero</div>
+      <div class="evento-desc">Dos solicitudes de carrotanques (días 13 y 20). Lavado de membranas MBR2, RO no operó primeros 2 turnos del 13 por cloro en tanque permeado. Arreglo impulsor bomba alta ingreso RO.
+        <small>GEM detenido el 20 por taponamiento del Swingmill. Mayor consumo agua caliente del año: 5.030 m³.</small>
+      </div>
+    </div>
+    <div class="evento critico">
+      <div class="evento-fecha">Febrero</div>
+      <div class="evento-desc">🚨 Falla bomba alimentación al sistema UF el 18-feb — sistema inhabilitado días 18 y 19. Baja eficiencia posterior por saturación membranas, múltiples CEB sin solución. Dos CIP realizados: primero el 25-feb con acompañamiento proveedor.
+        <small>Impacto: producción RO reducida. Rotativa en mínimo del año (52 m³ / 26.986 m).</small>
+      </div>
+    </div>
+    <div class="evento info">
+      <div class="evento-fecha">Marzo</div>
+      <div class="evento-desc">Abastecimiento estable 1.100–1.459 m³/día. Pico máximo 19-mar (1.459 m³). Caídas días 29–31 por Semana Santa y paro de producción. RO como columna vertebral del suministro.
+        <small>Mejor mes de reúso del periodo (61,9%). Lavado membranas con hipoclorito 0,2% días 29–31.</small>
+      </div>
+    </div>
+    <div class="evento alerta">
+      <div class="evento-fecha">Abril</div>
+      <div class="evento-desc">Sin operación del 1 al 5 de abril (Semana Santa). Arranque el 6-abr con lavado del tanque anóxico. Consumo de 1.231 m³ ese día con bajo permeado RO (290 m³) por condiciones de estabilización.
+        <small>Eficiencia PTAP cayó a 63,8% — máximo consumo acueducto del año. Producción rotativa máxima: 76.750 m tela.</small>
+      </div>
+    </div>
+    <div class="evento alerta">
+      <div class="evento-fecha">Mayo</div>
+      <div class="evento-desc">Días 2–3, 10, 17, 24, 28–31 sin operación. Eficiencia RO en caída (73,5% promedio). MBR2 con producción baja (6.472 m³). Rollover de contadores el día 27 (excluido del informe).
+        <small>Retorno verde = 0. Agua caliente sube a 1.038 m³ (4× promedio Feb–Abr).</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SECCIÓN 6: INDICADORES ESPECÍFICOS -->
+<div class="seccion">
+  <h2>📈 6. Indicadores Específicos de Consumo</h2>
+  <p style="color:#64748b;font-size:13px;margin-bottom:16px;">
+    Consumo por unidad producida en cada área vs. la meta corporativa.
+  </p>
+
+  <div class="param-grid" style="grid-template-columns:repeat(3,1fr);">
+    <div class="param-card">
+      <h4>🧵 Tintorería — Acumulado Ene–May: <span style="color:var(--verde)">51,7 L/kg</span></h4>
+      <div style="margin:8px 0;">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>51,7 / 65 L/kg</span><span>79,5% de la meta</span></div>
+        <div class="rem-bar-wrap"><div class="rem-bar alta" style="width:80%"></div></div>
+      </div>
+      <div class="stat-row"><span class="stat-label">Mínimo (Feb)</span><span class="stat-val ok">42,6 L/kg</span></div>
+      <div class="stat-row"><span class="stat-label">Máximo (May)</span><span class="stat-val warn">55,5 L/kg</span></div>
+      <div class="stat-row"><span class="stat-label">Meses ≤ meta (≤65)</span><span class="stat-val ok">5 / 5 ✓</span></div>
+      <div class="stat-row"><span class="stat-label">Total kg tela</span><span class="stat-val">1.015.539 kg</span></div>
+    </div>
+    <div class="param-card">
+      <h4>👕 Lavandería — Acumulado Ene–May: <span style="color:var(--verde)">47,0 L/und</span></h4>
+      <div style="margin:8px 0;">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>47,0 / 50 L/und</span><span>94% de la meta</span></div>
+        <div class="rem-bar-wrap"><div class="rem-bar media" style="width:94%"></div></div>
+      </div>
+      <div class="stat-row"><span class="stat-label">Mínimo (Ene)</span><span class="stat-val ok">45,5 L/und</span></div>
+      <div class="stat-row"><span class="stat-label">Máximo (May)</span><span class="stat-val warn">49,4 L/und</span></div>
+      <div class="stat-row"><span class="stat-label">Meses ≤ meta (≤50)</span><span class="stat-val ok">5 / 5 ✓</span></div>
+      <div class="stat-row"><span class="stat-label">Total und efectivas</span><span class="stat-val">1.845.537</span></div>
+    </div>
+    <div class="param-card">
+      <h4>🧶 Rotativa — Acumulado Ene–May: <span style="color:var(--verde)">23,8 L/m</span></h4>
+      <div style="margin:8px 0;">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>23,8 / 30 L/m</span><span>79% de la meta</span></div>
+        <div class="rem-bar-wrap"><div class="rem-bar alta" style="width:79%"></div></div>
+      </div>
+      <div class="stat-row"><span class="stat-label">Mínimo (Feb)</span><span class="stat-val ok">1,9 L/m</span></div>
+      <div class="stat-row"><span class="stat-label">Máximo (May)</span><span class="stat-val bad">45,8 L/m ⚠</span></div>
+      <div class="stat-row"><span class="stat-label">Meses ≤ meta (≤30)</span><span class="stat-val warn">4 / 5 ⚠</span></div>
+      <div class="stat-row"><span class="stat-label">Total m tela</span><span class="stat-val">191.656 m</span></div>
+    </div>
+  </div>
+
+  <h3 style="margin-top:20px;">Tabla mensual de indicadores</h3>
+  <table>
+    <tr>
+      <th>Mes</th>
+      <th class="num">Tin (L/kg)</th><th class="num">Meta</th>
+      <th class="num">Lav (L/und)</th><th class="num">Meta</th>
+      <th class="num">Rot (L/m)</th><th class="num">Meta</th>
+      <th>Estado</th>
+    </tr>
+    <tr>
+      <td>Enero</td>
+      <td class="num">52,0</td><td class="num">65</td>
+      <td class="num">45,5</td><td class="num">50</td>
+      <td class="num" style="color:var(--amarillo);font-weight:600">33,4 ⚠</td><td class="num">30</td>
+      <td><span class="badge alerta">⚠ Rot. supera meta</span></td>
+    </tr>
+    <tr>
+      <td>Febrero</td>
+      <td class="num">42,6</td><td class="num">65</td>
+      <td class="num">45,7</td><td class="num">50</td>
+      <td class="num" style="color:var(--verde);font-weight:600">1,9</td><td class="num">30</td>
+      <td><span class="badge conforme">✓ Todas cumplen</span></td>
+    </tr>
+    <tr>
+      <td>Marzo</td>
+      <td class="num">51,9</td><td class="num">65</td>
+      <td class="num">46,8</td><td class="num">50</td>
+      <td class="num">28,3</td><td class="num">30</td>
+      <td><span class="badge conforme">✓ Todas cumplen</span></td>
+    </tr>
+    <tr>
+      <td>Abril</td>
+      <td class="num">52,6</td><td class="num">65</td>
+      <td class="num">48,5</td><td class="num">50</td>
+      <td class="num">19,5</td><td class="num">30</td>
+      <td><span class="badge conforme">✓ Todas cumplen</span></td>
+    </tr>
+    <tr class="parcial">
+      <td>Mayo (1–26)</td>
+      <td class="num">55,5</td><td class="num">65</td>
+      <td class="num">49,4</td><td class="num">50</td>
+      <td class="num" style="color:var(--rojo);font-weight:600">45,8 ⚠</td><td class="num">30</td>
+      <td><span class="badge critico">⚠ Rot. supera meta</span></td>
+    </tr>
+    <tr class="avg">
+      <td>Promedio Ene–May</td>
+      <td class="num">51,7</td><td class="num">65</td>
+      <td class="num">47,0</td><td class="num">50</td>
+      <td class="num">23,8</td><td class="num">30</td>
+      <td><span class="badge conforme">✓ Promedio cumple</span></td>
+    </tr>
+  </table>
+  <div class="alerta-box amarillo">
+    <div class="icon">🔄</div>
+    <div class="content">
+      <strong>Rotativa: alta variabilidad mes a mes (1,9 – 45,8 L/m) — indicador sensible a producción</strong>
+      <p>El indicador de rotativa es muy sensible a la producción de metros de tela. Febrero (26.986 m, indicator 1,9) vs. mayo (20.638 m, indicador 45,8). Cuando la producción de rotativa baja, el indicador sube aunque el consumo de agua sea menor en absoluto. <strong>Recomendación:</strong> evaluar la meta en función de una producción mínima mensual representativa, o calcular el indicador solo en meses con producción ≥ 25.000 m.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SECCIÓN 7: REÚSO -->
+<div class="seccion">
+  <h2>♻️ 7. Reúso y Agua Recuperada</h2>
+  <div class="costo-grid">
+    <div class="costo-card">
+      <div class="lbl">Permeado RO (Reúso)</div>
+      <div class="val" style="color:var(--verde)">61.052 m³</div>
+      <div class="sub">Ene–May acumulado</div>
+    </div>
+    <div class="costo-card">
+      <div class="lbl">Retorno verde</div>
+      <div class="val" style="color:var(--verde)">14.547 m³</div>
+      <div class="sub">Ene–Abr (mayo = 0)</div>
+    </div>
+    <div class="costo-card">
+      <div class="lbl">Total reúso</div>
+      <div class="val" style="color:var(--verde)">75.599 m³</div>
+      <div class="sub">54,3% del agua limpia total</div>
+    </div>
+    <div class="costo-card">
+      <div class="lbl">Mejor mes</div>
+      <div class="val" style="color:var(--verde)">Marzo</div>
+      <div class="sub">61,9% — 18.914 m³ reusados</div>
+    </div>
+  </div>
+  <table>
+    <tr>
+      <th>Mes</th>
+      <th class="num">Permeado RO (m³)</th>
+      <th class="num">Retorno verde (m³)</th>
+      <th class="num">Total reúso (m³)</th>
+      <th class="num">Agua limpia (m³)</th>
+      <th class="num">% reúso</th>
+    </tr>
+    <tr><td>Enero</td>   <td class="num">11.443</td><td class="num">3.743</td><td class="num">15.186</td><td class="num">27.229</td><td class="num">55,8%</td></tr>
+    <tr><td>Febrero</td> <td class="num">11.281</td><td class="num">2.267</td><td class="num">13.548</td><td class="num">26.234</td><td class="num">51,6%</td></tr>
+    <tr><td>Marzo</td>   <td class="num">14.663</td><td class="num">4.251</td><td class="num">18.914</td><td class="num">30.552</td><td class="num">61,9%</td></tr>
+    <tr><td>Abril</td>   <td class="num">13.229</td><td class="num">4.286</td><td class="num">17.515</td><td class="num">29.301</td><td class="num">59,8%</td></tr>
+    <tr class="parcial">
+      <td>Mayo (1–26)</td><td class="num">10.436</td><td class="num">0</td><td class="num">10.436</td><td class="num">26.007</td><td class="num">40,1%</td>
+    </tr>
+    <tr class="total">
+      <td>TOTAL Ene–May</td><td class="num">61.052</td><td class="num">14.547</td><td class="num">75.599</td><td class="num">139.323</td><td class="num">54,3%</td>
+    </tr>
+  </table>
+  <div class="alerta-box rojo">
+    <div class="icon">📉</div>
+    <div class="content">
+      <strong>Mayo: % reúso cae a 40,1% por ausencia de retorno verde — mínimo del año</strong>
+      <p>El retorno verde en Ene–Abr promedió 3.637 m³/mes. En mayo fue 0, lo que redujo el reúso total de mayo de ~14.000 m³ a solo 10.436 m³ y el porcentaje del 55–62% habitual al 40,1%. Esto impactó directamente en la dependencia del acueducto (51% del agua limpia de mayo). Confirmar si el retorno verde fue interrumpido operativamente o si hay un error de registro.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SECCIÓN 8: COMPARATIVO MENSUAL -->
+<div class="seccion">
+  <h2>📊 8. Comparativo de Indicadores Clave — Enero a Mayo 2026</h2>
+  <table>
+    <tr>
+      <th>Indicador</th>
+      <th class="num">Enero</th><th class="num">Febrero</th><th class="num">Marzo</th>
+      <th class="num">Abril</th><th class="num">Mayo*</th><th class="num">Prom. Ene–May</th>
+      <th>Tendencia</th>
+    </tr>
+    <tr><td>Agua limpia (m³)</td>          <td class="num">27.229</td><td class="num">26.234</td><td class="num">30.552</td><td class="num">29.301</td><td class="num">26.007</td><td class="num">27.865</td><td><span class="badge conforme">↔ Estable</span></td></tr>
+    <tr><td>Acueducto %</td>               <td class="num">36,5%</td><td class="num">38,5%</td><td class="num">34,4%</td><td class="num">46,4%</td><td class="num">50,9%</td><td class="num">41,2%</td><td><span class="badge critico">↑ Subiendo ⚠</span></td></tr>
+    <tr><td>Permeado RO (m³)</td>          <td class="num">11.443</td><td class="num">11.281</td><td class="num">14.663</td><td class="num">13.229</td><td class="num">10.436</td><td class="num">12.210</td><td><span class="badge alerta">↓ Bajando</span></td></tr>
+    <tr><td>Eficiencia RO (%)</td>         <td class="num">78,2%</td><td class="num">80,3%</td><td class="num">77,2%</td><td class="num">74,8%</td><td class="num">73,5%</td><td class="num">76,7%</td><td><span class="badge critico">↓ Caída sostenida</span></td></tr>
+    <tr><td>% Reúso</td>                   <td class="num">55,8%</td><td class="num">51,6%</td><td class="num">61,9%</td><td class="num">59,8%</td><td class="num">40,1%</td><td class="num">54,3%</td><td><span class="badge critico">↓ Mayo baja ⚠</span></td></tr>
+    <tr><td>GEM tratado (m³)</td>          <td class="num">29.325</td><td class="num">30.080</td><td class="num">32.829</td><td class="num">32.414</td><td class="num">28.881</td><td class="num">30.706</td><td><span class="badge conforme">↔ Estable</span></td></tr>
+    <tr><td>Tintorería (L/kg)</td>         <td class="num">52,0</td><td class="num">42,6</td><td class="num">51,9</td><td class="num">52,6</td><td class="num">55,5</td><td class="num">51,7</td><td><span class="badge alerta">↑ Leve subida</span></td></tr>
+    <tr><td>Lavandería (L/und)</td>        <td class="num">45,5</td><td class="num">45,7</td><td class="num">46,8</td><td class="num">48,5</td><td class="num">49,4</td><td class="num">47,0</td><td><span class="badge alerta">↑ Tendencia alta</span></td></tr>
+    <tr><td>Rotativa (L/m)</td>            <td class="num">33,4</td><td class="num">1,9</td><td class="num">28,3</td><td class="num">19,5</td><td class="num">45,8</td><td class="num">23,8</td><td><span class="badge critico">⚠ Alta variabilidad</span></td></tr>
+    <tr><td>Eficiencia PTAP (%)</td>       <td class="num">75,7%</td><td class="num">74,6%</td><td class="num">77,1%</td><td class="num">63,8%</td><td class="num">87,2%</td><td class="num">75,2%</td><td><span class="badge conforme">↑ Rec. en mayo</span></td></tr>
+    <tr><td>kg tela tintorería</td>        <td class="num">206.773</td><td class="num">130.962</td><td class="num">229.502</td><td class="num">230.217</td><td class="num">218.085</td><td class="num">203.108</td><td><span class="badge conforme">↔ Estable</span></td></tr>
+    <tr><td>Und efectivas lavandería</td>  <td class="num">361.783</td><td class="num">450.288</td><td class="num">397.881</td><td class="num">353.945</td><td class="num">281.640</td><td class="num">369.107</td><td><span class="badge alerta">↓ Mayo bajo</span></td></tr>
+  </table>
+  <p class="fuente">*Mayo: datos días 1–26 (excluye día 27 por rollover de contadores).</p>
+</div>
+
+<!-- SECCIÓN 9: COSTOS ABASTECIMIENTO -->
+<div class="seccion">
+  <h2>💰 9. Costos de Abastecimiento — Enero a Marzo 2026</h2>
+  <p style="color:#64748b;font-size:13px;margin-bottom:16px;">
+    Datos de costo disponibles en PLANTILLA KPI 2026.xlsx (hoja Hoja1). Costos OPEX sin depreciación.
+  </p>
+  <table>
+    <tr>
+      <th>Fuente</th>
+      <th class="num">Enero Vol. (m³)</th><th class="num">Enero $/m³</th>
+      <th class="num">Feb. Vol. (m³)</th><th class="num">Feb. $/m³</th>
+      <th class="num">Mar. Vol. (m³)</th><th class="num">Mar. $/m³</th>
+    </tr>
+    <tr><td>Ósmosis Inversa (RO)</td>   <td class="num">11.443</td><td class="num">3.406</td><td class="num">11.281</td><td class="num">3.406</td><td class="num">14.663</td><td class="num">3.406</td></tr>
+    <tr><td>PTAP (Pozo propio)</td>     <td class="num">5.662</td> <td class="num">4.805</td><td class="num">4.456</td> <td class="num">4.805</td><td class="num">5.368</td> <td class="num">4.805</td></tr>
+    <tr><td>Acueducto</td>             <td class="num">9.944</td> <td class="num">10.763</td><td class="num">10.099</td><td class="num">10.763</td><td class="num">10.521</td><td class="num">10.763</td></tr>
+    <tr><td>Carrotanques</td>          <td class="num">180</td>   <td class="num">12.700</td><td class="num">308</td>   <td class="num">12.700</td><td class="num">0</td>     <td class="num">—</td></tr>
+    <tr class="total"><td>TOTAL abastecimiento</td><td class="num" colspan="2" style="text-align:center">27.229 m³</td><td class="num" colspan="2" style="text-align:center">26.143 m³</td><td class="num" colspan="2" style="text-align:center">30.552 m³</td></tr>
+  </table>
+  <div class="alerta-box azul">
+    <div class="icon">💡</div>
+    <div class="content">
+      <strong>Impacto del reúso en costo de abastecimiento</strong>
+      <p>El permeado RO ($3.406/m³) es 3,2× más barato que el acueducto ($10.763/m³). En Ene–May el sistema reutilizó 61.052 m³ de permeado RO. Si este volumen hubiera sido suplido por acueducto, el costo adicional habría sido: 61.052 × ($10.763 − $3.406) = <strong>~$449 millones adicionales</strong>. El reúso es el principal mecanismo de ahorro en costos de abastecimiento.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SECCIÓN 10: CONCLUSIONES -->
+<div class="seccion">
+  <h2>✅ 10. Conclusiones y Recomendaciones</h2>
+
+  <div class="alerta-box verde">
+    <div class="icon">💧</div>
+    <div class="content">
+      <strong>Balance hídrico Ene–May 2026: cumplimiento en indicadores de consumo, con alertas en eficiencia RO y reúso</strong>
+      <p>Los tres indicadores de consumo cumplen la meta acumulada (tintorería 51,7 L/kg, lavandería 47,0 L/und, rotativa 23,8 L/m). El 54,3% del agua usada proviene del reúso interno. Las principales alertas son la caída de eficiencia RO a 73,5% en mayo (2° mes bajo la meta del 75%) y la ausencia de retorno verde en mayo que redujo el reúso al 40,1%.</p>
+    </div>
+  </div>
+
+  <h3>Acciones Recomendadas</h3>
+  <table>
+    <tr><th>#</th><th>Acción</th><th>Responsable</th><th>Prioridad</th><th>Plazo</th></tr>
+    <tr>
+      <td>1</td>
+      <td><strong>CIP (limpieza química in-situ) del sistema RO</strong>: eficiencia cayó de 80,3% (feb) a 73,5% (mayo) — tendencia continua a la baja, 2° mes consecutivo por debajo de 75%. Programar CIP antes del 15 de junio para recuperar eficiencia.</td>
+      <td>Operación PTAR</td>
+      <td><span class="badge critico">ALTA</span></td>
+      <td>15-jun</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td><strong>Investigar ausencia de retorno verde en mayo</strong>: en Ene–Abr promedió 3.637 m³/mes; en mayo fue 0. Si es un error de registro, corregir en BASE DE DATOS. Si fue interrupción operativa, documentar la causa y retomar en junio.</td>
+      <td>Confiabilidad</td>
+      <td><span class="badge critico">ALTA</span></td>
+      <td>05-jun</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td><strong>Investigar caída MBR2 en mayo (6.472 m³ vs. promedio 10.787 m³)</strong>: revisar si hubo intervención, paro o problema técnico. Esta reducción también puede estar relacionada con la baja eficiencia RO.</td>
+      <td>Operación PTAR</td>
+      <td><span class="badge critico">ALTA</span></td>
+      <td>10-jun</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td><strong>Corregir rollover de contadores día 27 de mayo</strong>: el día 27 presenta valores de −308.318 m³ en RO, −389.222 m³ en lavandería y −53.801 m³ en rotativa. Ajustar en la BASE DE DATOS con los valores reales del turno o marcar como día a excluir.</td>
+      <td>Confiabilidad</td>
+      <td><span class="badge alerta">MEDIA</span></td>
+      <td>30-jun</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td><strong>Monitorear tendencia al alza de lavandería</strong>: indicador sube mes a mes (45,5 → 49,4 L/und). Con mayo en 49,4 queda a solo 0,6 L/und de la meta. Identificar si hay cambio en mix de prendas, descalibración de medidores o incremento real en consumo.</td>
+      <td>Operación Lavandería</td>
+      <td><span class="badge alerta">MEDIA</span></td>
+      <td>15-jun</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td><strong>Verificar agua caliente enero (5.030 m³)</strong>: 5× el promedio del resto del año (507 m³/mes Feb–May). Si es un error de lectura, corregir en BASE DE DATOS. Si es real, documentar la causa y evaluar impacto en consumo tintorería.</td>
+      <td>Operación Tintorería</td>
+      <td><span class="badge alerta">MEDIA</span></td>
+      <td>30-jun</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td><strong>Estrategia para mantener acueducto &lt; 40% del agua limpia</strong>: en mayo representó el 50,9% (máximo del año). Línea de acción: mantener PTAP sobre 75% eficiencia + recuperar retorno verde + sostener permeado RO sobre 12.000 m³/mes.</td>
+      <td>Jefatura PTAR</td>
+      <td><span class="badge alerta">MEDIA</span></td>
+      <td>30-jun</td>
+    </tr>
+  </table>
+
+  <h3 style="margin-top:20px;">10.2 Tabla de Cierre — Indicadores Ene–May 2026</h3>
+  <table>
+    <tr><th>Criterio</th><th>Resultado</th><th>Estado</th></tr>
+    <tr><td>Agua limpia total (m³)</td>                  <td>139.323 (Ene–May)</td><td><span class="badge info">En seguimiento</span></td></tr>
+    <tr><td>Total reúso (m³)</td>                         <td>75.599 (RO 61.052 + Retorno 14.547)</td><td><span class="badge conforme">✓ 54,3%</span></td></tr>
+    <tr><td>Indicador tintorería (L/kg) vs meta ≤65</td>  <td>51,7 — 5/5 meses cumplen</td><td><span class="badge conforme">✓ CUMPLE</span></td></tr>
+    <tr><td>Indicador lavandería (L/und) vs meta ≤50</td> <td>47,0 — 5/5 meses cumplen — May: 49,4 ⚠</td><td><span class="badge alerta">⚠ Tendencia ↑</span></td></tr>
+    <tr><td>Indicador rotativa (L/m) vs meta ≤30</td>     <td>23,8 prom. — Ene (33,4) y May (45,8) exceden</td><td><span class="badge alerta">⚠ Variable</span></td></tr>
+    <tr><td>Eficiencia RO promedio (%)</td>               <td>76,7% prom. — Abr (74,8%) y May (73,5%) bajo meta</td><td><span class="badge critico">⚠ CAÍDA SOSTENIDA</span></td></tr>
+    <tr><td>Eficiencia PTAP (%)</td>                      <td>75,2% prom. — Abr (63,8%) → May recuperó (87,2%)</td><td><span class="badge conforme">✓ Recuperada</span></td></tr>
+    <tr><td>% Reúso mayo</td>                             <td>40,1% — retorno verde = 0</td><td><span class="badge critico">⚠ Investigar</span></td></tr>
+    <tr><td>Carrotanques recibidos (m³)</td>              <td>488 — solo Ene (180) y Feb (308)</td><td><span class="badge conforme">✓ Reducción</span></td></tr>
+    <tr><td>Mulas Funza (m³)</td>                         <td>90 — solo Febrero</td><td><span class="badge conforme">✓ Mínimo</span></td></tr>
+    <tr><td>Caudal GEM tratado (m³)</td>                  <td>153.529 (Ene–May)</td><td><span class="badge conforme">✓ Operando</span></td></tr>
+    <tr><td>Producción tintorería (kg tela)</td>          <td>1.015.539 kg — promedio 203.108/mes</td><td><span class="badge info">Superó 1M kg</span></td></tr>
+    <tr><td>Producción lavandería (und ef.)</td>          <td>1.845.537 und — promedio 369.107/mes</td><td><span class="badge info">Normal</span></td></tr>
+    <tr><td>Producción rotativa (m tela)</td>             <td>191.656 m — alta variabilidad</td><td><span class="badge alerta">⚠ Apr pico (76.750 m)</span></td></tr>
+    <tr><td>Rollover contadores</td>                      <td>Día 27 mayo y día 12 mayo (auto-corregido)</td><td><span class="badge critico">⚠ Corregir día 27</span></td></tr>
+  </table>
+</div>
+
+<div class="pie">
+  <p><strong>INFORME DE BALANCE HÍDRICO — PTAR PERMODA | Período: 1 enero al 26 de mayo de 2026</strong></p>
+  <p style="margin-top:4px;">Preparado por: Moon (lunaop@permoda.com.co) | Generado: 29 de mayo de 2026</p>
+  <p style="margin-top:4px;">
+    Fuentes: DASHBOARD BALANCE HÍDRICO BOGOTÁ 2026 (hoja BASE DE DATOS) ·
+    BALANCE HIDRICO BOGOTÁ 2026.xlsx (hojas ENERO–MAYO) ·
+    PLANTILLA KPI 2026.xlsx (hojas METODOS, Hoja1) ·
+    BALANCE RO (hoja BALANCE RO del Dashboard)
+  </p>
+  <p style="margin-top:4px; color:#f59e0b;">⚠ Mayo: día 27 excluido por rollover de contadores. Días 2, 3, 10, 17, 24, 28–31 sin operación registrada.</p>
+</div>
+
+</div>
+</body>
+</html>

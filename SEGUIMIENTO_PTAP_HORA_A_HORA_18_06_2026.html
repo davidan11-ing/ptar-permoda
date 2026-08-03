@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seguimiento PTAP Hora a Hora — 18/06/2026</title>
+<style>
+  :root{
+    --azul:#1f4e79; --azul-claro:#dbe5f1; --amarillo:#fff2cc;
+    --gris:#f5f6f8; --borde:#c9d1da; --texto:#1f2a36;
+  }
+  *{box-sizing:border-box;}
+  body{
+    font-family:"Segoe UI",Arial,sans-serif; color:var(--texto);
+    line-height:1.65; margin:0; padding:32px; background:#fff;
+    max-width:900px; margin:0 auto;
+  }
+  header{border-bottom:3px solid var(--azul); padding-bottom:14px; margin-bottom:24px;}
+  h1{color:var(--azul); font-size:1.5rem; margin:0 0 4px;}
+  .meta{color:#5a6470; font-size:.9rem;}
+  h2{color:var(--azul); font-size:1.1rem; margin:28px 0 10px; border-left:4px solid var(--azul); padding-left:10px;}
+  p{margin:0 0 14px; text-align:justify;}
+  .obj{background:var(--gris); border:1px solid var(--borde); border-radius:6px; padding:14px 18px; font-size:.97rem;}
+  table{border-collapse:collapse; width:100%; font-size:.82rem; margin:8px 0 6px;}
+  th,td{border:1px solid var(--borde); padding:6px 8px; text-align:center;}
+  thead th{background:var(--azul-claro); color:var(--azul); font-weight:600;}
+  td.fecha{font-weight:600; background:#fafbfc;}
+  tr.total td, tr.prom td{background:var(--gris); font-weight:600;}
+  .cap{font-size:.78rem; color:#5a6470; margin-top:0;}
+  .placeholder{background:#fff8e1; border:1px dashed #d9b310; border-radius:6px; padding:14px 18px; color:#7a5b00; font-size:.9rem;}
+  strong{color:var(--azul);}
+  footer{margin-top:32px; padding-top:12px; border-top:1px solid var(--borde); font-size:.8rem; color:#7a828c;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>SEGUIMIENTO PTAP HORA A HORA</h1>
+  <div class="meta">Fecha de operación: <strong>18 de junio de 2026</strong></div>
+</header>
+
+<p class="obj">Continuando con el objetivo de elevar el caudal de tratamiento de la planta, la jornada del 18 de junio se concentró en el <strong>aforo de las bombas de dosificación química</strong>, la <strong>puesta a punto y ejecución del CEB ácido</strong> y una <strong>prueba de operación a caudal alto</strong>, subiendo el set de la UF a <strong>39 m³/h</strong> (frente a los 22 m³/h previos). El propósito fue verificar hasta qué caudal y por cuánto tiempo logra sostener la filtración la UF una vez corregidas las condiciones de dosificación.</p>
+
+<h2>Aforo de las bombas de dosificación química</h2>
+<p>El primer frente de trabajo fue el aforo de las bombas dosificadoras, que arrojó un hallazgo importante: la <strong>bomba de coagulante</strong> indica en pantalla una dosificación de <strong>12,5 L/h</strong>, pero al aforarla físicamente entrega apenas <strong>4,74 L/h</strong>. Es decir, el dato que muestra el equipo no corresponde con la dosificación real, por lo que en adelante la operación debe guiarse por el aforo y no por la lectura de pantalla. En cuanto al <strong>polímero (floculante)</strong>, se encontró en muy mal estado, prácticamente coagulado y con grumos; fue necesario lavar por completo el tanque —que tenía bastante polímero acumulado en grumos que podía afectar el proceso de varias formas— y prepararlo de nuevo, dejándolo en una proporción de <strong>500 g en 500 L</strong>. De aquí se desprende un punto de mejora claro: no se cuenta con un embudo ni con los elementos adecuados para preparar el polímero correctamente. El <strong>peróxido</strong>, por su parte, se aforó y se encontró correcto, en <strong>12,5 ppm</strong>, valor adecuado para una buena oxidación. Adicionalmente se detectó que, al inicio, la dosificación estaba dirigida <strong>hacia la torre de aireación y no hacia el serpentín</strong>.</p>
+
+<h2>CEB ácido</h2>
+<p>Para realizar el CEB ácido se encontró que el <strong>racor de la bomba del CEB estaba dañado</strong>, por lo que primero hubo que repararlo y solo entonces se pudo iniciar el lavado. El CEB se ejecutó con <strong>ácido sulfúrico (del GEM)</strong>, dado que no se dispone de ácido cítrico.</p>
+
+<h2>Registro de eficiencias UF (06:00 – 12:00)</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Fecha</th><th>Hora</th>
+      <th>Medidor ingreso UF</th><th>Medidor salida UF TR</th>
+      <th>Vol. ingreso UF (m³)</th><th>Vol. salida UF TR (m³)</th>
+      <th>Vol. ingreso UF (lps)</th><th>Vol. salida UF TR (lps)</th>
+      <th>Eficiencia UF (%)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td class="fecha" rowspan="7">18/06/2026</td><td>6:00</td><td>5296,82</td><td>4847,56</td><td>16,37</td><td>15,11</td><td>4,55</td><td>4,20</td><td>92,30</td></tr>
+    <tr><td>7:00</td><td>5313,19</td><td>4862,67</td><td>20,20</td><td>19,57</td><td>5,61</td><td>5,44</td><td>96,88</td></tr>
+    <tr><td>8:00</td><td>5333,39</td><td>4882,24</td><td>21,97</td><td>19,42</td><td>6,10</td><td>5,39</td><td>88,39</td></tr>
+    <tr><td>9:00</td><td>5355,36</td><td>4901,66</td><td>13,42</td><td>6,26</td><td>3,73</td><td>1,74</td><td>46,65</td></tr>
+    <tr><td>10:00</td><td>5368,78</td><td>4907,92</td><td>10,31</td><td>4,82</td><td>2,86</td><td>1,34</td><td>46,75</td></tr>
+    <tr><td>11:00</td><td>5379,09</td><td>4912,74</td><td>25,97</td><td>25,96</td><td>7,21</td><td>7,21</td><td>99,96</td></tr>
+    <tr><td>12:00</td><td>5405,06</td><td>4938,70</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+    <tr class="total"><td colspan="2">TOTAL (m³)</td><td colspan="2"></td><td>108,24</td><td>91,14</td><td></td><td></td><td></td></tr>
+    <tr class="prom"><td colspan="2">PROMEDIO</td><td colspan="2"></td><td>18,04</td><td>15,19</td><td>5,01</td><td>4,22</td><td>78,49</td></tr>
+  </tbody>
+</table>
+<p class="cap">Eficiencia promedio de la UF durante la ventana monitoreada: <strong>78,49 %</strong>. Se observa una caída marcada de eficiencia entre las 09:00 y 10:00 (46,65 % y 46,75 %), coincidente con las interrupciones por presión y los ajustes de nivel del clarifloculador durante la prueba a caudal alto.</p>
+
+<h2>Prueba de operación a caudal alto</h2>
+<p>Una vez estabilizadas las condiciones químicas y ejecutado el CEB ácido, se arrancó el proceso con un <strong>set de UF de 39 m³/h</strong> —partiendo del clarifloculador en nivel alto y la piscina 2 a <strong>46,5 Hz</strong>—, sin generar rebose en la segunda piscina. Aunque el set era de 39, el <strong>caudal real de ingreso a la UF fue de 34,8 m³/h</strong>; a los dos minutos del arranque la <strong>presión de alimentación marcaba 26,7 PSI</strong> y la <strong>presión de entrada a la UF 26 PSI</strong>, con un tiempo de ciclo de filtración configurado en <strong>60 minutos</strong>. En el marco de esta prueba se modificó la <strong>alarma de presión de la UF</strong>, que pasó de dispararse a 25 PSI con 10 minutos de espera a hacerlo a <strong>30 PSI con 3 minutos</strong>.</p>
+<p>Llevando el clarifloculador entre <strong>47 y 50 Hz</strong> —buscando no rebosar la segunda piscina pero al tiempo sacarle volumen al clarifloculador— se alcanzó una alimentación a la UF cercana a los <strong>36 m³/h</strong>. Sin embargo, este tramo duró únicamente <strong>9 a 10 minutos</strong> antes de que el clarifloculador se alarmara por <strong>nivel bajo</strong>, lo que indica que se estaba superando su caudal de alimentación. Fue necesario detenerse para que el clarifloculador recuperara su nivel hasta el flotador (nivel máximo), lo que tomó <strong>aproximadamente 15 a 20 minutos</strong>. Al re-arrancar, el caudal se fue bajando a <strong>32–33 m³/h</strong>, arrancando ya en torno a 27 PSI, y se sostuvo <strong>12 minutos</strong> antes de alarmar por presión.</p>
+<p>En los tramos finales la UF apenas lograba sostenerse entre <strong>4 y 7 minutos</strong>, iniciando alrededor de <strong>29,4 m³/h</strong> y deteniéndose por <strong>alta presión transmembrana</strong>, no por falta de agua —el set de la UF seguía en 39 m³/h y la alimentación al clarifloculador en 50 Hz—. Entre paradas se aprovechaba para realizar los enjuagues de la UF y reanudar el ciclo.</p>
+
+<h2>Análisis y conclusiones</h2>
+<p>La UF solo se detuvo <strong>dos veces por nivel bajo del clarifloculador</strong>, y ello se debió a que en esos momentos <strong>aún no se había arrancado con el clarifloculador en nivel alto</strong>; una vez se partió con el clarifloculador en su nivel máximo, las paradas dejaron de ser por nivel y pasaron a ser por <strong>diferencial de presión transmembrana (TMP)</strong>. La causa probable de este comportamiento no es únicamente el mayor caudal, sino la <strong>deficiente calidad del agua que llega a la UF</strong>: al manipular de forma tan amplia los niveles de alimentación del clarifloculador, la dosificación química resultó muy variable y no se logró estabilizar, generando una mala floculación que satura la UF y eleva su presión transmembrana. Cabe anotar que <strong>no fue necesario realizar cambio de manga</strong>, ya que el diferencial de presión llegó hasta 17 PSI.</p>
+
+<h2>Pendientes y puntos por corregir</h2>
+<p>Quedan varios puntos por atender. El primero es la <strong>bomba de coagulante</strong>, cuyo dato de pantalla no corresponde con la dosificación real, por lo que debe operarse con base en el aforo. El segundo es la <strong>preparación del polímero</strong>, que requiere disponer de un embudo y los elementos adecuados para hacerse correctamente. Finalmente, las <strong>purgas siguen realizándose de forma manual</strong>: como el clarifloculador no se estabiliza y la frecuencia se mantiene constante, el <strong>manto de lodo de las colmenas traseras persiste</strong>, por lo que es necesario buscar la forma de <strong>purgar esa zona posterior del clarifloculador sin tener que desocupar todo el sistema</strong>.</p>
+
+<h2>Próximos pasos</h2>
+<p>Una vez se cuente con una <strong>dosificación química estable</strong> para estos nuevos caudales, se repetirá la prueba llenando el clarifloculador hasta su nivel máximo, con el fin de medir cuánto tiempo logra sostener la filtración la UF cuando se le alimenta agua de buena calidad, verificar si efectivamente se alcanzan los <strong>39 m³/h</strong> y determinar el tiempo de filtración logrado antes de que el pozo o el clarifloculador limiten la operación.</p>
+
+<footer>
+  Informe de seguimiento operativo PTAP — 18/06/2026. Datos consolidados a partir del registro de operación y los aforos de la jornada.
+</footer>
+
+</body>
+</html>

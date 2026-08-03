@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seguimiento PTAP Hora a Hora — 17/06/2026</title>
+<style>
+  :root{
+    --azul:#1f4e79; --azul-claro:#dbe5f1; --amarillo:#fff2cc;
+    --gris:#f5f6f8; --borde:#c9d1da; --texto:#1f2a36;
+  }
+  *{box-sizing:border-box;}
+  body{
+    font-family:"Segoe UI",Arial,sans-serif; color:var(--texto);
+    line-height:1.65; margin:0; padding:32px; background:#fff;
+    max-width:900px; margin:0 auto;
+  }
+  header{border-bottom:3px solid var(--azul); padding-bottom:14px; margin-bottom:24px;}
+  h1{color:var(--azul); font-size:1.5rem; margin:0 0 4px;}
+  .meta{color:#5a6470; font-size:.9rem;}
+  h2{color:var(--azul); font-size:1.1rem; margin:28px 0 10px; border-left:4px solid var(--azul); padding-left:10px;}
+  p{margin:0 0 14px; text-align:justify;}
+  .obj{background:var(--gris); border:1px solid var(--borde); border-radius:6px; padding:14px 18px; font-size:.97rem;}
+  table{border-collapse:collapse; width:100%; font-size:.82rem; margin:8px 0 6px;}
+  th,td{border:1px solid var(--borde); padding:6px 8px; text-align:center;}
+  thead th{background:var(--azul-claro); color:var(--azul); font-weight:600;}
+  td.fecha{font-weight:600; background:#fafbfc;}
+  tr.total td, tr.prom td{background:var(--gris); font-weight:600;}
+  .cap{font-size:.78rem; color:#5a6470; margin-top:0;}
+  strong{color:var(--azul);}
+  footer{margin-top:32px; padding-top:12px; border-top:1px solid var(--borde); font-size:.8rem; color:#7a828c;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>SEGUIMIENTO PTAP HORA A HORA</h1>
+  <div class="meta">Fecha de operación: <strong>17 de junio de 2026</strong> &nbsp;·&nbsp; Ventana monitoreada: 06:00 – 12:00</div>
+</header>
+
+<p class="obj">El presente seguimiento se realiza con el fin de evaluar el desempeño hidráulico de la planta, cuyo objetivo de tratamiento es de <strong>10 lps</strong>. Para alcanzarlo se requiere que ingresen como mínimo <strong>36 m³/h</strong> a la unidad de ultrafiltración (UF). El monitoreo hora a hora busca verificar el caudal real entregado por el pozo tras la modificación realizada a la bomba de extracción el fin de semana, y determinar hasta qué punto el tren de tratamiento permite sostener ese caudal de forma estable.</p>
+
+<h2>Descripción del sistema</h2>
+<p>El agua se extrae del pozo mediante una bomba de extracción —intervenida el fin de semana con el propósito de incrementar el caudal de envío— que descarga sobre una torre de aireación. Desde la torre el agua cae a una primera piscina, la cual rebosa hacia una segunda piscina que alimenta el clarifloculador; el control operativo busca precisamente evitar el rebose de esta segunda piscina, de manera que todo lo extraído del pozo ingrese al clarifloculador. A la salida del clarifloculador, antes de la UF, se encuentra un filtro bolsa que actúa como protección de las membranas. La UF opera por ciclos, alternando aproximadamente <strong>65 minutos de filtración</strong> con <strong>8 a 12 minutos de enjuague</strong>. Es importante anotar que el agua filtrada no se dirige en su totalidad al tanque de recirculación: una fracción se desvía hacia una <strong>tercera piscina</strong>, que es la que alimenta los enjuagues de la UF y que en esta jornada tardó cerca de <strong>13 minutos</strong> en llenarse.</p>
+
+<h2>Registro de eficiencias UF (06:00 – 12:00)</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Fecha</th><th>Hora</th>
+      <th>Medidor ingreso UF</th><th>Medidor salida UF TR</th>
+      <th>Vol. ingreso UF (m³)</th><th>Vol. salida UF TR (m³)</th>
+      <th>Vol. ingreso UF (lps)</th><th>Vol. salida UF TR (lps)</th>
+      <th>Eficiencia UF (%)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td class="fecha" rowspan="7">17/06/2026</td><td>6:00</td><td>4947,77</td><td>4529,16</td><td>15,32</td><td>12,43</td><td>4,26</td><td>3,45</td><td>81,14</td></tr>
+    <tr><td>7:00</td><td>4963,09</td><td>4541,59</td><td>16,15</td><td>14,17</td><td>4,49</td><td>3,94</td><td>87,74</td></tr>
+    <tr><td>8:00</td><td>4979,24</td><td>4555,76</td><td>14,52</td><td>10,59</td><td>4,03</td><td>2,94</td><td>72,93</td></tr>
+    <tr><td>9:00</td><td>4993,76</td><td>4566,35</td><td>20,47</td><td>18,98</td><td>5,69</td><td>5,27</td><td>92,72</td></tr>
+    <tr><td>10:00</td><td>5014,23</td><td>4585,33</td><td>14,51</td><td>13,06</td><td>4,03</td><td>3,63</td><td>90,01</td></tr>
+    <tr><td>11:00</td><td>5028,74</td><td>4598,39</td><td>22,54</td><td>21,66</td><td>6,26</td><td>6,02</td><td>96,10</td></tr>
+    <tr><td>12:00</td><td>5051,28</td><td>4620,05</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+    <tr class="total"><td colspan="2">TOTAL (m³)</td><td colspan="2"></td><td>103,51</td><td>90,89</td><td></td><td></td><td></td></tr>
+    <tr class="prom"><td colspan="2">PROMEDIO</td><td colspan="2"></td><td>17,25</td><td>15,15</td><td>4,79</td><td>4,21</td><td>86,77</td></tr>
+  </tbody>
+</table>
+<p class="cap">Eficiencia promedio de la UF durante la ventana monitoreada: <strong>86,77 %</strong>.</p>
+
+<h2>Desarrollo del seguimiento y ajustes realizados</h2>
+<p>La jornada se trabajó subiendo de forma progresiva la frecuencia de la bomba de alimentación al clarifloculador desde los <strong>38 Hz</strong>, acompañando cada incremento con los ajustes necesarios aguas abajo. El objetivo de elevar los Hz de alimentación era evitar que la segunda piscina —que es la que alimenta el clarifloculador— se rebosara, logrando que todo el caudal extraído del pozo ingresara al tratamiento. Como primer ajuste se realizó el <strong>cambio de la manga del filtro bolsa</strong>, lo que mejoró de inmediato la capacidad de filtración y permitió elevar el ingreso a la UF hasta <strong>25 m³/h</strong>. En paralelo se llevó el clarifloculador a <strong>45 Hz</strong> y, de forma independiente, se dejó la válvula de purga abierta "un diente" para sostener la calidad del efluente del clarifloculador; conviene precisar que esta purga evacúa el lodo sedimentado, pero no corrige la pared de lodo acumulada en las colmenas posteriores. Con esta configuración la segunda piscina quedó estable y sin rebose durante el ciclo de filtración, y el sistema en equilibrio.</p>
+<p>Sobre esa base estable se probó un incremento a <strong>26 m³/h</strong> para tantear el margen disponible. La UF respondió con una alarma por diferencial de presión, indicando que pedía un CEB; como el último lavado había sido 8 horas antes y el tanque de recirculación estaba en nivel bajo, se decidió no detener la operación para el CEB (que toma ~40 min) y se retornó a <strong>25 m³/h</strong>. A esta frecuencia el sistema sostiene en promedio unos 20 minutos de filtración por tramo antes de pedir nuevamente lavado, por lo que se definió mantener este caudal y dejar el <strong>CEB ácido programado</strong> para ejecutarlo en cuanto el tanque de recirculación recupere nivel y validar si, con la UF recién lavada, se habilita subir más.</p>
+<p>Un dato clave que arrojaron los ajustes es el comportamiento de la segunda piscina: en ciclo de filtración a 45 Hz se mantiene equilibrada, sin rebosarse y sin quedarse sin agua para alimentar el clarifloculador; solo durante el enjuague —cuando el clarifloculador deja de enviar— empieza a rebosarse pasados unos 8 minutos. Este balance hidráulico confirma que, en operación estable, <strong>el pozo entrega del orden de 25 m³/h (≈6,9 lps)</strong>. Como ajuste de cierre, para recuperar el nivel de la segunda piscina se bajó la frecuencia del clarifloculador a <strong>44 Hz</strong>, quedando la UF a las 12:00 en torno a <strong>16 m³/h</strong> mientras se mantiene a la espera del CEB.</p>
+
+<h2>Novedades y hallazgos</h2>
+<p>Durante la jornada se detectaron dos novedades relevantes. La primera es que la <strong>válvula solenoide</strong> del clarifloculador se recalienta durante la operación; al hacerlo deja de actuar automáticamente, por lo que la purga debe realizarse de forma manual. La segunda es una <strong>acumulación de lodo en las colmenas de la zona posterior del clarifloculador</strong>: dado que la purga se encuentra únicamente en la parte frontal, las colmenas delanteras se mantienen relativamente limpias, pero las traseras quedan muy saturadas al estar la purga demasiado lejos. Esta acumulación deteriora la calidad del efluente del clarifloculador, lo que a su vez satura el filtro bolsa y eleva la presión transmembrana (TMP) de la UF; en consecuencia, además de generar las alarmas observadas, reduce los tiempos efectivos de filtración por ciclo.</p>
+
+<h2>Conclusiones y recomendaciones</h2>
+<p>El seguimiento permite concluir que el pozo entrega de forma sostenible un caudal cercano a los <strong>24–25 m³/h, equivalentes a unos 6,9 lps</strong>. El valor de 25 m³/h se alcanzó, pero quedó al límite —de hecho, de no haberse alarmado la UF probablemente no se habría sostenido—, por lo que se recomienda fijar el <strong>caudal operativo estable en 24 m³/h (≈6,7 lps)</strong>. No fue posible validar un caudal mayor, ya que las restricciones de la UF (presión y CEB pendiente) impidieron subir la salida del clarifloculador. Como acciones a seguir se recomienda: <strong>programar el CEB ácido</strong> tan pronto el tanque de recirculación recupere nivel y verificar si, con la UF recién lavada, se permite elevar el caudal; <strong>habilitar una purga en la zona posterior del clarifloculador</strong> para evitar la acumulación de lodo en las colmenas traseras; y <strong>revisar la válvula solenoide</strong> que presenta recalentamiento.</p>
+
+<footer>
+  Informe de seguimiento operativo PTAP — 17/06/2026. Datos consolidados a partir del registro horario de eficiencias UF y de la bitácora de operación de la jornada.
+</footer>
+
+</body>
+</html>

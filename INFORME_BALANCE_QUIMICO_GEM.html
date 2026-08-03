@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Balance Consumo Químico GEM · Ene–May 2026 | PTAR PERMODA</title>
+<style>
+  :root{
+    --verde:#16a34a;--verde-bg:#dcfce7;--verde-borde:#86efac;
+    --amarillo:#d97706;--amarillo-bg:#fef3c7;--amarillo-borde:#fcd34d;
+    --rojo:#dc2626;--rojo-bg:#fee2e2;--rojo-borde:#fca5a5;
+    --azul:#2563eb;--azul-bg:#dbeafe;--azul-borde:#93c5fd;
+    --morado:#7c3aed;--morado-bg:#f3e8ff;--morado-borde:#c4b5fd;
+    --naranja:#ea580c;--naranja-bg:#ffedd5;
+    --gris:#6b7280;--gris-bg:#f3f4f6;--gris-borde:#d1d5db;
+    --primario:#1e3a5f;--acento:#0ea5e9;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:#f8fafc;color:#1e293b;font-size:14px;line-height:1.6;}
+
+  /* HEADER */
+  .header{background:linear-gradient(135deg,#1e3a5f 0%,#0ea5e9 100%);color:white;padding:32px 40px;}
+  .header h1{font-size:26px;font-weight:700;letter-spacing:-0.5px;}
+  .header .sub{font-size:14px;opacity:.85;margin-top:6px;}
+  .header .meta{display:flex;flex-wrap:wrap;gap:16px;margin-top:14px;font-size:13px;opacity:.9;}
+  .badge-hdr{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;}
+
+  /* LAYOUT */
+  .container{max-width:1200px;margin:0 auto;padding:32px 24px;}
+  .seccion{background:white;border-radius:12px;padding:24px;margin-bottom:24px;box-shadow:0 1px 3px rgba(0,0,0,.08);}
+  .seccion h2{font-size:17px;font-weight:700;color:var(--primario);border-bottom:2px solid #e2e8f0;padding-bottom:12px;margin-bottom:18px;display:flex;align-items:center;gap:8px;}
+  .seccion h3{font-size:14px;font-weight:600;color:#334155;margin:18px 0 10px;}
+  .seccion p{margin-bottom:10px;color:#475569;font-size:13px;}
+
+  /* KPI CARDS */
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin:16px 0;}
+  .kpi{border-radius:10px;padding:16px;border-left:4px solid;}
+  .kpi.azul{background:var(--azul-bg);border-color:var(--azul);}
+  .kpi.verde{background:var(--verde-bg);border-color:var(--verde);}
+  .kpi.amarillo{background:var(--amarillo-bg);border-color:var(--amarillo);}
+  .kpi.rojo{background:var(--rojo-bg);border-color:var(--rojo);}
+  .kpi.morado{background:var(--morado-bg);border-color:var(--morado);}
+  .kpi .lbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--gris);}
+  .kpi .val{font-size:22px;font-weight:700;margin:4px 0;font-variant-numeric:tabular-nums;}
+  .kpi .desc{font-size:12px;color:#475569;}
+  .kpi.azul .val{color:var(--azul);}
+  .kpi.verde .val{color:var(--verde);}
+  .kpi.amarillo .val{color:var(--amarillo);}
+  .kpi.rojo .val{color:var(--rojo);}
+  .kpi.morado .val{color:var(--morado);}
+
+  /* TABLES */
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{background:#f1f5f9;color:#475569;font-weight:600;padding:10px 12px;text-align:left;font-size:12px;border-bottom:2px solid #e2e8f0;}
+  td{padding:9px 12px;border-bottom:1px solid #f1f5f9;}
+  tr:hover td{background:#fafafa;}
+  .num{text-align:right;font-variant-numeric:tabular-nums;}
+  tfoot td{font-weight:700;background:#f1f5f9;border-top:2px solid #cbd5e1;}
+  .fila-feb td{background:#fef3c7;}
+  .fila-may td{background:#dcfce7;}
+  .fila-total td{background:#dbeafe;font-weight:700;}
+
+  /* BADGES */
+  .badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;}
+  .badge.verde{background:var(--verde-bg);color:var(--verde);}
+  .badge.rojo{background:var(--rojo-bg);color:var(--rojo);}
+  .badge.amarillo{background:var(--amarillo-bg);color:var(--amarillo);}
+  .badge.azul{background:var(--azul-bg);color:var(--azul);}
+  .badge.gris{background:var(--gris-bg);color:var(--gris);}
+  .badge.morado{background:var(--morado-bg);color:var(--morado);}
+
+  /* ALERTA BOXES */
+  .alerta{border-radius:8px;padding:14px 16px;margin:10px 0;display:flex;gap:12px;align-items:flex-start;}
+  .alerta.amarillo{background:var(--amarillo-bg);border:1px solid var(--amarillo-borde);}
+  .alerta.verde{background:var(--verde-bg);border:1px solid var(--verde-borde);}
+  .alerta.rojo{background:var(--rojo-bg);border:1px solid var(--rojo-borde);}
+  .alerta.azul{background:var(--azul-bg);border:1px solid var(--azul-borde);}
+  .alerta .icon{font-size:18px;flex-shrink:0;}
+  .alerta .txt strong{display:block;font-size:13px;margin-bottom:2px;}
+  .alerta .txt p{font-size:12px;color:#475569;margin:0;}
+
+  /* PRODUCT CARDS */
+  .prod-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px;}
+  .prod-card{border:1px solid #e2e8f0;border-radius:10px;padding:18px;background:white;}
+  .prod-card .title{font-size:14px;font-weight:700;color:var(--primario);margin-bottom:12px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+  .prod-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f1f5f9;font-size:12px;}
+  .prod-row:last-child{border:none;}
+  .prod-row .lbl{color:var(--gris);}
+  .prod-row .v{font-weight:600;color:#1e293b;font-variant-numeric:tabular-nums;}
+  .prod-row .v.ok{color:var(--verde);}
+  .prod-row .v.warn{color:var(--amarillo);}
+
+  /* BARS */
+  .bar-wrap{background:#f1f5f9;border-radius:6px;height:8px;overflow:hidden;margin-top:6px;}
+  .bar{height:100%;border-radius:6px;}
+  .bar.verde{background:linear-gradient(90deg,#16a34a,#22c55e);}
+  .bar.amarillo{background:linear-gradient(90deg,#d97706,#f59e0b);}
+  .bar.rojo{background:linear-gradient(90deg,#dc2626,#ef4444);}
+  .bar.azul{background:linear-gradient(90deg,#2563eb,#3b82f6);}
+  .bar.morado{background:linear-gradient(90deg,#7c3aed,#8b5cf6);}
+
+  /* TREND CHART (inline bars) */
+  .chart-row{display:flex;align-items:center;gap:10px;margin:6px 0;font-size:12px;}
+  .chart-label{min-width:70px;color:#475569;}
+  .chart-bar-wrap{flex:1;background:#f1f5f9;border-radius:4px;height:22px;position:relative;overflow:hidden;}
+  .chart-bar-fill{height:100%;border-radius:4px;display:flex;align-items:center;padding-left:8px;font-size:11px;font-weight:700;color:white;white-space:nowrap;}
+  .chart-val{min-width:80px;text-align:right;font-variant-numeric:tabular-nums;font-weight:600;}
+
+  /* COSTO TABLE */
+  .pct-bar{display:inline-block;height:8px;border-radius:4px;vertical-align:middle;margin-left:6px;}
+
+  /* FOOTER */
+  .pie{text-align:center;padding:24px;color:#94a3b8;font-size:12px;border-top:1px solid #e2e8f0;margin-top:24px;}
+
+  @media print{
+    body{background:white;}
+    .seccion{box-shadow:none;border:1px solid #e2e8f0;page-break-inside:avoid;}
+    .header{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════
+     HEADER
+═══════════════════════════════════════════════════════════════ -->
+<div class="header">
+  <h1>⚗️ Balance de Consumo Químico — GEM</h1>
+  <div class="sub">PTAR PERMODA · Sistema GEM (Gestión de Entradas y Movimientos) · Planta Funza</div>
+  <div class="meta">
+    <span class="badge-hdr">📅 ENERO – MAYO 2026</span>
+    <span>📅 Emisión: 29/05/2026</span>
+    <span>🏭 PTAR 2 — Funza, Cundinamarca</span>
+    <span>📊 Fuente: Hojas GEM · 5 archivos Excel</span>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ═══════════════════════════════════════════════════════════
+     1. RESUMEN EJECUTIVO
+═══════════════════════════════════════════════════════════════ -->
+<div class="seccion">
+  <h2>📊 Resumen Ejecutivo — Período Enero–Mayo 2026</h2>
+  <p>Balance consolidado del consumo de productos químicos en el sistema GEM durante los cinco primeros meses de 2026. Incluye caudal tratado, volúmenes dosificados, costos operativos y análisis de tendencia.</p>
+
+  <div class="kpi-grid">
+    <div class="kpi azul">
+      <div class="lbl">Caudal total tratado</div>
+      <div class="val">154.969 m³</div>
+      <div class="desc">Ene–May 2026 · 5 meses</div>
+    </div>
+    <div class="kpi morado">
+      <div class="lbl">Costo total química GEM</div>
+      <div class="val">$482.812.569</div>
+      <div class="desc">COP · 5 productos químicos</div>
+    </div>
+    <div class="kpi verde">
+      <div class="lbl">Costo promedio</div>
+      <div class="val">$3.116 /m³</div>
+      <div class="desc">Promedio ponderado del período</div>
+    </div>
+    <div class="kpi rojo">
+      <div class="lbl">Mes de mayor costo</div>
+      <div class="val">$4.418 /m³</div>
+      <div class="desc">Febrero 2026 · pico de consumo</div>
+    </div>
+    <div class="kpi amarillo">
+      <div class="lbl">Mes de menor costo</div>
+      <div class="val">$2.378 /m³</div>
+      <div class="desc">Mayo 2026 · optimización lograda</div>
+    </div>
+  </div>
+
+  <div class="alerta azul">
+    <span class="icon">ℹ️</span>
+    <div class="txt">
+      <strong>Tendencia positiva de eficiencia</strong>
+      <p>El costo por m³ se redujo un <strong>46%</strong> entre Febrero ($4.418/m³) y Mayo ($2.378/m³), evidenciando una mejora sostenida en la eficiencia de dosificación química. El coagulante representa el <strong>46%</strong> del gasto total, siendo el principal foco de optimización.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     2. COMPARATIVO MENSUAL
+═══════════════════════════════════════════════════════════════ -->
+<div class="seccion">
+  <h2>📅 Comparativo Mensual — Caudal y Costo</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Mes</th>
+        <th class="num">Caudal (m³)</th>
+        <th class="num">Costo Total (COP)</th>
+        <th class="num">$/m³</th>
+        <th class="num">Horas Op.</th>
+        <th>Tendencia $/m³</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Enero 2026</strong></td>
+        <td class="num">29.325</td>
+        <td class="num">$89.231.263</td>
+        <td class="num">$3.043</td>
+        <td class="num"><span class="badge gris">N/D</span></td>
+        <td>
+          <div class="bar-wrap" style="width:180px">
+            <div class="bar azul" style="width:69%"></div>
+          </div>
+        </td>
+      </tr>
+      <tr class="fila-feb">
+        <td><strong>Febrero 2026</strong> 🔺</td>
+        <td class="num">30.080</td>
+        <td class="num">$132.880.653</td>
+        <td class="num"><strong>$4.418</strong></td>
+        <td class="num"><span class="badge gris">N/D</span></td>
+        <td>
+          <div class="bar-wrap" style="width:180px">
+            <div class="bar rojo" style="width:100%"></div>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td><strong>Marzo 2026</strong></td>
+        <td class="num">32.829</td>
+        <td class="num">$102.401.074</td>
+        <td class="num">$3.119</td>
+        <td class="num"><span class="badge gris">N/D</span></td>
+        <td>
+          <div class="bar-wrap" style="width:180px">
+            <div class="bar amarillo" style="width:71%"></div>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td><strong>Abril 2026</strong></td>
+        <td class="num">32.414</td>
+        <td class="num">$86.198.676</td>
+        <td class="num">$2.659</td>
+        <td class="num">403,0 h</td>
+        <td>
+          <div class="bar-wrap" style="width:180px">
+            <div class="bar verde" style="width:60%"></div>
+          </div>
+        </td>
+      </tr>
+      <tr class="fila-may">
+        <td><strong>Mayo 2026</strong> 🔽</td>
+        <td class="num">30.321</td>
+        <td class="num">$72.100.903</td>
+        <td class="num"><strong>$2.378</strong></td>
+        <td class="num">376,4 h</td>
+        <td>
+          <div class="bar-wrap" style="width:180px">
+            <div class="bar verde" style="width:54%"></div>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr class="fila-total">
+        <td>TOTAL PERÍODO</td>
+        <td class="num">154.969 m³</td>
+        <td class="num">$482.812.569</td>
+        <td class="num">$3.116 /m³</td>
+        <td class="num">779,4 h</td>
+        <td></td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <p style="margin-top:10px;font-size:11px;color:#94a3b8;">🔺 Mayor costo/m³ del período · 🔽 Menor costo/m³ del período</p>
+
+  <h3>Evolución del costo unitario ($/m³)</h3>
+  <div style="margin-top:12px;">
+    <div class="chart-row">
+      <span class="chart-label">Enero</span>
+      <div class="chart-bar-wrap">
+        <div class="chart-bar-fill" style="width:69%;background:#2563eb;">$3.043</div>
+      </div>
+      <span class="chart-val">69% del pico</span>
+    </div>
+    <div class="chart-row">
+      <span class="chart-label">Febrero</span>
+      <div class="chart-bar-wrap">
+        <div class="chart-bar-fill" style="width:100%;background:#dc2626;">$4.418 ← máximo</div>
+      </div>
+      <span class="chart-val">100%</span>
+    </div>
+    <div class="chart-row">
+      <span class="chart-label">Marzo</span>
+      <div class="chart-bar-wrap">
+        <div class="chart-bar-fill" style="width:71%;background:#d97706;">$3.119</div>
+      </div>
+      <span class="chart-val">71%</span>
+    </div>
+    <div class="chart-row">
+      <span class="chart-label">Abril</span>
+      <div class="chart-bar-wrap">
+        <div class="chart-bar-fill" style="width:60%;background:#16a34a;">$2.659</div>
+      </div>
+      <span class="chart-val">60%</span>
+    </div>
+    <div class="chart-row">
+      <span class="chart-label">Mayo</span>
+      <div class="chart-bar-wrap">
+        <div class="chart-bar-fill" style="width:54%;background:#16a34a;">$2.378 ← mínimo</div>
+      </div>
+      <span class="chart-val">54%</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     3. CONSUMO MENSUAL POR PRODUCTO (LITROS)
+═══════════════════════════════════════════════════════════════ -->
+<div class="seccion">
+  <h2>🧪 Consumo Mensual por Producto Químico — GEM</h2>
+
+  <h3>Volúmenes en Litros (L)</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Mes</th>
+        <th class="num">Ácido HCl (L)</th>
+        <th class="num">Coagulante (L)</th>
+        <th class="num">Decolorante (L)</th>
+        <th class="num">Total (L)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Enero</td><td class="num">5.200</td><td class="num">11.630</td><td class="num">3.770</td><td class="num"><strong>20.600</strong></td></tr>
+      <tr class="fila-feb"><td>Febrero 🔺</td><td class="num">8.360</td><td class="num">17.180</td><td class="num">5.510</td><td class="num"><strong>31.050</strong></td></tr>
+      <tr><td>Marzo</td><td class="num">9.600</td><td class="num">11.860</td><td class="num">4.710</td><td class="num"><strong>26.170</strong></td></tr>
+      <tr><td>Abril</td><td class="num">7.170</td><td class="num">9.830</td><td class="num">3.840</td><td class="num"><strong>20.840</strong></td></tr>
+      <tr class="fila-may"><td>Mayo 🔽</td><td class="num">1.800</td><td class="num">8.380</td><td class="num">3.410</td><td class="num"><strong>13.590</strong></td></tr>
+    </tbody>
+    <tfoot>
+      <tr><td>TOTAL</td><td class="num">32.130 L</td><td class="num">58.880 L</td><td class="num">21.240 L</td><td class="num">112.250 L</td></tr>
+    </tfoot>
+  </table>
+
+  <h3 style="margin-top:20px;">Masas en Kilogramos (kg) · Incluye Polímeros</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Mes</th>
+        <th class="num">Ácido (kg)</th>
+        <th class="num">Coagulante (kg)</th>
+        <th class="num">Decolorante (kg)</th>
+        <th class="num">Pol. Aniónico (kg)</th>
+        <th class="num">Pol. Catiónico (kg)</th>
+        <th class="num">Total (kg)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Enero</td>
+        <td class="num">6.760,00</td><td class="num">15.409,75</td><td class="num">4.712,50</td>
+        <td class="num">145,00</td><td class="num">295,00</td>
+        <td class="num"><strong>27.322,25</strong></td>
+      </tr>
+      <tr class="fila-feb">
+        <td>Febrero 🔺</td>
+        <td class="num">10.868,00</td><td class="num">22.763,50</td><td class="num">6.887,50</td>
+        <td class="num">205,00</td><td class="num">480,00</td>
+        <td class="num"><strong>41.204,00</strong></td>
+      </tr>
+      <tr>
+        <td>Marzo</td>
+        <td class="num">12.480,00</td><td class="num">15.714,50</td><td class="num">5.887,50</td>
+        <td class="num">168,00</td><td class="num">340,00</td>
+        <td class="num"><strong>34.590,00</strong></td>
+      </tr>
+      <tr>
+        <td>Abril</td>
+        <td class="num">9.321,00</td><td class="num">13.024,75</td><td class="num">4.800,00</td>
+        <td class="num">195,00</td><td class="num">355,00</td>
+        <td class="num"><strong>27.695,75</strong></td>
+      </tr>
+      <tr class="fila-may">
+        <td>Mayo 🔽</td>
+        <td class="num">2.340,00</td><td class="num">11.103,50</td><td class="num">4.262,50</td>
+        <td class="num">295,00</td><td class="num">295,00</td>
+        <td class="num"><strong>18.296,00</strong></td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr>
+        <td>TOTAL</td>
+        <td class="num">41.769,00</td><td class="num">78.016,00</td><td class="num">26.550,00</td>
+        <td class="num">1.008,00</td><td class="num">1.765,00</td>
+        <td class="num">149.108,00</td>
+      </tr>
+    </tfoot>
+  </table>
+  <p style="font-size:11px;color:#94a3b8;margin-top:6px;">Conversión litros→kg: Ácido ×1,30 · Coagulante ×1,325 · Decolorante ×1,25 · Polímeros: valor directo en kg.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     4. DETALLE POR PRODUCTO QUÍMICO
+═══════════════════════════════════════════════════════════════ -->
+<div class="seccion">
+  <h2>🔬 Perfil de Cada Producto Químico — Período Total</h2>
+  <p>Dosis promedio calculada como: PPM = (kg × 1.000.000) / m³ tratados (154.969 m³ totales).</p>
+
+  <div class="prod-grid">
+
+    <!-- ÁCIDO -->
+    <div class="prod-card">
+      <div class="title">
+        HCl — Ácido Clorhídrico 10%
+        <span class="badge azul">Ajuste pH</span>
+      </div>
+      <div class="prod-row"><span class="lbl">Total consumido</span><span class="v">41.769 kg · 32.130 L</span></div>
+      <div class="prod-row"><span class="lbl">Precio unitario</span><span class="v">$830 /kg</span></div>
+      <div class="prod-row"><span class="lbl">Densidad</span><span class="v">1,30 kg/L</span></div>
+      <div class="prod-row"><span class="lbl">Dosis promedio</span><span class="v">269,5 ppm</span></div>
+      <div class="prod-row"><span class="lbl">Costo total período</span><span class="v">$34.668.270</span></div>
+      <div class="prod-row"><span class="lbl">% del gasto total</span><span class="v ok">7,2 %</span></div>
+      <div class="prod-row"><span class="lbl">Mayor consumo</span><span class="v warn">Marzo (12.480 kg)</span></div>
+      <div class="bar-wrap"><div class="bar azul" style="width:7%"></div></div>
+    </div>
+
+    <!-- COAGULANTE -->
+    <div class="prod-card" style="border-color:#7c3aed;border-width:2px;">
+      <div class="title">
+        Coagulante (PAC/Sulfato)
+        <span class="badge morado">Primaria · 46% gasto</span>
+      </div>
+      <div class="prod-row"><span class="lbl">Total consumido</span><span class="v">78.016 kg · 58.880 L</span></div>
+      <div class="prod-row"><span class="lbl">Precio unitario</span><span class="v">$2.900 (Ene-Feb) · $2.818 (Mar-May)</span></div>
+      <div class="prod-row"><span class="lbl">Densidad</span><span class="v">1,325 kg/L</span></div>
+      <div class="prod-row"><span class="lbl">Dosis promedio</span><span class="v">503,4 ppm</span></div>
+      <div class="prod-row"><span class="lbl">Costo total período</span><span class="v"><strong>$222.979.295</strong></span></div>
+      <div class="prod-row"><span class="lbl">% del gasto total</span><span class="v warn">46,2 %</span></div>
+      <div class="prod-row"><span class="lbl">Mayor consumo</span><span class="v warn">Febrero (22.764 kg)</span></div>
+      <div class="bar-wrap"><div class="bar morado" style="width:46%"></div></div>
+    </div>
+
+    <!-- DECOLORANTE -->
+    <div class="prod-card">
+      <div class="title">
+        Decolorante
+        <span class="badge amarillo">Color · 35% gasto</span>
+      </div>
+      <div class="prod-row"><span class="lbl">Total consumido</span><span class="v">26.550 kg · 21.240 L</span></div>
+      <div class="prod-row"><span class="lbl">Precio unitario</span><span class="v">$6.295 /kg</span></div>
+      <div class="prod-row"><span class="lbl">Densidad</span><span class="v">1,25 kg/L</span></div>
+      <div class="prod-row"><span class="lbl">Dosis promedio</span><span class="v">171,3 ppm</span></div>
+      <div class="prod-row"><span class="lbl">Costo total período</span><span class="v">$167.132.750</span></div>
+      <div class="prod-row"><span class="lbl">% del gasto total</span><span class="v warn">34,6 %</span></div>
+      <div class="prod-row"><span class="lbl">Mayor consumo</span><span class="v warn">Febrero (6.888 kg)</span></div>
+      <div class="bar-wrap"><div class="bar amarillo" style="width:35%"></div></div>
+    </div>
+
+    <!-- POL ANIÓNICO -->
+    <div class="prod-card">
+      <div class="title">
+        Polímero Aniónico
+        <span class="badge verde">Floculante</span>
+      </div>
+      <div class="prod-row"><span class="lbl">Total consumido</span><span class="v">1.008 kg</span></div>
+      <div class="prod-row"><span class="lbl">Precio unitario</span><span class="v">$19.050 /kg</span></div>
+      <div class="prod-row"><span class="lbl">Dosis promedio</span><span class="v">6,5 ppm</span></div>
+      <div class="prod-row"><span class="lbl">Costo total período</span><span class="v">$19.202.400</span></div>
+      <div class="prod-row"><span class="lbl">% del gasto total</span><span class="v ok">4,0 %</span></div>
+      <div class="prod-row"><span class="lbl">Mayor consumo</span><span class="v">Mayo (295 kg)</span></div>
+      <div class="bar-wrap"><div class="bar verde" style="width:4%"></div></div>
+    </div>
+
+    <!-- POL CATIÓNICO -->
+    <div class="prod-card">
+      <div class="title">
+        Polímero Catiónico
+        <span class="badge verde">Floculante</span>
+      </div>
+      <div class="prod-row"><span class="lbl">Total consumido</span><span class="v">1.765 kg</span></div>
+      <div class="prod-row"><span class="lbl">Precio unitario</span><span class="v">$22.050 /kg</span></div>
+      <div class="prod-row"><span class="lbl">Dosis promedio</span><span class="v">11,4 ppm</span></div>
+      <div class="prod-row"><span class="lbl">Costo total período</span><span class="v">$38.918.250</span></div>
+      <div class="prod-row"><span class="lbl">% del gasto total</span><span class="v ok">8,1 %</span></div>
+      <div class="prod-row"><span class="lbl">Mayor consumo</span><span class="v">Febrero (480 kg)</span></div>
+      <div class="bar-wrap"><div class="bar verde" style="width:8%"></div></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     5. ANÁLISIS DE COSTOS
+═══════════════════════════════════════════════════════════════ -->
+<div class="seccion">
+  <h2>💰 Análisis de Costos — Distribución del Gasto</h2>
+
+  <h3>Gasto total por producto (período Ene–May 2026)</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Producto Químico</th>
+        <th class="num">Consumo Total</th>
+        <th class="num">Precio Ref. ($/kg)</th>
+        <th class="num">Costo Total (COP)</th>
+        <th class="num">% del Total</th>
+        <th>Participación</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Coagulante (PAC)</td>
+        <td class="num">78.016 kg</td>
+        <td class="num">$2.818–2.900</td>
+        <td class="num">$222.979.295</td>
+        <td class="num"><strong>46,2 %</strong></td>
+        <td><div class="pct-bar" style="width:92px;background:#7c3aed;height:12px;border-radius:4px;"></div></td>
+      </tr>
+      <tr>
+        <td>Decolorante</td>
+        <td class="num">26.550 kg</td>
+        <td class="num">$6.295</td>
+        <td class="num">$167.132.750</td>
+        <td class="num"><strong>34,6 %</strong></td>
+        <td><div class="pct-bar" style="width:69px;background:#d97706;height:12px;border-radius:4px;"></div></td>
+      </tr>
+      <tr>
+        <td>Polímero Catiónico</td>
+        <td class="num">1.765 kg</td>
+        <td class="num">$22.050</td>
+        <td class="num">$38.918.250</td>
+        <td class="num">8,1 %</td>
+        <td><div class="pct-bar" style="width:16px;background:#16a34a;height:12px;border-radius:4px;"></div></td>
+      </tr>
+      <tr>
+        <td>Ácido HCl 10%</td>
+        <td class="num">41.769 kg</td>
+        <td class="num">$830</td>
+        <td class="num">$34.668.270</td>
+        <td class="num">7,2 %</td>
+        <td><div class="pct-bar" style="width:14px;background:#2563eb;height:12px;border-radius:4px;"></div></td>
+      </tr>
+      <tr>
+        <td>Polímero Aniónico</td>
+        <td class="num">1.008 kg</td>
+        <td class="num">$19.050</td>
+        <td class="num">$19.202.400</td>
+        <td class="num">4,0 %</td>
+        <td><div class="pct-bar" style="width:8px;background:#0ea5e9;height:12px;border-radius:4px;"></div></td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr><td>TOTAL GEM</td><td class="num">—</td><td class="num">—</td><td class="num">$482.900.965</td><td class="num">100 %</td><td></td></tr>
+    </tfoot>
+  </table>
+  <p style="font-size:11px;color:#94a3b8;margin-top:6px;">* El total calculado ($482.900.965) puede diferir levemente del total acumulado por turnos ($482.812.569) debido a redondeos internos en la hoja GEM por turno.</p>
+
+  <h3>Desglose mensual por producto (COP)</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Mes</th>
+        <th class="num">Ácido</th>
+        <th class="num">Coagulante</th>
+        <th class="num">Decolorante</th>
+        <th class="num">Pol. Aniónico</th>
+        <th class="num">Pol. Catiónico</th>
+        <th class="num">Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Enero</td>
+        <td class="num">$5.610.800</td>
+        <td class="num">$44.688.275</td>
+        <td class="num">$29.664.188</td>
+        <td class="num">$2.762.250</td>
+        <td class="num">$6.504.750</td>
+        <td class="num"><strong>$89.231.263</strong></td>
+      </tr>
+      <tr class="fila-feb">
+        <td>Febrero 🔺</td>
+        <td class="num">$9.020.440</td>
+        <td class="num">$66.014.150</td>
+        <td class="num">$43.356.813</td>
+        <td class="num">$3.905.250</td>
+        <td class="num">$10.584.000</td>
+        <td class="num"><strong>$132.880.653</strong></td>
+      </tr>
+      <tr>
+        <td>Marzo</td>
+        <td class="num">$10.358.400</td>
+        <td class="num">$44.283.461</td>
+        <td class="num">$37.063.313</td>
+        <td class="num">$3.200.400</td>
+        <td class="num">$7.497.000</td>
+        <td class="num"><strong>$102.401.074</strong></td>
+      </tr>
+      <tr>
+        <td>Abril</td>
+        <td class="num">$7.736.430</td>
+        <td class="num">$36.703.746</td>
+        <td class="num">$30.216.000</td>
+        <td class="num">$3.714.750</td>
+        <td class="num">$7.827.750</td>
+        <td class="num"><strong>$86.198.676</strong></td>
+      </tr>
+      <tr class="fila-may">
+        <td>Mayo 🔽</td>
+        <td class="num">$1.942.200</td>
+        <td class="num">$31.289.663</td>
+        <td class="num">$26.832.438</td>
+        <td class="num">$5.619.750</td>
+        <td class="num">$6.504.750</td>
+        <td class="num"><strong>$72.100.903</strong></td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr>
+        <td>TOTAL</td>
+        <td class="num">$34.668.270</td>
+        <td class="num">$222.979.295</td>
+        <td class="num">$167.132.750</td>
+        <td class="num">$19.202.400</td>
+        <td class="num">$38.918.250</td>
+        <td class="num">$482.812.569</td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     6. PRODUCTOS RO
+═══════════════════════════════════════════════════════════════ -->
+<div class="seccion">
+  <h2>🔄 Consumo Productos Químicos — Sistema RO (Ósmosis Inversa)</h2>
+  <p>Consumo de insumos específicos para el sistema de Ósmosis Inversa, registrados en la hoja "CONSUMO QUÍMICA – CAUDALES RO".</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Mes</th>
+        <th class="num">Kuriverter IK-220 (L) · Biocida</th>
+        <th class="num">Vitec 7000 (L) · Antiscalant</th>
+        <th class="num">Total RO (L)</th>
+        <th>Observación</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Enero</td><td class="num">71,68</td><td class="num">88,92</td><td class="num">160,60</td><td><span class="badge azul">Normal</span></td></tr>
+      <tr><td>Febrero</td><td class="num">150,03</td><td class="num">421,97</td><td class="num">572,00</td><td><span class="badge amarillo">Vitec aumentado</span></td></tr>
+      <tr><td>Marzo</td><td class="num">334,03</td><td class="num">268,17</td><td class="num">602,20</td><td><span class="badge amarillo">Biocida aumentado</span></td></tr>
+      <tr class="fila-feb"><td>Abril</td><td class="num">0,00</td><td class="num">0,00</td><td class="num"><strong>0,00</strong></td><td><span class="badge rojo">Sin operación RO</span></td></tr>
+      <tr class="fila-may"><td>Mayo</td><td class="num">119,52</td><td class="num">112,05</td><td class="num">231,57</td><td><span class="badge verde">Reanudó normal</span></td></tr>
+    </tbody>
+    <tfoot>
+      <tr><td>TOTAL</td><td class="num">675,26 L</td><td class="num">891,11 L</td><td class="num">1.566,37 L</td><td></td></tr>
+    </tfoot>
+  </table>
+
+  <div class="alerta amarillo" style="margin-top:14px;">
+    <span class="icon">⚠️</span>
+    <div class="txt">
+      <strong>Sistema RO sin operación — Abril 2026</strong>
+      <p>No se registró consumo de químicos RO en el mes de abril. Se requiere verificar si el sistema estuvo en mantenimiento, parada programada o fuera de servicio. Impacto en calidad del agua tratada debe evaluarse.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     7. HALLAZGOS Y OBSERVACIONES
+═══════════════════════════════════════════════════════════════ -->
+<div class="seccion">
+  <h2>⚠️ Hallazgos y Observaciones Clave</h2>
+
+  <div class="alerta rojo">
+    <span class="icon">🚨</span>
+    <div class="txt">
+      <strong>Hallazgo 1 — Pico de consumo en Febrero</strong>
+      <p>Febrero presentó el mayor costo del período con $132.880.653 COP ($4.418/m³), superando en <strong>46%</strong> el promedio del período ($3.116/m³). El coagulante alcanzó su máximo histórico: 22.763,5 kg (+47% vs promedio mensual). Se asocia posiblemente a mayor carga orgánica y/o color en el agua residual industrial de ese mes.</p>
+    </div>
+  </div>
+
+  <div class="alerta verde">
+    <span class="icon">✅</span>
+    <div class="txt">
+      <strong>Hallazgo 2 — Reducción sostenida de ácido (Mar→May)</strong>
+      <p>El consumo de ácido HCl cayó de 12.480 kg en Marzo a solo 2.340 kg en Mayo, una reducción del <strong>81%</strong>. Esto indica una mejora en el control del pH de entrada al sistema GEM o cambio en la calidad del agua cruda. Este ajuste aportó directamente a la reducción del $/m³.</p>
+    </div>
+  </div>
+
+  <div class="alerta verde">
+    <span class="icon">📉</span>
+    <div class="txt">
+      <strong>Hallazgo 3 — Tendencia de eficiencia positiva</strong>
+      <p>El indicador $/m³ mostró una reducción constante del <strong>46%</strong> en el semestre: de $4.418 (febrero) a $2.378 (mayo). La tendencia es consistente y no atribuible a reducción de caudal (mayo mantuvo 30.321 m³, comparable a enero con 29.325 m³).</p>
+    </div>
+  </div>
+
+  <div class="alerta amarillo">
+    <span class="icon">⚠️</span>
+    <div class="txt">
+      <strong>Hallazgo 4 — Coagulante: principal driver de costo</strong>
+      <p>El coagulante representa el <strong>46,2%</strong> del gasto total en química GEM. Cualquier optimización en su dosificación tiene impacto directo y significativo en el costo operativo. Se recomienda revisar la dosis óptima mediante jar-test mensual.</p>
+    </div>
+  </div>
+
+  <div class="alerta amarillo">
+    <span class="icon">🔄</span>
+    <div class="txt">
+      <strong>Hallazgo 5 — Sistema RO inoperante en Abril</strong>
+      <p>El sistema RO no registró consumo de biocida (Kuriverter IK-220) ni antiscalant (Vitec 7000) en Abril. Causa no documentada en los archivos disponibles. Se debe verificar el impacto en la calidad del agua tratada y el estado de las membranas.</p>
+    </div>
+  </div>
+
+  <div class="alerta azul">
+    <span class="icon">💡</span>
+    <div class="txt">
+      <strong>Observación — Polímero aniónico aumentó en Mayo</strong>
+      <p>El polímero aniónico aumentó de 168 kg (Marzo) a 295 kg (Mayo), un incremento del 76%. Este aumento simultáneo a la reducción del ácido sugiere un ajuste en la estrategia de tratamiento. Verificar si hay cambio de protocolo operativo.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     8. CONCLUSIONES
+═══════════════════════════════════════════════════════════════ -->
+<div class="seccion">
+  <h2>📝 Conclusiones y Recomendaciones</h2>
+
+  <h3>Conclusiones</h3>
+  <ol style="padding-left:20px;line-height:2.0;color:#475569;font-size:13px;">
+    <li>La PTAR trató <strong>154.969 m³</strong> durante Enero–Mayo 2026, con un costo total de química GEM de <strong>$482.812.569 COP</strong> ($3.116/m³ promedio).</li>
+    <li>El <strong>coagulante</strong> es el insumo de mayor costo (46,2%), seguido del decolorante (34,6%) y el polímero catiónico (8,1%).</li>
+    <li><strong>Febrero 2026</strong> fue el mes de mayor costo unitario ($4.418/m³), principalmente por el pico de coagulante (22.764 kg), un 47% por encima del promedio mensual del período.</li>
+    <li>La tendencia de <strong>reducción del $/m³</strong> desde Febrero hasta Mayo (−46%) indica mejora real en la eficiencia operativa.</li>
+    <li>El <strong>sistema RO no operó en Abril</strong>. Este evento debe registrarse y justificarse formalmente en la bitácora.</li>
+  </ol>
+
+  <h3>Recomendaciones</h3>
+  <ol style="padding-left:20px;line-height:2.0;color:#475569;font-size:13px;">
+    <li><strong>Realizar jar-test mensual</strong> para validar la dosis óptima de coagulante y reducir consumo sin comprometer la remoción.</li>
+    <li><strong>Documentar las causas</strong> del pico de Febrero (mayor carga industrial, cambio de proveedor textil, etc.) para crear alertas tempranas.</li>
+    <li><strong>Establecer presupuesto de $/m³ objetivo</strong>: con base en el dato de Mayo ($2.378/m³) como benchmark de eficiencia alcanzada.</li>
+    <li><strong>Reportar formalmente</strong> la parada del sistema RO en Abril: causa, duración, impacto en calidad del agua y acciones correctivas.</li>
+    <li><strong>Continuar monitoreando</strong> el aumento del polímero aniónico en Mayo para confirmar si es un ajuste permanente de protocolo o una desviación.</li>
+    <li>Incluir datos de <strong>horas de operación</strong> en todos los meses (no solo Abril y Mayo) para calcular caudal real promedio horario y detectar eficiencias/ineficiencias operativas.</li>
+  </ol>
+</div>
+
+</div><!-- /container -->
+
+<div class="pie">
+  Informe de Balance de Consumo Químico GEM · PTAR PERMODA · Período Enero–Mayo 2026<br>
+  Generado con datos reales de 5 archivos Excel · Hojas "INVENTARIO Y CONSUMO GEM" y "CONSUMO QUÍMICA – CAUDALES RO"<br>
+  <strong>Archivo editable:</strong> INFORME_BALANCE_QUIMICO_GEM.html
+</div>
+
+</body>
+</html>

@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Informe Calidad de Agua — PTAR 2 | Abril 1–19, 2026</title>
+<style>
+  :root {
+    --verde: #16a34a; --verde-bg: #dcfce7; --verde-borde: #86efac;
+    --amarillo: #d97706; --amarillo-bg: #fef3c7; --amarillo-borde: #fcd34d;
+    --rojo: #dc2626; --rojo-bg: #fee2e2; --rojo-borde: #fca5a5;
+    --azul: #2563eb; --azul-bg: #dbeafe; --azul-borde: #93c5fd;
+    --gris: #6b7280; --gris-bg: #f3f4f6; --gris-borde: #d1d5db;
+    --primario: #1e3a5f; --acento: #0ea5e9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f8fafc; color: #1e293b; font-size: 14px; line-height: 1.6; }
+  .header { background: linear-gradient(135deg, #1e3a5f 0%, #0ea5e9 100%); color: white; padding: 32px 40px; }
+  .header h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
+  .header .sub { font-size: 14px; opacity: 0.85; margin-top: 6px; }
+  .header .meta { display: flex; gap: 24px; margin-top: 16px; font-size: 13px; opacity: 0.9; }
+  .header .meta span { display: flex; align-items: center; gap: 6px; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
+
+  /* RESUMEN EJECUTIVO */
+  .exec-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin: 20px 0; }
+  .exec-card { border-radius: 10px; padding: 16px; border-left: 4px solid; }
+  .exec-card.verde { background: var(--verde-bg); border-color: var(--verde); }
+  .exec-card.amarillo { background: var(--amarillo-bg); border-color: var(--amarillo); }
+  .exec-card.rojo { background: var(--rojo-bg); border-color: var(--rojo); }
+  .exec-card.azul { background: var(--azul-bg); border-color: var(--azul); }
+  .exec-card .label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--gris); }
+  .exec-card .valor { font-size: 22px; font-weight: 700; margin: 4px 0; }
+  .exec-card .desc { font-size: 12px; color: #475569; }
+  .exec-card.verde .valor { color: var(--verde); }
+  .exec-card.amarillo .valor { color: var(--amarillo); }
+  .exec-card.rojo .valor { color: var(--rojo); }
+  .exec-card.azul .valor { color: var(--azul); }
+
+  /* SECCIONES */
+  .seccion { background: white; border-radius: 12px; padding: 24px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .seccion h2 { font-size: 17px; font-weight: 700; color: var(--primario); border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 18px; display: flex; align-items: center; gap: 8px; }
+  .seccion h3 { font-size: 14px; font-weight: 600; color: #334155; margin: 18px 0 10px; }
+
+  /* TABLAS */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { background: #f1f5f9; color: #475569; font-weight: 600; padding: 10px 12px; text-align: left; font-size: 12px; border-bottom: 2px solid #e2e8f0; }
+  td { padding: 9px 12px; border-bottom: 1px solid #f1f5f9; }
+  tr:hover td { background: #fafafa; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+  /* BADGES */
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+  .badge.conforme { background: var(--verde-bg); color: var(--verde); }
+  .badge.alerta { background: var(--amarillo-bg); color: var(--amarillo); }
+  .badge.critico { background: var(--rojo-bg); color: var(--rojo); }
+  .badge.info { background: var(--azul-bg); color: var(--azul); }
+  .badge.neutro { background: var(--gris-bg); color: var(--gris); }
+
+  /* ALERTAS */
+  .alerta-box { border-radius: 8px; padding: 14px 16px; margin: 12px 0; display: flex; gap: 12px; align-items: flex-start; }
+  .alerta-box.rojo { background: var(--rojo-bg); border: 1px solid var(--rojo-borde); }
+  .alerta-box.amarillo { background: var(--amarillo-bg); border: 1px solid var(--amarillo-borde); }
+  .alerta-box.verde { background: var(--verde-bg); border: 1px solid var(--verde-borde); }
+  .alerta-box.azul { background: var(--azul-bg); border: 1px solid var(--azul-borde); }
+  .alerta-box .icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .alerta-box .content strong { display: block; font-size: 13px; margin-bottom: 3px; }
+  .alerta-box .content p { font-size: 12px; color: #475569; margin: 0; }
+
+  /* BARRA ESTADÍSTICA */
+  .param-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 700px) { .param-grid { grid-template-columns: 1fr; } }
+  .param-card { border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; }
+  .param-card h4 { font-size: 13px; font-weight: 700; color: var(--primario); margin-bottom: 10px; }
+  .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid #f1f5f9; font-size: 12px; }
+  .stat-row:last-child { border: none; }
+  .stat-label { color: var(--gris); }
+  .stat-val { font-weight: 600; color: #1e293b; }
+  .stat-val.warn { color: var(--amarillo); }
+  .stat-val.ok { color: var(--verde); }
+  .stat-val.bad { color: var(--rojo); }
+
+  /* BARRA DE REMOCIÓN */
+  .rem-bar-wrap { background: #f1f5f9; border-radius: 6px; height: 8px; width: 100%; overflow: hidden; margin-top: 4px; }
+  .rem-bar { height: 100%; border-radius: 6px; }
+  .rem-bar.alta { background: var(--verde); }
+  .rem-bar.media { background: var(--amarillo); }
+  .rem-bar.baja { background: var(--rojo); }
+
+  /* EVENTOS */
+  .evento-list { display: flex; flex-direction: column; gap: 8px; }
+  .evento { display: flex; gap: 12px; padding: 12px 14px; border-radius: 8px; border: 1px solid #e2e8f0; align-items: flex-start; }
+  .evento-fecha { font-size: 12px; font-weight: 700; min-width: 60px; color: var(--primario); }
+  .evento-desc { font-size: 13px; flex: 1; }
+  .evento-desc small { display: block; color: #64748b; font-size: 11px; margin-top: 2px; }
+  .evento.critico { border-color: var(--rojo-borde); background: #fff5f5; }
+  .evento.alerta { border-color: var(--amarillo-borde); background: #fffbeb; }
+  .evento.info { border-color: var(--azul-borde); background: #eff6ff; }
+
+  /* COSTO */
+  .costo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin: 12px 0; }
+  .costo-card { border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; text-align: center; }
+  .costo-card .lbl { font-size: 11px; color: var(--gris); text-transform: uppercase; font-weight: 600; }
+  .costo-card .val { font-size: 20px; font-weight: 700; color: var(--primario); margin: 6px 0 2px; }
+  .costo-card .sub { font-size: 11px; color: #64748b; }
+
+  /* PIE */
+  .pie { text-align: center; padding: 24px; color: #94a3b8; font-size: 12px; border-top: 1px solid #e2e8f0; margin-top: 32px; }
+  .tren-flow { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 12px 0; font-size: 12px; }
+  .tren-box { background: #e0f2fe; color: #0369a1; padding: 5px 10px; border-radius: 6px; font-weight: 600; white-space: nowrap; }
+  .tren-arrow { color: #94a3b8; font-weight: 700; }
+  .tren-box.ro { background: #f3e8ff; color: #7c3aed; }
+  .tren-box.vert { background: #fef9c3; color: #a16207; }
+  .highlight { background: #fef9c3; }
+  .excede { background: #fee2e2; color: var(--rojo); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📊 Informe de Calidad de Agua — PTAR 2</h1>
+  <div class="sub">Planta de Tratamiento de Agua Residual Textil — Bogotá D.C.</div>
+  <div class="meta">
+    <span>📅 Período: <strong>1 al 19 de abril de 2026</strong></span>
+    <span>👤 Moon | lunaop@permoda.com.co</span>
+    <span>📋 Generado: 22 de abril de 2026</span>
+    <span>📂 Fuente: DASHBOARD CALIDAD + DASHBOARD COSTOS</span>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- RESUMEN EJECUTIVO -->
+<div class="seccion">
+  <h2>🔎 Resumen Ejecutivo</h2>
+  <div class="exec-grid">
+    <div class="exec-card verde">
+      <div class="label">pH Vertimiento</div>
+      <div class="valor">✓ CONFORME</div>
+      <div class="desc">100% registros dentro de 5.0–9.0 u.pH<br>Rango real: 6.81–8.81</div>
+    </div>
+    <div class="exec-card verde">
+      <div class="label">SST Vertimiento</div>
+      <div class="valor">97% cumple</div>
+      <div class="desc">1 incumplimiento: 14/04 T3 = 97 mg/L<br>Promedio: 24.6 mg/L | Límite: 75 mg/L</div>
+    </div>
+    <div class="exec-card verde">
+      <div class="label">Temperatura Vert.</div>
+      <div class="valor">✓ CONFORME</div>
+      <div class="desc">Máx. vert. = 35.6 °C (< 40 °C)<br>Pulmón: 3 picos &gt; 40°C (sin impacto vert.)</div>
+    </div>
+    <div class="exec-card verde">
+      <div class="label">Costo GEM</div>
+      <div class="valor">$2.681/m³</div>
+      <div class="desc">Muy por debajo del límite $3.599/m³<br>Volumen: 16.599 m³ (13 días op.)</div>
+    </div>
+    <div class="exec-card verde">
+      <div class="label">Remoción SST GEM</div>
+      <div class="valor">88.7%</div>
+      <div class="desc">Por encima del objetivo 80%<br>Remoción Color GEM: 84.1%</div>
+    </div>
+    <div class="exec-card amarillo">
+      <div class="label">Acidificante</div>
+      <div class="valor">0.299 kg/m³</div>
+      <div class="desc">Primera mejora respecto Q1 (0.38 kg/m³)<br>Proyectado: 0.308 kg/m³ → ahora bajo</div>
+    </div>
+    <div class="exec-card rojo">
+      <div class="label">Evento Crítico 14/04</div>
+      <div class="valor">⚠ SST + Color</div>
+      <div class="desc">14/04 T3: SST vert = 97 mg/L (excede)<br>Color vert = 12.300 UPTCO (pico máximo)</div>
+    </div>
+    <div class="exec-card azul">
+      <div class="label">DQO Vertimiento</div>
+      <div class="valor">247 mg/L</div>
+      <div class="desc">1 sola medición (10/04 T3) &lt; 600 mg/L ✓<br>Se requiere mayor frecuencia de muestreo</div>
+    </div>
+  </div>
+</div>
+
+<!-- TREN DE TRATAMIENTO -->
+<div class="seccion">
+  <h2>🏭 Tren de Tratamiento PTAR 2</h2>
+  <div class="tren-flow">
+    <div class="tren-box">Tanque Pulmón</div><div class="tren-arrow">→</div>
+    <div class="tren-box">Homogeneizador</div><div class="tren-arrow">→</div>
+    <div class="tren-box">GEM (Coag-Floc)</div><div class="tren-arrow">→</div>
+    <div class="tren-box">Reactor Anóxico</div><div class="tren-arrow">→</div>
+    <div class="tren-box">MBBR</div><div class="tren-arrow">→</div>
+    <div class="tren-box">MBR 1/2 (interno)</div><div class="tren-arrow">→</div>
+    <div class="tren-box">MBR 1/2 (permeado)</div><div class="tren-arrow">→</div>
+    <div class="tren-box ro">RO (única etapa TDS)</div><div class="tren-arrow">→</div>
+    <div class="tren-box vert">Vertimiento</div>
+  </div>
+  <p style="font-size:12px; color:#64748b; margin-top:8px;">ℹ️ El sistema biológico (Anóxico, MBBR, MBR) no remueve sales/conductividad. Solo la RO remueve TDS. Conductividad alta en vertimiento = normal (recibe rechazo RO).</p>
+</div>
+
+<!-- SECCIÓN 1: CALIDAD POR PARÁMETRO -->
+<div class="seccion">
+  <h2>🔬 1. Calidad de Agua — Análisis por Parámetro (Abril 1–19)</h2>
+  <p style="color:#64748b; font-size:13px; margin-bottom:16px;">Datos con valores activos registrados. Días sin operación: 1, 3, 4, 5, 12, 19 (festivos/fines de semana). Total: <strong>36 registros</strong> por parámetro en 13 días operativos.</p>
+
+  <!-- 1.1 pH -->
+  <h3>1.1 pH — Límite vertimiento: 5.0–9.0 u.pH <span class="badge conforme">✓ 100% CONFORME</span></h3>
+  <div class="param-grid">
+    <div class="param-card">
+      <h4>📊 Estadísticos por punto de muestreo</h4>
+      <table>
+        <tr><th>Punto</th><th class="num">N</th><th class="num">Mín</th><th class="num">Prom</th><th class="num">Máx</th><th class="num">CV%</th><th>Estado</th></tr>
+        <tr><td>Tanque Pulmón</td><td class="num">35</td><td class="num">6.82</td><td class="num">9.07</td><td class="num">10.35</td><td class="num">10.9%</td><td><span class="badge alerta">Alta var.</span></td></tr>
+        <tr><td>Homogeneizador (Entrada GEM)</td><td class="num">36</td><td class="num">6.78</td><td class="num">7.70</td><td class="num">8.31</td><td class="num">4.5%</td><td><span class="badge conforme">Estable</span></td></tr>
+        <tr><td>GEM (Salida)</td><td class="num">36</td><td class="num">6.77</td><td class="num">7.17</td><td class="num">7.45</td><td class="num">2.2%</td><td><span class="badge conforme">Muy estable</span></td></tr>
+        <tr><td>MBR 1 (Permeado)</td><td class="num">33</td><td class="num">7.17</td><td class="num">7.74</td><td class="num">8.21</td><td class="num">2.5%</td><td><span class="badge conforme">Normal</span></td></tr>
+        <tr><td>MBR 2 (Permeado)</td><td class="num">33</td><td class="num">7.57</td><td class="num">7.82</td><td class="num">8.32</td><td class="num">1.9%</td><td><span class="badge conforme">Normal</span></td></tr>
+        <tr><td><strong>Vertimiento</strong></td><td class="num">34</td><td class="num">6.81</td><td class="num"><strong>7.96</strong></td><td class="num">8.81</td><td class="num">4.6%</td><td><span class="badge conforme">✓ Cumple</span></td></tr>
+      </table>
+    </div>
+    <div class="param-card">
+      <h4>📋 Interpretación técnica</h4>
+      <div class="stat-row"><span class="stat-label">Vertimiento — cumplimiento normativo</span><span class="stat-val ok">100% (34/34)</span></div>
+      <div class="stat-row"><span class="stat-label">pH Pulmón — rango observado</span><span class="stat-val warn">6.82–10.35 u.pH</span></div>
+      <div class="stat-row"><span class="stat-label">pH Pulmón > 9.5 (alta alcalinidad)</span><span class="stat-val warn">11 turnos de 35</span></div>
+      <div class="stat-row"><span class="stat-label">pH GEM salida — estabilidad</span><span class="stat-val ok">CV = 2.2% (muy baja)</span></div>
+      <div class="stat-row"><span class="stat-label">pH máximo vertimiento</span><span class="stat-val ok">8.81 u.pH (06/04 T3)</span></div>
+      <p style="font-size:12px; color:#475569; margin-top:10px;">El Tanque Pulmón muestra alta variabilidad por el influente textil alcalino. El GEM estabiliza eficazmente el pH (CV 2.2%). El sistema biológico mantiene pH neutro-alcalino en permeados. Ningún valor de vertimiento excedió el límite de 9.0.</p>
+    </div>
+  </div>
+
+  <!-- 1.2 SST -->
+  <h3 style="margin-top:24px;">1.2 SST — Sólidos Suspendidos Totales — Límite vertimiento: ≤ 75 mg/L <span class="badge critico">⚠ 1 INCUMPLIMIENTO</span></h3>
+  <div class="alerta-box rojo">
+    <div class="icon">🚨</div>
+    <div class="content">
+      <strong>Incumplimiento 14/04 Turno 3: SST Vertimiento = 97 mg/L (límite 75 mg/L)</strong>
+      <p>En el mismo turno, GEM salida = 303 mg/L y Color vertimiento = 12.300 UPTCO → indica falla operativa puntual en el sistema GEM. Acción: revisar registro bitácora del turno, verificar dosificación química y posible bypass.</p>
+    </div>
+  </div>
+  <div class="param-grid">
+    <div class="param-card">
+      <h4>📊 Estadísticos por punto de muestreo</h4>
+      <table>
+        <tr><th>Punto</th><th class="num">N</th><th class="num">Prom</th><th class="num">Máx</th><th class="num">CV%</th><th>Estado</th></tr>
+        <tr><td>Tanque Pulmón</td><td class="num">35</td><td class="num">274</td><td class="num">748</td><td class="num">48.4%</td><td><span class="badge alerta">Variable</span></td></tr>
+        <tr><td>Homogeneizador (Entrada GEM)</td><td class="num">36</td><td class="num">591</td><td class="num">2.744</td><td class="num">66.2%</td><td><span class="badge alerta">Alta var.</span></td></tr>
+        <tr><td>GEM (Salida)</td><td class="num">36</td><td class="num">60</td><td class="num">366</td><td class="num">117.7%</td><td><span class="badge alerta">Ver eventos</span></td></tr>
+        <tr><td>MBR 1 (Interno)</td><td class="num">6</td><td class="num">13.093</td><td class="num">14.100</td><td class="num">6.0%</td><td><span class="badge conforme">Normal MBR</span></td></tr>
+        <tr><td>MBR 2 (Interno)</td><td class="num">4</td><td class="num">13.965</td><td class="num">15.700</td><td class="num">8.6%</td><td><span class="badge conforme">Normal MBR</span></td></tr>
+        <tr><td>MBR 1 (Permeado)</td><td class="num">31</td><td class="num">2.2</td><td class="num">4.0</td><td class="num">41.6%</td><td><span class="badge conforme">Membranas OK</span></td></tr>
+        <tr><td>MBR 2 (Permeado)</td><td class="num">33</td><td class="num">2.3</td><td class="num">5.0</td><td class="num">47.0%</td><td><span class="badge conforme">Membranas OK</span></td></tr>
+        <tr><td><strong>Vertimiento</strong></td><td class="num">34</td><td class="num"><strong>24.6</strong></td><td class="num"><strong>97</strong></td><td class="num">86.2%</td><td><span class="badge critico">1 excedencia</span></td></tr>
+      </table>
+    </div>
+    <div class="param-card">
+      <h4>📋 Remociones y eventos</h4>
+      <div class="stat-row"><span class="stat-label">Remoción GEM promedio (Homo→GEM sal.)</span><span class="stat-val ok">88.7%</span></div>
+      <div class="stat-row"><span class="stat-label">Remoción GEM mínima</span><span class="stat-val warn">37.7% (14/04 T3)</span></div>
+      <div class="stat-row"><span class="stat-label">Remoción GEM máxima</span><span class="stat-val ok">98.9%</span></div>
+      <div class="stat-row"><span class="stat-label">Turnos GEM salida > 75 mg/L</span><span class="stat-val warn">5 turnos</span></div>
+      <div class="stat-row"><span class="stat-label">14/04 T3 — GEM salida / Vert.</span><span class="stat-val bad">303 / 97 mg/L ❌</span></div>
+      <div class="stat-row"><span class="stat-label">Permeados MBR (integridad membrana)</span><span class="stat-val ok">Máx. 5 mg/L ✓</span></div>
+      <div class="stat-row"><span class="stat-label">MBR interno (9.000-15.000 mg/L)</span><span class="stat-val ok">Normal para MBR</span></div>
+      <p style="font-size:12px; color:#475569; margin-top:10px;"><strong>Nota:</strong> Los valores de SST interno en MBR (13.000–15.700 mg/L) son completamente normales en sistemas de alta carga. El criterio de control es el permeado (&lt;5 mg/L), que confirma integridad de membranas.</p>
+    </div>
+  </div>
+
+  <h4 style="margin:14px 0 8px; font-size:13px;">Turnos con GEM salida &gt; 75 mg/L (detalle):</h4>
+  <table>
+    <tr><th>Fecha</th><th>Turno</th><th class="num">Homo. (mg/L)</th><th class="num">GEM sal. (mg/L)</th><th class="num">Vertim. (mg/L)</th><th class="num">Coag. PPM</th><th>Observación</th></tr>
+    <tr><td>07/04</td><td>T3</td><td class="num">436</td><td class="num highlight">86</td><td class="num">19</td><td class="num">–</td><td>SST vert. dentro límite ✓</td></tr>
+    <tr><td>08/04</td><td>T1</td><td class="num">622</td><td class="num highlight">82</td><td class="num">30</td><td class="num">364</td><td>SST vert. dentro límite ✓</td></tr>
+    <tr><td>09/04</td><td>T1</td><td class="num">591</td><td class="num highlight">79</td><td class="num">31</td><td class="num">237</td><td>SST vert. dentro límite ✓</td></tr>
+    <tr class="excede"><td>14/04</td><td>T3</td><td class="num">486</td><td class="num">303 ⚠</td><td class="num">97 ❌</td><td class="num">635</td><td>ÚNICO INCUMPLIMIENTO NORMATIVO</td></tr>
+    <tr><td>17/04</td><td>T3</td><td class="num">615</td><td class="num highlight">366</td><td class="num">4</td><td class="num">–</td><td>SST vert. 4 mg/L — MBR absorbió ✓</td></tr>
+  </table>
+
+  <!-- 1.3 Temperatura -->
+  <h3 style="margin-top:24px;">1.3 Temperatura — Límite vertimiento: ≤ 40 °C <span class="badge conforme">✓ CONFORME</span></h3>
+  <div class="alerta-box amarillo">
+    <div class="icon">⚠️</div>
+    <div class="content">
+      <strong>Temperatura Pulmón supera 40°C en 3 turnos (no impacta el vertimiento)</strong>
+      <p>08/04 T2: 41.4°C | 10/04 T3: 40.1°C | 17/04 T2: 40.7°C. La temperatura del vertimiento se mantuvo ≤ 35.6°C en todos los registros. El sistema de enfriamiento funciona. Se recomienda monitorear la fuente caliente (proceso de tintorería).</p>
+    </div>
+  </div>
+  <table>
+    <tr><th>Punto</th><th class="num">N</th><th class="num">Promedio (°C)</th><th class="num">Mínimo</th><th class="num">Máximo</th><th class="num">CV%</th><th>Estado</th></tr>
+    <tr><td>Tanque Pulmón</td><td class="num">35</td><td class="num">37.73</td><td class="num">33.50</td><td class="num">41.40</td><td class="num">5.0%</td><td><span class="badge alerta">3 picos &gt;40°C</span></td></tr>
+    <tr><td>Homogeneizador</td><td class="num">36</td><td class="num">33.09</td><td class="num">29.40</td><td class="num">36.00</td><td class="num">5.5%</td><td><span class="badge conforme">Normal</span></td></tr>
+    <tr><td>GEM (Salida)</td><td class="num">36</td><td class="num">31.28</td><td class="num">25.10</td><td class="num">36.10</td><td class="num">10.5%</td><td><span class="badge conforme">Normal</span></td></tr>
+    <tr><td>MBR 1 (Permeado)</td><td class="num">33</td><td class="num">32.08</td><td class="num">24.50</td><td class="num">34.50</td><td class="num">6.1%</td><td><span class="badge conforme">Normal</span></td></tr>
+    <tr><td><strong>Vertimiento</strong></td><td class="num">34</td><td class="num"><strong>31.54</strong></td><td class="num">24.20</td><td class="num"><strong>35.60</strong></td><td class="num">7.2%</td><td><span class="badge conforme">✓ Cumple &lt;40°C</span></td></tr>
+  </table>
+
+  <!-- 1.4 Color -->
+  <h3 style="margin-top:24px;">1.4 Color — Sin límite normativo numérico <span class="badge neutro">Solo seguimiento</span></h3>
+  <div class="alerta-box rojo">
+    <div class="icon">🎨</div>
+    <div class="content">
+      <strong>Evento crítico 14/04 T3: Color vertimiento = 12.300 UPTCO (máximo del período)</strong>
+      <p>Este turno concentra las anomalías: SST excede normativa, color pico histórico, GEM falla. Posible falla operativa o influente extremo. Se recomienda investigar causa raíz: ¿paro inesperado del GEM, problemas de dosificación, influente con lote especial de tintura?</p>
+    </div>
+  </div>
+  <table>
+    <tr><th>Punto</th><th class="num">N</th><th class="num">Promedio (UPTCO)</th><th class="num">Mínimo</th><th class="num">Máximo</th><th class="num">CV%</th></tr>
+    <tr><td>Tanque Pulmón</td><td class="num">35</td><td class="num">5.905</td><td class="num">2.137</td><td class="num">14.690</td><td class="num">42.5%</td></tr>
+    <tr><td>Homogeneizador (Entrada GEM)</td><td class="num">36</td><td class="num">6.181</td><td class="num">1.380</td><td class="num">8.890</td><td class="num">24.8%</td></tr>
+    <tr><td>GEM (Salida)</td><td class="num">36</td><td class="num">913</td><td class="num">516</td><td class="num">1.380</td><td class="num">26.0%</td></tr>
+    <tr><td>MBR 1 (Permeado)</td><td class="num">33</td><td class="num">775</td><td class="num">399</td><td class="num">4.570</td><td class="num">89.6%</td></tr>
+    <tr><td>MBR 2 (Permeado)</td><td class="num">33</td><td class="num">849</td><td class="num">403</td><td class="num">4.440</td><td class="num">78.3%</td></tr>
+    <tr><td>Vertimiento</td><td class="num">34</td><td class="num">2.363</td><td class="num">721</td><td class="num">12.300</td><td class="num">84.2%</td></tr>
+  </table>
+
+  <h4 style="margin:14px 0 8px; font-size:13px;">Turnos con color vertimiento &gt; 3.000 UPTCO:</h4>
+  <table>
+    <tr><th>Fecha</th><th>Turno</th><th class="num">Color Homo. (UPTCO)</th><th class="num">Color GEM sal.</th><th class="num">Color Vert.</th><th class="num">Remoción GEM</th><th>Observación</th></tr>
+    <tr><td>11/04</td><td>T1</td><td class="num">8.311</td><td class="num">826</td><td class="num">4.340</td><td class="num">90.1%</td><td>GEM remueve bien; color vert. por bypass bio.</td></tr>
+    <tr><td>14/04</td><td>T2</td><td class="num">4.310</td><td class="num">1.297</td><td class="num">3.550</td><td class="num">69.9%</td><td>GEM con remoción reducida ese turno</td></tr>
+    <tr class="excede"><td>14/04</td><td>T3</td><td class="num">4.750</td><td class="num">708</td><td class="num">12.300 ⚠</td><td class="num">85.1%</td><td>PICO MÁXIMO — correlaciona con SST excedencia</td></tr>
+    <tr><td>15/04</td><td>T1</td><td class="num">4.920</td><td class="num">516</td><td class="num">5.142</td><td class="num">89.5%</td><td>GEM remueve bien; color vert. heredado</td></tr>
+    <tr><td>18/04</td><td>T3</td><td class="num">7.812</td><td class="num">1.031</td><td class="num">3.114</td><td class="num">86.8%</td><td>Influente con alta carga de color</td></tr>
+  </table>
+
+  <!-- 1.5 Conductividad -->
+  <h3 style="margin-top:24px;">1.5 Conductividad (TDS) — Sin límite normativo <span class="badge neutro">Alta en vert. = normal</span></h3>
+  <div class="alerta-box azul">
+    <div class="icon">ℹ️</div>
+    <div class="content">
+      <strong>Conductividad alta en vertimiento es esperada y no constituye incumplimiento</strong>
+      <p>El rechazo de la RO (que concentra todas las sales) se descarga al vertimiento. Promedio vertimiento: 9.447 µS/cm. La Resolución 0631/2015 no establece límite de conductividad/TDS para este tipo de vertimiento textil. Solo la RO remueve sales — el sistema biológico no tiene esta función.</p>
+    </div>
+  </div>
+  <div class="alerta-box amarillo" style="margin-top:8px;">
+    <div class="icon">⚠️</div>
+    <div class="content">
+      <strong>Valor atípico 13/04 T1: Conductividad Pulmón = 64.490 µS/cm → probable error de digitación</strong>
+      <p>El valor es 9× el máximo típico del Pulmón. Se recomienda verificar el registro original en la bitácora y corregir si procede. Este dato fue excluido del promedio estadístico.</p>
+    </div>
+  </div>
+  <table>
+    <tr><th>Punto</th><th class="num">N</th><th class="num">Promedio (µS/cm)</th><th class="num">Mínimo</th><th class="num">Máximo</th><th class="num">CV%</th><th>Interpretación</th></tr>
+    <tr><td>Tanque Pulmón</td><td class="num">34*</td><td class="num">4.869</td><td class="num">2.069</td><td class="num">12.120</td><td class="num">45.8%</td><td>Alta variabilidad influente textil</td></tr>
+    <tr><td>Homogeneizador</td><td class="num">35</td><td class="num">4.535</td><td class="num">2.230</td><td class="num">6.920</td><td class="num">22.1%</td><td>Amortiguación por homogeneización</td></tr>
+    <tr><td>GEM (Salida)</td><td class="num">35</td><td class="num">4.008</td><td class="num">729</td><td class="num">5.910</td><td class="num">37.9%</td><td>Sin remoción de sales (esperado)</td></tr>
+    <tr><td>MBR 1 (Permeado)</td><td class="num">32</td><td class="num">4.688</td><td class="num">3.170</td><td class="num">5.770</td><td class="num">12.9%</td><td>Estable, no remueve sales</td></tr>
+    <tr><td>MBR 2 (Permeado)</td><td class="num">32</td><td class="num">4.625</td><td class="num">2.300</td><td class="num">5.650</td><td class="num">14.9%</td><td>Estable, no remueve sales</td></tr>
+    <tr><td><strong>Vertimiento</strong></td><td class="num">33</td><td class="num"><strong>9.447</strong></td><td class="num">1.324</td><td class="num">16.430</td><td class="num">45.1%</td><td>Alto por rechazo RO — Normal ✓</td></tr>
+  </table>
+  <p style="font-size:11px; color:#94a3b8; margin-top:6px;">* Excluye dato 13/04 T1 (64.490 µS/cm — probable error de digitación)</p>
+
+  <!-- 1.6 DQO -->
+  <h3 style="margin-top:24px;">1.6 DQO — Límite vertimiento: ≤ 600 mg/L <span class="badge info">Solo 1 medición</span></h3>
+  <div class="alerta-box amarillo">
+    <div class="icon">⚠️</div>
+    <div class="content">
+      <strong>Frecuencia de muestreo DQO insuficiente: solo 1 medición en 19 días</strong>
+      <p>10/04 T3: GEM salida = 857 mg/L (alto, posiblemente influente con carga orgánica elevada), Permeados MBR = 121 mg/L, Vertimiento = 247 mg/L ✓ (cumple &lt;600 mg/L). Recomendación: aumentar frecuencia a mínimo 2–3 veces/semana en turno 2. El dato único es insuficiente para análisis estadístico confiable.</p>
+    </div>
+  </div>
+  <table>
+    <tr><th>Fecha</th><th>Turno</th><th class="num">GEM Salida (mg/L)</th><th class="num">MBR 1 Perm.</th><th class="num">MBR 2 Perm.</th><th class="num">Vertimiento</th><th>Cumplimiento</th></tr>
+    <tr><td>10/04</td><td>T3</td><td class="num">857</td><td class="num">121</td><td class="num">121</td><td class="num">247</td><td><span class="badge conforme">✓ &lt; 600 mg/L</span></td></tr>
+  </table>
+
+  <!-- 1.7 Cloruros y Sólidos Sedimentables -->
+  <h3 style="margin-top:24px;">1.7 Cloruros y Sólidos Sedimentables <span class="badge conforme">✓ CONFORME</span></h3>
+  <div class="param-grid">
+    <div class="param-card">
+      <h4>Cloruros (mg/L) — Límite: ≤ 1.200 mg/L</h4>
+      <table>
+        <tr><th>Fecha</th><th>Punto</th><th class="num">Valor</th><th>Estado</th></tr>
+        <tr><td>14/04 T2</td><td>Pulmón</td><td class="num">419</td><td><span class="badge conforme">✓</span></td></tr>
+        <tr><td>14/04 T2</td><td>Homogeneizador</td><td class="num">509</td><td><span class="badge conforme">✓</span></td></tr>
+        <tr><td>14/04 T2</td><td>GEM Salida</td><td class="num">539</td><td><span class="badge conforme">✓</span></td></tr>
+        <tr><td>14/04 T2</td><td>MBR 1 Permeado</td><td class="num">439</td><td><span class="badge conforme">✓</span></td></tr>
+        <tr><td>14/04 T2</td><td><strong>Vertimiento</strong></td><td class="num"><strong>819</strong></td><td><span class="badge conforme">✓ &lt; 1.200</span></td></tr>
+        <tr><td>15/04 T3</td><td>Pulmón</td><td class="num">599</td><td><span class="badge conforme">✓</span></td></tr>
+      </table>
+      <p style="font-size:12px; color:#64748b; margin-top:8px;">Solo 2 eventos de muestreo. Ambos dentro del límite normativo. Se recomienda aumentar frecuencia.</p>
+    </div>
+    <div class="param-card">
+      <h4>Sólidos Sedimentables (mL/L) — Límite: ≤ 3 mL/L</h4>
+      <table>
+        <tr><th>Fecha</th><th>Turno</th><th class="num">GEM sal.</th><th class="num">Vertim.</th><th>Estado</th></tr>
+        <tr><td>09/04</td><td>T1</td><td class="num">0.70</td><td class="num">2.00</td><td><span class="badge conforme">✓</span></td></tr>
+        <tr><td>10/04</td><td>T1</td><td class="num">1.00</td><td class="num">2.00</td><td><span class="badge conforme">✓</span></td></tr>
+        <tr><td>15/04</td><td>T2</td><td class="num">0.20</td><td class="num">0.40</td><td><span class="badge conforme">✓</span></td></tr>
+        <tr><td>15/04</td><td>T3</td><td class="num">8.00</td><td class="num">1.00</td><td><span class="badge conforme">✓ Vert.</span></td></tr>
+      </table>
+      <p style="font-size:12px; color:#64748b; margin-top:8px;">Todos los valores de vertimiento cumplen el límite de 3 mL/L. GEM salida 15/04 T3 = 8 mL/L (alto, sin impacto en vert.).</p>
+    </div>
+  </div>
+</div>
+
+<!-- SECCIÓN 2: CUMPLIMIENTO NORMATIVO -->
+<div class="seccion">
+  <h2>⚖️ 2. Resumen de Cumplimiento Normativo — Resolución 0631/2015</h2>
+  <table>
+    <tr>
+      <th>Parámetro</th><th class="num">Límite</th><th class="num">Prom. Vert.</th><th class="num">Máx. Vert.</th>
+      <th class="num">N registros</th><th class="num">Incumplimientos</th><th>Estado</th>
+    </tr>
+    <tr>
+      <td>pH</td><td class="num">5.0–9.0 u.pH</td><td class="num">7.96</td><td class="num">8.81</td>
+      <td class="num">34</td><td class="num">0</td><td><span class="badge conforme">✓ CONFORME</span></td>
+    </tr>
+    <tr>
+      <td>SST</td><td class="num">≤ 75 mg/L</td><td class="num">24.6</td><td class="num">97</td>
+      <td class="num">34</td><td class="num">1 (14/04 T3)</td><td><span class="badge critico">⚠ 1 EVENTO</span></td>
+    </tr>
+    <tr>
+      <td>Temperatura</td><td class="num">≤ 40 °C</td><td class="num">31.54</td><td class="num">35.60</td>
+      <td class="num">34</td><td class="num">0</td><td><span class="badge conforme">✓ CONFORME</span></td>
+    </tr>
+    <tr>
+      <td>DQO</td><td class="num">≤ 600 mg/L</td><td class="num">247</td><td class="num">247</td>
+      <td class="num">1</td><td class="num">0</td><td><span class="badge info">⚠ 1 dato — insuf.</span></td>
+    </tr>
+    <tr>
+      <td>Cloruros</td><td class="num">≤ 1.200 mg/L</td><td class="num">819</td><td class="num">819</td>
+      <td class="num">1</td><td class="num">0</td><td><span class="badge conforme">✓ CONFORME</span></td>
+    </tr>
+    <tr>
+      <td>Sólidos Sedimentables</td><td class="num">≤ 3 mL/L</td><td class="num">1.48</td><td class="num">2.00</td>
+      <td class="num">5</td><td class="num">0</td><td><span class="badge conforme">✓ CONFORME</span></td>
+    </tr>
+    <tr>
+      <td>Conductividad</td><td class="num">Sin límite</td><td class="num">9.447 µS/cm</td><td class="num">16.430</td>
+      <td class="num">33</td><td class="num">N/A</td><td><span class="badge neutro">Normal (rechazo RO)</span></td>
+    </tr>
+    <tr>
+      <td>Color</td><td class="num">Sin límite</td><td class="num">2.363 UPTCO</td><td class="num">12.300</td>
+      <td class="num">34</td><td class="num">N/A</td><td><span class="badge neutro">Sin límite normativo</span></td>
+    </tr>
+  </table>
+</div>
+
+<!-- SECCIÓN 3: REMOCIONES GEM -->
+<div class="seccion">
+  <h2>⚗️ 3. Eficiencia de Remoción — Sistema GEM (Coagulación-Floculación)</h2>
+  <p style="font-size:13px; color:#64748b; margin-bottom:16px;">Fórmula: % Remoción = ((Entrada Homo. − Salida GEM) / Entrada Homo.) × 100. Se excluyen turnos con caudal GEM = 0.</p>
+  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px;">
+    <div>
+      <h3>SST — Remoción promedio: <span style="color:var(--verde)">88.7%</span></h3>
+      <div style="margin:8px 0;">
+        <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;"><span>88.7%</span><span>Promedio (n=36)</span></div>
+        <div class="rem-bar-wrap"><div class="rem-bar alta" style="width:88.7%"></div></div>
+      </div>
+      <table style="margin-top:12px;">
+        <tr><th>Estadístico</th><th class="num">Valor</th></tr>
+        <tr><td>Promedio</td><td class="num">88.7%</td></tr>
+        <tr><td>Mínimo</td><td class="num">37.7% (14/04 T3)</td></tr>
+        <tr><td>Máximo</td><td class="num">98.9%</td></tr>
+        <tr><td>Registros ≥ 80%</td><td class="num">27/36 (75%)</td></tr>
+        <tr><td>Registros 60–79%</td><td class="num">7/36 (19%)</td></tr>
+        <tr><td>Registros &lt; 60%</td><td class="num">2/36 (6%)</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>Color — Remoción promedio: <span style="color:var(--verde)">84.1%</span></h3>
+      <div style="margin:8px 0;">
+        <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;"><span>84.1%</span><span>Promedio (n=36)</span></div>
+        <div class="rem-bar-wrap"><div class="rem-bar alta" style="width:84.1%"></div></div>
+      </div>
+      <table style="margin-top:12px;">
+        <tr><th>Estadístico</th><th class="num">Valor</th></tr>
+        <tr><td>Promedio</td><td class="num">84.1%</td></tr>
+        <tr><td>Mínimo</td><td class="num">55.0% (02/04 T1)</td></tr>
+        <tr><td>Máximo</td><td class="num">92.8%</td></tr>
+        <tr><td>Registros ≥ 80%</td><td class="num">24/36 (67%)</td></tr>
+        <tr><td>Registros 60–79%</td><td class="num">10/36 (28%)</td></tr>
+        <tr><td>Registros &lt; 60%</td><td class="num">2/36 (6%)</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- SECCIÓN 4: COSTOS -->
+<div class="seccion">
+  <h2>💰 4. Costos Operativos GEM — Abril 1–19, 2026</h2>
+
+  <div class="costo-grid">
+    <div class="costo-card">
+      <div class="lbl">Volumen tratado</div>
+      <div class="val">16.599 m³</div>
+      <div class="sub">13 días operativos de 19</div>
+    </div>
+    <div class="costo-card">
+      <div class="lbl">Costo promedio GEM</div>
+      <div class="val" style="color:var(--verde)">$2.681/m³</div>
+      <div class="sub">Límite: $3.599/m³ ✓</div>
+    </div>
+    <div class="costo-card">
+      <div class="lbl">Días sin operación</div>
+      <div class="val" style="color:var(--gris)">6 días</div>
+      <div class="sub">1, 3, 4, 5, 12, 19 (fest./fin sem.)</div>
+    </div>
+    <div class="costo-card">
+      <div class="lbl">Turno más costoso</div>
+      <div class="val" style="color:var(--amarillo)">$3.482/m³</div>
+      <div class="sub">17/04 día 17 (bajo límite ✓)</div>
+    </div>
+    <div class="costo-card">
+      <div class="lbl">Turno más eficiente</div>
+      <div class="val" style="color:var(--verde)">$1.813/m³</div>
+      <div class="sub">09/04 día 9</div>
+    </div>
+    <div class="costo-card">
+      <div class="lbl">vs. Q1 2026 promedio</div>
+      <div class="val" style="color:var(--verde)">-$453/m³</div>
+      <div class="sub">Q1: $3.134/m³ → Mejora 14.5%</div>
+    </div>
+  </div>
+
+  <h3>Indicador $/m³ por día operativo</h3>
+  <table>
+    <tr><th>Día</th><th>Fecha</th><th class="num">Caudal (m³)</th><th class="num">$/m³</th><th class="num">vs. Límite</th><th>Estado</th></tr>
+    <tr><td>2</td><td>02/04</td><td class="num">880</td><td class="num">2.001,67</td><td class="num">-1.597,33</td><td><span class="badge conforme">✓ OK</span></td></tr>
+    <tr><td>6</td><td>06/04</td><td class="num">1.040</td><td class="num">2.638,67</td><td class="num">-960,33</td><td><span class="badge conforme">✓ OK</span></td></tr>
+    <tr><td>7</td><td>07/04</td><td class="num">1.079</td><td class="num">2.771,15</td><td class="num">-827,85</td><td><span class="badge conforme">✓ OK</span></td></tr>
+    <tr><td>8</td><td>08/04</td><td class="num">1.200</td><td class="num">2.309,47</td><td class="num">-1.289,53</td><td><span class="badge conforme">✓ OK</span></td></tr>
+    <tr><td>9</td><td>09/04</td><td class="num">1.280</td><td class="num">1.812,61</td><td class="num">-1.786,39</td><td><span class="badge conforme">✓ OK</span></td></tr>
+    <tr><td>10</td><td>10/04</td><td class="num">1.520</td><td class="num">2.291,07</td><td class="num">-1.307,93</td><td><span class="badge conforme">✓ OK</span></td></tr>
+    <tr><td>11</td><td>11/04</td><td class="num">1.040</td><td class="num">3.164,72</td><td class="num">-434,28</td><td><span class="badge conforme">✓ OK</span></td></tr>
+    <tr><td>13</td><td>13/04</td><td class="num">1.360</td><td class="num">2.363,51</td><td class="num">-1.235,49</td><td><span class="badge conforme">✓ OK</span></td></tr>
+    <tr><td>14</td><td>14/04</td><td class="num">1.280</td><td class="num">3.136,79</td><td class="num">-462,21</td><td><span class="badge conforme">✓ OK</span></td></tr>
+    <tr><td>15</td><td>15/04</td><td class="num">1.200</td><td class="num">2.896,06</td><td class="num">-702,94</td><td><span class="badge conforme">✓ OK</span></td></tr>
+    <tr><td>16</td><td>16/04</td><td class="num">1.600</td><td class="num">2.646,43</td><td class="num">-952,57</td><td><span class="badge conforme">✓ OK</span></td></tr>
+    <tr><td>17</td><td>17/04</td><td class="num">1.440</td><td class="num">3.481,74</td><td class="num">-117,26</td><td><span class="badge alerta">⚠ Vigil.</span></td></tr>
+    <tr><td>18</td><td>18/04</td><td class="num">1.680</td><td class="num">3.085,62</td><td class="num">-513,38</td><td><span class="badge conforme">✓ OK</span></td></tr>
+    <tr style="font-weight:700; background:#f8fafc;"><td colspan="2"><strong>TOTAL / PROMEDIO</strong></td><td class="num"><strong>16.599</strong></td><td class="num"><strong>2.680,74</strong></td><td class="num"><strong>-918,26</strong></td><td><span class="badge conforme">✓ TODOS OK</span></td></tr>
+  </table>
+
+  <h3 style="margin-top:20px;">Consumo de Químicos GEM — Acumulado Abril 1–19</h3>
+  <table>
+    <tr><th>Químico</th><th class="num">Litros (L)</th><th class="num">Kg consumidos</th><th class="num">kg/m³ real</th><th class="num">kg/m³ Q1 real</th><th class="num">kg/m³ proyect.</th><th>Tendencia</th></tr>
+    <tr><td>COF 280 — Ácido</td><td class="num">3.815</td><td class="num">4.959,5</td><td class="num">0,299</td><td class="num">0,380</td><td class="num">0,308</td><td><span class="badge conforme">↓ Mejora Q2</span></td></tr>
+    <tr><td>COF 235 — Coagulante</td><td class="num">5.080</td><td class="num">6.731,0</td><td class="num">0,406</td><td class="num">~0,590</td><td class="num">–</td><td><span class="badge conforme">↓ Mejora</span></td></tr>
+    <tr><td>COF 255 — Decolorante</td><td class="num">1.985</td><td class="num">2.481,3</td><td class="num">0,149</td><td class="num">~0,161</td><td class="num">–</td><td><span class="badge conforme">Estable</span></td></tr>
+    <tr><td>COF 440 — Pol. Aniónico</td><td class="num">90</td><td class="num">90,0</td><td class="num">0,005</td><td class="num">~0,005</td><td class="num">–</td><td><span class="badge conforme">Normal</span></td></tr>
+    <tr><td>COF 494 — Pol. Catiónico</td><td class="num">185</td><td class="num">185,0</td><td class="num">0,011</td><td class="num">~0,010</td><td class="num">–</td><td><span class="badge conforme">Normal</span></td></tr>
+  </table>
+
+  <div class="alerta-box verde" style="margin-top:16px;">
+    <div class="icon">✅</div>
+    <div class="content">
+      <strong>Mejora significativa en acidificante (COF 280): 0.299 kg/m³ vs. 0.380 kg/m³ en Q1</strong>
+      <p>El consumo de ácido en abril 1–19 bajó al nivel proyectado (0.308 kg/m³) por primera vez en 2026. Esto sugiere que las acciones de ajuste o el comportamiento del influente han mejorado. Se debe confirmar si el ajuste del Plan Maestro fue aplicado o si el influente llegó menos alcalino.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SECCIÓN 5: EVENTOS -->
+<div class="seccion">
+  <h2>📋 5. Eventos Operativos Relevantes — Abril 1–19</h2>
+  <div class="evento-list">
+    <div class="evento info">
+      <div class="evento-fecha">01–05/04</div>
+      <div class="evento-desc">
+        Sin operación — Semana Santa (continuación) y festivos nacionales
+        <small>Días 1, 3, 4, 5 sin tratamiento GEM. El sistema biológico puede mantenerse con recirculación mínima.</small>
+      </div>
+    </div>
+    <div class="evento alerta">
+      <div class="evento-fecha">02/04</div>
+      <div class="evento-desc">
+        Primer día operativo post-festivos. Solo 2 turnos con caudal (880 m³). Muestras limitadas a Homo./GEM.
+        <small>Color Homo. = 1.380 UPTCO. pH Homo. = 7.78. SST GEM = 29 mg/L ✓. Normal al arranque.</small>
+      </div>
+    </div>
+    <div class="evento alerta">
+      <div class="evento-fecha">06/04</div>
+      <div class="evento-desc">
+        Primer día con medición completa del tren. pH Pulmón = 9.68 (T2) y 9.07 (T3) — carga alcalina alta.
+        <small>PPM coagulante T1 = 910 PPM (alta dosis — arranque). Color Pulmón hasta 6.210 UPTCO.</small>
+      </div>
+    </div>
+    <div class="evento info">
+      <div class="evento-fecha">07–10/04</div>
+      <div class="evento-desc">
+        Operación regular. pH Pulmón oscila entre 7.93–10.35. SST GEM en algunos turnos por encima de 75 mg/L pero vert. cumple.
+        <small>08/04 T2: Temp. Pulmón = 41.4°C (pico). 10/04: medición DQO única: vert. = 247 mg/L ✓.</small>
+      </div>
+    </div>
+    <div class="evento critico">
+      <div class="evento-fecha">14/04 T3</div>
+      <div class="evento-desc">
+        🚨 EVENTO CRÍTICO — Única excedencia normativa del período
+        <small>SST GEM salida = 303 mg/L → SST Vertimiento = 97 mg/L (excede 75 mg/L). Color Vert. = 12.300 UPTCO (máximo del mes). Remoción SST GEM = 37.7% (mínimo del mes). Causa probable: falla dosificación o influente extraordinario. Revisar bitácora turno 3 del 14/04.</small>
+      </div>
+    </div>
+    <div class="evento alerta">
+      <div class="evento-fecha">15/04 T1</div>
+      <div class="evento-desc">
+        Color vertimiento = 5.142 UPTCO — segundo pico más alto del período
+        <small>GEM removió 89.5% del color (516 UPTCO salida). El color elevado en vert. es heredado del MBR. Sin excedencia normativa.</small>
+      </div>
+    </div>
+    <div class="evento alerta">
+      <div class="evento-fecha">17/04</div>
+      <div class="evento-desc">
+        Día más costoso: $/m³ = 3.481,74 (más cercano al límite de $3.599). PPM ácido T2 = 812.5 ppm (máximo).
+        <small>Temperatura Pulmón T2 = 40.7°C. SST GEM T3 = 366 mg/L (pico extremo) pero SST Vert. = 4 mg/L ✓ — MBR absorbió.</small>
+      </div>
+    </div>
+    <div class="evento info">
+      <div class="evento-fecha">18/04</div>
+      <div class="evento-desc">
+        Mayor caudal diario del período: 1.680 m³ (3 turnos completos). Color Pulmón T1 = 14.690 UPTCO (más alto del mes).
+        <small>Costo = $3.085,62/m³ — dentro del límite. SST y pH vert. cumplen normativa.</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SECCIÓN 6: COMPARATIVO Q1 vs ABRIL -->
+<div class="seccion">
+  <h2>📈 6. Comparativo: Abril vs. Q1 2026</h2>
+  <table>
+    <tr><th>Indicador</th><th class="num">Enero</th><th class="num">Febrero</th><th class="num">Marzo</th><th class="num">Q1 Prom.</th><th class="num"><strong>Abril 1–19</strong></th><th>Tendencia</th></tr>
+    <tr><td>Volumen GEM (m³ período)</td><td class="num">29.325</td><td class="num">30.080</td><td class="num">32.829</td><td class="num">30.745</td><td class="num"><strong>16.599</strong></td><td>13 días op. de 19</td></tr>
+    <tr><td>Costo $/m³ GEM</td><td class="num">$3.043</td><td class="num">$3.240</td><td class="num">$3.119</td><td class="num">$3.134</td><td class="num" style="color:var(--verde)"><strong>$2.681</strong></td><td><span class="badge conforme">↓ Mejor</span></td></tr>
+    <tr><td>Acidificante (kg/m³)</td><td class="num">0,328</td><td class="num">0,355</td><td class="num">0,380</td><td class="num">0,354</td><td class="num" style="color:var(--verde)"><strong>0,299</strong></td><td><span class="badge conforme">↓ Primera vez bajo proy.</span></td></tr>
+    <tr><td>Coagulante (kg/m³)</td><td class="num">0,724</td><td class="num">0,572</td><td class="num">0,479</td><td class="num">0,591</td><td class="num" style="color:var(--verde)"><strong>0,406</strong></td><td><span class="badge conforme">↓ Mejora continua</span></td></tr>
+    <tr><td>SST vert. — cumplimiento</td><td class="num">100%</td><td class="num">100%</td><td class="num">100%</td><td class="num">100%</td><td class="num" style="color:var(--amarillo)"><strong>97% (1 evento)</strong></td><td><span class="badge critico">14/04 T3</span></td></tr>
+    <tr><td>pH vert. — cumplimiento</td><td class="num">100%</td><td class="num">100%</td><td class="num">100%</td><td class="num">100%</td><td class="num" style="color:var(--verde)"><strong>100%</strong></td><td><span class="badge conforme">✓ Mantiene</span></td></tr>
+  </table>
+</div>
+
+<!-- SECCIÓN 7: CONCLUSIONES -->
+<div class="seccion">
+  <h2>✅ 7. Conclusiones y Recomendaciones</h2>
+
+  <h3>7.1 Estado General del Sistema</h3>
+  <div class="alerta-box verde">
+    <div class="icon">✅</div>
+    <div class="content">
+      <strong>PTAR 2 opera dentro de los parámetros normativos en abril 1–19 de 2026</strong>
+      <p>El sistema cumple con la Resolución 0631/2015 en pH (100%), temperatura (100%), cloruros (100%) y sólidos sedimentables (100%). El único incumplimiento normativo detectado fue el SST en vertimiento el 14/04 T3 (97 mg/L vs. límite 75 mg/L), asociado a una falla operativa puntual del GEM ese turno.</p>
+    </div>
+  </div>
+
+  <div class="alerta-box verde" style="margin-top:12px;">
+    <div class="icon">📉</div>
+    <div class="content">
+      <strong>Primera reducción sostenida de acidificante: 0.299 kg/m³ — por debajo de la proyección</strong>
+      <p>Después de 3 meses superando la meta (Q1 promedio 0.354 kg/m³ vs. proyectado 0.308 kg/m³), abril muestra una reversión positiva. Se debe investigar si se ajustó la dosificación, si el influente llegó menos alcalino, o si ambos factores coincidieron. Este es el indicador más relevante para el Plan Maestro Q2.</p>
+    </div>
+  </div>
+
+  <h3>7.2 Acciones Recomendadas</h3>
+  <table>
+    <tr><th>#</th><th>Acción</th><th>Prioridad</th><th>Plazo</th></tr>
+    <tr>
+      <td>1</td>
+      <td><strong>Investigar causa raíz 14/04 T3</strong>: revisar bitácora, PPM dosificados, estado del GEM ese turno y tipo de influente. Determinar si fue falla de equipo, error operativo o influente extremo.</td>
+      <td><span class="badge critico">ALTA</span></td>
+      <td>Inmediato</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td><strong>Aumentar frecuencia de muestreo DQO</strong>: mínimo 2–3 mediciones/semana (turnos 1 y 2). El único dato disponible en 19 días (10/04 T3: 857 mg/L en GEM) es insuficiente para análisis estadístico.</td>
+      <td><span class="badge critico">ALTA</span></td>
+      <td>Mayo 2026</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td><strong>Confirmar causa de mejora acidificante</strong>: si fue ajuste operacional, documentarlo y formalizar como nueva dosis base para Q2 en el Plan Maestro.</td>
+      <td><span class="badge alerta">MEDIA</span></td>
+      <td>30 de abril</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td><strong>Monitorear temperatura Pulmón</strong>: 3 picos > 40°C (08/04, 10/04, 17/04). Si bien no impacta el vertimiento, puede indicar sobrecalentamiento en el proceso de tintorería que merece seguimiento.</td>
+      <td><span class="badge alerta">MEDIA</span></td>
+      <td>Mayo 2026</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td><strong>Digitalizar datos RO</strong>: RO1 (compuesta, etapa 1, etapa 2) y RO2 aún están en fotos. Pendiente desde Q1 2026.</td>
+      <td><span class="badge alerta">MEDIA</span></td>
+      <td>Mayo 2026</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td><strong>Completar datos calidad enero y febrero</strong>: aún no están digitalizados para los análisis comparativos trimestrales.</td>
+      <td><span class="badge neutro">BAJA</span></td>
+      <td>Q2 2026</td>
+    </tr>
+  </table>
+
+  <h3 style="margin-top:20px;">7.3 Tabla de Cierre — Estado Indicadores Abril 1–19</h3>
+  <table>
+    <tr><th>Criterio</th><th>Resultado</th><th>Estado</th></tr>
+    <tr><td>Cumplimiento Normativo SST</td><td>97% — 1 excedencia 14/04 T3 (97 mg/L)</td><td><span class="badge critico">⚠ REVISAR</span></td></tr>
+    <tr><td>Cumplimiento Normativo pH</td><td>100% — Rango vert.: 6.81–8.81</td><td><span class="badge conforme">✓ CONFORME</span></td></tr>
+    <tr><td>Cumplimiento Normativo Temperatura</td><td>100% — Máx. vert.: 35.6°C</td><td><span class="badge conforme">✓ CONFORME</span></td></tr>
+    <tr><td>Cumplimiento Normativo Cloruros</td><td>100% — Vert.: 819 mg/L (1 dato)</td><td><span class="badge conforme">✓ CONFORME</span></td></tr>
+    <tr><td>Costo GEM vs. Indicador $3.599/m³</td><td>$2.681/m³ promedio — 100% días OK</td><td><span class="badge conforme">✓ BAJO LÍMITE</span></td></tr>
+    <tr><td>Remoción GEM — SST</td><td>88.7% promedio (>80% meta)</td><td><span class="badge conforme">✓ EFICIENTE</span></td></tr>
+    <tr><td>Remoción GEM — Color</td><td>84.1% promedio</td><td><span class="badge conforme">✓ EFICIENTE</span></td></tr>
+    <tr><td>Acidificante vs. Proyección</td><td>0.299 kg/m³ < 0.308 proyectado</td><td><span class="badge conforme">✓ PRIMERA MEJORA</span></td></tr>
+    <tr><td>Integridad Membranas MBR</td><td>Permeados &lt;5 mg/L SST</td><td><span class="badge conforme">✓ ÍNTEGRAS</span></td></tr>
+    <tr><td>Conductividad Vertimiento</td><td>9.447 µS/cm — normal (rechazo RO)</td><td><span class="badge neutro">Normal ✓</span></td></tr>
+  </table>
+</div>
+
+<div class="pie">
+  <p><strong>INFORME DE CALIDAD DE AGUA — PTAR 2 | Período: 1 al 19 de abril de 2026</strong></p>
+  <p style="margin-top:4px;">Preparado por: Moon (lunaop@permoda.com.co) | Fecha de generación: 22 de abril de 2026</p>
+  <p style="margin-top:4px;">Normativa: Resolución 0631 de 2015 (Art. 13) + Resolución 3759 de 2009 | Fuente datos: DASHBOARD CALIDAD AGUA ABRIL 2026 + DASHBOARD COSTOS ABRIL</p>
+</div>
+
+</div>
+</body>
+</html>
