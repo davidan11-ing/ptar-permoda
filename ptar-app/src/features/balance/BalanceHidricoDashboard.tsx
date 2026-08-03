@@ -6,7 +6,7 @@ import {
   PieChart, Pie, Cell, ReferenceLine,
 } from 'recharts';
 import { useBalanceData } from './hooks/useBalanceData';
-import { getReporteBalanceHtmlUrl, getGemEficiencia, type BalanceHidricoRow, type GemEficienciaRow } from '../../services/ptarClient';
+import { getGemEficiencia, type BalanceHidricoRow, type GemEficienciaRow } from '../../services/ptarClient';
 import InformeBalanceModal from './InformeBalanceModal';
 import GranularidadSelector from '../../components/shared/GranularidadSelector';
 import { useGranularidad } from '../../hooks/useGranularidad';
@@ -79,6 +79,7 @@ function ChartPending({ titulo, alto = 200 }: { titulo: string; alto?: number })
     </div>
   );
 }
+void ChartPending;
 
 const TURNO_NUM: Record<string, number> = { noche: 1, 'mañana': 2, tarde: 3 };
 

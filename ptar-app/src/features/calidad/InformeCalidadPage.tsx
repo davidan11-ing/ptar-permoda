@@ -97,7 +97,7 @@ export default function InformeCalidadPage() {
           background: '#1a478a', color: '#fff', padding: '8px 24px',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           fontSize: 12, fontWeight: 600, position: 'sticky', top: 0, zIndex: 10,
-          printVisibility: 'hidden',
+          visibility: 'visible',
         }}
       >
         <span>INFORME DE CALIDAD — PERMODA LTDA &nbsp;·&nbsp; {periodoLabel}</span>

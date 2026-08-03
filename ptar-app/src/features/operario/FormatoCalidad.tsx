@@ -46,7 +46,7 @@ const GRID_PARAMS: GridParam[] = [
   { id:'SST',             nombre:'SST',             unidad:'mg/L',       min:0,   max:1000,  decimales:0, freq:{
     ...TB6('t'), ...RA4('d1'), 'RO|Perm':'d2','RO|Rechazo':'d2', 'TKR|Recirc':'d1',
     'PT|Pozo':'ls','PT|Clari':'t','PT|SalUF':'t' }},
-  { id:'SolidosSediment', nombre:'Sól. Sed.',       unidad:'ml/L',       min:0,   max:500,   decimales:1, freq:{
+  { id:'SolidosSediment', nombre:'Solidos Sedimentables', unidad:'ml/L',  min:0,   max:500,   decimales:1, freq:{
     ...TB6('t'), ...RA4('d1'),
     'PT|Pozo':'ls','PT|Clari':'t' }},
   { id:'Conductividad',   nombre:'Conductividad',   unidad:'µS/cm',      min:0,   max:10000, decimales:0, freq:{
@@ -59,26 +59,26 @@ const GRID_PARAMS: GridParam[] = [
     'TKR|Recirc':'t', 'PT|Pozo':'ls','PT|Clari':'d2','PT|SalUF':'t' }},
   { id:'DQO',             nombre:'DQO',             unidad:'mg/L',       min:0,   max:5000,  decimales:0, freq:{
     ...TB6('mj3'),           'RO|Rechazo':'j2' }},
-  { id:'SST_Gravimetrico',nombre:'SST Grav.',       unidad:'mg/L',       min:0,   max:1000,  decimales:0, freq:{
+  { id:'SST_Gravimetrico',nombre:'SST Gravimetrico', unidad:'mg/L',       min:0,   max:1000,  decimales:0, freq:{
     ...TB6('j3'), ...RA4('j1') }},
   { id:'Cloruros',        nombre:'Cloruros',        unidad:'mg/L',       min:0,   max:1000,  decimales:0, freq:{
     ...TB6('mj3'),           'RO|Perm':'d2','RO|Rechazo':'d2', 'TKR|Recirc':'d1',
     'PT|SalUF':'ls' }},
   { id:'Sulfatos',        nombre:'Sulfatos',        unidad:'mg/L',       min:0,   max:500,   decimales:0, freq:{
     ...TB6('j3'),            'RO|Rechazo':'j2', 'TKR|Recirc':'t', 'PT|SalUF':'ls' }},
-  { id:'Fosforo',         nombre:'Fósforo Total',   unidad:'mg/L',       min:0,   max:100,   decimales:2, freq:{
+  { id:'Fosforo',         nombre:'Fosforo',          unidad:'mg/L',       min:0,   max:100,   decimales:2, freq:{
     'TB|SalGEM':'j3' }},
-  { id:'Nitrogeno',       nombre:'Nitrógeno Total', unidad:'mg/L',       min:0,   max:200,   decimales:2, freq:{
+  { id:'Nitrogeno',       nombre:'Nitrogeno',        unidad:'mg/L',       min:0,   max:200,   decimales:2, freq:{
     'TB|SalGEM':'j3' }},
   { id:'DurezaTotal',     nombre:'Dureza Total',    unidad:'mg CaCO₃/L', min:0,   max:1500,  decimales:0, freq:{
     'TB|MBR1':'j3','TB|MBR2':'j3', 'RO|Perm':'j2','RO|Rechazo':'j2',
     'TKR|Recirc':'t', 'PT|SalUF':'ls' }},
-  { id:'Silice',          nombre:'Sílice',          unidad:'mg/L',       min:0,   max:100,   decimales:2, freq:{
+  { id:'Silice',          nombre:'Silice',           unidad:'mg/L',       min:0,   max:100,   decimales:2, freq:{
     'TB|MBR1':'j3','TB|MBR2':'j3', 'RO|Perm':'j2','RO|Rechazo':'j2',
     'PT|Pozo':'ls','PT|Clari':'ls','PT|SalUF':'ls' }},
   { id:'Aluminio',        nombre:'Aluminio',        unidad:'mg/L',       min:0,   max:10,    decimales:2, freq:{
     'TKR|Recirc':'t', 'PT|SalUF':'ls' }},
-  { id:'CloroResidual',   nombre:'Cloro libre',     unidad:'mg/L',       min:0,   max:5,     decimales:2, freq:{
+  { id:'CloroResidual',   nombre:'Cloro residual',  unidad:'mg/L',       min:0,   max:5,     decimales:2, freq:{
     'TKR|Recirc':'t', 'PT|SalUF':'ls' }},
   { id:'Cobre',           nombre:'Cobre',           unidad:'mg/L',       min:0,   max:5,     decimales:2, freq:{
     'TKR|Recirc':'t', 'PT|Pozo':'ls','PT|Clari':'ls','PT|SalUF':'ls' }},

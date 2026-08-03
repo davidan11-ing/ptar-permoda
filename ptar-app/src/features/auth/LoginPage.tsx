@@ -254,7 +254,7 @@ export default function LoginPage() {
             <button
               className="login-btn"
               style={{ background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
-              onClick={() => { setStep('login'); resetLogin(); }}
+              onClick={() => { setStep('login'); setLoginError(''); }}
             >
               ← Volver
             </button>

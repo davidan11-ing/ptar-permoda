@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { getCalidadResumen, getCalidadRemociones, getReporteCalidadHtmlUrl } from '../../services/ptarClient';
+import { getCalidadResumen, getCalidadRemociones } from '../../services/ptarClient';
 import type { CalidadResumenRow, RemocionCalidad } from '../../services/ptarClient';
 
 /* ── Secciones configurables ─────────────────────────────────────────────── */

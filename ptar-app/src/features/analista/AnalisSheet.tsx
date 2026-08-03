@@ -4,6 +4,10 @@ import './analisis.css';
 const API = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
 const PAGE_SIZE = 100;
 
+const _y = new Date().getFullYear();
+const DEFAULT_FI = `${_y}-01-01`;
+const DEFAULT_FF = `${_y}-04-01`;
+
 interface ColInfo  { columnName: string; dataType: string; isPk: boolean; }
 interface TablaData { columnas: ColInfo[]; filas: Record<string, unknown>[]; total: number; isView: boolean; }
 
@@ -18,8 +22,8 @@ export default function AnalisSheet() {
   const [tabla,       setTabla]       = useState('');
   const [data,        setData]        = useState<TablaData | null>(null);
   const [pagina,      setPagina]      = useState(1);
-  const [fi,          setFi]          = useState('');
-  const [ff,          setFf]          = useState('');
+  const [fi,          setFi]          = useState(DEFAULT_FI);
+  const [ff,          setFf]          = useState(DEFAULT_FF);
   const [loading,     setLoading]     = useState(false);
   const [status,      setStatus]      = useState('');
   const [tablasError, setTablasError] = useState('');

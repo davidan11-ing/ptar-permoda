@@ -9,7 +9,6 @@ import {
   type ConsumoQuimicoDiaRow,
 } from './hooks/useCostosData';
 import {
-  getReporteCostosHtmlUrl,
   getCalidadRemociones,
   getRoEficiencia,
   type RemocionCalidad,
@@ -35,7 +34,7 @@ const PRECIOS_COP_KG: Record<string, number> = {
   'Decolorante':          6295,
   'Pol. Aniónico':        19050,
   'Pol. Catiónico':       22050,
-};
+}; void PRECIOS_COP_KG;
 
 function _mq(n: string, f: string) { return n.toLowerCase().includes(f); }
 function colorPPM(nombre: string): string {
@@ -163,7 +162,7 @@ function ChartCard({ title, subtitle, children }: { title: string; subtitle?: st
 
 /* ── componente principal ────────────────────────────────────────────── */
 export default function CostosDashboard() {
-  const anioActual = new Date().getFullYear();
+  const anioActual = new Date().getFullYear(); void anioActual;
 
   const { granularidad, setGranularidad, fechaInicio, fechaFin, draftInicio, draftFin, handleFechaInicio, handleFechaFin, commitFechaInicio, commitFechaFin } = useGranularidad();
   const [sistema,        setSistema]        = useState('GEM');

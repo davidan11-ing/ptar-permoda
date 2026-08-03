@@ -1,57 +1,59 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import KpiGauge from './KpiGauge';
-import { KPI_METRICS } from './mockData';
+import RealKpiSection from './RealKpiSection';
 import { getReportePdfUrl, getReporteDashboardHtmlUrl } from '../../services/ptarClient';
 import { useAuth } from '../../state/AuthContext';
 import { ROUTES } from '../../lib/routes';
+import {
+  WIDGET_CATALOG, DEFAULT_WIDGETS, LS_KEY,
+  type WidgetId,
+} from './widgets/WidgetCatalog';
+import BalanceConsumoWidget  from './widgets/BalanceConsumoWidget';
+import GemCostoWidget        from './widgets/GemCostoWidget';
+import RoCostoWidget         from './widgets/RoCostoWidget';
+import CalidadTendenciaWidget from './widgets/CalidadTendenciaWidget';
 
 interface Props { canEdit: boolean }
 
 const TODAY = new Date().toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-const CAUDAL_TARGET_M3 = 640; // m³ por turno — meta de diseño de la PTAR
+// Fecha rango: últimos 30 días
+const FECHA_FIN    = new Date().toISOString().slice(0, 10);
+const FECHA_INICIO = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+function renderWidget(id: WidgetId, fechaInicio: string, fechaFin: string): React.ReactNode {
+  switch (id) {
+    case 'balance-consumo':   return <BalanceConsumoWidget  fechaInicio={fechaInicio} fechaFin={fechaFin} />;
+    case 'gem-costo-m3':      return <GemCostoWidget        fechaInicio={fechaInicio} fechaFin={fechaFin} />;
+    case 'ro-costo-m3':       return <RoCostoWidget         fechaInicio={fechaInicio} fechaFin={fechaFin} />;
+    case 'calidad-tendencia': return <CalidadTendenciaWidget fechaInicio={fechaInicio} fechaFin={fechaFin} />;
+  }
+}
 
 export default function DashboardPage({ canEdit }: Props) {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
-  const [editMode, setEditMode] = useState(false);
-  const [kpis, setKpis] = useState(KPI_METRICS);
 
-  // ── Actualizar KPIs de Eficiencia y Caudal con datos reales ──────────
+  // ── Widget selector ───────────────────────────────────────────────────────────
+  const [selectedWidgets, setSelectedWidgets] = useState<WidgetId[]>(() => {
+    try {
+      const saved = localStorage.getItem(LS_KEY);
+      return saved ? (JSON.parse(saved) as WidgetId[]) : DEFAULT_WIDGETS;
+    } catch { return DEFAULT_WIDGETS; }
+  });
+  const [pickMode, setPickMode] = useState(false);
+
   useEffect(() => {
-    const API = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:8001';
-    fetch(`${API}/api/reactivos/?limit=500`)
-      .then(r => r.ok ? r.json() : Promise.reject())
-      .then((data: { fecha: string; caudal_m3_dia: number | null }[]) => {
-        if (!data?.length) return;
-        const byDate = new Map<string, number[]>();
-        for (const row of data) {
-          if (!row.fecha) continue;
-          if (!byDate.has(row.fecha)) byDate.set(row.fecha, []);
-          if (row.caudal_m3_dia != null && row.caudal_m3_dia > 0)
-            byDate.get(row.fecha)!.push(Number(row.caudal_m3_dia));
-        }
-        const dates = Array.from(byDate.keys()).sort().reverse().slice(0, 7);
-        if (!dates.length) return;
-        const vals = dates.map(f => {
-          const arr = byDate.get(f)!;
-          const avg = arr.reduce((a, b) => a + b, 0) / arr.length;
-          return Math.min(100, Math.round(avg / CAUDAL_TARGET_M3 * 100));
-        });
-        const avgEf   = Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
-        const avgCaud = avgEf;
-        setKpis(prev => prev.map(k => {
-          if (k.label === 'Eficiencia Tratamiento') return { ...k, value: avgEf };
-          if (k.label === 'Caudal Procesado')       return { ...k, value: avgCaud };
-          return k;
-        }));
-      })
-      .catch(() => {});
-  }, []);
+    localStorage.setItem(LS_KEY, JSON.stringify(selectedWidgets));
+  }, [selectedWidgets]);
 
-  const handleTargetChange = (idx: number, val: number) => {
-    setKpis(prev => prev.map((k, i) => i === idx ? { ...k, target: val } : k));
+  const toggleWidget = (id: WidgetId) => {
+    setSelectedWidgets(prev =>
+      prev.includes(id) ? prev.filter(w => w !== id) : [...prev, id],
+    );
   };
+
+  // Widgets activos ordenados según el catálogo
+  const activeWidgets = WIDGET_CATALOG.filter(w => selectedWidgets.includes(w.id));
 
   return (
     <div className="dashboard">
@@ -65,8 +67,8 @@ export default function DashboardPage({ canEdit }: Props) {
           <div className="dash-plant-badge">Planta: <strong>PTAR-01</strong></div>
           <a
             href={getReporteDashboardHtmlUrl({
-              fecha_inicio: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
-              fecha_fin: new Date().toISOString().slice(0, 10),
+              fecha_inicio: FECHA_INICIO,
+              fecha_fin: FECHA_FIN,
             })}
             target="_blank"
             rel="noopener noreferrer"
@@ -76,8 +78,8 @@ export default function DashboardPage({ canEdit }: Props) {
           </a>
           <a
             href={getReportePdfUrl({
-              fecha_inicio: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
-              fecha_fin: new Date().toISOString().slice(0, 10),
+              fecha_inicio: FECHA_INICIO,
+              fecha_fin: FECHA_FIN,
               tipo: 'completo',
             })}
             target="_blank"
@@ -86,6 +88,20 @@ export default function DashboardPage({ canEdit }: Props) {
           >
             ↓ PDF últimos 30 días
           </a>
+
+          {/* Botón Widgets */}
+          <button
+            onClick={() => setPickMode(v => !v)}
+            style={{
+              background: pickMode ? '#21262d' : '#21262d',
+              color: pickMode ? '#58a6ff' : '#8b949e',
+              border: `1px solid ${pickMode ? '#58a6ff' : '#30363d'}`,
+              padding: '6px 14px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+            }}
+          >
+            🧩 Widgets
+          </button>
+
           {canEdit && (
             <button
               onClick={() => navigate(ROUTES.ENCARGADO_REGISTROS)}
@@ -95,55 +111,72 @@ export default function DashboardPage({ canEdit }: Props) {
               📋 Registros Operarios
             </button>
           )}
-          {canEdit && (
-            <button
-              className={`edit-toggle-btn ${editMode ? 'active' : ''}`}
-              onClick={() => setEditMode(v => !v)}
-            >
-              {editMode ? (
-                <><span>✓</span> Guardar</>
-              ) : (
-                <><span>✎</span> Editar</>
-              )}
-            </button>
-          )}
           {!canEdit && (
             <span className="readonly-badge">Solo lectura</span>
           )}
         </div>
       </div>
 
-      {/* KPI Gauges row */}
-      <section className="dash-section">
-        <div className="section-title">Indicadores Clave de Desempeño</div>
-        <div className="kpi-row">
-          {kpis.map((kpi, i) => (
-            <div key={kpi.label} className="kpi-card">
-              <KpiGauge
-                label={kpi.label}
-                value={kpi.value}
-                target={kpi.target}
-                unit={kpi.unit}
-                color={kpi.color}
-                size={150}
-              />
-              {editMode && (
-                <div className="kpi-edit-row">
-                  <label className="kpi-edit-label">Meta:</label>
-                  <input
-                    type="number"
-                    className="kpi-edit-input"
-                    value={kpi.target}
-                    min={0} max={100}
-                    onChange={e => handleTargetChange(i, Number(e.target.value))}
-                  />
-                  <span>%</span>
-                </div>
-              )}
-            </div>
-          ))}
+      {/* Panel de selección de widgets */}
+      {pickMode && (
+        <div style={panelStyle.container}>
+          <div style={panelStyle.header}>
+            <span style={{ color: '#e6edf3', fontWeight: 600, fontSize: 13 }}>Selecciona las gráficas a mostrar</span>
+            <button onClick={() => setPickMode(false)} style={panelStyle.closeBtn}>Cerrar ✕</button>
+          </div>
+          <div style={panelStyle.chips}>
+            {WIDGET_CATALOG.map(w => {
+              const active = selectedWidgets.includes(w.id);
+              return (
+                <button
+                  key={w.id}
+                  onClick={() => toggleWidget(w.id)}
+                  title={w.description}
+                  style={{
+                    ...panelStyle.chip,
+                    background: active ? `${w.color}22` : '#21262d',
+                    border: `1px solid ${active ? w.color : '#30363d'}`,
+                    color: active ? w.color : '#8b949e',
+                  }}
+                >
+                  {w.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </section>
+      )}
+
+      {/* Indicadores reales */}
+      <RealKpiSection />
+
+      {/* Sección de widgets seleccionados */}
+      {activeWidgets.length > 0 && (
+        <section className="dash-section">
+          <div className="section-title">Gráficas seleccionadas</div>
+          <div style={gridStyle}>
+            {activeWidgets.map(w => (
+              <div key={w.id} style={cardStyle}>
+                {/* Card header */}
+                <div style={{ ...cardHeaderStyle, borderBottom: `2px solid ${w.color}` }}>
+                  <span style={{ color: w.color, fontWeight: 600, fontSize: 13 }}>{w.label}</span>
+                  <button
+                    onClick={() => toggleWidget(w.id)}
+                    title="Quitar gráfica"
+                    style={removeBtn}
+                  >
+                    ✕
+                  </button>
+                </div>
+                {/* Card body */}
+                <div style={{ padding: '8px 4px 4px' }}>
+                  {renderWidget(w.id, FECHA_INICIO, FECHA_FIN)}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Footer info */}
       <div className="dash-footer">
@@ -155,3 +188,72 @@ export default function DashboardPage({ canEdit }: Props) {
     </div>
   );
 }
+
+// ── Estilos inline ─────────────────────────────────────────────────────────────
+
+const panelStyle = {
+  container: {
+    background: '#161b22',
+    border: '1px solid #30363d',
+    borderRadius: 8,
+    padding: '12px 16px',
+    margin: '0 0 12px',
+  } as React.CSSProperties,
+  header: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  } as React.CSSProperties,
+  chips: {
+    display: 'flex',
+    flexWrap: 'wrap' as const,
+    gap: 8,
+  } as React.CSSProperties,
+  chip: {
+    padding: '5px 12px',
+    borderRadius: 20,
+    fontSize: 12,
+    fontWeight: 600,
+    cursor: 'pointer',
+    transition: 'all 0.15s',
+  } as React.CSSProperties,
+  closeBtn: {
+    background: 'none',
+    border: 'none',
+    color: '#8b949e',
+    fontSize: 12,
+    cursor: 'pointer',
+  } as React.CSSProperties,
+};
+
+const gridStyle: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(2, 1fr)',
+  gap: 16,
+};
+
+const cardStyle: React.CSSProperties = {
+  background: '#161b22',
+  border: '1px solid #30363d',
+  borderRadius: 10,
+  overflow: 'hidden',
+};
+
+const cardHeaderStyle: React.CSSProperties = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  padding: '8px 12px',
+  background: '#0d1117',
+};
+
+const removeBtn: React.CSSProperties = {
+  background: 'none',
+  border: 'none',
+  color: '#8b949e',
+  fontSize: 12,
+  cursor: 'pointer',
+  padding: '2px 4px',
+  borderRadius: 4,
+};

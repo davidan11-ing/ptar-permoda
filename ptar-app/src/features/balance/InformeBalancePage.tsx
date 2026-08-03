@@ -15,7 +15,7 @@ const SECCIONES: { key: SeccionKey; label: string }[] = [
   { key: 'balance',      label: 'Balance General' },
   { key: 'eficiencia',   label: 'Eficiencia del Sistema' },
   { key: 'indicadores',  label: 'Indicadores de Producción' },
-];
+]; void SECCIONES;
 
 export default function InformeBalancePage() {
   const p       = new URLSearchParams(window.location.search);
