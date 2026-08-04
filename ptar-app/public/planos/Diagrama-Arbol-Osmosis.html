@@ -7,7 +7,7 @@
 <style>
   :root{
     --ink:#2C2C2A; --mut:#5F5E5A; --line:#B7B5AC;
-    --teal:#0F6E56; --tealD:#04342C; --tealM:#1D9E75; --tealL:#E1F5EE;
+    --teal:#1f6feb; --tealD:#071828; --tealM:#3d8edd; --tealL:#dbeafe;
     --amber:#854F0B; --amberL:#FAEEDA; --red:#A32D2D; --redL:#FCEBEB;
     --blue:#185FA5; --blueL:#E6F1FB; --purp:#534AB7; --purpL:#EEEDFE;
   }
@@ -52,14 +52,14 @@
   .node .more{position:absolute;top:7px;right:9px;font-size:9px;opacity:.65}
   .n-hmi{background:linear-gradient(180deg,#5F55C9,#4A41A5);color:#fff;min-width:250px}
   .n-hmi .ss{color:#D6D3F8}
-  .n-plc{background:linear-gradient(180deg,#0A5844,#04342C);color:#fff;min-width:330px;border:2px solid var(--tealM)}
-  .n-plc .ss{color:#9FE1CB}
+  .n-plc{background:linear-gradient(180deg,#0a2a50,#071828);color:#fff;min-width:330px;border:2px solid #3d8edd}
+  .n-plc .ss{color:#a0c4e8}
   .n-peer{background:#fff;border:2px dashed #F0997B;color:#712B13;min-width:140px}
   .n-peer .ss{color:#993C1D}
   .card{background:#fff;border:1.5px solid #DCEFE7;border-radius:14px;width:200px;box-shadow:0 3px 10px rgba(0,0,0,.10);overflow:hidden;transition:box-shadow .12s}
   .card:hover{box-shadow:0 6px 18px rgba(0,0,0,.16)}
-  .card>.chead{background:linear-gradient(180deg,#E9F7F1,#DCF1E7);color:var(--tealD);padding:9px 11px;border-bottom:1.5px solid #DCEFE7;cursor:pointer;position:relative}
-  .card>.chead:hover{background:#D2EFE2}
+  .card>.chead{background:linear-gradient(180deg,#EEF4FB,#DDE8F5);color:var(--tealD);padding:9px 11px;border-bottom:1.5px solid #C8D9EC;cursor:pointer;position:relative}
+  .card>.chead:hover{background:#C8DDF5}
   .card .tt{font-weight:bold;font-size:12.5px;display:flex;gap:6px;align-items:center}
   .card .ss{font-size:8.8px;color:var(--teal);margin-top:3px;line-height:1.5}
   .card .more{position:absolute;top:6px;right:8px;font-size:9px;color:var(--tealM)}
@@ -80,18 +80,18 @@
   .xl:hover{color:#1D9E75}
   .tagrow .xl{background:var(--tealL);color:var(--teal);text-decoration:none}
   /* área coloring del tablero */
-  .card[data-area="400"]>.chead{background:linear-gradient(180deg,#E1F5EE,#CCF0E2);border-top:3px solid #0F6E56}
+  .card[data-area="400"]>.chead{background:linear-gradient(180deg,#EEF4FB,#D4E6F5);border-top:3px solid #1f6feb}
   .card[data-area="500"]>.chead{background:linear-gradient(180deg,#E6F1FB,#D0E8F9);border-top:3px solid #185FA5}
   .card[data-area="5d"]>.chead{background:linear-gradient(180deg,#FAEEDA,#F5E0BF);border-top:3px solid #854F0B}
   .card[data-area="600"]>.chead{background:linear-gradient(180deg,#EEEDFE,#E0DEFF);border-top:3px solid #534AB7}
   /* guía de arquitectura */
   #archguide{padding:0 0 20px;margin:0 auto 4px}
-  .archguide-inner{background:linear-gradient(135deg,#04342C 60%,#06463B);color:#9FE1CB;border-radius:14px;padding:14px 18px;display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start;box-shadow:0 3px 12px rgba(4,52,44,.25)}
+  .archguide-inner{background:linear-gradient(135deg,#071828 60%,#0d1b2a);color:#a0c4e8;border-radius:14px;padding:14px 18px;display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start;box-shadow:0 3px 12px rgba(4,14,40,.35)}
   .ag-layer{background:rgba(255,255,255,.08);border-radius:10px;padding:8px 12px;font-size:11px;text-align:center;min-width:140px}
   .ag-layer .ag-title{font-size:9px;opacity:.65;letter-spacing:.5px;text-transform:uppercase;margin-bottom:3px}
   .ag-layer b{display:block;font-size:12.5px;color:#fff}
   .ag-layer small{display:block;opacity:.75;font-size:9.5px;margin-top:2px;line-height:1.4}
-  .ag-arr{color:#5DCAA5;font-size:16px;padding:14px 2px 0;align-self:flex-start}
+  .ag-arr{color:#58a6ff;font-size:16px;padding:14px 2px 0;align-self:flex-start}
   .ag-slaves{display:flex;flex-wrap:wrap;gap:6px;align-items:flex-start}
   .ag-slave{border-radius:8px;padding:5px 10px;font-size:10px;text-align:center;white-space:nowrap}
   .ag-slave b{display:block;font-size:11px}
@@ -102,7 +102,7 @@
   .tree li.areasep::before,.tree li.areasep::after{display:none!important}
   .areasep-inner{font-size:9px;font-weight:bold;letter-spacing:.6px;text-transform:uppercase;color:#5F5E5A;background:#F0EDE4;border:1px solid #D9EDE4;border-radius:20px;padding:2px 12px;white-space:nowrap;margin-top:2px}
   .tagrow .xl:hover{background:#C5EBDC}
-  .seqon{outline:3px solid #1D9E75;box-shadow:0 0 10px rgba(29,158,117,.75);border-radius:8px}
+  .seqon{outline:3px solid #1f6feb;box-shadow:0 0 10px rgba(31,111,235,.65);border-radius:8px}
   .seqw{outline:2px dashed #EF9F27}
   .sdim{opacity:.14;filter:grayscale(.5)}
   body.wmode .eq:not(.hasw){opacity:.12;filter:grayscale(.6)}
@@ -157,8 +157,8 @@
   .rot{stroke:#8B897F;stroke-width:2.4;stroke-linecap:round}
   g.apmp.on .rot{stroke:#0F6E56;animation:aspin 1s linear infinite;transform-box:fill-box;transform-origin:center}
   @keyframes aspin{to{transform:rotate(360deg)}}
-  .vfdbox{fill:#04342C} .vfdtx{fill:#9FE1CB;font:bold 11px Arial}
-  g.apmp.on .vfdbox{fill:#0F6E56}
+  .vfdbox{fill:#061428} .vfdtx{fill:#58a6ff;font:bold 11px Arial}
+  g.apmp.on .vfdbox{fill:#1a4d8a}
   .sens{fill:#fff;stroke:#BA7515;stroke-width:2}
   .senst{font:bold 10.5px Arial;fill:#5F5E5A}
   g.asen.watch .sens{animation:apulse 1.1s ease-in-out infinite}
@@ -167,22 +167,22 @@
   .wire{stroke:#D8D5CB;stroke-width:1.8;fill:none}
   .wled{fill:#D8D5CB}
   .wlab{font:bold 10.5px Consolas,monospace;fill:#8B897F;cursor:pointer;paint-order:stroke;stroke:#FBFAF7;stroke-width:3px}
-  g.awr:hover .wlab{fill:#04342C}
+  g.awr:hover .wlab{fill:#1f6feb}
   g.awr:hover .wire{stroke:#8B897F}
-  g.awr.hot:hover .wire{stroke:#0F6E56}
-  g.awr.hot .wire{stroke:#1D9E75;stroke-width:2.2;stroke-dasharray:7 5;animation:adash .7s linear infinite}
-  g.awr.hot .wled{fill:#1D9E75}
-  g.awr.hot .wlab{fill:#0F6E56}
+  g.awr.hot:hover .wire{stroke:#3d8edd}
+  g.awr.hot .wire{stroke:#3d8edd;stroke-width:2.2;stroke-dasharray:7 5;animation:adash .7s linear infinite}
+  g.awr.hot .wled{fill:#3d8edd}
+  g.awr.hot .wlab{fill:#1f6feb}
   .tankb{fill:#F4F8FB;stroke:#8B897F;stroke-width:2}
   .tankw{fill:#B5D4F4;opacity:.75}
   .albl{font:bold 11.5px Arial;fill:#2C2C2A}
   .albs{font:10px Arial;fill:#5F5E5A}
   .memb{fill:#EAF2FB;stroke:#185FA5;stroke-width:2.2}
-  .plcb{fill:#04342C} .plct{fill:#9FE1CB;font:bold 12px Arial}
+  .plcb{fill:#061428} .plct{fill:#58a6ff;font:bold 12px Arial}
   [data-id]{cursor:pointer}
   .stepchip{font:bold 11px Arial;fill:#fff}
   /* MODAL */
-  #ovl{position:fixed;inset:0;background:rgba(4,52,44,.55);backdrop-filter:blur(2px);display:none;z-index:50}
+  #ovl{position:fixed;inset:0;background:rgba(4,14,28,.55);backdrop-filter:blur(2px);display:none;z-index:50}
   #ovl.on{display:flex;align-items:center;justify-content:center;padding:26px}
   #dlg{background:#fff;border-radius:16px;max-width:700px;width:100%;max-height:86vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.4);overflow:hidden;animation:pop .18s ease}
   @keyframes pop{from{transform:scale(.94);opacity:0}to{transform:none;opacity:1}}
@@ -198,14 +198,14 @@
   .kv{display:grid;grid-template-columns:130px 1fr;gap:4px 12px;margin:4px 0}
   .kv b{color:var(--mut);font-weight:bold;font-size:11px}
   .kv span{color:var(--ink)}
-  .io{font-family:Consolas,Menlo,monospace;font-size:11.5px;background:#F4F8F6;border-radius:5px;padding:1px 6px;color:#0A5844}
+  .io{font-family:Consolas,Menlo,monospace;font-size:11.5px;background:#EEF4FB;border-radius:5px;padding:1px 6px;color:#1a5a8a}
   .rdt{width:100%;border-collapse:collapse;font-size:11px;margin-top:5px}
-  .rdt th{background:#EAF4EF;color:#04342C;text-align:left;padding:5px 7px;font-size:9.5px;letter-spacing:.2px;text-transform:uppercase;border-bottom:1px solid #CFE7DC;white-space:nowrap}
-  .rdt td{padding:5px 7px;border-bottom:1px solid #EDF3F0;vertical-align:top;color:var(--ink)}
+  .rdt th{background:#E8F1FA;color:#071828;text-align:left;padding:5px 7px;font-size:9.5px;letter-spacing:.2px;text-transform:uppercase;border-bottom:1px solid #C4D9EC;white-space:nowrap}
+  .rdt td{padding:5px 7px;border-bottom:1px solid #EDF2F7;vertical-align:top;color:var(--ink)}
   .rdt td.io{font-size:10.5px}
   .rdt small{color:#7A8A83}
-  .rdt tbody tr:hover{background:#F8FBF9}
-  .rdnote{font-size:10.5px;line-height:1.5;color:#3A5A50;background:#F4F8F6;border:1px solid #D9EDE4;border-radius:8px;padding:8px 11px;margin-top:8px}
+  .rdt tbody tr:hover{background:#EEF4FB}
+  .rdnote{font-size:10.5px;line-height:1.5;color:#2A4A6A;background:#EEF4FB;border:1px solid #C4D9EC;border-radius:8px;padding:8px 11px;margin-top:8px}
   .wbox{background:var(--redL);color:#793030;border-radius:9px;padding:9px 12px;margin-top:8px;font-size:12px}
   .wbox b{color:#501313}
   .nbox{background:var(--amberL);color:var(--amber);border-radius:9px;padding:9px 12px;margin-top:8px;font-size:12px}
@@ -234,7 +234,7 @@
   <span style="color:#9A9890">| CIP transversal</span>
   <div class="lg">
     <span style="background:var(--purpL);color:var(--purp)">HMI</span>
-    <span style="background:#0A5844;color:#9FE1CB">PLC/TABLERO</span>
+    <span style="background:#0a1d35;color:#a0c4e8">PLC/TABLERO</span>
     <span style="background:var(--tealL);color:var(--teal)">BOMBA</span>
     <span style="background:var(--blueL);color:var(--blue)">VÁLVULA</span>
     <span style="background:var(--amberL);color:var(--amber)">INSTRUM.</span>
@@ -247,7 +247,7 @@
   <select id="seqSel"><option value="">— apagado —</option><option value="ro1">Tren RO1 — pasos reales del PLC (FC3)</option><option value="ro2">Tren RO2 — pasos reales del PLC (FC4)</option><option value="sf">Regeneración suavizador — pasos reales (FC57)</option><option value="cip">Limpieza CIP — etapas conceptuales (FC5)</option><option value="cf">Química continua — etapas conceptuales (FC6)</option></select>
   <select id="stepSel" style="display:none"></select>
   <button id="playBtn" class="sbtn" style="display:none" onclick="playToggle()">▶ Reproducir</button>
-  <span class="seqleg" id="seqleg" style="display:none"><i style="background:#1D9E75"></i>activo <i style="border:2px dashed #EF9F27;background:transparent"></i>vigilado <i style="background:#5F5E5A;opacity:.4"></i>inactivo</span>
+  <span class="seqleg" id="seqleg" style="display:none"><i style="background:#1f6feb"></i>activo <i style="border:2px dashed #EF9F27;background:transparent"></i>vigilado <i style="background:#5F5E5A;opacity:.4"></i>inactivo</span>
   <span id="seqTxt">Elige una secuencia y recorre sus pasos: el árbol ilumina qué equipos actúan y qué señales se vigilan en cada momento.</span>
 </div>
 <div id="viewport"><div id="canvas"><div class="tree" id="tree"></div><div class="tree" id="tree2" style="display:none"></div></div></div>
@@ -297,7 +297,7 @@ const IC = {
   net:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="5" r="2.6" stroke="currentColor" stroke-width="2"/><circle cx="5" cy="19" r="2.6" stroke="currentColor" stroke-width="2"/><circle cx="19" cy="19" r="2.6" stroke="currentColor" stroke-width="2"/><path d="M10.5 7L6 16.5M13.5 7L18 16.5M7.6 19h8.8" stroke="currentColor" stroke-width="2"/></svg>'
 };
 const TYPE_NAME = {b:'Bomba / motor', v:'Válvula', i:'Instrumento', s:'Switch / seguridad', x:'Paro de emergencia'};
-const TYPE_HEAD = {b:'#0F6E56', v:'#185FA5', i:'#854F0B', s:'#5F5E5A', x:'#A32D2D', plc:'#04342C', hmi:'#534AB7', peer:'#993C1D'};
+const TYPE_HEAD = {b:'#1a5fa0', v:'#185FA5', i:'#854F0B', s:'#5F5E5A', x:'#A32D2D', plc:'#071828', hmi:'#534AB7', peer:'#993C1D'};
 
 /* ================= BASE DE DATOS ================= */
 /* Equipo: t=tag, s=sub, y=tipo, fn=función, kw, io, vr=variables, lg=lógica, wn=hallazgo, nt=nota */
