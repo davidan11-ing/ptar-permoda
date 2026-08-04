@@ -103,10 +103,11 @@ const Dh = ({ w, h, pct = 0.63 }: { w: number; h: number; pct?: number }) => {
 function VibratoriaStage({ eq, motorLabel, svgLabel, showFinosLabel = false }:
   { eq: EqDef; motorLabel: string; svgLabel: string; showFinosLabel?: boolean }) {
   const { isDark } = useTheme();
-  const innerDrum = isDark ? '#0f2535' : '#1e3a5a';
+  const innerDrum = isDark ? '#0f2535' : '#b0c8e4';
+  const ltG = isDark ? 'url(#tankG)' : 'url(#tankGL)';
   return <>
     <SD eq={eq} cx={24} cy={-88}/>
-    <circle cx="0" cy="-42" r="38" fill={tG} stroke="#2a5a70" strokeWidth="1.5" className="eq-b"/>
+    <circle cx="0" cy="-42" r="38" fill={ltG} stroke="#2a5a70" strokeWidth="1.5" className="eq-b"/>
     <circle cx="0" cy="-88" r="5.5" fill="#1a3040" stroke="#2a5a70" strokeWidth="1"/>
     <text x="0" y="-85" textAnchor="middle" fill="#4a8aaa" fontSize="5" fontWeight="700">{motorLabel}</text>
     <line x1="0" y1="-83" x2="0" y2="-76" stroke="#2a5a70" strokeWidth="1.2"/>
@@ -127,13 +128,15 @@ function VibratoriaStage({ eq, motorLabel, svgLabel, showFinosLabel = false }:
 function MBRTank({ eq, svgLabel, borderColor, labelColor, innerStroke, waterOpacity = '.45', animDelay }:
   { eq: EqDef; svgLabel: string; borderColor: string; labelColor: string; innerStroke: string; waterOpacity?: string; animDelay?: string }) {
   const { isDark } = useTheme();
+  const ltG = isDark ? 'url(#tankG)' : 'url(#tankGL)';
+  const memFill = isDark ? '#1a3550' : '#a8c0d8';
   return <>
     <SD eq={eq} cx={32} cy={-82}/>
-    <rect x="-32" y="-82" width="64" height="82" rx="3" fill={tG} stroke={borderColor} strokeWidth="1.5" className="eq-b"/>
+    <rect x="-32" y="-82" width="64" height="82" rx="3" fill={ltG} stroke={borderColor} strokeWidth="1.5" className="eq-b"/>
     <rect x="-30" y="-55" width="60" height="53" fill={wG} opacity={waterOpacity}/>
     {[-24,-8,8,24].map(bx=>(
       <g key={bx} className="mem" style={animDelay ? {animationDelay: animDelay} : undefined}>
-        <rect x={bx-6} y="-52" width="12" height="48" rx="2" fill="#1a3550" stroke={innerStroke} strokeWidth="1"/>
+        <rect x={bx-6} y="-52" width="12" height="48" rx="2" fill={memFill} stroke={innerStroke} strokeWidth="1"/>
       </g>
     ))}
     <text y="13" textAnchor="middle" fill={labelColor} fontSize="9" fontWeight="700" fontFamily="monospace">{svgLabel}</text>
@@ -145,8 +148,8 @@ function MBRTank({ eq, svgLabel, borderColor, labelColor, innerStroke, waterOpac
 function ROStage({ eq, svgLabel, animDelayMultiplier, compact = false }:
   { eq: EqDef; svgLabel: string; animDelayMultiplier: number; compact?: boolean }) {
   const { isDark } = useTheme();
-  const roBody   = isDark ? '#081420' : '#1a2e52';
-  const roTube   = isDark ? '#0c1d30' : '#1e3050';
+  const roBody   = isDark ? '#081420' : '#c0d4ec';
+  const roTube   = isDark ? '#0c1d30' : '#aac0e0';
   const roStroke = isDark ? '#1f6feb60' : '#1f6febb0';
   const h    = compact ? 88  : 110;
   const cy   = compact ? -86 : -108;
@@ -271,12 +274,13 @@ export default function SplashScreen() {
     const cIonicLabel = isDark ? '#c084fc' : '#7c3aed';
     const cCyanText   = isDark ? '#00c5e3' : '#006d84';
     const cPhasePreli = isDark ? '#3ab8cc' : '#0a6b7a';
-    const cDrumFill  = isDark ? '#071520' : '#1e3a5a';
-    const cRo2Body   = isDark ? '#140808' : '#3a1010';
-    const cFiltAK    = isDark ? '#0e1a18' : '#1a2e28';
-    const cIonicBody = isDark ? '#120a18' : '#28103a';
-    const cCajaVert  = isDark ? '#1e0808' : '#3e1010';
-    const cProdBody  = isDark ? '#071a10' : '#0e2a16';
+    const tG         = isDark ? 'url(#tankG)' : 'url(#tankGL)';
+    const cDrumFill  = isDark ? '#071520' : '#b0c8e4';
+    const cRo2Body   = isDark ? '#140808' : '#e8c0c0';
+    const cFiltAK    = isDark ? '#0e1a18' : '#b8d4ce';
+    const cIonicBody = isDark ? '#120a18' : '#d4c0e8';
+    const cCajaVert  = isDark ? '#1e0808' : '#e8c0c0';
+    const cProdBody  = isDark ? '#071a10' : '#b8d8c0';
     const cStrkGreen60 = isDark ? '#3fb95060' : '#3fb950b0';
     const cStrkGreen50 = isDark ? '#3fb95050' : '#3fb950b0';
     const cStrkAmber60 = isDark ? '#d2992260' : '#d29922b0';
@@ -292,6 +296,9 @@ export default function SplashScreen() {
           <defs>
             <linearGradient id="tankG" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#1a3d54"/><stop offset="100%" stopColor="#0b2233"/>
+            </linearGradient>
+            <linearGradient id="tankGL" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#d4e6f8"/><stop offset="100%" stopColor="#bcd4ee"/>
             </linearGradient>
             <linearGradient id="waterG" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#00c5e3" stopOpacity=".8"/>
