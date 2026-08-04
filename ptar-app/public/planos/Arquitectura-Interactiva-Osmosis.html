@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arquitectura del proceso — Osmosis Inversa Permoda</title>
+<style>
+  :root{
+    --ink:#2C2C2A; --mut:#5F5E5A; --faint:#9A9890;
+    --teal:#0F6E56; --tealD:#04342C; --tealM:#1D9E75; --tealL:#E1F5EE;
+    --grayL:#F4F2EC; --amber:#854F0B; --amberL:#FAEEDA;
+    --red:#A32D2D; --redL:#FCEBEB; --blue:#185FA5; --blueL:#E6F1FB;
+    --purp:#534AB7; --purpL:#EEEDFE;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Arial,Helvetica,sans-serif;color:var(--ink);background:#fff}
+  header{background:var(--tealD);color:#fff;padding:22px 28px 16px;position:sticky;top:0;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+  header h1{margin:0;font-size:20px}
+  header .sub{color:#9FE1CB;font-size:12.5px;margin-top:4px}
+  .bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}
+  .bar input{flex:1;min-width:220px;padding:8px 12px;border-radius:8px;border:1px solid #1D9E75;background:#06463B;color:#fff;font-size:13px;outline:none}
+  .bar input::placeholder{color:#5DCAA5}
+  .bar button{padding:8px 14px;border-radius:8px;border:1px solid #1D9E75;background:transparent;color:#9FE1CB;font-size:12.5px;cursor:pointer}
+  .bar button:hover{background:#0F6E56;color:#fff}
+  .legend{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .legend .chip{font-size:10.5px}
+  .stats{color:#5DCAA5;font-size:11.5px;margin-top:8px}
+  main{max-width:1080px;margin:0 auto;padding:20px 24px 60px}
+  details{margin:6px 0;border-radius:10px}
+  details>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:10px;background:var(--grayL);border:1px solid #E3E0D6;transition:background .15s}
+  details>summary:hover{background:#ECE9DF}
+  details>summary::before{content:"▸";font-size:11px;color:var(--faint);transition:transform .15s;flex:0 0 auto}
+  details[open]>summary::before{transform:rotate(90deg)}
+  details>*:not(summary){margin-left:22px;border-left:2px solid #E3E0D6;padding-left:14px}
+  .t{font-weight:bold;font-size:13.5px}
+  .s{color:var(--mut);font-size:11.5px}
+  .chip{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:bold;letter-spacing:.4px;flex:0 0 auto}
+  .c-plc{background:var(--tealD);color:#9FE1CB}
+  .c-hmi{background:var(--purpL);color:var(--purp)}
+  .c-b{background:var(--tealL);color:var(--teal)}
+  .c-v{background:var(--blueL);color:var(--blue)}
+  .c-i{background:var(--amberL);color:var(--amber)}
+  .c-s{background:#EAE8E0;color:var(--mut)}
+  .c-p{background:var(--purpL);color:var(--purp)}
+  .c-x{background:var(--redL);color:var(--red)}
+  .lvl0>summary{background:var(--tealD);border-color:var(--tealD)}
+  .lvl0>summary .t{color:#fff;font-size:15px}
+  .lvl0>summary .s{color:#9FE1CB}
+  .lvl0>summary::before{color:#5DCAA5}
+  .tab>summary{background:var(--tealL);border-color:#BFE8D9}
+  .tab>summary:hover{background:#D2EFE4}
+  .tab>summary .t{color:var(--tealD)}
+  .grp>summary{background:#fff;border-style:dashed}
+  .det{background:#fff;border:1px solid #EDEAE0;border-radius:8px;padding:8px 12px;margin:6px 0;font-size:12px;color:var(--mut);line-height:1.55}
+  .det b{color:var(--ink)}
+  .det .k{color:var(--teal);font-weight:bold}
+  .io{font-family:Consolas,Menlo,monospace;font-size:11.5px;color:var(--ink)}
+  .warn{color:var(--red);font-weight:bold}
+  .note{background:var(--amberL);color:var(--amber);border:none}
+  mark{background:#FAC775;border-radius:3px;padding:0 2px}
+  footer{max-width:1080px;margin:0 auto;padding:0 24px 40px;color:var(--faint);font-size:11px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Arquitectura del proceso — Ósmosis Inversa Permoda</h1>
+  <div class="sub">Jerarquía completa: supervisión → PLC principal → tableros → equipos → variables y lógica. Fuente: memorias de análisis (jul-2026).</div>
+  <div class="bar">
+    <input id="q" type="text" placeholder="Buscar equipo, dirección o variable… ej: BCE504, Q30.0, LT507, FC3">
+    <button onclick="setAll(true)">Expandir todo</button>
+    <button onclick="setAll(false)">Colapsar todo</button>
+  </div>
+  <div class="legend">
+    <span class="chip c-hmi">SUPERVISIÓN</span><span class="chip c-plc">PLC</span><span class="chip c-b">BOMBA / MOTOR</span><span class="chip c-v">VÁLVULA</span><span class="chip c-i">INSTRUMENTO</span><span class="chip c-s">SWITCH / SEGURIDAD</span><span class="chip c-p">PROGRAMA</span>
+  </div>
+  <div class="stats">8 tableros · 61 motores (5 con variador) · 32 válvulas + 4 solenoides neumáticos · 24 instrumentos 4-20 mA · 31 switches · 406 direcciones E/S verificadas</div>
+</header>
+<main id="tree">
+
+<details class="lvl0" open><summary><span class="chip c-hmi">SUPERVISIÓN</span><span class="t">HMI TP1200 Comfort + acceso remoto</span><span class="s">Ethernet 192.168.3.x · en puerta del tablero principal</span></summary>
+  <div class="det"><span class="k">Red:</span> HMI <span class="io">192.168.3.30</span> · CPU <span class="io">192.168.3.31</span> · switch MOXA EDS-205A · CBOX-G <span class="io">.253</span> · router 4G HF9606 <span class="io">.254</span> → Internet (⚠ acceso remoto instalado — verificar control de acceso).</div>
+  <div class="det"><span class="k">Cómo opera:</span> lee/escribe directo los DB1 «MV» y DB2 «AIO». Mandos: <b>RO1.cmd / RO2.cmd</b> (1=marcha, 2=paro), <b>CIPSTART/CIPSELECT</b>, <b>CFSTART</b>. Manual por equipo: <b>OP_AM + OP_Start</b>. Ajustes: SET1-28 (alarmas), SFT1-8 (tiempos SF), RO1T1/RO2T1 (720 min), consignas de velocidad BCExxxS. Diagnóstico: step y cdn[] de cada secuencia. ⚠ La marca <b>Test (M5.0)</b> simula todo el campo y es escribible desde HMI.</div>
+</details>
+
+<details class="lvl0" open><summary><span class="chip c-plc">PLC MAESTRO</span><span class="t">S7-1500 CPU 1512SP-1 PN — tablero principal LCP4.1</span><span class="s">100% de la lógica de proceso · CM DP maestro PROFIBUS 187.5 kbit/s</span></summary>
+
+  <details><summary><span class="chip c-p">PROGRAMA</span><span class="t">Estructura del programa (OB1)</span><span class="s">capas: secuencias → drivers de equipo → soporte → diagnóstico</span></summary>
+    <div class="det"><span class="k">Secuencias (deciden QUÉ encender):</span> <b>FC3 RO1</b> y <b>FC4 RO2</b> (pasos 0→10 alimentación→11 permisos→12 booster→13-14 rampas HP→<b>15 producción 720 min</b>→21-26 rampa+flush→27); <b>FC57 Filter ×3</b> (servicio 11-12 · regeneración NaCl 20-26 con tiempos SFT2-7, una unidad a la vez); <b>FC5 CIP</b> (recetas SF/RO1/RO2); <b>FC6 CF</b> (química continua).</div>
+    <div class="det"><span class="k">Drivers (deciden SI se puede):</span> FC51 Motor · FC52 Válvula · FC61 Válvula motorizada · FC53 AI (escala + alarmas) · FC54 AO. Autorizan con ¬FLT · ¬Bad · RMT y modo auto/manual.</div>
+    <div class="det"><span class="k">Datos:</span> <b>DB1 «MV»</b> = struct de cada equipo (RMT/Runing/FLT/Bad/RDY/ON) + secuenciadores + tiempos. <b>DB2 «AIO»</b> = PV de 24 instrumentos + SET1-28 + consignas/rampas de velocidad + totalizadores m³.</div>
+    <div class="det"><span class="k">Soporte y diagnóstico:</span> FC50 (pulsos de tiempo, alternancia A/B cada 24 h), FC2 (heartbeat de tableros ~6 s + ESTOP → fuerza .Bad), FC100 GET/PUT con PLCs pares. <span class="warn">Pendiente: PT/FT calculados que no disparan (cdn 12-14) · sin remanencia · OB86 vacío.</span></div>
+  </details>
+
+  <details><summary><span class="chip c-plc">PLC PAR</span><span class="t">PLC Evaporator y PLC MBR</span><span class="s">plantas vecinas con control propio — solo intercambio de datos</span></summary>
+    <div class="det"><span class="k">Comunicación:</span> S7 GET/PUT cada 1 s (FC100). PUT → Evaporator: 100 bytes desde DB1000. GET ← MBR: 100 bytes hacia DB1001. <span class="warn">Sin manejo de error: un fallo pasa silencioso.</span></div>
+  </details>
+
+  <details class="tab"><summary><span class="chip c-plc">E/S LOCAL</span><span class="t">Tablero principal LCP4.1 — área 400 (pretratamiento + CIP)</span><span class="s">ET 200SP: 5×DI16 (I0-9) · 2×DQ16 (Q0-3) · AI8 (IW10-24) · AQ2 (QW4) · ESTOP I1.7</span></summary>
+    <details class="grp"><summary><span class="chip c-b">BOMBAS</span><span class="t">17 circuitos de motor</span><span class="s">selector Local-Off-Remote + contactor + guardamotor en cada uno</span></summary>
+      <details><summary><span class="chip c-b">BOMBA</span><span class="t">BCE401 A/B — alimentación RO1 · 30 kW</span><span class="s">pareja con alternancia 24 h</span></summary><div class="det"><span class="k">E/S:</span> <span class="io">A: I5.4-5.6→Q1.6 · B: I6.0-6.2→Q1.7</span> (circ. 15/16)<br><span class="k">Prog:</span> MV.BCE401A/B · <b>FC3 s49</b>: ON en pasos 12-25 con nivel LT401.B2 · reserva por A_AB/B_AB</div></details>
+      <details><summary><span class="chip c-b">BOMBA</span><span class="t">BCE406 — bomba CIP · 15 kW + VFD ACS310</span></summary><div class="det"><span class="k">E/S:</span> <span class="io">I6.3-6.5→Q2.0 · velocidad QW4</span> (circ. 17)<br><span class="k">Prog:</span> MV.BCE406 · <b>FC5 s7-9</b>: CIPSEL·LS406/407L·CIPSTART·CIPRUNT&lt;CIPT1 · rampa AIO.BCE406→consigna por receta (SF 20% / RO1 60% / RO2 25%)</div></details>
+      <details><summary><span class="chip c-b">BOMBA</span><span class="t">BCE507 A/B — alimentación RO2 · 5.5 kW</span></summary><div class="det"><span class="k">E/S:</span> <span class="io">A: I1.1-1.3→Q0.3 · B: I1.4-1.6→Q0.4</span> (circ. 4/5)<br><span class="k">Prog:</span> <b>FC4 s42</b>: pasos 12-25 · LT507.B2 · FCV503.OPN</div></details>
+      <details><summary><span class="chip c-b">BOMBA</span><span class="t">BCE403 A/B — salmuera NaCl · 2.2 kW</span><span class="s">regeneración de suavizadores</span></summary><div class="det"><span class="k">E/S:</span> <span class="io">A: I2.6-3.0→Q0.7 · B: I3.1-3.3→Q1.0</span> (circ. 8/9)<br><span class="k">Prog:</span> <b>FC57 s31-32</b>: paso 22 (inyección de salmuera), enclavada con LS403L</div></details>
+      <details><summary><span class="chip c-b">BOMBA</span><span class="t">BCE405 A/B — regeneración · 2.2 kW</span></summary><div class="det"><span class="k">E/S:</span> <span class="io">A: I3.4-3.6→Q1.1 · B: I4.0-4.2→Q1.2</span> (circ. 10/11)<br><span class="k">Prog:</span> <b>FC57 s33-34</b>: pasos 21-22, 24, 26 de la regeneración</div></details>
+      <details><summary><span class="chip c-b">BOMBA</span><span class="t">BCE513 A/B — transferencia área 600 · 5.5 kW</span></summary><div class="det"><span class="k">E/S:</span> <span class="io">A: I2.0-2.2→Q0.5 · B: I2.3-2.5→Q0.6</span> (circ. 6/7)<br><span class="k">Prog:</span> <b>FC6 s13</b>: permisos CF · LT513.B2 · LT615.B2</div></details>
+      <details><summary><span class="chip c-b">BOMBA</span><span class="t">BCE506 — servicio RO2 · 1.5 kW</span></summary><div class="det"><span class="k">E/S:</span> <span class="io">I4.3-4.5→Q1.3</span> (circ. 12)<br><span class="k">Prog:</span> <b>FC4 s49</b>: con BCE507.Runing</div></details>
+      <details><summary><span class="chip c-b">BOMBA</span><span class="t">BCE404 A/B · 0.75 kW</span></summary><div class="det"><span class="k">E/S:</span> <span class="io">A: I4.6-5.0→Q1.4 · B: I5.1-5.3→Q1.5</span> (circ. 13/14)<br><span class="k">Prog:</span> sin .ON en secuencias — solo manual desde HMI (OP_AM/OP_Start)</div></details>
+      <details><summary><span class="chip c-b">DOSIF.</span><span class="t">BDO402 A/B — dosificación pretratamiento · 0.37 kW</span></summary><div class="det"><span class="k">E/S:</span> <span class="io">A: I0.3-0.5→Q0.1 · B: I0.6-1.0→Q0.2</span> (circ. 2/3)<br><span class="k">Prog:</span> <b>FC3 s55</b>: arranca con la bomba HP RO1 (BCE504.Runing)</div></details>
+      <details><summary><span class="chip c-b">DOSIF.</span><span class="t">BDO408 — dosificación CIP (por pH alto) · 0.37 kW</span></summary><div class="det"><span class="k">E/S:</span> <span class="io">I0.0-0.2→Q0.0</span> (circ. 1)<br><span class="k">Prog:</span> <b>FC5 s13</b>: PH406.B1 · LS408L · BCE406.Runing</div></details>
+    </details>
+    <details class="grp"><summary><span class="chip c-i">INSTRUMENTOS</span><span class="t">6 lazos 4-20 mA (borne 4X, fusible por lazo)</span></summary>
+      <details><summary><span class="chip c-i">NIVEL</span><span class="t">LT401 — tanque de alimentación</span></summary><div class="det"><span class="io">IW18</span> → AIO.LT401 · alarmas SET1-3 · <span class="k">usa:</span> FC3 cdn[8] permiso de arranque, B2 = permiso de bombas</div></details>
+      <details><summary><span class="chip c-i">NIVEL</span><span class="t">LT507 — tanque permeado/intermedio</span></summary><div class="det"><span class="io">IW22</span> · SET7-9, 21 (HH), 22 (M) · <span class="k">usa:</span> FC3 cdn[8], FC4 cdn[8] (B3) y permisos B2</div></details>
+      <details><summary><span class="chip c-i">NIVEL</span><span class="t">LT513 — tanque área 600</span></summary><div class="det"><span class="io">IW24</span> · SET10-12 · <span class="k">usa:</span> FC4 cdn[8] (B1), FC6 CFCDN[0] (B2)</div></details>
+      <details><summary><span class="chip c-i">NIVEL</span><span class="t">LT404</span></summary><div class="det"><span class="io">IW20</span> · SET4-6 · <span class="warn">solo indicación — ningún bloque usa sus bits</span></div></details>
+      <details><summary><span class="chip c-i">pH</span><span class="t">PH406 — pH del CIP</span></summary><div class="det"><span class="io">IW12</span> · <span class="k">usa:</span> FC5 — B1 (alto) dosifica BDO408 · B2 (bajo) dosifica BDO407</div></details>
+      <details><summary><span class="chip c-i">ORP</span><span class="t">ORP401 — cloro en alimentación</span></summary><div class="det"><span class="io">IW10</span> · <span class="k">usa:</span> FC3 cdn[2] — ORP alto <b>dispara RO1</b> (protege membranas de cloro)</div></details>
+    </details>
+    <details class="grp"><summary><span class="chip c-s">SWITCHES</span><span class="t">Niveles de tanques químicos + seguridad</span></summary>
+      <div class="det"><span class="k">LS402</span> <span class="io">I8.0/I8.1</span> (químico RO1, cdn[9]) · <span class="k">LS403</span> <span class="io">I8.2/I8.3</span> (salmuera, FC57) · <span class="k">LS406</span> <span class="io">I8.4/I8.5</span> y <span class="k">LS407</span> <span class="io">I8.6/I8.7</span> (tanques CIP: permiso BCE406 y llenado FCV424/425) · <span class="k">LS408</span> <span class="io">I9.0/I9.1</span> (químico CIP) → bits MV.LSxxxH/L + valor 80/50/20% para HMI</div>
+      <div class="det"><span class="chip c-x">ESTOP</span> <span class="k">LCP41ESTOP</span> <span class="io">I1.7</span> → dispara RO1/RO2 (cdn[15]) y fuerza .Bad en los equipos del área 400</div>
+    </details>
+  </details>
+
+  <details class="tab"><summary><span class="chip c-plc">TABLERO 6</span><span class="t">LCB5.1 — Tren RO1</span><span class="s">esclavo DP 6 · S7-200 ST30 + AE08 + AQ04 · I70-89 / Q30-39 · heartbeat I72.7⇄Q31.7 · ESTOP I71.1</span></summary>
+    <details class="grp"><summary><span class="chip c-b">BOMBAS VFD</span><span class="t">Bombas de alta presión (variadores ACS510)</span></summary>
+      <details><summary><span class="chip c-b">BOMBA VFD</span><span class="t">BCE504 — alta presión RO1 · 45 kW</span></summary><div class="det"><span class="k">E/S:</span> <span class="io">rem I70.2 · run I70.0 · flt I70.1 → start Q30.0 · velocidad QW32</span><br><span class="k">Prog:</span> MV.BCE504 + AIO.BCE504/BCE504S · <b>FC3 s30-32</b>: rampa +0.67%/s hasta consigna (20-60%) en paso 13 · .ON pasos 13-22 (s50) · su Runing habilita las dosificadoras</div></details>
+      <details><summary><span class="chip c-b">BOMBA VFD</span><span class="t">BCE505 — booster RO1 · 15 kW</span></summary><div class="det"><span class="k">E/S:</span> <span class="io">rem I70.5 · run I70.3 · flt I70.4 → start Q30.1 · velocidad QW34</span><br><span class="k">Prog:</span> <b>FC3 s32-34</b>: rampa +4.0%/s en paso 14 · .ON pasos 14-21 (s51)</div></details>
+    </details>
+    <details class="grp"><summary><span class="chip c-v">VÁLVULAS</span><span class="t">Alimentación y flush</span></summary>
+      <details><summary><span class="chip c-v">MOTORIZ.</span><span class="t">FCV502 — alimentación RO1 (on/off motorizada)</span></summary><div class="det"><span class="k">E/S:</span> <span class="io">rem I70.6 · opened I71.3 → start Q30.2</span><br><span class="k">Prog:</span> driver <b>FC61 Mvalve</b> · FC3 s27: abre en paso 10 (habilita paso 11) · s53: ON con step ≤23 o ≥26</div></details>
+      <details><summary><span class="chip c-v">PROPORC.</span><span class="t">FCV501 — flush de membranas (proporcional)</span></summary><div class="det"><span class="k">E/S:</span> <span class="io">mando QW36 (0-100%) · posición IW86</span><br><span class="k">Prog:</span> AIO.FCV501 / FCV501AI · <b>FC3 s52</b>: 100% en pasos 10-22 y 26+, 0% en 23-25 · s38: posición ≥3% avanza el flush</div></details>
+    </details>
+    <details class="grp"><summary><span class="chip c-i">INSTRUMENTOS</span><span class="t">7 lazos del tren (borne 1X)</span></summary>
+      <div class="det"><span class="k">FT501</span> caudal alim. <span class="io">IW74</span> — cdn[12] &lt;64 m³/h <span class="warn">calculado, no dispara</span> · totalizador FT501cum · <span class="k">FT504</span> permeado <span class="io">IW76</span>+cum · <span class="k">PH501</span> <span class="io">IW78</span> — cdn[1] HH/LL <b>dispara</b>, B1 dosifica BDO501 · <span class="k">CT502</span> conductividad <span class="io">IW80</span> · <span class="k">PT501/PT502</span> presiones <span class="io">IW82/IW84</span> — cdn[13]/[14] HH <span class="warn">no disparan</span></div>
+    </details>
+    <details class="grp"><summary><span class="chip c-s">SEGURIDAD</span><span class="t">PSL501 + ESTOP</span></summary>
+      <div class="det"><span class="k">PSL501</span> presostato baja succión <span class="io">I71.2</span> → FC3 cdn[11] (TON 5 s, pasos 13-19, <b>dispara</b>) · <span class="chip c-x">ESTOP</span> LCB51 <span class="io">I71.1</span> → cdn[15] + .Bad en BCE504/505/FCV502</div>
+    </details>
+  </details>
+
+  <details class="tab"><summary><span class="chip c-plc">TABLERO 7</span><span class="t">LCB5.2 — Tren RO2</span><span class="s">esclavo DP 7 · ST30 + AE08 + AQ04 · I90-109 / Q40-49 · heartbeat I92.7⇄Q41.7 · ESTOP I91.1</span></summary>
+    <details class="grp"><summary><span class="chip c-b">BOMBAS VFD</span><span class="t">Bombas del tren (ACS510)</span></summary>
+      <details><summary><span class="chip c-b">BOMBA VFD</span><span class="t">BCE511 — alta presión RO2 · 110 kW</span></summary><div class="det"><span class="k">E/S:</span> <span class="io">rem I90.2 · run I90.0 · flt I90.1 → start Q40.0 · velocidad QW42</span><br><span class="k">Prog:</span> AIO.BCE511/BCE511S · <b>FC4 s22-24</b>: rampa en paso 13 · .ON pasos 13-22</div></details>
+      <details><summary><span class="chip c-b">BOMBA VFD</span><span class="t">BCE512 — recirculación RO2 · 11 kW</span></summary><div class="det"><span class="k">E/S:</span> <span class="io">rem I90.5 · run I90.3 · flt I90.4 → start Q40.1 · velocidad QW44</span><br><span class="k">Prog:</span> <b>FC4 s24-26</b>: rampa paso 14 · .ON 14-21 · su Runing gobierna FCV507</div></details>
+    </details>
+    <details class="grp"><summary><span class="chip c-v">VÁLVULAS</span><span class="t">Alimentación, enfriamiento y flush</span></summary>
+      <div class="det"><span class="k">FCV503</span> alimentación <span class="io">rem I90.6 · opened I91.3 → Q40.2</span> — FC4: abre en paso 10, permiso de BCE507 · <span class="k">FCV504</span> enfriamiento <span class="io">I90.7/I91.4 → Q40.3</span> — FC4 s52: por TT507 H/L en producción · <span class="k">FCV506</span> <span class="io">I91.0/I91.5 → Q40.4</span> — ON permanente (s46) · <span class="k">FCV505</span> flush proporcional <span class="io">QW46 / posición IW108</span> — FC4 s45 · <span class="k">FCV507</span> proporcional <span class="io">QW48</span> — f(BCE512.Runing) (s47)</div>
+    </details>
+    <details class="grp"><summary><span class="chip c-i">INSTRUMENTOS</span><span class="t">8 lazos del tren</span></summary>
+      <div class="det"><span class="k">FT508</span> <span class="io">IW94</span> — cdn[12] <span class="warn">no dispara</span> · <span class="k">FT512</span> <span class="io">IW96</span> · <span class="k">PH506</span> <span class="io">IW98</span> — cdn[0] HH/LL <b>dispara</b>, B1 dosifica BDO508 · <span class="k">CT511</span> <span class="io">IW100</span> · <span class="k">PT509</span> <span class="io">IW102</span> — cdn[13] <span class="warn">no dispara</span> · <span class="k">TT507/TT509</span> temperaturas <span class="io">IW104/IW106</span> — cdn[14] HH <b>sí dispara</b> + TT507 abre FCV504</div>
+    </details>
+    <details class="grp"><summary><span class="chip c-s">SEGURIDAD</span><span class="t">PSL508 + ESTOP</span></summary>
+      <div class="det"><span class="k">PSL508</span> <span class="io">I91.2</span> → FC4 cdn[11] · <span class="chip c-x">ESTOP</span> LCB52 <span class="io">I91.1</span> → cdn[15] + .Bad en BCE511/512 y FCV503/504/506</div>
+    </details>
+  </details>
+
+  <details class="tab"><summary><span class="chip c-plc">TABLERO 8</span><span class="t">LCP5.1 — Dosificación RO (y acometida general 440 V)</span><span class="s">esclavo DP 8 (fin de línea, terminación) · ST40 + 2×DE16 · I60-66 / Q20-21 · heartbeat I62.7⇄Q21.7 · ESTOP I65.5</span></summary>
+    <details class="grp"><summary><span class="chip c-b">DOSIFICADORAS</span><span class="t">13 bombas 0.37 kW</span></summary>
+      <div class="det"><span class="k">RO1:</span> BDO501A/B <span class="io">I60.0-.2→Q20.0 · I60.3-.5→Q20.1</span> (FC3 s57: + PH501.B1) · BDO502A/B <span class="io">I60.6→Q20.2 · I61.1→Q20.3</span> · BDO503A/B <span class="io">I61.4→Q20.4 · I61.7→Q20.5</span> (FC3 s55: con bomba HP)</div>
+      <div class="det"><span class="k">RO2:</span> BDO508A/B <span class="io">I63.0→Q20.6 · I63.3→Q20.7</span> (FC4 s51: + PH506.B1) · BDO509A/B <span class="io">I63.6→Q21.0 · I64.1→Q21.1</span> · BDO510A/B <span class="io">I64.4→Q21.2 · I64.7→Q21.3</span> (FC4 s49)</div>
+      <div class="det"><span class="k">CIP:</span> BDO407 <span class="io">I65.2-.4→Q21.4</span> (FC5 s11: PH406.B2 · LS501L · BCE406.Runing)</div>
+    </details>
+    <details class="grp"><summary><span class="chip c-s">SWITCHES</span><span class="t">Niveles de químicos + seguridad</span></summary>
+      <div class="det"><span class="k">LS501/502/503</span> H/L <span class="io">I66.0-.5</span> → permiso de químicos cdn[9] de ambos trenes · <span class="chip c-x">ESTOP</span> LCP51 <span class="io">I65.5</span></div>
+    </details>
+    <div class="det note">Este tablero además recibe la acometida de 440 V de toda la planta (0QF 500 A + medidor) y alimenta a los demás tableros.</div>
+  </details>
+
+  <details class="tab"><summary><span class="chip c-plc">TABLERO 2</span><span class="t">LCP6.1 — Química continua (área 600)</span><span class="s">esclavo DP 2 (fin de línea, terminación) · ST40 + DT32 + 3×DE16 + AE08 · I30-57 / Q10-13 · heartbeat I32.7⇄Q13.7 · ESTOP I39.3</span></summary>
+    <details class="grp"><summary><span class="chip c-b">DOSIFICADORAS</span><span class="t">5 parejas por pH / nivel (0.37 kW)</span></summary>
+      <div class="det"><span class="k">BDO601A/B</span> <span class="io">I30.0→Q10.0 · I30.3→Q10.1</span> — FC6 s17: PH601.B1 · LS611L · <span class="k">BDO602A/B</span> <span class="io">I30.6→Q10.2 · I31.1→Q10.3</span> — s19: transferencia activa · LS612L · <span class="k">BDO607A/B</span> <span class="io">I31.4→Q10.4 · I31.7→Q10.5</span> — s26: PH607.B1 · LS611L · <span class="k">BDO613A/B</span> <span class="io">I33.0→Q10.6 · I33.3→Q10.7</span> — s21: LS613L · <span class="k">BDO614A/B</span> <span class="io">I33.6→Q11.0 · I34.1→Q11.1</span> — s23: PH605.B1 · LS614L</div>
+    </details>
+    <details class="grp"><summary><span class="chip c-b">BOMBAS / MOTORES</span><span class="t">Transferencias, mezcladores, soplador</span></summary>
+      <div class="det"><span class="k">BCE606A/B</span> 0.75 kW <span class="io">I34.4→Q11.2 · I34.7→Q11.3</span> — s24: LS606L·ONOFF · <span class="k">SOP606</span> soplador 1.1 kW <span class="io">I35.2→Q11.4</span> — s24: con BCE606 · <span class="k">BCE610A/B</span> 1.5 kW <span class="io">I35.5→Q11.5 · I36.0→Q11.6</span> — s31: LS610L · <span class="k">BCE615A/B</span> 0.75 kW <span class="io">I36.3→Q11.7 · I36.6→Q12.0</span> — s14: LT513.B2·LT615.B1</div>
+      <div class="det"><span class="k">Mezcladores:</span> MX601 2.2 kW <span class="io">I37.1→Q12.1</span> · MX604 5.5 kW <span class="io">I37.4→Q12.2</span> · MX605 <span class="io">I37.7→Q12.3</span> · MX607 <span class="io">I38.2→Q12.4</span> — FC6 s15 con permisos · MX612 <span class="io">I38.5→Q12.5</span> y MX613 <span class="io">I39.0→Q12.6</span> — s18/s20: TON 10/30 min</div>
+      <div class="det"><span class="k">Bombas neumáticas (solenoides, sin feedback):</span> BNM604A/B <span class="io">→ Q13.0/Q13.1</span> — s27: ciclado CFON/CFOFF · LS609H · BNM609A/B <span class="io">→ Q13.2/Q13.3</span> — s29: LS609L · FPS610H</div>
+    </details>
+    <details class="grp"><summary><span class="chip c-i">INSTRUMENTOS</span><span class="t">5 lazos</span></summary>
+      <div class="det"><span class="k">PH601</span> <span class="io">IW42</span>, <span class="k">PH605</span> <span class="io">IW44</span>, <span class="k">PH607</span> <span class="io">IW46</span> — histéresis B1 dosifica; HH/LL → CFCDN[3] <b>dispara CF</b> · <span class="k">LT608</span> <span class="io">IW48</span> SET13-16 (CFCDN[0]) · <span class="k">LT615</span> <span class="io">IW50</span> SET17-20 (B1/B2 transferencias)</div>
+    </details>
+    <details class="grp"><summary><span class="chip c-s">SWITCHES</span><span class="t">Niveles + seguridad</span></summary>
+      <div class="det"><span class="k">LS606</span> <span class="io">I39.4/.5</span> · <span class="k">LS609</span> <span class="io">I39.6/.7</span> · <span class="k">LS610-613</span> <span class="io">I40.0-.7</span> · <span class="k">LS614</span> <span class="io">I32.2/.3</span> · <span class="k">FPS610</span> H/F <span class="io">I32.4/.5</span> (equipo de 2.2 kW con arrancador propio, sin control PLC) · <span class="chip c-x">ESTOP</span> LCP61 <span class="io">I39.3</span></div>
+    </details>
+  </details>
+
+  <details class="tab"><summary><span class="chip c-plc">TABLERO 3</span><span class="t">LCB4.1 — Válvulas suavizador SF1</span><span class="s">esclavo DP 3 · ST30 · solo 24 VDC · I110-112 / Q50-51 · heartbeat I112.7⇄Q51.7</span></summary>
+    <details class="grp"><summary><span class="chip c-v">VÁLVULAS</span><span class="t">9 neumáticas (selector local On-Off-Remote por válvula)</span></summary>
+      <div class="det"><span class="k">FCV401</span> Upper Inlet <span class="io">I110.0/I111.1→Q50.0</span> · <span class="k">FCV402</span> Upper Drain <span class="io">I110.1/I111.2→Q50.1</span> · <span class="k">FCV403</span> Lower Inlet <span class="io">I110.2/I111.3→Q50.2</span> · <span class="k">FCV404</span> Lower Drain <span class="io">I110.3/I111.4→Q50.3</span> · <span class="k">FCV405</span> Outlet <span class="io">I110.4/I111.5→Q50.4</span> · <span class="k">FCV406</span> Reg Inlet <span class="io">I110.5/I111.6→Q50.5</span> · <span class="k">FCV407</span> Exhaust <span class="io">I110.6/I111.7→Q50.6</span></div>
+      <div class="det"><span class="k">Compartidas de los 3 SF:</span> FCV422 Collection <span class="io">I110.7/I112.0→Q50.7</span> · FCV423 Drain <span class="io">I111.0/I112.1→Q51.0</span><br><span class="k">Prog:</span> structs MV.FCV4xx · driver FC52 (fallo si no confirma en 6 s) · gobernadas por <b>FC57 (MV.Filter1)</b> según paso de servicio/regeneración · ⚠ el selector "On" local abre sin pasar por el maestro</div>
+    </details>
+  </details>
+
+  <details class="tab"><summary><span class="chip c-plc">TABLERO 4</span><span class="t">LCB4.2 — Válvulas suavizador SF2</span><span class="s">esclavo DP 4 · ST30 · I120-122 / Q60-61 · heartbeat I122.7⇄Q61.7</span></summary>
+    <details class="grp"><summary><span class="chip c-v">VÁLVULAS</span><span class="t">7 del SF2 + 2 de llenado CIP</span></summary>
+      <div class="det"><span class="k">FCV408-414</span> (mismo orden funcional que SF1) <span class="io">I120.0-.6 / I121.1-.7 → Q60.0-.6</span> — FC57 (MV.Filter2)</div>
+      <div class="det"><span class="k">FCV424/FCV425</span> — llenado de tanques CIP <span class="io">I120.7/I122.0→Q60.7 · I121.0/I122.1→Q61.0</span> — <b>FC5 s14-15</b>: abren con LS406L/LS407L hasta nivel alto</div>
+    </details>
+  </details>
+
+  <details class="tab"><summary><span class="chip c-plc">TABLERO 5</span><span class="t">LCB4.3 — Válvulas suavizador SF3</span><span class="s">esclavo DP 5 · ST30 · I130-132 / Q70-71 · heartbeat I132.7⇄Q71.7</span></summary>
+    <details class="grp"><summary><span class="chip c-v">VÁLVULAS</span><span class="t">7 neumáticas</span></summary>
+      <div class="det"><span class="k">FCV415-421</span> <span class="io">I130.0-.6 / I131.1-.7 → Q70.0-.6</span> — FC57 (MV.Filter3)</div>
+    </details>
+  </details>
+
+  <div class="det note"><b>Cadena física PROFIBUS (hoja 9-1):</b> LCP5.1 (adr 8, terminación) → LCB5.2 (7) → LCB5.1 (6) → LCB4.3 (5) → LCB4.2 (4) → LCB4.1 (3) → <b>maestro LCP4.1</b> → LCP6.1 (adr 2, terminación). Cada S7-200 es pasarela pura con watchdog: sin bus 4 s ⇒ salidas a cero.</div>
+</details>
+
+</main>
+<footer>Fuente: memorias de análisis en Documentacion/Programacion/Memorias (programa PLC principal jul-2026, programas S7-200 y planos CWT-PRM-DEL-004A). Documento generado para Permoda — proyecto Osmosis Inversa.</footer>
+<script>
+const defOpen = new Set(Array.from(document.querySelectorAll('details[open]')));
+function setAll(v){document.querySelectorAll('details').forEach(d=>d.open=v);}
+const q = document.getElementById('q');
+q.addEventListener('input', ()=>{
+  const t = q.value.trim().toLowerCase();
+  document.querySelectorAll('main details').forEach(d=>{
+    if(!t){ d.style.display=''; d.open = defOpen.has(d); return; }
+    const hit = d.textContent.toLowerCase().includes(t);
+    d.style.display = hit ? '' : 'none';
+    d.open = hit;
+  });
+});
+</script>
+</body>
+</html>

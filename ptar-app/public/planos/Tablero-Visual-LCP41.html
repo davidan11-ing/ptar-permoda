@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>LCP 4.1 — Tablero Interactivo</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:#0C0C0C;color:#DDD;font-family:-apple-system,Arial,sans-serif}
+#app{display:flex;flex-direction:column;height:100%}
+#hdr{background:#060E1A;border-bottom:1px solid #0F2040;padding:4px 10px;display:flex;align-items:center;gap:6px;flex-shrink:0}
+#hctrls{display:flex;gap:6px}
+.hbtn{background:#0E1A2E;border:1px solid #1A3A6A;color:#5A9AE8;border-radius:6px;padding:5px 13px;cursor:pointer;font-size:11px;font-weight:600;transition:.15s;letter-spacing:.2px}
+.hbtn:hover{background:#152236;border-color:#2A5090;color:#80B8FF}
+.hbtn.act{background:#0A2060;border-color:#2860CC;color:#90C4FF}
+#main{display:flex;flex:1;min-height:0}
+#canvas{flex:1;overflow:auto;padding:6px 4px;background:#0A0A0A}
+#panel-svg{display:block}
+#info{width:300px;background:#0E0E0E;border-left:1px solid #1A1A1A;overflow-y:auto;flex-shrink:0;display:flex;flex-direction:column}
+#info-head{padding:12px 14px 8px;border-bottom:1px solid #163060;background:#07101E;flex-shrink:0}
+#info-id{font-size:20px;font-weight:700;color:#4090FF;letter-spacing:.3px}
+#info-circuit{font-size:10px;color:#507090;margin-top:2px;font-weight:500}
+#info-type{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#3A3A3A;margin-top:2px}
+#info-body{padding:12px 14px;overflow-y:auto}
+.irow{display:flex;gap:8px;margin-bottom:6px;font-size:11px;align-items:flex-start}
+.ilbl{color:#484848;min-width:72px;flex-shrink:0;padding-top:1px}
+.ival{color:#CCC;font-weight:500;word-break:break-word;line-height:1.4}
+.isep{height:1px;background:#1A1A1A;margin:10px 0}
+.isec-h{font-size:9px;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;font-weight:700}
+.chain{display:flex;flex-direction:column;gap:3px}
+.citem{display:flex;align-items:center;gap:6px;font-size:11px;padding:5px 8px;border-radius:4px;background:#161616;cursor:pointer;border-left:3px solid transparent;transition:.1s;user-select:none}
+.citem:hover{background:#1E1E1E}
+.citem.pwr{border-left-color:#FF3333}
+.citem.ctrl{border-left-color:#00CC44}
+.citem.sig{border-left-color:#3399FF}
+.ctag{background:#202020;border-radius:3px;padding:1px 5px;font-size:10px;font-weight:700;flex-shrink:0}
+#info-empty{color:#333;text-align:center;padding:50px 20px;font-size:12px;line-height:1.8}
+/* SVG interactive */
+.cg{cursor:pointer;transition:opacity .2s}
+.cg .cr{transition:filter .12s}
+.cg:hover .cr{filter:brightness(1.45)}
+.cg.sel .cr{filter:brightness(1.8) drop-shadow(0 0 8px #FFD600)}
+.cg.hi-p .cr{filter:brightness(1.5) drop-shadow(0 0 9px #FF3333)}
+.cg.hi-c .cr{filter:brightness(1.5) drop-shadow(0 0 9px #00CC44)}
+.cg.hi-s .cr{filter:brightness(1.5) drop-shadow(0 0 8px #3399FF)}
+.cg.dim{opacity:0.10;pointer-events:none}
+/* Terminal borne hover/sel */
+.term-g .cr{transition:filter .12s,stroke-width .12s}
+.term-g:hover .cr{filter:brightness(2) drop-shadow(0 0 3px currentColor);stroke-width:1.8!important}
+.term-g.sel .cr{filter:brightness(2.5) drop-shadow(0 0 5px #FFD600);stroke-width:2!important;stroke:#FFD600!important}
+/* Circuit trace */
+@keyframes fl-p{to{stroke-dashoffset:-22}}
+@keyframes fl-c{to{stroke-dashoffset:-18}}
+@keyframes fl-s{to{stroke-dashoffset:-16}}
+.cl{fill:none;stroke-linecap:round;stroke-linejoin:round;pointer-events:none;opacity:0;transition:opacity .2s}
+.cl.p{stroke:#FF3333;stroke-width:4.5}
+.cl.c{stroke:#00CC44;stroke-width:3.5}
+.cl.s{stroke:#3399FF;stroke-width:2.5;stroke-dasharray:10 5}
+.cl.on{opacity:1}
+.cl.anim.p{stroke-dasharray:14 8;animation:fl-p .38s linear infinite}
+.cl.anim.c{stroke-dasharray:12 7;animation:fl-c .44s linear infinite}
+.cl.anim.s{animation:fl-s .5s linear infinite}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="hdr">
+    <div id="hctrls">
+      <button class="hbtn" onclick="clearSel()">✕ Limpiar</button>
+      <button class="hbtn" id="btnFlow" onclick="toggleFlow()">▶ Animar flujo</button>
+      <button class="hbtn" id="btnBornes" onclick="toggleBornes()">⊟ Bornes</button>
+    </div>
+  </div>
+  <div id="main">
+    <div id="canvas"><svg id="panel-svg" xmlns="http://www.w3.org/2000/svg"></svg></div>
+    <aside id="info"><div id="info-empty">👆<br><br>Clic en cualquier componente para rastrear el circuito eléctrico completo<br><br><span style="font-size:10px;color:#282828">potencia · mando · señal PLC</span></div></aside>
+  </div>
+</div>
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// CONSTANTS
+// ─────────────────────────────────────────────────────────────────────────────
+const PW=862, SW=1100, SH=920;
+
+// Zone Y positions (with visible duct gaps between them)
+const Z={
+  z1: {y:8,   h:215, bg:'rgba(130,12,12,0.16)',  lbl:'Z1 — POTENCIA ENTRADA 440V AC'},
+  z2: {y:233, h:110, bg:'rgba(8,90,40,0.16)',    lbl:'Z2 — PLC ET200SP · FUENTES 24VDC'},
+  z3: {y:357, h:68,  bg:'rgba(95,70,0,0.16)',    lbl:'Z3 — RELÉS KB · SALIDAS DIGITALES'},
+  z4a:{y:439, h:76,  bg:'rgba(72,30,0,0.16)',    lbl:'Z4A — GUARDAMOTORES M1–M11'},
+  z4b:{y:529, h:76,  bg:'rgba(72,30,0,0.13)',    lbl:'Z4B — GUARDAMOTORES M12–M17'},
+  z5a:{y:619, h:90,  bg:'rgba(10,10,95,0.18)',   lbl:'Z5A — CONTACTORES M1–M11'},
+  z5b:{y:723, h:104, bg:'rgba(10,10,95,0.15)',   lbl:'Z5B — CONTACTORES M12–M17'},
+  z6: {y:841, h:66,  bg:'rgba(0,0,0,0.14)',      lbl:'Z6 — BORNERAS DE CAMPO'},
+};
+
+// Internal 440V bus within Zone 1 (y=88 = about 80px from zone top)
+const Z1_IBUS = 88;
+// External bus bar at bottom of zone 1 (feeds motor zones below)
+const BUS_440 = Z.z1.y + Z.z1.h; // 223
+// 24VDC bus at bottom of zone 2
+const BUS_24  = Z.z2.y + Z.z2.h; // 343
+
+// Component band positions
+const PLCY  = Z.z2.y + 5;   // 238
+const kbY   = Z.z3.y + 5;   // 362
+const kbH   = 58, kbW = 34;
+const qfAY  = Z.z4a.y + 7;  // 446
+const qfAH  = 62;
+const qfBY  = Z.z4b.y + 7;  // 536
+const qfBH  = 62;
+const kmAY  = Z.z5a.y + 7;  // 626
+const kmAH  = 78;
+const kmBY  = Z.z5b.y + 7;  // 730
+const kmBH  = 90;
+
+// ─── Motor data ───────────────────────────────────────────────────────────────
+const MT=[
+  {n:1,  qf:'1QF',  km:'1KM',  amps:'2.5–4',  qfm:'GV2-PM08C', kmm:'LC1-D09', dq:'1DQ · %Q1.0', row:'A'},
+  {n:2,  qf:'2QF',  km:'2KM',  amps:'2.5–4',  qfm:'GV2-PM08C', kmm:'LC1-D09', dq:'1DQ · %Q1.1', row:'A'},
+  {n:3,  qf:'3QF',  km:'3KM',  amps:'2.5–4',  qfm:'GV2-PM08C', kmm:'LC1-D09', dq:'1DQ · %Q1.2', row:'A'},
+  {n:4,  qf:'4QF',  km:'4KM',  amps:'9–14',   qfm:'GV2-PM14C', kmm:'LC1-D18', dq:'1DQ · %Q1.3', row:'A'},
+  {n:5,  qf:'5QF',  km:'5KM',  amps:'9–14',   qfm:'GV2-PM14C', kmm:'LC1-D18', dq:'1DQ · %Q1.4', row:'A'},
+  {n:6,  qf:'6QF',  km:'6KM',  amps:'9–14',   qfm:'GV2-PM14C', kmm:'LC1-D18', dq:'1DQ · %Q1.5', row:'A'},
+  {n:7,  qf:'7QF',  km:'7KM',  amps:'9–14',   qfm:'GV2-PM14C', kmm:'LC1-D18', dq:'1DQ · %Q1.6', row:'A'},
+  {n:8,  qf:'8QF',  km:'8KM',  amps:'1–4.3',  qfm:'GV2-PM06C', kmm:'LC1-D09', dq:'1DQ · %Q1.7', row:'A'},
+  {n:9,  qf:'9QF',  km:'9KM',  amps:'1–4.3',  qfm:'GV2-PM06C', kmm:'LC1-D09', dq:'2DQ · %Q2.0', row:'A'},
+  {n:10, qf:'10QF', km:'10KM', amps:'1–4.3',  qfm:'GV2-PM06C', kmm:'LC1-D09', dq:'2DQ · %Q2.1', row:'A'},
+  {n:11, qf:'11QF', km:'11KM', amps:'1–4.3',  qfm:'GV2-PM06C', kmm:'LC1-D09', dq:'2DQ · %Q2.2', row:'A'},
+  {n:12, qf:'12QF', km:'12KM', amps:'13–22',  qfm:'GV2-PM22C', kmm:'LC1-D25', dq:'2DQ · %Q2.3', row:'B'},
+  {n:13, qf:'13QF', km:'13KM', amps:'16–23',  qfm:'GV2-PM32C', kmm:'LC1-D25', dq:'2DQ · %Q2.4', row:'B'},
+  {n:14, qf:'14QF', km:'14KM', amps:'6–23',   qfm:'GV2-PM22C', kmm:'LC1-D25', dq:'2DQ · %Q2.5', row:'B'},
+  {n:15, qf:'15F',  km:'15KM', amps:'63',     qfm:'iC60N C63', kmm:'LC1-D40', dq:'2DQ · %Q2.6', row:'B', big:true},
+  {n:16, qf:'16F',  km:'16KM', amps:'63',     qfm:'iC60N C63', kmm:'LC1-D32', dq:'2DQ · %Q2.7', row:'B'},
+  {n:17, qf:'17F',  km:'17KM', amps:'40',     qfm:'iC60N C40', kmm:'17KM/17KA',dq:'2DQ · %Q3.0', row:'B', vfd:true},
+];
+const AN=11, BN=6;
+MT.slice(0,AN).forEach((m,i)=>{ m.cx=Math.round(PW/AN*(i+0.5)); });
+MT.slice(AN).forEach((m,i)=>{ m.cx=Math.round(PW/BN*(i+0.5)); });
+// Relay X: 24 relays uniform
+function kbX(n){ return Math.round(PW/24*(n-0.5)); }
+MT.forEach(m=>{ m.kbcx=kbX(m.n); });
+
+// ─── PLC modules ──────────────────────────────────────────────────────────────
+const PLCM=[
+  {id:'CPU', lb:'CPU',   sb:'1512SP-1 PN', x:8,   w:82, cl:'#0A4A28', tc:'#9FE1CB'},
+  {id:'CMDP',lb:'CM DP', sb:'Maestro DP',  x:95,  w:56, cl:'#0A286A', tc:'#9AC8FF'},
+  {id:'1DI', lb:'1DI',   sb:'DI 16×',     x:156, w:40, cl:'#0D3A1C', tc:'#6ED8A0'},
+  {id:'2DI', lb:'2DI',   sb:'DI 16×',     x:201, w:40, cl:'#0D3A1C', tc:'#6ED8A0'},
+  {id:'3DI', lb:'3DI',   sb:'DI 16×',     x:246, w:40, cl:'#0D3A1C', tc:'#6ED8A0'},
+  {id:'4DI', lb:'4DI',   sb:'DI 16×',     x:291, w:40, cl:'#0D3A1C', tc:'#6ED8A0'},
+  {id:'5DI', lb:'5DI',   sb:'DI 16×',     x:336, w:40, cl:'#0D3A1C', tc:'#6ED8A0'},
+  {id:'1DQ', lb:'1DQ',   sb:'DQ 16×',     x:381, w:40, cl:'#1E0E78', tc:'#B8A8FF'},
+  {id:'2DQ', lb:'2DQ',   sb:'DQ 8×',      x:426, w:40, cl:'#1E0E78', tc:'#B8A8FF'},
+  {id:'1AI', lb:'1AI',   sb:'AI 8×',      x:471, w:40, cl:'#481E00', tc:'#FFB060'},
+  {id:'1AQ', lb:'1AQ',   sb:'AQ 2×',      x:516, w:40, cl:'#580000', tc:'#FF9090'},
+];
+const Z2E=[
+  {id:'1F', lb:'1F', sb:'4A', x:565, w:30, h:50, cl:'#380808', note:'→ L1+ PLC/relés'},
+  {id:'2F', lb:'2F', sb:'4A', x:600, w:30, h:50, cl:'#380808', note:'→ L2+ Instrumentos'},
+  {id:'3F', lb:'3F', sb:'4A', x:635, w:30, h:50, cl:'#380808', note:'→ L3+ HMI/Red'},
+  {id:'AD1',lb:'AD1',sb:'NDR-240-24',x:670, w:86, h:98, cl:'#001438', note:'100–240VAC → 24VDC 10A · Bus L1+'},
+  {id:'AD2',lb:'AD2',sb:'NDR-240-24',x:761, w:86, h:98, cl:'#001438', note:'100–240VAC → 24VDC 10A · Bus L2+'},
+];
+
+// ─── Terminal (bornera) data — signal per borne ───────────────────────────────
+// X3 (3X): DI campo — motores señales rem/run/flt + ESTOP (I0.0–I2.7, DI mod 1+2)
+// X4 (4X): AI instrumentos 4-20mA locales (IW10–IW20)
+// X5 (5X): 24VDC a LCB4.x válvulas + señales KB relay salida
+// X1     : PE / tierra
+const TERM_DATA={
+  X3:[
+    {sig:'BDO408 Remote',  addr:'%I0.0', mod:'1DI ch.0', dst:'SC selector Local-0-Remote BDO408',  tipo:'DI', fc:'FC1→FC51 driver: habilita arranque cuando SC=Remote', eq:'BDO408'},
+    {sig:'BDO408 Running', addr:'%I0.1', mod:'1DI ch.1', dst:'Contacto aux. NA 1KM → confirma marcha', tipo:'DI', fc:'FC51: verifica Runing dentro de 10s del arranque', eq:'BDO408'},
+    {sig:'BDO408 Fault',   addr:'%I0.2', mod:'1DI ch.2', dst:'Contacto NC 1QF → disparo guardamotor', tipo:'DI', fc:'FC51: fuerza .Bad y para equipo inmediatamente', eq:'BDO408'},
+    {sig:'BDO402A Remote', addr:'%I0.3', mod:'1DI ch.3', dst:'SC selector BDO402A (dosif. pretrat.)',tipo:'DI', fc:'FC1→FC51', eq:'BDO402A'},
+    {sig:'BDO402A Running',addr:'%I0.4', mod:'1DI ch.4', dst:'Contacto aux. NA 2KM',               tipo:'DI', fc:'FC51: supervisión marcha', eq:'BDO402A'},
+    {sig:'BDO402A Fault',  addr:'%I0.5', mod:'1DI ch.5', dst:'Contacto NC 2QF disparo',            tipo:'DI', fc:'FC51: disparo → .Bad', eq:'BDO402A'},
+    {sig:'BDO402B Remote', addr:'%I0.6', mod:'1DI ch.6', dst:'SC selector BDO402B (dosif. pretrat.)',tipo:'DI', fc:'FC1→FC51', eq:'BDO402B'},
+    {sig:'BDO402B Running',addr:'%I0.7', mod:'1DI ch.7', dst:'Contacto aux. NA 3KM',               tipo:'DI', fc:'FC51: supervisión marcha', eq:'BDO402B'},
+    {sig:'BDO402B Fault',  addr:'%I1.0', mod:'1DI ch.8', dst:'Contacto NC 3QF disparo',            tipo:'DI', fc:'FC51: disparo → .Bad', eq:'BDO402B'},
+    {sig:'BCE507A Remote', addr:'%I1.1', mod:'1DI ch.9', dst:'SC selector BCE507A (alim. RO2)',     tipo:'DI', fc:'FC1→FC51', eq:'BCE507A'},
+    {sig:'BCE507A Running',addr:'%I1.2', mod:'1DI ch.10',dst:'Contacto aux. NA 4KM',               tipo:'DI', fc:'FC51: supervisión marcha', eq:'BCE507A'},
+    {sig:'BCE507A Fault',  addr:'%I1.3', mod:'1DI ch.11',dst:'Contacto NC 4QF disparo',            tipo:'DI', fc:'FC51: disparo → .Bad', eq:'BCE507A'},
+    {sig:'BCE507B Remote', addr:'%I1.4', mod:'1DI ch.12',dst:'SC selector BCE507B (alim. RO2)',     tipo:'DI', fc:'FC1→FC51', eq:'BCE507B'},
+    {sig:'BCE507B Running',addr:'%I1.5', mod:'1DI ch.13',dst:'Contacto aux. NA 5KM',               tipo:'DI', fc:'FC51: supervisión marcha', eq:'BCE507B'},
+    {sig:'BCE507B Fault',  addr:'%I1.6', mod:'1DI ch.14',dst:'Contacto NC 5QF disparo',            tipo:'DI', fc:'FC51: disparo → .Bad', eq:'BCE507B'},
+    {sig:'ESTOP LCP4.1',   addr:'%I1.7', mod:'1DI ch.15',dst:'Paro emergencia ESB1 (puerta tablero)',tipo:'DI', fc:'FC2 seg.9: activa LCP41ESTOP → fuerza .Bad todos los equipos locales', eq:''},
+    {sig:'BCE513A Remote', addr:'%I2.0', mod:'2DI ch.0', dst:'SC selector BCE513A (transf. área 600)',tipo:'DI', fc:'FC1→FC51', eq:'BCE513A'},
+    {sig:'BCE513A Running',addr:'%I2.1', mod:'2DI ch.1', dst:'Contacto aux. NA 6KM',               tipo:'DI', fc:'FC51: supervisión marcha', eq:'BCE513A'},
+    {sig:'BCE513A Fault',  addr:'%I2.2', mod:'2DI ch.2', dst:'Contacto NC 6QF disparo',            tipo:'DI', fc:'FC51: disparo → .Bad', eq:'BCE513A'},
+    {sig:'BCE513B Remote', addr:'%I2.3', mod:'2DI ch.3', dst:'SC selector BCE513B (transf. área 600)',tipo:'DI', fc:'FC1→FC51', eq:'BCE513B'},
+    {sig:'BCE513B Running',addr:'%I2.4', mod:'2DI ch.4', dst:'Contacto aux. NA 7KM',               tipo:'DI', fc:'FC51: supervisión marcha', eq:'BCE513B'},
+    {sig:'BCE513B Fault',  addr:'%I2.5', mod:'2DI ch.5', dst:'Contacto NC 7QF disparo',            tipo:'DI', fc:'FC51: disparo → .Bad', eq:'BCE513B'},
+    {sig:'BCE403A Remote', addr:'%I2.6', mod:'2DI ch.6', dst:'SC selector BCE403A (salmuera NaCl)', tipo:'DI', fc:'FC1→FC51', eq:'BCE403A'},
+    {sig:'BCE403A Running',addr:'%I2.7', mod:'2DI ch.7', dst:'Contacto aux. NA 8KM',               tipo:'DI', fc:'FC51: supervisión marcha', eq:'BCE403A'},
+  ],
+  X4:[
+    {sig:'ORP401 (+)',  addr:'%IW10', mod:'1AI ch.0', dst:'AIT.4.01 — transmisor ORP/cloro entrada agua · 4–20mA', tipo:'AI', fc:'FC53 s96: escala → AIO.ORP401 · B.H/L → cdns tren RO1', eq:''},
+    {sig:'ORP401 (−)',  addr:'%IW10', mod:'1AI ch.0', dst:'Retorno lazo ORP401 — común módulo AI',  tipo:'AI', fc:'—', eq:''},
+    {sig:'PH406 (+)',   addr:'%IW12', mod:'1AI ch.1', dst:'AIT.4.06 — transmisor pH circuito CIP · 4–20mA',   tipo:'AI', fc:'FC53 s97: escala → AIO.PH406 · B1(alto)→BDO408 · B2(bajo)→BDO407', eq:''},
+    {sig:'PH406 (−)',   addr:'%IW12', mod:'1AI ch.1', dst:'Retorno lazo PH406',                     tipo:'AI', fc:'—', eq:''},
+    {sig:'LT401 (+)',   addr:'%IW18', mod:'1AI ch.4', dst:'LT.4.01 — nivel TAQ.4.01 alim. trenes 0–6m · 4–20mA',tipo:'AI', fc:'FC53 s98: escala → AIO.LT401 · B2→arranque BCE401 + cdn[8] FC3', eq:''},
+    {sig:'LT401 (−)',   addr:'%IW18', mod:'1AI ch.4', dst:'Retorno lazo LT401',                     tipo:'AI', fc:'—', eq:''},
+    {sig:'LT404 (+)',   addr:'%IW20', mod:'1AI ch.5', dst:'LT.4.04 — nivel TAQ.4.04 auxiliar 0–6m · 4–20mA',  tipo:'AI', fc:'FC53 s99: escala → AIO.LT404 · solo indicación HMI (sin enclavamiento activo)', eq:''},
+    {sig:'LT404 (−)',   addr:'%IW20', mod:'1AI ch.5', dst:'Retorno lazo LT404',                     tipo:'AI', fc:'—', eq:''},
+  ],
+  X5:[
+    {sig:'L+ → LCB4.1', addr:'24VDC', mod:'Bus AD1 L1+', dst:'Alimentación 24VDC tablero SF1 (LCB4.1) · cable LCB4.1-P1 KVVP 2×1.0', tipo:'24V', fc:'Energiza CPU ST30 + EM DP01 + 9 relés KB LCB4.1', eq:''},
+    {sig:'M  → LCB4.1', addr:'0VDC',  mod:'Bus 0V común', dst:'Retorno 0V tablero SF1 (LCB4.1)',    tipo:'24V', fc:'—', eq:''},
+    {sig:'L+ → LCB4.2', addr:'24VDC', mod:'Bus AD1 L1+', dst:'Alimentación 24VDC tablero SF2 (LCB4.2) · cable LCB4.2-P1 KVVP 2×1.0', tipo:'24V', fc:'Energiza CPU ST30 + EM DP01 + 9 relés KB LCB4.2', eq:''},
+    {sig:'M  → LCB4.2', addr:'0VDC',  mod:'Bus 0V común', dst:'Retorno 0V tablero SF2 (LCB4.2)',    tipo:'24V', fc:'—', eq:''},
+    {sig:'L+ → LCB4.3', addr:'24VDC', mod:'Bus AD1 L1+', dst:'Alimentación 24VDC tablero SF3 (LCB4.3) · cable LCB4.3-P1 KVVP 2×1.0', tipo:'24V', fc:'Energiza CPU ST30 + EM DP01 + 9 relés KB LCB4.3', eq:''},
+    {sig:'M  → LCB4.3', addr:'0VDC',  mod:'Bus 0V común', dst:'Retorno 0V tablero SF3 (LCB4.3)',    tipo:'24V', fc:'—', eq:''},
+    {sig:'KB1 → 1KM',   addr:'%Q0.0', mod:'1DQ ch.0', dst:'Contacto NO relé 1KB → bobina 1KM (BDO408)',  tipo:'DQ', fc:'FC1 s4→FC51: start BDO408 → DQ activo → KB1 cierra → KM energiza', eq:'BDO408'},
+    {sig:'KB2 → 2KM',   addr:'%Q0.1', mod:'1DQ ch.1', dst:'Contacto NO relé 2KB → bobina 2KM (BDO402A)',tipo:'DQ', fc:'FC51: start BDO402A', eq:'BDO402A'},
+    {sig:'KB3 → 3KM',   addr:'%Q0.2', mod:'1DQ ch.2', dst:'Contacto NO relé 3KB → bobina 3KM (BDO402B)',tipo:'DQ', fc:'FC51: start BDO402B', eq:'BDO402B'},
+    {sig:'KB4 → 4KM',   addr:'%Q0.3', mod:'1DQ ch.3', dst:'Contacto NO relé 4KB → bobina 4KM (BCE507A)',tipo:'DQ', fc:'FC51: start BCE507A', eq:'BCE507A'},
+    {sig:'KB5 → 5KM',   addr:'%Q0.4', mod:'1DQ ch.4', dst:'Contacto NO relé 5KB → bobina 5KM (BCE507B)',tipo:'DQ', fc:'FC51: start BCE507B', eq:'BCE507B'},
+    {sig:'KB6 → 6KM',   addr:'%Q0.5', mod:'1DQ ch.5', dst:'Contacto NO relé 6KB → bobina 6KM (BCE513A)',tipo:'DQ', fc:'FC51: start BCE513A', eq:'BCE513A'},
+    {sig:'KB7 → 7KM',   addr:'%Q0.6', mod:'1DQ ch.6', dst:'Contacto NO relé 7KB → bobina 7KM (BCE513B)',tipo:'DQ', fc:'FC51: start BCE513B', eq:'BCE513B'},
+    {sig:'KB8 → 8KM',   addr:'%Q0.7', mod:'1DQ ch.7', dst:'Contacto NO relé 8KB → bobina 8KM (BCE403A)',tipo:'DQ', fc:'FC51: start BCE403A · salmuera NaCl', eq:'BCE403A'},
+    {sig:'KB9 → 9KM',   addr:'%Q1.0', mod:'1DQ ch.8', dst:'Contacto NO relé 9KB → bobina 9KM (BCE403B)',tipo:'DQ', fc:'FC51: start BCE403B', eq:'BCE403B'},
+    {sig:'KB10 → 10KM', addr:'%Q1.1', mod:'1DQ ch.9', dst:'Contacto NO relé 10KB → bobina 10KM (BCE405A)',tipo:'DQ',fc:'FC51: start BCE405A · regen. suavizadores', eq:'BCE405A'},
+    {sig:'KB11 → 11KM', addr:'%Q1.2', mod:'1DQ ch.10',dst:'Contacto NO relé 11KB → bobina 11KM (BCE405B)',tipo:'DQ',fc:'FC51: start BCE405B', eq:'BCE405B'},
+    {sig:'KB12 → 12KM', addr:'%Q1.3', mod:'1DQ ch.11',dst:'Contacto NO relé 12KB → bobina 12KM (BCE506)', tipo:'DQ',fc:'FC51: start BCE506 · aux. RO2', eq:'BCE506'},
+  ],
+  X1:[
+    {sig:'PE cable LCB4.1', addr:'PE', mod:'Barra tierra', dst:'Protección tierra cable 24VDC → LCB4.1 (LCB4.1-P1)', tipo:'PE', fc:'—', eq:''},
+    {sig:'PE cable LCB4.2', addr:'PE', mod:'Barra tierra', dst:'Protección tierra cable 24VDC → LCB4.2 (LCB4.2-P1)', tipo:'PE', fc:'—', eq:''},
+    {sig:'PE cable LCB4.3', addr:'PE', mod:'Barra tierra', dst:'Protección tierra cable 24VDC → LCB4.3 (LCB4.3-P1)', tipo:'PE', fc:'—', eq:''},
+    {sig:'PE cables AI',    addr:'PE', mod:'Barra tierra', dst:'Pantalla apantallado instrumentos 4-20mA (X4)',        tipo:'PE', fc:'—', eq:''},
+    {sig:'PE cables DI',    addr:'PE', mod:'Barra tierra', dst:'Pantalla cables señal DI campo (X3)',                  tipo:'PE', fc:'—', eq:''},
+    {sig:'PE motor campo',  addr:'PE', mod:'Barra tierra', dst:'Conductor PE cables potencia motores área 400',        tipo:'PE', fc:'—', eq:''},
+    {sig:'PE tablero',      addr:'PE', mod:'Barra tierra', dst:'Carcasa tablero LCP4.1 — equipotencialidad',           tipo:'PE', fc:'—', eq:''},
+    {sig:'PE HMI',          addr:'PE', mod:'Barra tierra', dst:'Tierra puerta tablero (HMI + pulsadores)',             tipo:'PE', fc:'—', eq:''},
+    {sig:'PE reserva',      addr:'PE', mod:'Barra tierra', dst:'Terminal reserva PE',                                  tipo:'PE', fc:'—', eq:''},
+    {sig:'PE reserva',      addr:'PE', mod:'Barra tierra', dst:'Terminal reserva PE',                                  tipo:'PE', fc:'—', eq:''},
+  ]
+};
+
+// Zone 1 physical components — ALL with absolute y coordinates
+const Z1C=[
+  // 0QF — compact, ABOVE internal bus, acts as the "gate"
+  {id:'0QF',   lb:'0QF',   sb:'125A / 3P',   x:10,  y:24,  w:78, h:60, cl:'#2E0000', note:'Interruptor general — LCP5.1 → todo el tablero LCP4.1', gate:true},
+  // Components BELOW the internal 440V bus
+  {id:'TR1',   lb:'TR1',   sb:'440→220V 3kVA',x:10,  y:98,  w:148,h:110, cl:'#2E1400', note:'Transformador 440→220V / 3kVA — alimenta circuito de mando 50QF → fuentes 24VDC', xfmr:true},
+  {id:'50QF',  lb:'50QF',  sb:'20A / 2P',    x:168, y:98,  w:48, h:55, cl:'#2A0C00', note:'Protección secundario transformador', sbkr:true},
+  {id:'51QF',  lb:'51QF',  sb:'10A',         x:222, y:98,  w:38, h:55, cl:'#2A0C00', note:'Protección circuito 51L señales', sbkr:true},
+  {id:'52QF',  lb:'52QF',  sb:'10A',         x:265, y:98,  w:38, h:55, cl:'#2A0C00', note:'Protección fuente AD1/AD2', sbkr:true},
+  {id:'53QF',  lb:'53QF',  sb:'10A',         x:308, y:98,  w:38, h:55, cl:'#2A0C00', note:'Protección L3+ HMI', sbkr:true},
+  {id:'54QF',  lb:'54QF',  sb:'10A',         x:351, y:98,  w:38, h:55, cl:'#2A0C00', note:'Protección bus mando 54L', sbkr:true},
+  // VFD — taps from internal 440V bus on the right section
+  {id:'VFD',   lb:'VFD ABB',sb:'ACS355 · M17',x:402, y:94,  w:168,h:118, cl:'#000D2C', note:'Variador frecuencia motor M17 — referencia 4–20mA desde PLC 1AQ', vfd:true},
+  // Communications devices
+  {id:'HF9606',lb:'HF9606', sb:'Router 4G',   x:580, y:94,  w:78, h:55, cl:'#0C0C0C', note:'Router 4G comunicación remota — Ethernet → CPU · red 192.168.3.x'},
+  {id:'DTU1',  lb:'DTU1',   sb:'Telemetría',  x:580, y:155, w:78, h:52, cl:'#0C0C0C', note:'Módulo telemetría/DTU — conectado a HF9606'},
+  {id:'EH1',   lb:'SW ETH', sb:'Switch 4P',   x:664, y:94,  w:78, h:55, cl:'#0A130A', note:'Switch Ethernet — conecta CPU · HMI TP1200 · HF9606'},
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SVG HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+function svgEl(tag,a,inner=''){
+  return `<${tag}${Object.entries(a).map(([k,v])=>` ${k}="${v}"`).join('')}>${inner}</${tag}>`;
+}
+function rect(x,y,w,h,a={}){return svgEl('rect',{x,y,width:w,height:h,...a});}
+function txt(x,y,s,a={}){return svgEl('text',{x,y,'text-anchor':'middle',...a},s);}
+function line(x1,y1,x2,y2,a={}){return svgEl('line',{x1,y1,x2,y2,...a});}
+function path(d,a={}){return svgEl('path',{d,...a});}
+function compG(id,circuit,inner){
+  return `<g id="cg-${id}" class="cg" data-id="${id}" data-circuit="${circuit||''}" onclick="clickComp('${id}')">${inner}</g>`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COMPONENT DRAWERS
+// ─────────────────────────────────────────────────────────────────────────────
+function drawQF(m,x,y,w,h){
+  const cx=x+w/2, kR=Math.min(w*.28,13);
+  const big=m.amps.includes('63')||m.amps.includes('40');
+  const med=m.amps.includes('9');
+  const sc=big?'#7030BB':med?'#BB5010':'#6A4A10';
+  const hc=big?'#2A0055':med?'#3A1000':'#281800';
+  let s=rect(x,y,w,h,{rx:3,fill:'#222220',stroke:sc,'stroke-width':1.3,class:'cr'});
+  s+=rect(x,y,w,20,{rx:3,fill:hc}); s+=rect(x,y+17,w,3,{fill:hc});
+  s+=svgEl('circle',{cx,cy:y+h*.44,r:kR,fill:'#181816',stroke:'#999','stroke-width':1.5});
+  s+=svgEl('circle',{cx,cy:y+h*.44,r:kR*.36,fill:'#272725'});
+  s+=line(cx,y+h*.44-kR*.34,cx,y+h*.44-kR+2,{stroke:'#CCC','stroke-width':2.5,'stroke-linecap':'round'});
+  const gp=(w-6)/3.4;
+  for(let i=0;i<4;i++) s+=rect(x+3+i*gp,y+h-10,gp-1,7,{rx:1,fill:'#2A2A28',stroke:'#585856'});
+  s+=txt(cx,y+13,m.qf,{fill:'#FFF','font-size':9.5,'font-weight':700});
+  s+=txt(cx,y+h*.44+kR+11,m.qfm.replace('GV2-',''),{fill:'#888','font-size':6.8});
+  s+=txt(cx,y+h-16,m.amps+' A',{fill:big?'#CC99FF':med?'#FFAA55':'#FFD070','font-size':8.5,'font-weight':600});
+  return s;
+}
+
+function drawKM(m,x,y,w,h){
+  const cx=x+w/2;
+  const big=m.big;
+  let s=rect(x,y,w,h,{rx:3,fill:'#121228',stroke:big?'#6020A8':'#222268',class:'cr'});
+  s+=rect(x,y,w,20,{rx:3,fill:big?'#280050':'#100845'}); s+=rect(x,y+17,w,3,{fill:big?'#280050':'#100845'});
+  for(let i=0;i<3;i++){
+    const bx=x+8+i*(w-16)/2;
+    s+=line(bx,y+30,bx+10,y+30,{stroke:'#4848CC','stroke-width':2,'stroke-linecap':'round'});
+    s+=line(bx+3,y+38,bx+13,y+38,{stroke:'#4848CC','stroke-width':2,'stroke-linecap':'round'});
+    s+=line(bx+10,y+30,bx+10,y+38,{stroke:'#4848CC','stroke-width':1,'stroke-dasharray':'2 2'});
+  }
+  const coilY=y+h-26;
+  s+=rect(cx-13,coilY,26,15,{rx:2,fill:'none',stroke:'#3399FF','stroke-width':1.5,'stroke-dasharray':'3 2'});
+  s+=txt(cx,coilY+10,'A1~A2',{fill:'#3399FF','font-size':6.5});
+  s+=txt(cx,y+13,m.km,{fill:'#FFF','font-size':9.5,'font-weight':700});
+  s+=txt(cx,y+54,m.kmm,{fill:'#8888EE','font-size':7.5});
+  s+=txt(cx,y+h-8,'LADN20',{fill:'#777777','font-size':6.5});
+  return s;
+}
+
+function drawKB(n,x,y,w,h,isM){
+  const cx=x+w/2;
+  let s=rect(x,y,w,h,{rx:2,fill:'#181000',stroke:isM?'#CC9900':'#3A3A3A',class:'cr'});
+  s+=rect(x+1,y+h-19,w-2,17,{rx:2,fill:isM?'#CC9900':'#2A2A2A'});
+  s+=svgEl('circle',{cx,cy:y+10,r:3.5,fill:'#080806',stroke:'#3A3A3A'});
+  s+=svgEl('circle',{cx:cx+1,cy:y+11.5,r:1.4,fill:'#00FF00',opacity:.45});
+  s+=txt(cx,y+26,'IDEC',{fill:'#909090','font-size':6.8});
+  s+=txt(cx,y+36,'RJ2S',{fill:'#888888','font-size':6.5});
+  s+=txt(cx,y+h-6,n+'KB',{fill:isM?'#000':'#777','font-size':7.5,'font-weight':700});
+  return s;
+}
+
+function drawPLC(m,y){
+  const cx=m.x+m.w/2, h=76;
+  let s=rect(m.x,y,m.w,h,{rx:2,fill:m.cl,stroke:'#1A9068','stroke-width':1.5,class:'cr'});
+  const leds=m.id==='CPU'?['#0f0','#ff0','#f00']:m.id==='CMDP'?['#0f0','#ff0']:['#0f0','#0f0'];
+  leds.forEach((c,i)=>s+=svgEl('circle',{cx:m.x+7+i*10,cy:y+9,r:3.5,fill:c,opacity:.7}));
+  const tN=Math.max(3,Math.floor(m.w/7));
+  for(let i=0;i<tN;i++) s+=rect(m.x+2+i*(m.w-4)/tN,y+h-8,4,7,{fill:'#0A0A18',stroke:'#2A2A2A'});
+  s+=txt(cx,y+28,m.lb,{fill:m.tc,'font-size':10,'font-weight':700});
+  s+=txt(cx,y+43,m.sb,{fill:m.tc+'88','font-size':7});
+  return s;
+}
+
+function drawZ2E(e){
+  const y=PLCY+3, cx=e.x+e.w/2;
+  let s=rect(e.x,y,e.w,e.h,{rx:3,fill:e.cl,stroke:'#2A2A2A',class:'cr'});
+  if(e.id==='AD1'||e.id==='AD2'){
+    s+=rect(e.x+2,y+2,e.w-4,e.h*.42,{rx:2,fill:'#001448'});
+    s+=txt(cx,y+e.h*.22,e.lb,{fill:'#4880E8','font-size':12,'font-weight':700});
+    s+=txt(cx,y+e.h*.40,'NDR-240-24',{fill:'#6898E8','font-size':7.5});
+    s+=txt(cx,y+e.h*.58,'24VDC · 10A',{fill:'#EEE','font-size':8.5,'font-weight':600});
+    s+=txt(cx,y+e.h*.73,'100–240VAC→',{fill:'#777','font-size':7});
+    s+=txt(cx,y+e.h*.87,e.lb==='AD1'?'Bus L1+':'Bus L2+',{fill:'#00CC44','font-size':7.5,'font-weight':600});
+  } else {
+    s+=svgEl('circle',{cx,cy:y+e.h*.32,r:9,fill:'#400000',stroke:'#BB3333','stroke-width':1.5});
+    s+=txt(cx,y+e.h*.32+4,'F',{fill:'#EEE','font-size':8,'font-weight':700});
+    s+=txt(cx,y+e.h*.60,e.lb,{fill:'#EEE','font-size':10,'font-weight':700});
+    s+=txt(cx,y+e.h*.80,'4 A',{fill:'#EF9A9A','font-size':8,'font-weight':600});
+  }
+  return s;
+}
+
+// Zone 1 component drawer — uses absolute y from c.y
+function drawZ1C(c){
+  const cx=c.x+c.w/2, cy=c.y+c.h/2;
+  let s=rect(c.x,c.y,c.w,c.h,{rx:4,fill:c.cl,stroke:'#3A3A3A',class:'cr'});
+  if(c.gate){
+    // 0QF — compact rotary breaker "gate" above the internal 440V bus
+    const kR=c.w*.26;
+    s+=svgEl('circle',{cx,cy:c.y+c.h*.52,r:kR,fill:'#181816',stroke:'#AA3333','stroke-width':2.5});
+    s+=svgEl('circle',{cx,cy:c.y+c.h*.52,r:kR*.38,fill:'#262624'});
+    s+=line(cx,c.y+c.h*.52-kR*.35,cx,c.y+c.h*.52-kR+2.5,{stroke:'#EEE','stroke-width':4,'stroke-linecap':'round'});
+    s+=txt(cx,c.y+11,c.lb,{fill:'#FF7777','font-size':11,'font-weight':700});
+    s+=txt(cx,c.y+c.h-7,'125A · 3P',{fill:'#FFAAAA','font-size':8.5,'font-weight':600});
+  } else if(c.xfmr){
+    // TR1 transformer
+    const eCx=cx-26, eCx2=cx+26;
+    s+=svgEl('ellipse',{cx:eCx,cy:cy,rx:22,ry:30,fill:'none',stroke:'#FF9020','stroke-width':2,'stroke-dasharray':'5 3'});
+    s+=svgEl('ellipse',{cx:eCx2,cy:cy,rx:22,ry:30,fill:'none',stroke:'#FF9020','stroke-width':2,'stroke-dasharray':'5 3'});
+    s+=txt(cx,c.y+14,c.lb,{fill:'#FFB060','font-size':11,'font-weight':700});
+    s+=txt(eCx,cy,'440V',{fill:'#FF5555','font-size':8,'font-weight':700});
+    s+=txt(eCx2,cy,'220V',{fill:'#00CC44','font-size':8,'font-weight':700});
+    s+=txt(cx,c.y+c.h-7,'3 kVA',{fill:'#777','font-size':7.5});
+  } else if(c.vfd){
+    // VFD ABB
+    s+=rect(c.x+4,c.y+4,c.w-8,c.h*.42,{rx:2,fill:'#000E50'});
+    s+=txt(cx,c.y+c.h*.22,'VFD ABB',{fill:'#4488EE','font-size':13,'font-weight':700});
+    s+=txt(cx,c.y+c.h*.40,'ACS355',{fill:'#6098DD','font-size':9});
+    s+=txt(cx,c.y+c.h*.60,'Motor M17',{fill:'#EEE','font-size':9.5,'font-weight':600});
+    s+=txt(cx,c.y+c.h*.76,'0–440V · 0–60Hz',{fill:'#888','font-size':7.5});
+    s+=txt(cx,c.y+c.h*.90,'ref. 4-20mA ← 1AQ',{fill:'#FFAA55','font-size':7.5});
+    s+=svgEl('circle',{cx:c.x+c.w-14,cy:c.y+16,r:4,fill:'#00FF00',opacity:.65});
+    s+=svgEl('circle',{cx:c.x+c.w-14,cy:c.y+28,r:4,fill:'#FF2200',opacity:.3});
+  } else if(c.sbkr){
+    // Small secondary breakers
+    const kR=Math.min(c.w*.24,9);
+    s+=svgEl('circle',{cx,cy:c.y+c.h*.43,r:kR,fill:'#181816',stroke:'#7A4A10','stroke-width':1.2});
+    s+=line(cx,c.y+c.h*.43-kR*.32,cx,c.y+c.h*.43-kR+1.5,{stroke:'#CCC','stroke-width':2,'stroke-linecap':'round'});
+    s+=txt(cx,c.y+10,c.lb,{fill:'#FF8844','font-size':8,'font-weight':700});
+    s+=txt(cx,c.y+c.h-6,c.sb,{fill:'#777','font-size':6.5});
+  } else {
+    // Comms (HF9606, DTU1, EH1)
+    s+=rect(c.x+4,c.y+4,c.w-8,20,{rx:2,fill:'#1A1A1A'});
+    s+=txt(cx,c.y+17,c.lb,{fill:'#999','font-size':10,'font-weight':700});
+    for(let i=0;i<4;i++) s+=svgEl('circle',{cx:c.x+12+i*14,cy:c.y+35,r:3,fill:'#009900',opacity:.6});
+    s+=txt(cx,c.y+c.h-7,c.sb,{fill:'#555','font-size':7.5});
+  }
+  return s;
+}
+
+function drawTerminals(){
+  const tx=882, ty=233, tw=184, termH=SH-ty-10;
+  // Non-interactive background & headers
+  let bg=rect(tx,ty,tw,termH,{rx:4,fill:'#0C0C0C',stroke:'#222'});
+  bg+=txt(tx+tw/2,ty+14,'BORNERAS CAMPO',{fill:'#444','font-size':8.5,'font-weight':700,'letter-spacing':1});
+  const grps=[
+    {id:'X3',label:'DI señales campo',  y:ty+22,    n:24, col:'#1A8050'},
+    {id:'X4',label:'AI · Instrumentos', y:ty+22+124,n:8,  col:'#7A5500'},
+    {id:'X5',label:'DQ / 24V LCBs',    y:ty+22+210,n:18, col:'#4040A0'},
+    {id:'X1',label:'PE / Tierra',       y:ty+22+334,n:10, col:'#5A5A5A'},
+  ];
+  // Individual clickable bornes
+  let bornes='';
+  grps.forEach(g=>{
+    // Group label + color bar (non-clickable, part of bg)
+    bg+=txt(tx+tw/2,g.y+12,g.id,{fill:g.col,'font-size':10,'font-weight':700});
+    bg+=rect(tx+6,g.y+16,tw-12,3,{fill:g.col,opacity:.7});
+    bg+=txt(tx+tw/2,g.y+50,g.label,{fill:'#888888','font-size':7.5,'font-style':'italic'});
+    const bW=(tw-12)/g.n;
+    for(let i=0;i<g.n;i++){
+      const termId=`TERM-${g.id}-${i+1}`;
+      const bx=tx+6+i*bW+1;
+      const by=g.y+21;
+      const bw=Math.max(bW-2,1);
+      const td=TERM_DATA[g.id]&&TERM_DATA[g.id][i];
+      const tipCol=td?(td.tipo==='DI'?'#1A8050':td.tipo==='AI'?'#8A5500':td.tipo==='DQ'?'#303090':td.tipo==='24V'?'#1A4060':'#404040'):g.col;
+      bornes+=`<g id="cg-${termId}" class="cg term-g" data-id="${termId}" data-circuit="" style="cursor:pointer">`;
+      bornes+=rect(bx,by,bw,17,{rx:1,fill:'#161616',stroke:tipCol,'stroke-width':.9,'class':'cr'});
+      // Show number for terminals 1-9 (wider spacing) and for all with small font
+      bornes+=svgEl('text',{x:bx+bw/2,y:by+11,'text-anchor':'middle',fill:tipCol,'font-size':4.8,'font-weight':'600','pointer-events':'none'},(i+1).toString());
+      bornes+=`</g>`;
+    }
+  });
+  // Background (non-clickable) wraps everything under it; bornes are layered on top
+  return `<g id="g-term-bg">${bg}</g>${bornes}`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BUILD SVG
+// ─────────────────────────────────────────────────────────────────────────────
+function buildSVG(){
+  const svg=document.getElementById('panel-svg');
+  const vw=document.getElementById('canvas').clientWidth-12;
+  const SW_use=showBornes?SW:PW+8;
+  const SH_use=showBornes?SH:Z.z6.y+2;
+  // Allow higher zoom when bornes hidden so the panel fills the screen
+  const scMax=showBornes?1.05:1.55;
+  const sc=Math.max(0.62,Math.min(scMax,vw/SW_use));
+  svg.setAttribute('width',SW_use*sc); svg.setAttribute('height',SH_use*sc);
+  svg.setAttribute('viewBox',`0 0 ${SW_use} ${SH_use}`);
+  let h='';
+
+  // ── Glow filters ─────────────────────────────────────────────────────────
+  h+=`<defs>
+    <filter id="gr" x="-30%" y="-60%" width="160%" height="220%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="gg" x="-30%" y="-60%" width="160%" height="220%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>`;
+
+  // ── Panel backgrounds ─────────────────────────────────────────────────────
+  h+=rect(0,0,PW+2,SH,{fill:'#161614',rx:4});
+  if(showBornes) h+=rect(PW+10,0,SW-PW-12,SH,{fill:'#101010',rx:4});
+
+  // ── Zone backgrounds ──────────────────────────────────────────────────────
+  Object.entries(Z).forEach(([k,z])=>{
+    if(!showBornes&&k==='z6') return;
+    h+=rect(2,z.y,PW-4,z.h,{fill:z.bg,rx:2});
+    h+=svgEl('text',{x:8,y:z.y+11,fill:'#555560','font-size':9,'font-weight':700,'letter-spacing':.6},z.lbl);
+    h+=rect(2,z.y+z.h*.77,PW-4,5,{fill:'#2E2E2C',rx:1,opacity:.9});
+  });
+
+  // ── Duct areas (cable management channels between zones) ──────────────────
+  [ [Z.z1,Z.z2],[Z.z2,Z.z3],[Z.z3,Z.z4a],[Z.z4a,Z.z4b],[Z.z4b,Z.z5a],[Z.z5a,Z.z5b],[Z.z5b,Z.z6] ]
+    .forEach(([a,b])=>{
+      const dy=a.y+a.h, dh=b.y-dy;
+      if(dh>0) h+=rect(2,dy,PW-4,dh,{fill:'rgba(0,0,0,0.42)',rx:0});
+    });
+
+  // ── Zone 1: Internal 440V bus + schematic ─────────────────────────────────
+  // Split Zone 1 into: LEFT (power) x=0-394 / RIGHT (VFD+comms) x=396-860
+  const Z1_SEP = 396;
+  h+=rect(4, Z.z1.y+2, Z1_SEP-6, Z.z1.h-4,{rx:3,fill:'rgba(100,5,5,0.14)',stroke:'rgba(180,20,20,0.16)','stroke-width':.8});
+  h+=rect(Z1_SEP+2, Z.z1.y+2, PW-Z1_SEP-6, Z.z1.h-4,{rx:3,fill:'rgba(5,10,50,0.14)',stroke:'rgba(20,40,140,0.16)','stroke-width':.8});
+
+  // Section labels
+  h+=svgEl('text',{x:108,y:Z.z1.y+62,fill:'#CC5555','font-size':9,'font-weight':700,'letter-spacing':.6},'ENTRADA 440V · CIRCUITO MANDO');
+  h+=svgEl('text',{x:Z1_SEP+10,y:Z.z1.y+20,fill:'#5588CC','font-size':9,'font-weight':700,'letter-spacing':.6},'VARIADOR M17 · COMUNICACIONES');
+
+  // LCP5.1 entry arrow (above 0QF)
+  const qf0cx = Z1C[0].x + Z1C[0].w/2; // center of 0QF = 49
+  h+=svgEl('polygon',{points:`${qf0cx-16},${Z.z1.y+8} ${qf0cx+16},${Z.z1.y+8} ${qf0cx},${Z.z1.y+24}`,fill:'#AA1111'});
+  h+=svgEl('text',{x:qf0cx,y:Z.z1.y+8,'text-anchor':'middle',fill:'#FF5555','font-size':7,'font-weight':700},'← 440V LCP5.1');
+
+  // Internal 440V bus (horizontal, inside Zone 1, at y=Z1_IBUS=88)
+  h+=rect(4, Z1_IBUS, Z1_SEP-6, 9,{fill:'#8A0000',rx:2,filter:'url(#gr)'});
+  h+=svgEl('text',{x:200,y:Z1_IBUS-2,'text-anchor':'middle',fill:'#FF5555','font-size':8,'font-weight':700,filter:'url(#gr)'},'BUS 440V 3F AC');
+
+  // 0QF to internal bus (connector line)
+  h+=path(`M ${qf0cx} ${Z1C[0].y+Z1C[0].h} L ${qf0cx} ${Z1_IBUS}`,{stroke:'#882222','stroke-width':3,fill:'none','stroke-linecap':'round'});
+
+  // Internal bus to TR1 (tap line going down)
+  h+=path(`M 85 ${Z1_IBUS+9} L 85 ${Z1C[1].y}`,{stroke:'#662222','stroke-width':2,'stroke-dasharray':'4 3',fill:'none'});
+  // Internal bus to secondary breakers (50QF-54QF)
+  h+=path(`M 190 ${Z1_IBUS+9} L 190 ${Z1C[2].y}`,{stroke:'#662222','stroke-width':2,'stroke-dasharray':'4 3',fill:'none'});
+  // Connecting line from TR1 to 50QF (secondary)
+  h+=path(`M 168 ${Z1C[2].y+26} L ${Z1C[1].x+Z1C[1].w} ${Z1C[2].y+26}`,{stroke:'#555522','stroke-width':1.5,'stroke-dasharray':'3 2',fill:'none'});
+  // Connecting line between secondary breakers (horizontal bus)
+  h+=rect(168, Z1C[2].y+Z1C[2].h-4, 222, 3,{fill:'#5A3800',rx:1,opacity:.6});
+  // VFD tap from internal bus
+  const vfdCx = Z1C[7].x + Z1C[7].w/2; // center of VFD ≈ 486
+  h+=path(`M ${vfdCx} ${Z1_IBUS+9} L ${vfdCx} ${Z1C[7].y}`,{stroke:'#222266','stroke-width':2,'stroke-dasharray':'4 3',fill:'none'});
+
+  // External 440V bus bar label (at the BOTTOM edge of Zone 1 / top of duct)
+  h+=rect(2,BUS_440-4,PW-4,10,{fill:'#7A0000',rx:2,filter:'url(#gr)'});
+  h+=svgEl('text',{x:PW-8,y:BUS_440+4,'text-anchor':'end',fill:'#FF5555','font-size':8.5,'font-weight':700,filter:'url(#gr)'},'■ BUS 440V → MOTORES M1–M17');
+
+  // Draw Zone 1 components
+  Z1C.forEach(c=>h+=compG(c.id,'',drawZ1C(c)));
+
+  // ── Zone 2: PLC + PSU ────────────────────────────────────────────────────
+  // Layout in this zone:
+  //   y=233–309  → PLC modules (h=76)
+  //   y=309–343  → PSU units (AD1/AD2 bottom) + small breakers (1F/2F/3F)
+  //   y=337      → BUS 24VDC bar (INSIDE Z2, near bottom)
+  //   y=343      → Z2 bottom / top of duct
+  //   y=353      → Profibus cable (in duct, clear of everything above)
+  //   y=357      → Z3 top
+
+  // 24VDC bus bar — drawn INSIDE Zone 2 (well above Profibus)
+  h+=rect(2,BUS_24-10,PW*.88,11,{fill:'#0A6A1A',rx:2,filter:'url(#gg)'});
+  h+=svgEl('text',{x:8,y:BUS_24-1,'text-anchor':'start',fill:'#00CC44','font-size':8.5,'font-weight':700,filter:'url(#gg)'},'■ BUS 24VDC L1+');
+  h+=svgEl('text',{x:PW*.82,y:BUS_24-1,'text-anchor':'end',fill:'#1FAA50','font-size':8,'font-weight':600},'AD1/AD2 → PLC · Relés KB · Instrumentos');
+
+  // Profibus: routed through duct between Z2 and Z3 — BELOW 24V bus, no overlap
+  const dpCx=PLCM[1].x+PLCM[1].w/2;   // CMDP center x ≈ 123
+  const dpModBot=PLCY+76;               // PLC module bottom ≈ 314
+  const dpDuctY=Z.z2.y+Z.z2.h+10;      // = 353 (duct midpoint, clear of 24V bar at 333–343)
+  // Vertical drop stub: CMDP module bottom → duct
+  h+=path(`M ${dpCx} ${dpModBot} L ${dpCx} ${dpDuctY}`,
+    {stroke:'#7010A0','stroke-width':3,opacity:.75,fill:'none','stroke-linecap':'round','pointer-events':'none'});
+  // Horizontal Profibus cable through duct (full width)
+  h+=path(`M ${dpCx} ${dpDuctY} L ${PW-2} ${dpDuctY}`,
+    {stroke:'#5A0880','stroke-width':7,opacity:.5,fill:'none','stroke-linecap':'round','pointer-events':'none'});
+  h+=path(`M ${dpCx} ${dpDuctY} L ${PW-2} ${dpDuctY}`,
+    {stroke:'#CC70EE','stroke-width':2.5,'stroke-dasharray':'10 5',fill:'none','stroke-linecap':'round','pointer-events':'none'});
+  h+=svgEl('text',{x:dpCx+8,y:dpDuctY-3,'text-anchor':'start',fill:'#8020B0','font-size':7.5,'font-weight':700},
+    'Profibus DP 187.5kbit/s → LCB4.1 / 4.2 / 4.3 / 5.1 / 5.2 / 4.RF1 / 4.RF3');
+
+  PLCM.forEach(m=>h+=compG(m.id,'',drawPLC(m,PLCY)));
+  Z2E.forEach(e=>h+=compG(e.id,'',drawZ2E(e)));
+  // Ethernet: shown as a short label badge at CPU right edge only (no crossing line)
+  h+=rect(PLCM[0].x+PLCM[0].w+2,PLCY+4,42,14,{rx:3,fill:'#0A0A28',stroke:'#1A1A6A'});
+  h+=svgEl('text',{x:PLCM[0].x+PLCM[0].w+23,y:PLCY+14,'text-anchor':'middle',fill:'#6090DD','font-size':7.5,'font-weight':700},'ETH→ EH1');
+
+  // ── Zone 3: Relay KB ─────────────────────────────────────────────────────
+  MT.forEach(m=>{
+    const kbx=m.kbcx-kbW/2;
+    h+=compG(`${m.n}KB`,`M${m.n}`,drawKB(m.n,kbx,kbY,kbW,kbH,true));
+    // Short wire stub from relay top up to 24VDC bus (in duct area, visible)
+    h+=path(`M ${m.kbcx} ${kbY-1} L ${m.kbcx} ${BUS_24+8}`,{stroke:'#1A4A18','stroke-width':1.2,'stroke-dasharray':'3 3',fill:'none','pointer-events':'none'});
+  });
+  for(let i=18;i<=24;i++) h+=compG(`${i}KB`,'',drawKB(i,kbX(i)-kbW/2,kbY,kbW,kbH,false));
+
+  // ── Zone 4A: QF M1-11 ────────────────────────────────────────────────────
+  const wA=Math.min(70,PW/AN-4);
+  MT.filter(m=>m.row==='A').forEach(m=>{
+    h+=compG(m.qf,`M${m.n}`,drawQF(m,m.cx-wA/2,qfAY,wA,qfAH));
+    // Entry indicator (small red triangle = 440V enters from above)
+    h+=svgEl('polygon',{points:`${m.cx-6},${qfAY} ${m.cx+6},${qfAY} ${m.cx},${qfAY+7}`,fill:'#882222',opacity:.75,'pointer-events':'none'});
+  });
+
+  // ── Zone 4B: QF M12-17 ───────────────────────────────────────────────────
+  const wB=Math.min(110,PW/BN-8);
+  MT.filter(m=>m.row==='B').forEach(m=>{
+    h+=compG(m.qf,`M${m.n}`,drawQF(m,m.cx-wB/2,qfBY,wB,qfBH));
+    h+=svgEl('polygon',{points:`${m.cx-6},${qfBY} ${m.cx+6},${qfBY} ${m.cx},${qfBY+7}`,fill:'#882222',opacity:.75,'pointer-events':'none'});
+  });
+
+  // ── Zone 5A: KM M1-11 ────────────────────────────────────────────────────
+  MT.filter(m=>m.row==='A').forEach(m=>{
+    const w=Math.min(68,PW/AN-4), x=m.cx-w/2;
+    h+=compG(m.km,`M${m.n}`,drawKM(m,x,kmAY,w,kmAH));
+    // Exit stub below KM (short line to zone bottom)
+    h+=path(`M ${m.cx} ${kmAY+kmAH+1} L ${m.cx} ${Z.z5a.y+Z.z5a.h-1}`,{stroke:'#18184A','stroke-width':1.5,'stroke-dasharray':'3 3',fill:'none',opacity:.5,'pointer-events':'none'});
+    // Control input indicator (green dot = 24V mando)
+    h+=svgEl('circle',{cx:x+w-3,cy:kmAY+kmAH-22,r:3,fill:'#0A3A18',stroke:'#00CC44','stroke-width':1,opacity:.6,'pointer-events':'none'});
+  });
+
+  // ── Zone 5B: KM M12-17 ───────────────────────────────────────────────────
+  MT.filter(m=>m.row==='B').forEach(m=>{
+    const w=Math.min(110,PW/BN-8), x=m.cx-w/2, kmH=m.big?kmBH+10:kmBH;
+    h+=compG(m.km,`M${m.n}`,drawKM(m,x,kmBY,w,kmH));
+    h+=path(`M ${m.cx} ${kmBY+kmH+1} L ${m.cx} ${Z.z5b.y+Z.z5b.h-1}`,{stroke:'#18184A','stroke-width':1.5,'stroke-dasharray':'3 3',fill:'none',opacity:.5,'pointer-events':'none'});
+    h+=svgEl('circle',{cx:x+w-3,cy:kmBY+kmH-22,r:3,fill:'#0A3A18',stroke:'#00CC44','stroke-width':1,opacity:.6,'pointer-events':'none'});
+  });
+
+  // ── Zone 6: Field terminals (toggleable via showBornes) ──────────────────
+  const z6y=Z.z6.y+8, z6h=52, z6bot=Z.z6.y+Z.z6.h;
+  if(showBornes){
+    MT.forEach(m=>{
+      h+=path(`M ${m.cx} ${z6bot} L ${m.cx} ${z6bot+10}`,{stroke:'#2A2A3A','stroke-width':3,fill:'none','pointer-events':'none'});
+      h+=svgEl('polygon',{points:`${m.cx-5},${z6bot+10} ${m.cx+5},${z6bot+10} ${m.cx},${z6bot+16}`,fill:'#222235','pointer-events':'none'});
+      h+=`<g id="cg-CAMPO-M${m.n}" class="cg" data-id="CAMPO-M${m.n}" data-circuit="M${m.n}" onclick="clickComp('CAMPO-M${m.n}')">
+        ${rect(m.cx-17,z6y,34,z6h,{rx:2,fill:'#0E0E1A',stroke:'#28284A',class:'cr'})}
+        ${rect(m.cx-17,z6y,34,14,{rx:2,fill:'#141420'})}
+        ${txt(m.cx,z6y+10,'M'+m.n,{fill:'#6868AA','font-size':8.5,'font-weight':800})}
+        ${txt(m.cx,z6y+22,'440V→',{fill:'#8888CC','font-size':7,'font-weight':700})}
+        ${txt(m.cx,z6y+32,'campo',{fill:'#6868AA','font-size':6})}
+        ${rect(m.cx-14,z6y+z6h-13,10,9,{rx:1,fill:'#0A0A18',stroke:'#383858'})}
+        ${rect(m.cx+4,z6y+z6h-13,10,9,{rx:1,fill:'#0A0A18',stroke:'#383858'})}
+        ${txt(m.cx-9,z6y+z6h-6,'L1',{fill:'#8080BB','font-size':5.5})}
+        ${txt(m.cx+9,z6y+z6h-6,'L2',{fill:'#8080BB','font-size':5.5})}
+      </g>`;
+    });
+  }
+
+  // ── Terminal strip ────────────────────────────────────────────────────────
+  if(showBornes) h+=drawTerminals();
+
+  // ── CIRCUIT TRACE LINES ───────────────────────────────────────────────────
+  // Strategy: draw segments ONLY in duct areas and edge stubs.
+  // Use M (pen-up) moves to SKIP through component zones entirely.
+  // Components are highlighted separately — no wire drawn THROUGH their bodies.
+  h+='<g id="circuit-lines">';
+  const z2bot=Z.z2.y+Z.z2.h, z3bot=Z.z3.y+Z.z3.h;
+  const z4abot=Z.z4a.y+Z.z4a.h, z4bbot=Z.z4b.y+Z.z4b.h;
+  const z5abot=Z.z5a.y+Z.z5a.h, z5bbot=Z.z5b.y+Z.z5b.h;
+
+  MT.forEach(m=>{
+    const isA=m.row==='A';
+    const qfY=isA?qfAY:qfBY, qfH=isA?qfAH:qfBH;
+    const kmY=isA?kmAY:kmBY, kmH=isA?kmAH:kmBH+(m.big?10:0);
+    const cid=`M${m.n}`;
+
+    // ── POWER PATH ─────────────────────────────────────────────────────────
+    // Show: BUS_440 → duct→Z2 → skip Z2 → duct23 → skip Z3 → duct34 → QF stub
+    //       QF exit stub → (skip Z4B if A) → duct→KM → skip KM → stub→ field
+    let pd;
+    // Power path: duct-only segments, pen-up (M) through component zones
+    // Ends at field terminal bottom → visible exit to motor
+    const z6term = z6y + z6h; // bottom of terminal block
+    const z6tail = showBornes
+      ? `M ${m.cx} ${z5bbot}    L ${m.cx} ${z6y}`+
+        `M ${m.cx} ${z6term}    L ${m.cx} ${z6bot+14}`
+      : `M ${m.cx} ${z5bbot}    L ${m.cx} ${Z.z6.y+1}`;
+    if(isA){
+      pd=
+        `M ${m.cx} ${BUS_440+2} L ${m.cx} ${Z.z2.y}`+    // duct 1→2
+        `M ${m.cx} ${z2bot}     L ${m.cx} ${Z.z3.y}`+    // duct 2→3 (skip Z2)
+        `M ${m.cx} ${z3bot}     L ${m.cx} ${qfAY}`+      // duct 3→4A (skip Z3)
+        `M ${m.cx} ${qfAY+qfAH} L ${m.cx} ${z4abot}`+    // exit QF stub
+        `M ${m.cx} ${z4bbot}    L ${m.cx} ${kmAY}`+      // duct 4B→5A (skip Z4A/4B)
+        `M ${m.cx} ${kmAY+kmAH} L ${m.cx} ${z5abot}`+    // exit KM stub
+        z6tail;
+    } else {
+      pd=
+        `M ${m.cx} ${BUS_440+2} L ${m.cx} ${Z.z2.y}`+
+        `M ${m.cx} ${z2bot}     L ${m.cx} ${Z.z3.y}`+
+        `M ${m.cx} ${z3bot}     L ${m.cx} ${qfBY}`+
+        `M ${m.cx} ${qfBY+qfBH} L ${m.cx} ${z4bbot}`+
+        `M ${m.cx} ${z5abot}    L ${m.cx} ${kmBY}`+      // skip Z5A
+        `M ${m.cx} ${kmBY+kmH}  L ${m.cx} ${z5bbot}`+
+        z6tail;
+    }
+    h+=path(pd,{class:`cl p circuit-${cid}`,id:`clp-${cid}`});
+
+    // ── CONTROL PATH ───────────────────────────────────────────────────────
+    // 24V bus → relay top stub; relay bottom stub → duct; small stub at KM coil
+    const coilY=kmY+kmH*.65;
+    const cd=
+      // 24VDC bus bottom → relay top (duct area into relay zone)
+      `M ${m.kbcx} ${BUS_24+1} L ${m.kbcx} ${kbY}`+
+      // relay bottom → duct bottom (short exit stub)
+      `M ${m.kbcx} ${kbY+kbH} L ${m.kbcx} ${z3bot}`+
+      // KM coil stub (indicator only — no crossing lines)
+      `M ${m.cx} ${coilY-6} L ${m.cx} ${coilY+6}`;
+    h+=path(cd,{class:`cl c circuit-${cid}`,id:`clc-${cid}`});
+
+    // ── SIGNAL PATH ────────────────────────────────────────────────────────
+    // DQ module bottom → horizontal bus (inside Z2, above 24V bar) → relay top
+    const dqM=m.dq.startsWith('1DQ')?PLCM.find(p=>p.id==='1DQ'):PLCM.find(p=>p.id==='2DQ');
+    const dqcx=dqM.x+dqM.w/2;
+    const sigBusY=BUS_24-18;  // horizontal bus just above the 24V bar (y≈325)
+    const sd=
+      `M ${dqcx} ${PLCY+76} L ${dqcx} ${sigBusY}`+
+      `L ${m.kbcx} ${sigBusY} L ${m.kbcx} ${kbY}`;
+    h+=path(sd,{class:`cl s circuit-${cid}`,id:`cls-${cid}`});
+  });
+  h+='</g>';
+
+  // ── Right-side zone labels ────────────────────────────────────────────────
+  // Short labels sized to fit within each zone's height when rotated 90°
+  const ztc={
+    z1:'#DD4444', z2:'#22BB66', z3:'#DDAA00',
+    z4a:'#DD8833', z4b:'#DD8833',
+    z5a:'#6677EE', z5b:'#6677EE',
+    z6:'#909090'
+  };
+  const zslbl={
+    z1:'POTENCIA 440V',
+    z2:'PLC · 24VDC',
+    z3:'RELÉS KB',
+    z4a:'QF · M1–11',
+    z4b:'QF · M12–17',
+    z5a:'KM · M1–11',
+    z5b:'KM · M12–17',
+    z6:'CAMPO'
+  };
+  // Zone labels: right-panel column when bornes visible, right inner edge when hidden
+  Object.entries(Z).forEach(([k,z])=>{
+    if(!showBornes&&k==='z6') return;
+    const lx=showBornes?PW+10:PW-10;
+    const midY=z.y+z.h/2;
+    const clr=ztc[k]||'#778899';
+    const lbl=zslbl[k]||k.toUpperCase();
+    h+=rect(lx-8,z.y+1,16,z.h-2,{rx:3,fill:'rgba(4,4,4,0.82)'});
+    h+=svgEl('text',{
+      x:lx, y:midY, fill:clr,
+      'font-size':9, 'font-weight':700, 'letter-spacing':'.8',
+      'text-anchor':'middle',
+      transform:`rotate(-90,${lx},${midY})`
+    }, lbl);
+  });
+
+  svg.innerHTML=h;
+  svg.addEventListener('click',function(e){
+    const g=e.target.closest('.cg');
+    if(g){clickComp(g.dataset.id);e.stopPropagation();}
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INTERACTION
+// ─────────────────────────────────────────────────────────────────────────────
+let selComp=null, selCircuit=null, flowOn=false, showBornes=true;
+
+function clickComp(id){
+  clearSel(false);
+  selComp=id;
+  const el=document.getElementById('cg-'+id)||document.querySelector(`[data-id="${id}"]`);
+  const circuit=el?el.dataset.circuit:'';
+  selCircuit=circuit;
+
+  // ── DIM everything first ──────────────────────────────────────────────────
+  document.querySelectorAll('.cg').forEach(g=>g.classList.add('dim'));
+
+  if(el){ el.classList.remove('dim'); el.classList.add('sel'); }
+
+  if(circuit){
+    // Activate circuit lines
+    document.querySelectorAll(`.circuit-${circuit}`).forEach(l=>{
+      l.classList.add('on');
+      if(flowOn) l.classList.add('anim');
+    });
+    // Highlight + un-dim ALL components belonging to this circuit
+    document.querySelectorAll(`[data-circuit="${circuit}"]`).forEach(g=>{
+      g.classList.remove('dim');
+      const gid=g.dataset.id; if(gid===id) return;
+      if(gid.includes('KB'))      g.classList.add('hi-s');
+      else if(gid.startsWith('CAMPO')) g.classList.add('hi-p');
+      else                             g.classList.add('hi-p');
+    });
+    // Un-dim shared infrastructure components (always relevant)
+    const motor=MT.find(m=>`M${m.n}`===circuit);
+    if(motor){
+      const dqId=motor.dq.startsWith('1DQ')?'1DQ':'2DQ';
+      ['CPU','AD1','0QF',dqId].forEach(cid=>{
+        const ig=document.getElementById('cg-'+cid)||document.querySelector(`[data-id="${cid}"]`);
+        if(ig){ ig.classList.remove('dim'); ig.classList.add('hi-c'); }
+      });
+    }
+  }
+  showInfo(id,circuit);
+}
+
+function clearSel(upd=true){
+  if(selComp){const el=document.querySelector(`[data-id="${selComp}"]`);if(el)el.classList.remove('sel');}
+  document.querySelectorAll('.cl').forEach(l=>l.classList.remove('on','anim'));
+  document.querySelectorAll('.cg').forEach(g=>g.classList.remove('hi-p','hi-c','hi-s','dim'));
+  selComp=null;selCircuit=null;
+  if(upd) document.getElementById('info').innerHTML='<div id="info-empty">👆<br><br>Clic en cualquier componente para rastrear el circuito eléctrico completo<br><br><span style="font-size:10px;color:#282828">potencia · mando · señal PLC</span></div>';
+}
+
+function toggleFlow(){
+  flowOn=!flowOn;
+  document.getElementById('btnFlow').classList.toggle('act',flowOn);
+  document.getElementById('btnFlow').textContent=flowOn?'⏸ Detener flujo':'▶ Animar flujo';
+  document.querySelectorAll('.cl.on').forEach(l=>{if(flowOn)l.classList.add('anim');else l.classList.remove('anim');});
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INFO PANEL
+// ─────────────────────────────────────────────────────────────────────────────
+function irow(l,v){return `<div class="irow"><span class="ilbl">${l}</span><span class="ival">${v}</span></div>`;}
+
+function showInfo(id,circuit){
+  const motor=circuit?MT.find(m=>`M${m.n}`===circuit):null;
+  const info=document.getElementById('info');
+  let tl='Componente',tn='',det='';
+
+  if(id.endsWith('KB')){
+    const n=parseInt(id), isM=n<=17;
+    tl='Relé auxiliar IDEC RJ2S-CL'; tn=isM?`Circuito motor M${n}`:'Salida auxiliar';
+    det=irow('Tipo','IDEC RJ2S-CL 24VDC')+irow('Bobina','24VDC · ≤0.8W')+irow('Contactos','2CO (2×SPDT)')+irow('Función','Aísla galvánicamente salida PLC DQ del circuito mando contactor');
+  } else if(id.endsWith('QF')||['15F','16F','17F'].includes(id)){
+    const m=motor;
+    tl=m&&m.big?`Interruptor ${m.qfm}`:`Guardamotor ${m?m.qfm:'GV2'}`;
+    tn=m?`Motor M${m.n} — protección térmica + cortocircuito`:'';
+    det=m?irow('Modelo',m.qfm)+irow('Ajuste',m.amps+' A')+irow('Función','Protección térmica (sobrecarga) + cortocircuito + seccionador')+irow('Disparo','Manual = motor para inmediatamente'):'';
+  } else if(id.endsWith('KM')){
+    const m=motor;
+    tl=`Contactor ${m?m.kmm:'LC1'}`; tn=m?`Motor M${m.n} — conmuta 440V`:'';
+    det=m?irow('Modelo',m.kmm)+irow('Bobina','24VDC ← Relé '+m.n+'KB')+irow('Contactos','3NO (3F) — '+m.amps+' A')+irow('Aux. LADN20','1NO+1NC → retroalim. DI PLC'):'';
+  } else if(id==='VFD'){
+    tl='Variador de frecuencia ABB ACS355'; tn='Motor M17 — velocidad variable';
+    det=irow('Modelo','ABB ACS355')+irow('Entrada','440V AC 3F')+irow('Salida','0–440V · 0–60Hz')+irow('Referencia','4–20mA ← 1AQ PLC')+irow('Habilitación','24VDC ← 17KB');
+  } else if(id==='CPU'){
+    tl='CPU ET200SP 6ES7 512-1DK01-0AB0'; tn='PLC principal LCP 4.1 — IP 192.168.3.31';
+    det=irow('IP','192.168.3.31')+irow('Memoria','150 kB trabajo · 1 MB load')+irow('Ciclo','~10ms OB1')+irow('Profibus','Maestro DP → 7 esclavos LCB');
+  } else if(id==='CMDP'){
+    tl='CM DP — Maestro Profibus'; tn='7 esclavos ET200SP remotos';
+    det=irow('Velocidad','187.5 kbit/s')+irow('Esclavos','LCB4.1·4.2·4.3·5.1·5.2·4.RF1·4.RF3')+irow('Cable','Par trenzado apantallado PROFIBUS');
+  } else if(id==='AD1'||id==='AD2'){
+    const e=Z2E.find(z=>z.id===id);
+    tl='Fuente Mean Well NDR-240-24'; tn=id==='AD1'?'Bus L1+ → PLC + relés KB':'Bus L2+ → Instrumentos';
+    det=irow('Entrada','100–240VAC')+irow('Salida','24VDC · 10A · 240W')+irow('Alimenta',e?e.note:'');
+  } else if(id==='TR1'){
+    tl='Transformador 440/220V'; tn='Alimenta circuito mando 220VAC';
+    det=irow('Relación','440V → 220V monofásico')+irow('Potencia','~3 kVA')+irow('Secundario','→ 50QF → 51/52/53/54QF → AD1/AD2');
+  } else if(id==='0QF'){
+    tl='Interruptor general 125A/3P'; tn='Seccionador principal LCP5.1 → LCP4.1';
+    det=irow('Tipo','Rotativo Schneider')+irow('Calibre','125A / 3P')+irow('Función','OFF = todo el tablero desenergizado')+irow('Origen','440V 3F desde LCP5.1');
+  } else if(/^[1-5]DI$/.test(id)){
+    tl=`Módulo ${id} — Entradas digitales 16×`; tn='Señales campo → PLC';
+    det=irow('Tipo','6ES7 131-6BF01-0BA0')+irow('Canales','16 × DI 24VDC')+irow('Conexión','Borneras X3 · KVVP 0.5-1.5mm²');
+  } else if(id==='1DQ'||id==='2DQ'){
+    tl=`Módulo ${id} — Salidas digitales ${id==='1DQ'?'16×':'8×'}`; tn=`PLC → relés KB (${id==='1DQ'?'KB1–16':'KB17–24'})`;
+    det=irow('Tipo',id==='1DQ'?'6ES7 132-6BS01-0BA0':'6ES7 132-6BH01-0BA0')+irow('Salida','24VDC · 0.5A por canal')+irow('Cargas','Bobinas relés KB (0.8W)');
+  } else if(id==='1AI'){
+    tl='Módulo 1AI — AI 8×'; tn='Sensores 4-20mA → PLC';
+    det=irow('Tipo','6ES7 134-6GD00-0AB1')+irow('Canales','8 × AI 4-20mA')+irow('Señales','ORP · pH · presión · nivel');
+  } else if(id==='1AQ'){
+    tl='Módulo 1AQ — AQ 2×'; tn='Referencia velocidad → VFD M17';
+    det=irow('Tipo','6ES7 135-6GB00-0BA1')+irow('Salida','4–20mA · 12 bits')+irow('Carga','VFD ABB ACS355 — 0%=4mA · 100%=20mA');
+  } else if(id.startsWith('CAMPO-M')){
+    const mn=parseInt(id.replace('CAMPO-M',''));
+    const mf=MT.find(m=>m.n===mn);
+    tl=`Borneras campo — Motor M${mn}`; tn='Salida 440V 3F → motor en campo';
+    det=irow('Motor',`M${mn}`)+irow('Tensión','440V AC 3F + PE')+irow('Cable','NYY 3×…mm² apantallado')
+      +(mf?irow('Guardamotor',mf.qf+' · '+mf.qfm)+irow('Contactor',mf.km+' · '+mf.kmm):'');
+  } else if(id.startsWith('TERM-')){
+    const parts=id.split('-'); const grp=parts[1]; const num=parseInt(parts[2]);
+    const td=TERM_DATA[grp]&&TERM_DATA[grp][num-1];
+    const TIPO_COL={DI:'#1A8050',AI:'#8A5500',DQ:'#4040BB','24V':'#0060A0',PE:'#606060'};
+    const TIPO_LBL={DI:'Entrada digital 24VDC',AI:'Entrada analógica 4–20mA',DQ:'Salida digital 24VDC / Relé KB','24V':'Alimentación 24VDC','PE':'Tierra / protectiva'};
+    if(td){
+      const col=TIPO_COL[td.tipo]||'#888';
+      tl=TIPO_LBL[td.tipo]||td.tipo||'Terminal'; tn=td.sig;
+      det=`<div style="display:inline-block;background:${col}22;border:1px solid ${col};border-radius:4px;padding:2px 8px;font-size:9px;font-weight:700;color:${col};margin-bottom:8px;letter-spacing:.5px">${TIPO_LBL[td.tipo]||td.tipo}</div>`;
+      det+=irow('Señal',`<b style="color:#CCC">${td.sig}</b>`);
+      det+=irow('Dirección PLC',`<span style="font-family:monospace;color:#5DCAA5;font-size:11px">${td.addr}</span>`);
+      det+=irow('Módulo / slot',td.mod);
+      det+=irow('Origen / destino',td.dst);
+      if(td.fc&&td.fc!=='—') det+=irow('Lógica PLC',`<span style="font-size:10px;color:#A0A0A0">${td.fc}</span>`);
+      if(td.eq){
+        det+=`<div class="isep"></div>`;
+        det+=`<div class="isec-h" style="color:#3399FF">◈ EQUIPO ASOCIADO</div>`;
+        det+=`<div class="chain"><div class="citem sig" onclick="clickComp('${td.eq.replace('/','').replace(' ','')}')" style="cursor:pointer"><span class="ctag">${td.eq}</span><span>Ver equipo completo en el tablero</span></div></div>`;
+      }
+    } else {
+      tl=`${grp} · Borne ${num}`; tn='Terminal sin asignación registrada';
+      det=irow('Grupo',grp)+irow('Borne',num)+irow('Estado','Reserva');
+    }
+  } else {tl=id; det=irow('Ref.',id);}
+
+  let chain='';
+  if(motor){
+    const dqM=motor.dq.startsWith('1DQ')?'1DQ':'2DQ';
+    chain=`
+      <div class="isep"></div>
+      <div class="isec-h" style="color:#FF5555">⚡ POTENCIA (440V AC)</div>
+      <div class="chain">
+        <div class="citem pwr" onclick="clickComp('0QF')"><span class="ctag">0QF</span><span>Interruptor 125A → Bus 440V</span></div>
+        <div style="color:#2A2A2A;padding:0 8px;font-size:14px">↓</div>
+        <div class="citem pwr" onclick="clickComp('${motor.qf}')"><span class="ctag">${motor.qf}</span><span>${motor.qfm} · ${motor.amps} A</span></div>
+        <div style="color:#2A2A2A;padding:0 8px;font-size:14px">↓</div>
+        <div class="citem pwr" onclick="clickComp('${motor.km}')"><span class="ctag">${motor.km}</span><span>${motor.kmm} — contactor potencia</span></div>
+        <div style="color:#2A2A2A;padding:0 8px;font-size:14px">↓</div>
+        <div class="citem pwr" onclick="clickComp('CAMPO-M${motor.n}')"><span class="ctag">M${motor.n}</span><span>Motor campo 440V 3F</span></div>
+      </div>
+      <div class="isep"></div>
+      <div class="isec-h" style="color:#00CC44">✦ MANDO (24VDC)</div>
+      <div class="chain">
+        <div class="citem ctrl" onclick="clickComp('AD1')"><span class="ctag">AD1</span><span>Fuente 24VDC 10A</span></div>
+        <div style="color:#2A2A2A;padding:0 8px;font-size:14px">↓</div>
+        <div class="citem ctrl" onclick="clickComp('${motor.n}KB')"><span class="ctag">${motor.n}KB</span><span>Relé IDEC — aislamiento PLC</span></div>
+        <div style="color:#2A2A2A;padding:0 8px;font-size:14px">↓</div>
+        <div class="citem ctrl" onclick="clickComp('${motor.km}')"><span class="ctag">${motor.km} bobina</span><span>24VDC → cierra contactos 440V</span></div>
+      </div>
+      <div class="isep"></div>
+      <div class="isec-h" style="color:#3399FF">◈ SEÑAL PLC</div>
+      <div class="chain">
+        <div class="citem sig" onclick="clickComp('CPU')"><span class="ctag">CPU</span><span>OB1 ejecuta → activa DQ</span></div>
+        <div style="color:#2A2A2A;padding:0 8px;font-size:14px">↓</div>
+        <div class="citem sig" onclick="clickComp('${dqM}')"><span class="ctag">${motor.dq}</span><span>24VDC · 0.5A</span></div>
+        <div style="color:#2A2A2A;padding:0 8px;font-size:14px">↓</div>
+        <div class="citem sig" onclick="clickComp('${motor.n}KB')"><span class="ctag">${motor.n}KB</span><span>Activa bobina relé</span></div>
+      </div>`;
+  }
+
+  const isTerm=id.startsWith('TERM-');
+  const termParts=isTerm?id.split('-'):[];
+  info.innerHTML=`
+    <div id="info-head">
+      <div id="info-id">${isTerm?termParts[1]+' · B'+termParts[2]:id.replace('CAMPO-','Campo ')}</div>
+      <div id="info-circuit">${motor?'Motor M'+motor.n+' — '+motor.qf+' → '+motor.n+'KB → '+motor.km:tn}</div>
+      <div id="info-type">${tl}</div>
+    </div>
+    <div id="info-body">${det}${chain}${(!motor&&!isTerm)?'<div class="isep"></div><div style="color:#383838;font-size:11px">Componente de alimentación general o comunicación — sin circuito de motor directo.</div>':''}</div>`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+function toggleBornes(){
+  showBornes=!showBornes;
+  const btn=document.getElementById('btnBornes');
+  btn.textContent=showBornes?'⊟ Bornes':'⊞ Bornes';
+  btn.classList.toggle('act',!showBornes);
+  if(!showBornes&&selComp&&selComp.startsWith('TERM-')) clearSel(true);
+  buildSVG();
+  if(selComp&&!selComp.startsWith('TERM-')) clickComp(selComp);
+}
+
+function openPLCPanel(){
+  window.open('PLC-Wiring-Modulos.html','_blank');
+}
+
+window.addEventListener('DOMContentLoaded',()=>{
+  buildSVG();
+  window.addEventListener('resize',()=>{buildSVG();if(selComp)clickComp(selComp);});
+});
+</script>
+</body>
+</html>

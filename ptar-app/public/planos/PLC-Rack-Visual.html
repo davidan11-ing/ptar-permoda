@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>ET200SP LCP4.1 — Vista Rack</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#080809;color:#DDD;font-family:-apple-system,Arial,sans-serif;overflow:hidden}
+#app{display:flex;flex-direction:column;height:100%}
+
+#hdr{background:linear-gradient(135deg,#071428,#04080F);border-bottom:2px solid #1A3868;
+  padding:7px 14px;display:flex;align-items:center;gap:12px;flex-shrink:0;flex-wrap:wrap}
+.htit{font-size:14px;font-weight:800;color:#7FC4FF;letter-spacing:.3px}
+.hsub{font-size:9px;color:#2A4868;font-weight:500}
+.hbadge{background:#0A1828;border:1px solid #1A3460;border-radius:4px;padding:2px 8px;font-size:9px;color:#3A6090;font-weight:600;white-space:nowrap}
+.hbtn{background:#0E1A2E;border:1px solid #1A3A6A;color:#5A9AE8;border-radius:6px;
+  padding:4px 11px;cursor:pointer;font-size:11px;font-weight:600;transition:.14s;white-space:nowrap}
+.hbtn:hover{background:#152236;color:#80B8FF}
+.hbtn.act{background:#0A2060;border-color:#2860CC;color:#90C4FF}
+#back-btn{margin-left:auto;background:#0E1A2E;border:1px solid #1A3A6A;color:#5A9AE8;border-radius:6px;
+  padding:4px 11px;cursor:pointer;font-size:11px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:4px}
+#back-btn:hover{background:#152236;color:#80B8FF}
+
+/* Legend */
+#leg{display:flex;gap:14px;padding:0 4px}
+.li{display:flex;align-items:center;gap:5px;font-size:9px;color:#888}
+.lc{width:22px;height:6px;border-radius:2px}
+
+#main{display:flex;flex:1;min-height:0}
+#canvas{flex:1;overflow:auto;padding:10px 12px;background:#090909}
+#svg-wrap{display:inline-block}
+
+/* Info panel */
+#info{width:272px;background:#0B0B0B;border-left:1px solid #141414;overflow-y:auto;
+  flex-shrink:0;display:flex;flex-direction:column;padding:14px}
+#info-empty{color:#1E1E1E;text-align:center;padding:60px 12px;font-size:11px;line-height:2}
+#info-id{font-size:22px;font-weight:800;margin-bottom:2px}
+#info-sub{font-size:9px;text-transform:uppercase;letter-spacing:.7px;opacity:.45;margin-bottom:8px}
+#info-desc{font-size:11px;color:#888;margin-bottom:10px;line-height:1.5}
+.irow{display:flex;gap:8px;margin-bottom:6px;font-size:10.5px;align-items:flex-start}
+.ilbl{color:#666;min-width:58px;flex-shrink:0;font-size:10px}
+.ival{color:#BBB;font-weight:600;word-break:break-word;line-height:1.4}
+.isep{height:1px;background:#111;margin:9px 0}
+
+/* SVG interaction */
+.mod-g{cursor:pointer}
+.mod-g .mod-body{transition:filter .12s}
+.mod-g:hover .mod-body{filter:brightness(1.3)}
+.mod-g.sel .mod-body{filter:brightness(1.6) drop-shadow(0 0 8px rgba(255,255,255,.2))}
+.mod-g.dim{opacity:.08;pointer-events:none}
+.cab-g{cursor:pointer}
+.cab-g .cable-line{transition:stroke-width .12s,opacity .12s}
+.cab-g:hover .cable-line{opacity:1!important;stroke-width:2!important}
+.cab-g.sel .cable-line{opacity:1!important;stroke-width:2.5!important;stroke-dasharray:10 4;animation:caflow .5s linear infinite}
+.cab-g.dim{opacity:.04;pointer-events:none}
+@keyframes caflow{to{stroke-dashoffset:-14}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="hdr">
+    <div><div class="htit">ET200SP LCP 4.1 — Vista Rack</div>
+         <div class="hsub">CPU 1512SP-1 PN · 11 módulos · 80 DI · 32 DQ · 8 AI · 2 AQ</div></div>
+    <div id="leg">
+      <span class="li"><span class="lc" style="background:#22BB66"></span>DI</span>
+      <span class="li"><span class="lc" style="background:#FF5555"></span>DQ</span>
+      <span class="li"><span class="lc" style="background:#FFB030"></span>AI</span>
+      <span class="li"><span class="lc" style="background:#FF8844"></span>AQ</span>
+      <span class="li"><span class="lc" style="background:#CC80EE"></span>DP</span>
+      <span class="li"><span class="lc" style="background:#44AAEE"></span>ETH</span>
+      <span class="li"><span class="lc" style="background:#5A6A88"></span>24VDC</span>
+    </div>
+    <div style="display:flex;gap:6px;margin-left:auto">
+      <button class="hbtn" onclick="clearSel()">✕ Limpiar</button>
+      <button class="hbtn" onclick="window.open('PLC-Wiring-Modulos.html','_blank')">≡ Vista tabla</button>
+      <a id="back-btn" href="Tablero-Visual-LCP41.html" target="_self">← Tablero LCP4.1</a>
+    </div>
+  </div>
+  <div id="main">
+    <div id="canvas"><div id="svg-wrap"><svg id="rack-svg" xmlns="http://www.w3.org/2000/svg"></svg></div></div>
+    <div id="info"><div id="info-empty">🔌<br><br>Clic en un módulo o terminal para ver el detalle</div></div>
+  </div>
+</div>
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// DATA — motor tags
+// ─────────────────────────────────────────────────────────────────────────────
+const MTAG=[null,
+  {n:1, tag:'BDO4.08',desc:'Bomba dosif. NaOH CIP',       type:'dos',qf:'1QF', km:'1KM', born:'3X:01'},
+  {n:2, tag:'BDO4.02A',desc:'Bomba dosif. NaHSO₃ A',      type:'dos',qf:'2QF', km:'2KM', born:'3X:04'},
+  {n:3, tag:'BDO4.02B',desc:'Bomba dosif. NaHSO₃ B',      type:'dos',qf:'3QF', km:'3KM', born:'3X:07'},
+  {n:4, tag:'BCE4.01A',desc:'Bomba alimentación A',        type:'tri',qf:'4QF', km:'4KM', born:'3X:10'},
+  {n:5, tag:'BCE4.01B',desc:'Bomba alimentación B',        type:'tri',qf:'5QF', km:'5KM', born:'3X:13'},
+  {n:6, tag:'BCE4.03A',desc:'Bomba NaCl A',                type:'tri',qf:'6QF', km:'6KM', born:'3X:16'},
+  {n:7, tag:'BCE4.03B',desc:'Bomba NaCl B',                type:'tri',qf:'7QF', km:'7KM', born:'3X:19'},
+  {n:8, tag:'BCE4.05A',desc:'Bomba regeneración A',        type:'tri',qf:'8QF', km:'8KM', born:'3X:22'},
+  {n:9, tag:'BCE4.05B',desc:'Bomba regeneración B',        type:'tri',qf:'9QF', km:'9KM', born:'3X:25'},
+  {n:10,tag:'BCE4.04A',desc:'Bomba suavización reg. A',    type:'tri',qf:'10QF',km:'10KM',born:'3X:28'},
+  {n:11,tag:'BCE4.04B',desc:'Bomba suavización reg. B',    type:'tri',qf:'11QF',km:'11KM',born:'3X:31'},
+  {n:12,tag:'BCE4.01A2',desc:'Feed Pump A2',               type:'tri',qf:'12QF',km:'12KM',born:'3X:34'},
+  {n:13,tag:'—',       desc:'Reserva',                     type:'avl',qf:'13QF',km:'13KM',born:'3X:37'},
+  {n:14,tag:'—',       desc:'Reserva',                     type:'avl',qf:'14QF',km:'14KM',born:'3X:40'},
+  {n:15,tag:'—',       desc:'Reserva',                     type:'avl',qf:'15QF',km:'15KM',born:'3X:43'},
+  {n:16,tag:'—',       desc:'Reserva',                     type:'avl',qf:'16QF',km:'16KM',born:'3X:46'},
+  {n:17,tag:'BCE4.06', desc:'Bomba CIP (VFD ACS310)',      type:'vfd',qf:'17F', km:'17KM',born:'3X:49'},
+];
+
+function diMotor(n,ch){
+  const m=MTAG[n];
+  if(!m||m.type==='avl') return ch.map(a=>({addr:a,pin:a,sig:'— Disponible',dest:'—',type:'avl',cable:'—',note:''}));
+  const re=m.type==='vfd'?'Habilitación VFD':'SC Selector remoto';
+  const rn=m.type==='vfd'?'VFD RUN':'KM aux NO';
+  const fl=m.type==='vfd'?'VFD FAULT':`${m.qf} aux NC`;
+  return [
+    {addr:ch[0],pin:ch[0],sig:`M${n}·${m.tag} — ${re}`,  dest:`${m.born}→ ${re}`,  type:'di',cable:'KVVP 2×0.75',note:'',motN:n,sigType:'SC'},
+    {addr:ch[1],pin:ch[1],sig:`M${n}·${m.tag} — ${rn}`,  dest:`${m.born}→ ${rn}`,  type:'di',cable:'KVVP 2×0.75',note:'',motN:n,sigType:'KM'},
+    {addr:ch[2],pin:ch[2],sig:`M${n}·${m.tag} — ${fl}`,  dest:`${m.born}→ ${fl}`,  type:'di',cable:'KVVP 2×0.75',note:'',motN:n,sigType:'QF'},
+  ];
+}
+
+const MODS=[
+{id:'CPU',slot:1,label:'CPU 1512SP-1 PN',ref:'6ES7 512-1DK01-0AB0',cl:'#0A4A28',tc:'#9FE1CB',
+ desc:'Procesador principal · OB1 ~10ms · PROFINET · OPC UA',tags:['IP 192.168.3.31','OPC UA'],
+ terminals:[
+  {pin:'L+',   addr:'24VDC',sig:'Alimentación CPU 24VDC',       dest:'AD1 L+',                type:'pwr'},
+  {pin:'M',    addr:'0V',   sig:'Referencia GND',               dest:'AD1 M',                 type:'pwr'},
+  {pin:'P1',   addr:'ETH',  sig:'PROFINET Port 1',               dest:'MOXA EDS-205A Port 1',  type:'eth'},
+  {pin:'P2',   addr:'ETH',  sig:'PROFINET Port 2',               dest:'HMI TP1200 Comfort',    type:'eth'},
+  {pin:'MC',   addr:'MC',   sig:'Memory Card',                  dest:'6ES7 954-8LF03-0AA0',   type:'pwr'},
+  {pin:'RUN',  addr:'LED',  sig:'LED RUN verde',                dest:'Panel frontal',          type:'pwr'},
+  {pin:'ERR',  addr:'LED',  sig:'LED ERROR rojo',               dest:'Panel frontal',          type:'pwr'},
+]},
+{id:'CMDP',slot:2,label:'CM DP',ref:'6ES7 545-5DA00-0AB0',cl:'#0A286A',tc:'#9AC8FF',
+ desc:'Maestro Profibus DP · 187.5 kbit/s · 7 esclavos en daisy-chain',tags:['187.5 kbit/s','7 esclavos'],
+ terminals:[
+  {pin:'L+',  addr:'24VDC',sig:'Alimentación 24VDC módulo', dest:'Bus L+ interno',       type:'pwr'},
+  {pin:'M',   addr:'0V',   sig:'Referencia GND',            dest:'Bus M interno',         type:'pwr'},
+  {pin:'DP+', addr:'DP+',  sig:'Profibus línea A (VP)',      dest:'Conector DB9 pin3',     type:'dp'},
+  {pin:'DP−', addr:'DP−',  sig:'Profibus línea B (A)',       dest:'Conector DB9 pin8',     type:'dp'},
+  {pin:'SHD', addr:'PE',   sig:'Apantallamiento',           dest:'Barra tierra PE',        type:'pe'},
+  {pin:'TERM',addr:'TERM', sig:'Terminación 220Ω — OFF',    dest:'Solo en extremos del bus',type:'dp'},
+]},
+{id:'DI1',slot:3,label:'1DI · DI 16×24VDC',ref:'6ES7 131-6BH01-0BA0',cl:'#0B3016',tc:'#50C878',
+ desc:'Entradas digitales · %I0.0–%I1.7 · Motores M1–M5 + ESTOP',tags:['%I0.0–%I1.7','M1–M5+ESTOP'],
+ terminals:[
+  {pin:'L+',addr:'24VDC',sig:'Alimentación sensor 24VDC',dest:'Bus L+ interno',type:'pwr'},
+  {pin:'M', addr:'0V',   sig:'Referencia GND',           dest:'Bus M interno', type:'pwr'},
+  ...diMotor(1,['%I0.0','%I0.1','%I0.2']),
+  ...diMotor(2,['%I0.3','%I0.4','%I0.5']),
+  ...diMotor(3,['%I0.6','%I0.7','%I1.0']),
+  ...diMotor(4,['%I1.1','%I1.2','%I1.3']),
+  ...diMotor(5,['%I1.4','%I1.5','%I1.6']),
+  {pin:'%I1.7',addr:'%I1.7',sig:'ESTOP LCP41 — emergencia (NC)',dest:'3X→ESB1 pulsador',type:'di',sigType:'STP',motN:0},
+]},
+{id:'DI2',slot:4,label:'2DI · DI 16×24VDC',ref:'6ES7 131-6BH01-0BA0',cl:'#0B3016',tc:'#50C878',
+ desc:'Entradas digitales · %I2.0–%I3.7 · Motores M6–M10 + 1ª señal M11',tags:['%I2.0–%I3.7','M6–M11'],
+ terminals:[
+  {pin:'L+',addr:'24VDC',sig:'Alimentación sensor 24VDC',dest:'Bus L+ interno',type:'pwr'},
+  {pin:'M', addr:'0V',   sig:'Referencia GND',           dest:'Bus M interno', type:'pwr'},
+  ...diMotor(6, ['%I2.0','%I2.1','%I2.2']),
+  ...diMotor(7, ['%I2.3','%I2.4','%I2.5']),
+  ...diMotor(8, ['%I2.6','%I2.7','%I3.0']),
+  ...diMotor(9, ['%I3.1','%I3.2','%I3.3']),
+  ...diMotor(10,['%I3.4','%I3.5','%I3.6']),
+  {pin:'%I3.7',addr:'%I3.7',sig:'M11·BCE4.04B — SC Selector remoto',dest:'3X:31→SC',type:'di',sigType:'SC',motN:11},
+]},
+{id:'DI3',slot:5,label:'3DI · DI 16×24VDC',ref:'6ES7 131-6BH01-0BA0',cl:'#0B3016',tc:'#50C878',
+ desc:'Entradas digitales · %I4.0–%I5.7 · M11 cont. + M12–M16 (2 señales)',tags:['%I4.0–%I5.7','M11–M16'],
+ terminals:[
+  {pin:'L+',addr:'24VDC',sig:'Alimentación sensor 24VDC',dest:'Bus L+ interno',type:'pwr'},
+  {pin:'M', addr:'0V',   sig:'Referencia GND',           dest:'Bus M interno', type:'pwr'},
+  {pin:'%I4.0',addr:'%I4.0',sig:'M11·BCE4.04B — KM aux NO',   dest:'3X:31→11KM aux NO',type:'di',sigType:'KM',motN:11},
+  {pin:'%I4.1',addr:'%I4.1',sig:'M11·BCE4.04B — 11QF aux NC', dest:'3X:31→11QF aux NC',type:'di',sigType:'QF',motN:11},
+  ...diMotor(12,['%I4.2','%I4.3','%I4.4']),
+  ...diMotor(13,['%I4.5','%I4.6','%I4.7']),
+  ...diMotor(14,['%I5.0','%I5.1','%I5.2']),
+  ...diMotor(15,['%I5.3','%I5.4','%I5.5']),
+  {pin:'%I5.6',addr:'%I5.6',sig:'M16 — SC Selector remoto',   dest:'3X:46→SC',type:'di',sigType:'SC',motN:16},
+  {pin:'%I5.7',addr:'%I5.7',sig:'M16 — KM Contacto marcha',   dest:'3X:46→16KM aux',type:'di',sigType:'KM',motN:16},
+]},
+{id:'DI4',slot:6,label:'4DI · DI 16×24VDC',ref:'6ES7 131-6BH01-0BA0',cl:'#0B3016',tc:'#50C878',
+ desc:'Entradas digitales · %I6.0–%I7.7 · M16 fallo + M17 VFD + disponibles',tags:['%I6.0–%I7.7','M16–M17'],
+ terminals:[
+  {pin:'L+',addr:'24VDC',sig:'Alimentación sensor 24VDC',dest:'Bus L+ interno',type:'pwr'},
+  {pin:'M', addr:'0V',   sig:'Referencia GND',           dest:'Bus M interno', type:'pwr'},
+  {pin:'%I6.0',addr:'%I6.0',sig:'M16 — 16QF aux NC',           dest:'3X:46→16QF',type:'di',sigType:'QF',motN:16},
+  {pin:'%I6.1',addr:'%I6.1',sig:'M17·BCE4.06 VFD — SC',        dest:'3X:49→SC',  type:'di',sigType:'SC',motN:17},
+  {pin:'%I6.2',addr:'%I6.2',sig:'M17·BCE4.06 VFD — RUN',       dest:'3X:49→VFD RO1',type:'di',sigType:'KM',motN:17},
+  {pin:'%I6.3',addr:'%I6.3',sig:'M17·BCE4.06 VFD — FAULT',     dest:'3X:49→VFD R1', type:'di',sigType:'QF',motN:17},
+  ...['%I6.4','%I6.5','%I6.6','%I6.7','%I7.0','%I7.1','%I7.2','%I7.3','%I7.4','%I7.5','%I7.6','%I7.7']
+     .map(a=>({pin:a,addr:a,sig:'— Disponible',dest:'—',type:'avl'})),
+]},
+{id:'DI5',slot:7,label:'5DI · DI 16×24VDC',ref:'6ES7 131-6BH01-0BA0',cl:'#0B3016',tc:'#50C878',
+ desc:'Entradas digitales · %I8.0–%I9.7 · Switches nivel LS402–LS408',tags:['%I8.0–%I9.7','LS402–408'],
+ terminals:[
+  {pin:'L+',addr:'24VDC',sig:'Alimentación sensor 24VDC',dest:'Bus L+ interno',type:'pwr'},
+  {pin:'M', addr:'0V',   sig:'Referencia GND',           dest:'Bus M interno', type:'pwr'},
+  {pin:'%I8.0',addr:'%I8.0',sig:'LS402 — Nivel alto TAQ402',dest:'3X:52→LS402',type:'di',sigType:'LS'},
+  {pin:'%I8.1',addr:'%I8.1',sig:'LS403 — Nivel alto TAQ403',dest:'3X:53→LS403',type:'di',sigType:'LS'},
+  {pin:'%I8.2',addr:'%I8.2',sig:'LS404 — Nivel alto TAQ404',dest:'3X:54→LS404',type:'di',sigType:'LS'},
+  {pin:'%I8.3',addr:'%I8.3',sig:'LS405 — Nivel bajo TAQ405 (NC)',dest:'3X:55→LS405',type:'di',sigType:'LS'},
+  {pin:'%I8.4',addr:'%I8.4',sig:'LS406 — Nivel alto TAQ406',dest:'3X:56→LS406',type:'di',sigType:'LS'},
+  {pin:'%I8.5',addr:'%I8.5',sig:'LS407 — Nivel alto TAQ407',dest:'3X:57→LS407',type:'di',sigType:'LS'},
+  {pin:'%I8.6',addr:'%I8.6',sig:'LS408 — Nivel bajo TAQ408 (NC)',dest:'3X:58→LS408',type:'di',sigType:'LS'},
+  {pin:'%I8.7',addr:'%I8.7',sig:'— Disponible',dest:'—',type:'avl'},
+  ...['%I9.0','%I9.1','%I9.2','%I9.3','%I9.4','%I9.5','%I9.6','%I9.7']
+     .map(a=>({pin:a,addr:a,sig:'— Disponible',dest:'—',type:'avl'})),
+]},
+{id:'DQ1',slot:8,label:'1DQ · DQ 16×24VDC',ref:'6ES7 132-6BH01-0BA0',cl:'#3A0808',tc:'#FF7070',
+ desc:'Salidas digitales · %Q0.0–%Q1.7 · → Relés KB M1–M16',tags:['%Q0.0–%Q1.7','→ KB Relés'],
+ terminals:[
+  {pin:'L+',addr:'24VDC',sig:'Alimentación 24VDC salidas',dest:'Bus L+ interno',type:'pwr'},
+  {pin:'M', addr:'0V',   sig:'Referencia GND',            dest:'Bus M interno', type:'pwr'},
+  ...Array.from({length:16},(_,i)=>{
+    const n=i+1,m=MTAG[n],q=`%Q${i<8?'0':'1'}.${i%8}`;
+    if(!m||m.type==='avl') return {pin:q,addr:q,sig:'— Disponible',dest:'—',type:'avl'};
+    return {pin:q,addr:q,sig:`M${n}·${m.tag} → ${n}KB → ${m.km}`,dest:`${n}KB IDEC → ${m.km}`,type:'dq',motN:n};
+  })
+]},
+{id:'DQ2',slot:9,label:'2DQ · DQ 16×24VDC',ref:'6ES7 132-6BH01-0BA0',cl:'#3A0808',tc:'#FF7070',
+ desc:'Salidas digitales · %Q2.0–%Q3.7 · Solo %Q2.0 usado — M17 VFD',tags:['%Q2.0–%Q3.7','1 usado'],
+ terminals:[
+  {pin:'L+',addr:'24VDC',sig:'Alimentación 24VDC salidas',dest:'Bus L+ interno',type:'pwr'},
+  {pin:'M', addr:'0V',   sig:'Referencia GND',            dest:'Bus M interno', type:'pwr'},
+  {pin:'%Q2.0',addr:'%Q2.0',sig:'M17·BCE4.06 → 17KB → 17KM VFD',dest:'17KB IDEC → 17KM/KA',type:'dq',motN:17},
+  ...Array.from({length:15},(_,i)=>({pin:`%Q${(i+1)<8?'2':'3'}.${(i+1)%8}`,addr:`%Q${(i+1)<8?'2':'3'}.${(i+1)%8}`,sig:'— Disponible',dest:'—',type:'avl'}))
+]},
+{id:'AI1',slot:10,label:'1AI · AI 8×I 4-20mA',ref:'6ES7 134-6GF00-0AA1',cl:'#3C1800',tc:'#FFB050',
+ desc:'Entradas analógicas 4-20mA · %IW10–%IW24 · Diag. L+/rotura activos',tags:['%IW10–%IW24','4-20mA','8ch'],
+ terminals:[
+  {pin:'L+',   addr:'24VDC',sig:'Alimentación 24VDC módulo AI',dest:'Bus L+ interno', type:'pwr'},
+  {pin:'M',    addr:'0V',   sig:'Referencia GND',              dest:'Bus M interno',  type:'pwr'},
+  {pin:'CH0+', addr:'%IW10',sig:'ORP401 — ORP/Redox (+)',       dest:'4X:01→AIT4.01+', type:'ai',inst:'ORP401'},
+  {pin:'CH0−', addr:'%IW10',sig:'ORP401 — retorno lazo (−)',    dest:'4X:02→AIT4.01 M',type:'ai',inst:'ORP401'},
+  {pin:'CH1+', addr:'%IW12',sig:'PH406 — pH agua proceso (+)',  dest:'4X:03→AIT4.06+', type:'ai',inst:'PH406'},
+  {pin:'CH1−', addr:'%IW12',sig:'PH406 — retorno lazo (−)',     dest:'4X:04→AIT4.06 M',type:'ai',inst:'PH406'},
+  {pin:'CH2+', addr:'%IW14',sig:'— Reserva',                   dest:'—',              type:'avl'},
+  {pin:'CH2−', addr:'%IW14',sig:'— Reserva',                   dest:'—',              type:'avl'},
+  {pin:'CH3+', addr:'%IW16',sig:'— Reserva',                   dest:'—',              type:'avl'},
+  {pin:'CH3−', addr:'%IW16',sig:'— Reserva',                   dest:'—',              type:'avl'},
+  {pin:'CH4+', addr:'%IW18',sig:'LT401 — Nivel TAQ401 (+)',     dest:'4X:05→LT4.01+',  type:'ai',inst:'LT401'},
+  {pin:'CH4−', addr:'%IW18',sig:'LT401 — retorno lazo (−)',     dest:'4X:06→LT4.01 M', type:'ai',inst:'LT401'},
+  {pin:'CH5+', addr:'%IW20',sig:'LT404 — Nivel TAQ404 (+)',     dest:'4X:07→LT4.04+',  type:'ai',inst:'LT404'},
+  {pin:'CH5−', addr:'%IW20',sig:'LT404 — retorno lazo (−)',     dest:'4X:08→LT4.04 M', type:'ai',inst:'LT404'},
+  {pin:'CH6+', addr:'%IW22',sig:'LT507 — Nivel TAQ507 (+)',     dest:'4X:09→LT5.07+',  type:'ai',inst:'LT507'},
+  {pin:'CH6−', addr:'%IW22',sig:'LT507 — retorno lazo (−)',     dest:'4X:10→LT5.07 M', type:'ai',inst:'LT507'},
+  {pin:'CH7+', addr:'%IW24',sig:'LT513 — Nivel TAQ513 (+)',     dest:'4X:11→LT5.13+',  type:'ai',inst:'LT513'},
+  {pin:'CH7−', addr:'%IW24',sig:'LT513 — retorno lazo (−)',     dest:'4X:12→LT5.13 M', type:'ai',inst:'LT513'},
+]},
+{id:'AQ1',slot:11,label:'1AQ · AQ 2×I 4-20mA',ref:'6ES7 135-6GB00-0BA1',cl:'#4A0808',tc:'#FF9080',
+ desc:'Salidas analógicas 4-20mA · %QW4–%QW6 · %QW4 = ref. velocidad VFD',tags:['%QW4–%QW6','→ VFD ACS310'],
+ terminals:[
+  {pin:'L+',  addr:'24VDC',sig:'Alimentación 24VDC módulo AQ',dest:'Bus L+ interno',type:'pwr'},
+  {pin:'M',   addr:'0V',   sig:'Referencia GND',              dest:'Bus M interno', type:'pwr'},
+  {pin:'AQ0+',addr:'%QW4', sig:'BCE4.06 — Ref. velocidad VFD ACS310 AI1+',dest:'VFD ACS310 AI1 (+)',type:'aq'},
+  {pin:'AQ0−',addr:'%QW4', sig:'BCE4.06 — Retorno lazo AQ (−)',             dest:'VFD ACS310 AI1 (−)',type:'aq'},
+  {pin:'AQ1+',addr:'%QW6', sig:'— Reserva',dest:'—',type:'avl'},
+  {pin:'AQ1−',addr:'%QW6', sig:'— Reserva',dest:'—',type:'avl'},
+]},
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COLORS
+// ─────────────────────────────────────────────────────────────────────────────
+function tc(type){
+  return {di:'#22BB66',dq:'#FF5555',ai:'#FFB030',aq:'#FF8844',dp:'#CC80EE',eth:'#44AAEE',pwr:'#5A6A88',pe:'#F5A623',avl:'#181818'}[type]||'#444';
+}
+function shortDest(t){
+  if(t.type==='avl') return '—';
+  if(t.type==='pwr') return t.addr==='24VDC'?'L+':t.addr==='0V'?'M':'PE';
+  if(t.type==='pe') return 'PE';
+  if(t.type==='eth') return t.addr==='ETH'?'ETH':'P2';
+  if(t.type==='dp') return t.addr;
+  if(t.type==='di'){
+    if(t.sigType==='STP') return 'ESTOP';
+    if(t.sigType==='LS') return t.sig.match(/LS(\d+)/)?.[0]||'LS';
+    if(t.motN) return `M${t.motN}·${t.sigType||'?'}`;
+    return t.addr.replace('%I','I');
+  }
+  if(t.type==='dq') return t.motN?`M${t.motN}·KB`:'DQ';
+  if(t.type==='ai') return t.inst||t.addr.replace('%','');
+  if(t.type==='aq') return t.sig.includes('Reserva')?'—':'VFD';
+  return t.addr.replace('%','');
+}
+
+const TW=8.5;  // terminal block width (per terminal)
+const GAP=7;   // gap between modules
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COMPUTE MODULE POSITIONS
+// ─────────────────────────────────────────────────────────────────────────────
+let cx_=8;
+const RM=MODS.map(mod=>{
+  const mw=Math.max(mod.id==='CPU'?120:mod.id==='CMDP'?100:70,
+                    mod.terminals.length*TW+10);
+  const rx=cx_;
+  cx_+=mw+GAP;
+  return {...mod, rx, mw};
+});
+const SW_RACK=cx_+8;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SVG BUILDER
+// ─────────────────────────────────────────────────────────────────────────────
+function buildRack(){
+  const svg=document.getElementById('rack-svg');
+
+  // ── Dynamic layout — adapts to screen height ───────────────────────────────
+  const hdrH=document.getElementById('hdr').offsetHeight||50;
+  const availH=Math.max(480, window.innerHeight - hdrH - 16);
+
+  const BUS_Y=14, BUS_H=11;
+  const RAIL_Y=25, RAIL_H=7;
+  const MOD_Y=32, MOD_H=205;       // taller module for bigger text
+  const PIN_Y=MOD_Y+MOD_H;         // = 237
+  const PIN_H=28;                   // taller pin strip
+  const DUCT_Y=PIN_Y+PIN_H;        // = 265
+  const DUCT_H=13;
+  const CAB_Y=DUCT_Y+DUCT_H;       // cables start = 278
+  const DST_RESERVE=72;             // space for rotated labels at bottom
+  const CAB_E=availH-DST_RESERVE;  // cables end — dynamic
+  const DST_Y=CAB_E+5;
+  const SH=availH;
+
+  svg.setAttribute('width', SW_RACK);
+  svg.setAttribute('height', SH);
+  svg.setAttribute('viewBox', `0 0 ${SW_RACK} ${SH}`);
+
+  let h=`<defs>
+  <filter id="ggl" x="-30%" y="-30%" width="160%" height="160%">
+    <feGaussianBlur stdDeviation="2.5" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <filter id="ggm" x="-20%" y="-20%" width="140%" height="140%">
+    <feGaussianBlur stdDeviation="1.5" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  </defs>`;
+
+  // Background
+  h+=`<rect x="0" y="0" width="${SW_RACK}" height="${SH}" fill="#080809"/>`;
+
+  // ── 24VDC bus bars at top ──────────────────────────────────────────────────
+  h+=`<rect x="6" y="${BUS_Y}" width="${SW_RACK-12}" height="${BUS_H}" rx="2" fill="#083A10" stroke="#0F6020" stroke-width="0.8" filter="url(#ggm)"/>`;
+  h+=`<text x="14" y="${BUS_Y+8}" fill="#1A8030" font-size="8.5" font-weight="700" letter-spacing=".5">■ BUS 24VDC L+ / M — AD1 · AD2 (Mean Well NDR-240-24)</text>`;
+
+  // ── DIN rail backplane ─────────────────────────────────────────────────────
+  h+=`<rect x="4" y="${RAIL_Y}" width="${SW_RACK-8}" height="${RAIL_H}" rx="1" fill="#282828"/>`;
+  h+=`<rect x="4" y="${RAIL_Y+1}" width="${SW_RACK-8}" height="3" rx="1" fill="#3A3A3A" opacity=".5"/>`;
+
+  // ── Cable duct ─────────────────────────────────────────────────────────────
+  h+=`<rect x="4" y="${DUCT_Y}" width="${SW_RACK-8}" height="${DUCT_H}" rx="2" fill="#0D0D0E" stroke="#1A1A1A" stroke-width="1"/>`;
+  h+=`<text x="14" y="${DUCT_Y+9}" fill="#252525" font-size="8" font-weight="700" letter-spacing=".8">CANALETA / CABLE MANAGEMENT</text>`;
+
+  // ── Cable zone alternating background stripes ──────────────────────────────
+  RM.forEach((mod,mi)=>{
+    const op=mi%2===0?0.022:0;
+    if(op>0) h+=`<rect x="${mod.rx}" y="${CAB_Y}" width="${mod.mw}" height="${CAB_E-CAB_Y}" fill="#FFFFFF" opacity="${op}"/>`;
+  });
+
+  // ── Modules ────────────────────────────────────────────────────────────────
+  RM.forEach(mod=>{
+    const {rx,mw,cl,tc:mtc,id,terminals:T}=mod;
+    const mcx=rx+mw/2;
+
+    // Module group (click/dim target)
+    h+=`<g class="mod-g" id="mg-${id}" data-mod="${id}" onclick="clickMod('${id}')">`;
+
+    // Module body
+    h+=`<rect x="${rx}" y="${MOD_Y}" width="${mw}" height="${MOD_H}" rx="3" fill="${cl}" stroke="${mtc}" stroke-width="1.3" filter="url(#ggl)" class="mod-body"/>`;
+
+    // Bottom shadow strip
+    h+=`<rect x="${rx+1}" y="${MOD_Y+MOD_H-10}" width="${mw-2}" height="10" rx="0" fill="rgba(0,0,0,.45)"/>`;
+
+    // LED indicators (top)
+    for(let i=0;i<3;i++){
+      h+=`<circle cx="${rx+11+i*12}" cy="${MOD_Y+11}" r="4" fill="#080808" stroke="#1A1A1A" stroke-width="0.8"/>`;
+    }
+    h+=`<circle cx="${rx+11}" cy="${MOD_Y+11}" r="2.8" fill="#00CC33" opacity=".85" filter="url(#ggm)"/>`;
+
+    // Top color band
+    h+=`<rect x="${rx+2}" y="${MOD_Y+20}" width="${mw-4}" height="3.5" rx="0" fill="${mtc}" opacity=".55"/>`;
+
+    // Module ID label — big
+    h+=`<text x="${mcx}" y="${MOD_Y+43}" text-anchor="middle" fill="${mtc}" font-size="${mw>110?14:12}" font-weight="800" font-family="-apple-system,Arial,sans-serif">${id}</text>`;
+
+    // Slot + ref
+    const refFrag=mod.ref.split(' ').slice(-1)[0]||'';
+    h+=`<text x="${mcx}" y="${MOD_Y+57}" text-anchor="middle" fill="${mtc}" font-size="8" font-family="monospace" opacity=".55">Slot ${mod.slot}</text>`;
+    h+=`<text x="${mcx}" y="${MOD_Y+68}" text-anchor="middle" fill="${mtc}" font-size="7" font-family="monospace" opacity=".4">${refFrag}</text>`;
+
+    // Address range — prominent
+    const sigs=T.filter(t=>t.type!=='pwr'&&t.type!=='pe'&&t.type!=='avl');
+    if(sigs.length>0){
+      const aFirst=sigs[0].addr.replace('%','');
+      const aLast=sigs[sigs.length-1].addr.replace('%','');
+      const addrLbl=aFirst===aLast?aFirst:`${aFirst}–${aLast.split('.').pop()}`;
+      h+=`<text x="${mcx}" y="${MOD_Y+84}" text-anchor="middle" fill="${mtc}" font-size="9.5" font-weight="700" font-family="monospace" opacity=".8">${addrLbl}</text>`;
+    }
+
+    // Signal count badge
+    const sigCount=T.filter(t=>t.type!=='pwr'&&t.type!=='pe'&&t.type!=='avl').length;
+    h+=`<rect x="${rx+5}" y="${MOD_Y+MOD_H-42}" width="${mw-10}" height="19" rx="3" fill="rgba(0,0,0,.55)" stroke="${mtc}" stroke-width=".6" opacity=".65"/>`;
+    h+=`<text x="${mcx}" y="${MOD_Y+MOD_H-29}" text-anchor="middle" fill="${mtc}" font-size="9" font-weight="700" opacity=".8">${sigCount} señales activas</text>`;
+
+    // Type label
+    const typelbl=T.find(t=>!['pwr','pe','avl'].includes(t.type))?.type?.toUpperCase()||'PWR';
+    h+=`<text x="${mcx}" y="${MOD_Y+MOD_H-13}" text-anchor="middle" fill="${mtc}" font-size="11" font-weight="800" letter-spacing=".6" opacity=".5">${typelbl}</text>`;
+
+    // ── Terminal pins (inside mod-g → dims with module) ────────────────────
+    const twi=(mw-6)/T.length - 0.5;
+    T.forEach((t,ti)=>{
+      const tx=rx+3+ti*(mw-6)/T.length;
+      const tcx_=tx+twi/2;
+      const clr=tc(t.type);
+      const isAvl=t.type==='avl';
+      const isPwr=t.type==='pwr'||t.type==='pe';
+
+      h+=`<rect x="${tx}" y="${PIN_Y}" width="${twi}" height="${PIN_H}" rx=".5"
+        fill="${isAvl?'#0C0C0C':isPwr?'#141420':'#0A0A12'}"
+        stroke="${isAvl?'#141414':clr}" stroke-width="${isAvl?.25:isPwr?.6:1}"
+        opacity="${isAvl?.22:1}"/>`;
+
+      if(!isAvl){
+        h+=`<circle cx="${tcx_}" cy="${PIN_Y+7}" r="${Math.min(4,twi/2-0.8)}"
+          fill="rgba(0,0,0,.65)" stroke="${clr}" stroke-width=".7" opacity=".75"/>`;
+        if(twi>5){
+          const lbl=t.addr.replace('%I','').replace('%Q','Q').replace('%IW','IW').replace('%QW','QW').replace('24VDC','L+').replace('0V','M');
+          h+=`<text x="${tcx_}" y="${PIN_Y+PIN_H-3}" fill="${clr}" font-size="5.5"
+            text-anchor="middle" font-family="monospace" opacity=".8"
+            transform="rotate(-90,${tcx_},${PIN_Y+13})">${lbl}</text>`;
+        }
+      }
+    });
+
+    h+=`</g>`; // close mod-g
+
+    // ── Cable lines (outside mod-g — independent dim/sel) ────────────────────
+    T.forEach((t,ti)=>{
+      const tx=rx+3+ti*(mw-6)/T.length;
+      const tcx_=tx+twi/2;
+      const clr=tc(t.type);
+      const isAvl=t.type==='avl';
+      const isPwr=t.type==='pwr'||t.type==='pe';
+
+      if(!isAvl){
+        const cOP=isPwr?0.14:0.55;
+        const cSW=isPwr?1.3:1.5;
+
+        h+=`<g class="cab-g" id="cab-${id}-${ti}" data-mod="${id}" data-idx="${ti}"
+          data-type="${t.type}" onclick="clickCab('${id}',${ti})">`;
+
+        h+=`<line x1="${tcx_}" y1="${CAB_Y}" x2="${tcx_}" y2="${CAB_E}"
+          stroke="${clr}" stroke-width="${cSW}" opacity="${cOP}"
+          stroke-dasharray="${isPwr?'4 4':''}" class="cable-line"/>`;
+
+        h+=`<circle cx="${tcx_}" cy="${CAB_Y}" r="2.2" fill="${clr}" opacity="${Math.min(1,cOP*1.5)}"/>`;
+
+        if(!isPwr){
+          const dlbl=shortDest(t);
+          h+=`<text x="${tcx_}" y="${DST_Y}" fill="${clr}" font-size="8"
+            text-anchor="start" font-family="-apple-system,Arial,sans-serif"
+            font-weight="600" opacity=".7" transform="rotate(90,${tcx_},${DST_Y})">${dlbl}</text>`;
+        }
+        h+=`</g>`;
+      }
+    });
+  });
+
+  // ── Module separators ──────────────────────────────────────────────────────
+  RM.forEach((m,i)=>{
+    if(i>0){
+      h+=`<line x1="${m.rx-3}" y1="${MOD_Y}" x2="${m.rx-3}" y2="${PIN_Y+PIN_H}"
+        stroke="#222" stroke-width="1.2" opacity=".9"/>`;
+    }
+  });
+
+  // ── Slot numbers on DIN rail ───────────────────────────────────────────────
+  RM.forEach(m=>{
+    h+=`<text x="${m.rx+m.mw/2}" y="${RAIL_Y+6}" text-anchor="middle"
+      fill="#404040" font-size="7" font-weight="700">S${m.slot}</text>`;
+  });
+
+  svg.innerHTML=h;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INTERACTION
+// ─────────────────────────────────────────────────────────────────────────────
+let selMod=null, selCab=null;
+
+function clearSel(){
+  selMod=null; selCab=null;
+  document.querySelectorAll('.mod-g').forEach(g=>g.classList.remove('sel','dim'));
+  document.querySelectorAll('.cab-g').forEach(g=>g.classList.remove('sel','dim'));
+  document.getElementById('info').innerHTML=`<div id="info-empty">🔌<br><br>Clic en un módulo o terminal para ver el detalle</div>`;
+}
+
+function clickMod(id){
+  if(selMod===id&&selCab===null){clearSel();return;}
+  selMod=id; selCab=null;
+  document.querySelectorAll('.mod-g').forEach(g=>{
+    const gid=g.dataset.mod;
+    g.classList.remove('sel','dim');
+    if(gid===id) g.classList.add('sel');
+    else g.classList.add('dim');
+  });
+  document.querySelectorAll('.cab-g').forEach(g=>{
+    g.classList.remove('sel','dim');
+    if(g.dataset.mod!==id) g.classList.add('dim');
+  });
+  const mod=RM.find(m=>m.id===id);
+  if(mod) showModInfo(mod);
+}
+
+function clickCab(modId,idx){
+  const key=`${modId}-${idx}`;
+  if(selCab===key){clearSel();return;}
+  selMod=modId; selCab=key;
+  document.querySelectorAll('.mod-g').forEach(g=>{
+    g.classList.remove('sel','dim');
+    if(g.dataset.mod===modId) g.classList.add('sel');
+    else g.classList.add('dim');
+  });
+  document.querySelectorAll('.cab-g').forEach(g=>{
+    g.classList.remove('sel','dim');
+    const gkey=`${g.dataset.mod}-${g.dataset.idx}`;
+    if(gkey===key) g.classList.add('sel');
+    else g.classList.add('dim');
+  });
+  const mod=RM.find(m=>m.id===modId);
+  if(mod){
+    const t=mod.terminals[idx];
+    if(t) showTermInfo(mod,t,idx);
+  }
+}
+
+function showModInfo(mod){
+  const sigCount=mod.terminals.filter(t=>!['pwr','pe','avl'].includes(t.type)).length;
+  const tags=mod.tags.map(t=>`<span style="border:1px solid ${mod.cl};color:${mod.tc};border-radius:3px;padding:1px 6px;font-size:7.5px;font-weight:600;display:inline-block;margin:1px">${t}</span>`).join(' ');
+  document.getElementById('info').innerHTML=`
+    <div id="info-id" style="color:${mod.tc};font-size:20px;font-weight:800;margin-bottom:2px">${mod.id}</div>
+    <div style="font-size:9px;text-transform:uppercase;letter-spacing:.6px;color:${mod.tc};opacity:.4;margin-bottom:8px">Slot ${mod.slot}</div>
+    <div style="font-size:11px;color:#999;margin-bottom:10px;line-height:1.5">${mod.desc}</div>
+    <div style="margin-bottom:10px">${tags}</div>
+    <div class="isep"></div>
+    <div class="irow"><span class="ilbl">Ref.</span><span class="ival" style="font-family:monospace;font-size:9px">${mod.ref}</span></div>
+    <div class="irow"><span class="ilbl">Señales</span><span class="ival">${sigCount} activas · ${mod.terminals.length} terminales total</span></div>
+    <div class="irow"><span class="ilbl">Rango</span><span class="ival" style="font-family:monospace">${mod.terminals.find(t=>!['pwr','pe','avl'].includes(t.type))?.addr||'—'}</span></div>`;
+}
+
+function showTermInfo(mod,t,idx){
+  const clr=tc(t.type);
+  const typelbl={di:'Entrada Digital',dq:'Salida Digital',ai:'Entrada Analógica',aq:'Salida Analógica',dp:'Profibus DP',eth:'PROFINET ETH',pwr:'Alimentación 24VDC',pe:'Tierra / PE',avl:'Disponible'}[t.type]||t.type;
+  document.getElementById('info').innerHTML=`
+    <div style="color:${clr};font-size:20px;font-weight:800;margin-bottom:2px">${t.pin||t.addr}</div>
+    <div style="color:${clr};font-size:11px;font-family:monospace;font-weight:700;margin-bottom:3px">${t.addr}</div>
+    <div style="font-size:8px;text-transform:uppercase;letter-spacing:.6px;color:${clr};opacity:.45;margin-bottom:9px">${typelbl} · ${mod.id}</div>
+    <div style="font-size:11px;color:#AAA;margin-bottom:10px;line-height:1.5">${t.sig}</div>
+    <div class="isep"></div>
+    <div class="irow"><span class="ilbl">Destino</span><span class="ival">${t.dest||'—'}</span></div>
+    <div class="irow"><span class="ilbl">Cable</span><span class="ival" style="font-family:monospace;font-size:9px">${t.cable||'—'}</span></div>
+    ${t.note?`<div class="irow"><span class="ilbl">Nota</span><span class="ival" style="color:#4A5A70;font-style:italic;font-size:10px">${t.note}</span></div>`:''}
+    <div class="isep"></div>
+    <div class="irow"><span class="ilbl">Módulo</span><span class="ival" style="color:${mod.tc}">${mod.label}</span></div>
+    <div class="irow"><span class="ilbl">Slot</span><span class="ival">Slot ${mod.slot} · Terminal ${idx+1}/${mod.terminals.length}</span></div>`;
+}
+
+window.addEventListener('DOMContentLoaded',()=>{
+  buildRack();
+  document.getElementById('canvas').addEventListener('click',e=>{
+    if(e.target===e.currentTarget||e.target.tagName==='svg'||e.target.id==='svg-wrap') clearSel();
+  });
+});
+
+// Rebuild on resize to keep cables compact and on-screen
+let _resizeT;
+window.addEventListener('resize',()=>{
+  clearTimeout(_resizeT);
+  _resizeT=setTimeout(()=>{
+    const sm=selMod, sc=selCab;
+    buildRack();
+    if(sm&&!sc) clickMod(sm);
+    else if(sm&&sc){
+      const [,idx]=sc.split('-').slice(-1)[0]?[sm,parseInt(sc.split('-').pop())]:['',0];
+      // re-apply highlight after rebuild
+      document.querySelectorAll('.mod-g').forEach(g=>{
+        g.classList.remove('sel','dim');
+        if(g.dataset.mod===sm) g.classList.add('sel'); else g.classList.add('dim');
+      });
+      document.querySelectorAll('.cab-g').forEach(g=>{
+        g.classList.remove('sel','dim');
+        if(`${g.dataset.mod}-${g.dataset.idx}`===sc) g.classList.add('sel'); else g.classList.add('dim');
+      });
+    }
+  }, 120);
+});
+</script>
+</body>
+</html>

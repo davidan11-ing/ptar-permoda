@@ -1,0 +1,1418 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arquitectura de control — Ósmosis Inversa Permoda</title>
+<style>
+  :root{
+    --ink:#2C2C2A; --mut:#5F5E5A; --line:#B7B5AC;
+    --teal:#0F6E56; --tealD:#04342C; --tealM:#1D9E75; --tealL:#E1F5EE;
+    --amber:#854F0B; --amberL:#FAEEDA; --red:#A32D2D; --redL:#FCEBEB;
+    --blue:#185FA5; --blueL:#E6F1FB; --purp:#534AB7; --purpL:#EEEDFE;
+  }
+  *{box-sizing:border-box} html,body{margin:0;height:100%}
+  body{font-family:Arial,Helvetica,sans-serif;color:var(--ink);background:#F7F5F0;display:flex;flex-direction:column;overflow:hidden}
+  header.top{background:linear-gradient(180deg,#04342C,#06463B);color:#fff;padding:12px 22px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;z-index:5;box-shadow:0 2px 10px rgba(0,0,0,.28)}
+  header.top h1{margin:0;font-size:16.5px;flex:1;min-width:250px}
+  header.top .sub{color:#9FE1CB;font-size:10.5px;display:block;margin-top:3px;font-weight:normal}
+  #q{width:250px;padding:7px 12px;border-radius:8px;border:1px solid var(--tealM);background:#052F27;color:#fff;font-size:12px;outline:none}
+  #q::placeholder{color:#5DCAA5}
+  #qn{font-size:10.5px;color:#5DCAA5;min-width:86px}
+  .zoom{display:flex;gap:5px}
+  .zoom button{height:30px;min-width:32px;border-radius:8px;border:1px solid var(--tealM);background:transparent;color:#9FE1CB;font-size:14px;cursor:pointer;padding:0 8px}
+  .zoom button:hover{background:var(--teal);color:#fff}
+  .strip{background:#fff;border-bottom:1px solid #E8E5DB;padding:8px 22px;display:flex;gap:6px;align-items:center;overflow-x:auto;font-size:11px;color:var(--mut);white-space:nowrap}
+  .fstep{background:var(--tealL);color:var(--tealD);border-radius:16px;padding:3px 11px;font-weight:bold}
+  .farr{color:var(--line);font-weight:bold}
+  .lg{display:flex;gap:5px;margin-left:auto}
+  .lg span{display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:bold;padding:2px 8px;border-radius:14px}
+  #viewport{flex:1;overflow:auto;cursor:grab}
+  #pidwrap{background:#F7F5F0}
+  #viewport.drag{cursor:grabbing}
+  #canvas{transform-origin:0 0;padding:30px 40px 130px;width:max-content}
+  .tree ul{display:flex;justify-content:center;padding:26px 0 0;margin:0;position:relative;list-style:none}
+  .tree ul::before{content:'';position:absolute;top:0;left:50%;border-left:2px solid var(--line);height:26px}
+  .tree ul.root::before{display:none}
+  .tree li{display:flex;flex-direction:column;align-items:center;padding:26px 7px 0;position:relative}
+  .tree ul.root>li{padding-top:0}
+  .tree li::before,.tree li::after{content:'';position:absolute;top:0;right:50%;border-top:2px solid var(--line);width:50%;height:26px}
+  .tree li::after{right:auto;left:50%;border-left:2px solid var(--line)}
+  .tree li:only-child::before,.tree li:only-child::after{content:'';border-top:none}
+  .tree li:only-child::after{border-left:2px solid var(--line);height:26px}
+  .tree ul.root>li::before,.tree ul.root>li::after{display:none}
+  .tree li:first-child::before{border:none}
+  .tree li:last-child::after{border-left:none;border-top:2px solid var(--line);width:0}
+  .tree li:first-child::after{border-radius:8px 0 0 0}
+  .tree li:last-child::before{border-right:2px solid var(--line);border-radius:0 8px 0 0}
+  .node{border-radius:12px;padding:11px 16px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.10);cursor:pointer;transition:transform .12s, box-shadow .12s;position:relative}
+  .node:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.18)}
+  .node .tt{font-weight:bold;font-size:13.5px;display:flex;align-items:center;gap:8px;justify-content:center}
+  .node .ss{font-size:10px;margin-top:4px;line-height:1.45}
+  .node .more{position:absolute;top:7px;right:9px;font-size:9px;opacity:.65}
+  .n-hmi{background:linear-gradient(180deg,#5F55C9,#4A41A5);color:#fff;min-width:250px}
+  .n-hmi .ss{color:#D6D3F8}
+  .n-plc{background:linear-gradient(180deg,#0A5844,#04342C);color:#fff;min-width:330px;border:2px solid var(--tealM)}
+  .n-plc .ss{color:#9FE1CB}
+  .n-peer{background:#fff;border:2px dashed #F0997B;color:#712B13;min-width:140px}
+  .n-peer .ss{color:#993C1D}
+  .card{background:#fff;border:1.5px solid #DCEFE7;border-radius:14px;width:200px;box-shadow:0 3px 10px rgba(0,0,0,.10);overflow:hidden;transition:box-shadow .12s}
+  .card:hover{box-shadow:0 6px 18px rgba(0,0,0,.16)}
+  .card>.chead{background:linear-gradient(180deg,#E9F7F1,#DCF1E7);color:var(--tealD);padding:9px 11px;border-bottom:1.5px solid #DCEFE7;cursor:pointer;position:relative}
+  .card>.chead:hover{background:#D2EFE2}
+  .card .tt{font-weight:bold;font-size:12.5px;display:flex;gap:6px;align-items:center}
+  .card .ss{font-size:8.8px;color:var(--teal);margin-top:3px;line-height:1.5}
+  .card .more{position:absolute;top:6px;right:8px;font-size:9px;color:var(--tealM)}
+  .grp{padding:6px 8px 2px}
+  .grp h4{margin:2px 0 4px;font-size:8.6px;letter-spacing:.7px;color:#8B897F;text-transform:uppercase}
+  .chips{display:flex;flex-wrap:wrap;gap:4px;padding-bottom:6px}
+  .eq{border:none;border-radius:8px;padding:4px 8px;font-size:10px;font-weight:bold;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:5px;position:relative;transition:transform .1s}
+  .eq:hover{transform:scale(1.06)}
+  .eq small{display:block;font-weight:normal;font-size:8.3px;opacity:.85;text-align:left}
+  .eq svg{flex:0 0 auto}
+  .eq.b{background:var(--tealL);color:var(--teal)} .eq.v{background:var(--blueL);color:var(--blue)}
+  .eq.i{background:var(--amberL);color:var(--amber)} .eq.s{background:#EEECE4;color:var(--mut)}
+  .eq.x{background:var(--redL);color:var(--red)}
+  .eq .wdot{position:absolute;top:-3px;right:-3px;width:9px;height:9px;border-radius:50%;background:#E24B4A;border:1.5px solid #fff}
+  .dim{opacity:.13;filter:grayscale(.6)}
+  .hit{outline:2.5px solid #EF9F27}
+  .xl{color:#0F6E56;text-decoration:underline dotted;cursor:pointer;font-weight:bold}
+  .xl:hover{color:#1D9E75}
+  .tagrow .xl{background:var(--tealL);color:var(--teal);text-decoration:none}
+  /* área coloring del tablero */
+  .card[data-area="400"]>.chead{background:linear-gradient(180deg,#E1F5EE,#CCF0E2);border-top:3px solid #0F6E56}
+  .card[data-area="500"]>.chead{background:linear-gradient(180deg,#E6F1FB,#D0E8F9);border-top:3px solid #185FA5}
+  .card[data-area="5d"]>.chead{background:linear-gradient(180deg,#FAEEDA,#F5E0BF);border-top:3px solid #854F0B}
+  .card[data-area="600"]>.chead{background:linear-gradient(180deg,#EEEDFE,#E0DEFF);border-top:3px solid #534AB7}
+  /* guía de arquitectura */
+  #archguide{padding:0 0 20px;margin:0 auto 4px}
+  .archguide-inner{background:linear-gradient(135deg,#04342C 60%,#06463B);color:#9FE1CB;border-radius:14px;padding:14px 18px;display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start;box-shadow:0 3px 12px rgba(4,52,44,.25)}
+  .ag-layer{background:rgba(255,255,255,.08);border-radius:10px;padding:8px 12px;font-size:11px;text-align:center;min-width:140px}
+  .ag-layer .ag-title{font-size:9px;opacity:.65;letter-spacing:.5px;text-transform:uppercase;margin-bottom:3px}
+  .ag-layer b{display:block;font-size:12.5px;color:#fff}
+  .ag-layer small{display:block;opacity:.75;font-size:9.5px;margin-top:2px;line-height:1.4}
+  .ag-arr{color:#5DCAA5;font-size:16px;padding:14px 2px 0;align-self:flex-start}
+  .ag-slaves{display:flex;flex-wrap:wrap;gap:6px;align-items:flex-start}
+  .ag-slave{border-radius:8px;padding:5px 10px;font-size:10px;text-align:center;white-space:nowrap}
+  .ag-slave b{display:block;font-size:11px}
+  .ag-slave small{font-size:8.5px;opacity:.8}
+  .ag-note{font-size:9.5px;opacity:.65;margin-top:6px;line-height:1.4}
+  /* separadores de área dentro del árbol */
+  .tree li.areasep{pointer-events:none}
+  .tree li.areasep::before,.tree li.areasep::after{display:none!important}
+  .areasep-inner{font-size:9px;font-weight:bold;letter-spacing:.6px;text-transform:uppercase;color:#5F5E5A;background:#F0EDE4;border:1px solid #D9EDE4;border-radius:20px;padding:2px 12px;white-space:nowrap;margin-top:2px}
+  .tagrow .xl:hover{background:#C5EBDC}
+  .seqon{outline:3px solid #1D9E75;box-shadow:0 0 10px rgba(29,158,117,.75);border-radius:8px}
+  .seqw{outline:2px dashed #EF9F27}
+  .sdim{opacity:.14;filter:grayscale(.5)}
+  body.wmode .eq:not(.hasw){opacity:.12;filter:grayscale(.6)}
+  body.wmode .node{opacity:.45}
+  #wbtn.on{background:#A32D2D;border-color:#F09595;color:#fff}
+  #wpanel{position:fixed;top:0;right:0;bottom:0;width:330px;background:#fff;box-shadow:-6px 0 22px rgba(0,0,0,.25);z-index:40;transform:translateX(105%);transition:transform .2s;display:flex;flex-direction:column}
+  #wpanel.on{transform:none}
+  #wpanel .whead{background:var(--red);color:#fff;padding:13px 16px;font-weight:bold;font-size:13.5px}
+  #wpanel .wlist{flex:1;overflow-y:auto;padding:10px}
+  #wpanel .wit{border:1px solid #F7C1C1;background:var(--redL);border-radius:9px;padding:8px 11px;margin-bottom:7px;cursor:pointer;font-size:11.5px;line-height:1.5;color:#793030}
+  #wpanel .wit b{color:#501313;display:block;font-size:12px}
+  #wpanel .wit:hover{background:#F9D9D9}
+  #seqbar{background:#04342C;color:#9FE1CB;padding:7px 22px;display:flex;gap:10px;align-items:center;font-size:12px;flex-wrap:wrap}
+  #seqbar select{background:#06463B;color:#fff;border:1px solid var(--tealM);border-radius:7px;padding:5px 9px;font-size:12px;outline:none}
+  #seqTxt{flex:1;min-width:240px;color:#E1F5EE;line-height:1.45}
+  #seqTxt b{color:#5DCAA5}
+  #seqbar .sbtn{background:#06463B;color:#9FE1CB;border:1px solid var(--tealM);border-radius:7px;padding:5px 11px;font-size:12px;cursor:pointer}
+  #seqbar .sbtn:hover{background:var(--teal);color:#fff}
+  #seqbar .sbtn.playing{background:#EF9F27;border-color:#FAC775;color:#412402}
+  .seqleg{display:flex;gap:8px;font-size:10px;align-items:center}
+  .seqleg i{display:inline-block;width:11px;height:11px;border-radius:3px}
+  /* ANIMACION */
+  #animwrap{flex:1;display:none;flex-direction:column;background:#FBFAF7;overflow:hidden}
+  #lcp41wrap{flex:1;display:none;overflow:hidden}
+  #tabwrap{flex:1;display:none;overflow:hidden}
+  #plcwrap{flex:1;display:none;overflow:hidden}
+  #rackwrap{flex:1;display:none;overflow:hidden}
+  #animbar{background:#04342C;color:#9FE1CB;padding:8px 22px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:12px}
+  #animbar select,#animbar .sbtn{background:#06463B;color:#fff;border:1px solid var(--tealM);border-radius:7px;padding:5px 10px;font-size:12px;cursor:pointer}
+  #animbar .sbtn:hover{background:var(--teal)}
+  #animbar .sbtn.playing{background:#EF9F27;border-color:#FAC775;color:#412402}
+  #animTxt{flex:1;min-width:260px;color:#E1F5EE;line-height:1.4}
+  #animTxt b{color:#5DCAA5}
+  #animsvgbox{flex:1;min-height:0;overflow:hidden;display:flex;align-items:center;justify-content:center;padding:4px;cursor:grab}
+  #animsvgbox.drag{cursor:grabbing}
+  #animsvg{width:100%;height:100%}
+  .aleg{background:#fff;border-top:1px solid #E8E5DB;padding:6px 22px;font-size:10.5px;color:var(--mut);display:flex;gap:16px;flex-wrap:wrap}
+  .aleg i{display:inline-block;width:22px;height:4px;border-radius:2px;vertical-align:middle;margin-right:4px}
+  /* simbolos */
+  .pipe{stroke:#CFCCC2;stroke-width:7;fill:none;stroke-linecap:round}
+  .flowl{stroke:#378ADD;stroke-width:3.6;fill:none;stroke-linecap:round;stroke-dasharray:11 9;opacity:0}
+  g.f-on>.flowl{opacity:1;animation:adash .9s linear infinite}
+  @keyframes adash{to{stroke-dashoffset:-20}}
+  g.perm>.flowl{stroke:#1D9E75} g.chem>.flowl{stroke:#EF9F27} g.brine>.flowl{stroke:#7F77DD}
+  .vbody{fill:#fff;stroke:#8B897F;stroke-width:2}
+  .vact{fill:#EEECE4;stroke:#8B897F;stroke-width:1.5}
+  g.aval.on .vbody{fill:#1D9E75;stroke:#0F6E56}
+  g.aval .vx{stroke:#A32D2D;stroke-width:2.5;opacity:.9}
+  g.aval.on .vx{opacity:0}
+  .pbody{fill:#fff;stroke:#5F5E5A;stroke-width:2.4}
+  g.apmp.on .pbody{fill:#E1F5EE;stroke:#0F6E56}
+  .rot{stroke:#8B897F;stroke-width:2.4;stroke-linecap:round}
+  g.apmp.on .rot{stroke:#0F6E56;animation:aspin 1s linear infinite;transform-box:fill-box;transform-origin:center}
+  @keyframes aspin{to{transform:rotate(360deg)}}
+  .vfdbox{fill:#04342C} .vfdtx{fill:#9FE1CB;font:bold 11px Arial}
+  g.apmp.on .vfdbox{fill:#0F6E56}
+  .sens{fill:#fff;stroke:#BA7515;stroke-width:2}
+  .senst{font:bold 10.5px Arial;fill:#5F5E5A}
+  g.asen.watch .sens{animation:apulse 1.1s ease-in-out infinite}
+  g.asen.watch .senst{fill:#854F0B}
+  @keyframes apulse{0%,100%{stroke-width:2;fill:#fff}50%{stroke-width:4.5;fill:#FAEEDA}}
+  .wire{stroke:#D8D5CB;stroke-width:1.8;fill:none}
+  .wled{fill:#D8D5CB}
+  .wlab{font:bold 10.5px Consolas,monospace;fill:#8B897F;cursor:pointer;paint-order:stroke;stroke:#FBFAF7;stroke-width:3px}
+  g.awr:hover .wlab{fill:#04342C}
+  g.awr:hover .wire{stroke:#8B897F}
+  g.awr.hot:hover .wire{stroke:#0F6E56}
+  g.awr.hot .wire{stroke:#1D9E75;stroke-width:2.2;stroke-dasharray:7 5;animation:adash .7s linear infinite}
+  g.awr.hot .wled{fill:#1D9E75}
+  g.awr.hot .wlab{fill:#0F6E56}
+  .tankb{fill:#F4F8FB;stroke:#8B897F;stroke-width:2}
+  .tankw{fill:#B5D4F4;opacity:.75}
+  .albl{font:bold 11.5px Arial;fill:#2C2C2A}
+  .albs{font:10px Arial;fill:#5F5E5A}
+  .memb{fill:#EAF2FB;stroke:#185FA5;stroke-width:2.2}
+  .plcb{fill:#04342C} .plct{fill:#9FE1CB;font:bold 12px Arial}
+  [data-id]{cursor:pointer}
+  .stepchip{font:bold 11px Arial;fill:#fff}
+  /* MODAL */
+  #ovl{position:fixed;inset:0;background:rgba(4,52,44,.55);backdrop-filter:blur(2px);display:none;z-index:50}
+  #ovl.on{display:flex;align-items:center;justify-content:center;padding:26px}
+  #dlg{background:#fff;border-radius:16px;max-width:700px;width:100%;max-height:86vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.4);overflow:hidden;animation:pop .18s ease}
+  @keyframes pop{from{transform:scale(.94);opacity:0}to{transform:none;opacity:1}}
+  #dhead{padding:16px 22px;color:#fff;display:flex;align-items:flex-start;gap:12px}
+  #dhead .ic{flex:0 0 auto;width:40px;height:40px;border-radius:10px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center}
+  #dhead h2{margin:0;font-size:17px;line-height:1.3}
+  #dhead .dsub{font-size:11.5px;opacity:.85;margin-top:3px}
+  #dhead .x{margin-left:auto;background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:8px;width:30px;height:30px;font-size:14px;cursor:pointer}
+  #dhead .x:hover{background:rgba(255,255,255,.3)}
+  #dbody{padding:14px 22px 22px;overflow-y:auto;font-size:12.5px;line-height:1.6}
+  #dbody h3{font-size:11px;letter-spacing:.8px;text-transform:uppercase;color:var(--teal);margin:16px 0 6px;border-bottom:1px solid #E8F3EE;padding-bottom:4px}
+  #dbody h3:first-child{margin-top:2px}
+  .kv{display:grid;grid-template-columns:130px 1fr;gap:4px 12px;margin:4px 0}
+  .kv b{color:var(--mut);font-weight:bold;font-size:11px}
+  .kv span{color:var(--ink)}
+  .io{font-family:Consolas,Menlo,monospace;font-size:11.5px;background:#F4F8F6;border-radius:5px;padding:1px 6px;color:#0A5844}
+  .rdt{width:100%;border-collapse:collapse;font-size:11px;margin-top:5px}
+  .rdt th{background:#EAF4EF;color:#04342C;text-align:left;padding:5px 7px;font-size:9.5px;letter-spacing:.2px;text-transform:uppercase;border-bottom:1px solid #CFE7DC;white-space:nowrap}
+  .rdt td{padding:5px 7px;border-bottom:1px solid #EDF3F0;vertical-align:top;color:var(--ink)}
+  .rdt td.io{font-size:10.5px}
+  .rdt small{color:#7A8A83}
+  .rdt tbody tr:hover{background:#F8FBF9}
+  .rdnote{font-size:10.5px;line-height:1.5;color:#3A5A50;background:#F4F8F6;border:1px solid #D9EDE4;border-radius:8px;padding:8px 11px;margin-top:8px}
+  .wbox{background:var(--redL);color:#793030;border-radius:9px;padding:9px 12px;margin-top:8px;font-size:12px}
+  .wbox b{color:#501313}
+  .nbox{background:var(--amberL);color:var(--amber);border-radius:9px;padding:9px 12px;margin-top:8px;font-size:12px}
+  .gbox{background:var(--tealL);color:var(--tealD);border-radius:9px;padding:9px 12px;margin-top:8px;font-size:12px}
+  .tagrow{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+  .tagrow span{background:#F1EFE8;border-radius:14px;padding:2px 9px;font-size:10.5px;color:var(--mut)}
+  #dfoot{padding:8px 22px;background:#F8F7F3;color:#9A9890;font-size:10px;border-top:1px solid #EDEAE0}
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>Arquitectura de control — Ósmosis Inversa Permoda
+    <span class="sub">Haz clic en CUALQUIER elemento (HMI, PLC, tableros, equipos) para abrir su ficha detallada · arrastra para navegar · Ctrl+rueda = zoom</span>
+  </h1>
+  <input id="q" type="text" placeholder="Buscar: BCE504, Q30.0, pH, FC3…"><span id="qn"></span>
+  <div class="zoom"><button onclick="zoom(-.1)">−</button><button onclick="zoom(.1)">+</button><button onclick="fit()">Ajustar</button><button id="wbtn" onclick="toggleW()">⚠ Hallazgos</button><button id="viewBtn" onclick="toggleView()">⇄ Por sistema</button><button id="pidBtn" onclick="togglePid()">🏭 P&amp;ID planta</button><button id="senBtn" onclick="toggleSen()">🔬 Sensores</button><button id="lcpBtn" onclick="toggleLcp41()" title="Esquemático eléctrico interactivo del tablero principal LCP 4.1 — potencia, motores, E/S PLC, red, campo">⚡ LCP 4.1</button><button id="tabBtn" onclick="toggleTablero()" title="Vista física interactiva del tablero LCP 4.1 — sigue la línea eléctrica de cada motor">🔌 Tablero</button><button id="plcBtn" onclick="togglePlc()" title="Conexionado PLC — módulos ET200SP, bornes y cables por módulo">⬛ Conexionado</button><button id="rackBtn" onclick="toggleRack()" title="Vista rack física del PLC ET200SP — módulos, terminales y destinos">🖧 Rack PLC</button></div>
+</header>
+<div class="strip">
+  <b style="color:var(--tealD)">Proceso:</b>
+  <span class="fstep">Agua cruda</span><span class="farr">→</span>
+  <span class="fstep">Pretratamiento 400</span><span class="farr">→</span>
+  <span class="fstep">Suavizadores SF1-3</span><span class="farr">→</span>
+  <span class="fstep">RO1 + RO2</span><span class="farr">→</span>
+  <span class="fstep">Permeado</span><span class="farr">→</span>
+  <span class="fstep">Química 600</span>
+  <span style="color:#9A9890">| CIP transversal</span>
+  <div class="lg">
+    <span style="background:var(--purpL);color:var(--purp)">HMI</span>
+    <span style="background:#0A5844;color:#9FE1CB">PLC/TABLERO</span>
+    <span style="background:var(--tealL);color:var(--teal)">BOMBA</span>
+    <span style="background:var(--blueL);color:var(--blue)">VÁLVULA</span>
+    <span style="background:var(--amberL);color:var(--amber)">INSTRUM.</span>
+    <span style="background:#EAE8E0;color:var(--mut)">SWITCH</span>
+    <span style="background:var(--redL);color:var(--red)">● hallazgo</span>
+  </div>
+</div>
+<div id="seqbar">
+  <b style="color:#fff">Modo secuencia:</b>
+  <select id="seqSel"><option value="">— apagado —</option><option value="ro1">Tren RO1 — pasos reales del PLC (FC3)</option><option value="ro2">Tren RO2 — pasos reales del PLC (FC4)</option><option value="sf">Regeneración suavizador — pasos reales (FC57)</option><option value="cip">Limpieza CIP — etapas conceptuales (FC5)</option><option value="cf">Química continua — etapas conceptuales (FC6)</option></select>
+  <select id="stepSel" style="display:none"></select>
+  <button id="playBtn" class="sbtn" style="display:none" onclick="playToggle()">▶ Reproducir</button>
+  <span class="seqleg" id="seqleg" style="display:none"><i style="background:#1D9E75"></i>activo <i style="border:2px dashed #EF9F27;background:transparent"></i>vigilado <i style="background:#5F5E5A;opacity:.4"></i>inactivo</span>
+  <span id="seqTxt">Elige una secuencia y recorre sus pasos: el árbol ilumina qué equipos actúan y qué señales se vigilan en cada momento.</span>
+</div>
+<div id="viewport"><div id="canvas"><div class="tree" id="tree"></div><div class="tree" id="tree2" style="display:none"></div></div></div>
+
+<div id="animwrap">
+  <div id="animbar">
+    <b style="color:#fff">Circuito animado:</b>
+    <select id="animScene"><option value="ro1">Tren RO1 — FC3 (pasos reales)</option><option value="ro2">Tren RO2 — FC4 (pasos reales)</option><option value="sf">Regeneración suavizador — FC57 (pasos reales)</option></select>
+    <select id="animStep"></select>
+    <button class="sbtn" id="animPlay" onclick="animPlayToggle()">▶ Reproducir</button>
+    <button class="sbtn" onclick="animZoom(1.25)">+</button><button class="sbtn" onclick="animZoom(0.8)">−</button><button class="sbtn" onclick="animFit()">Ajustar</button>
+    <span id="animTxt"></span>
+  </div>
+  <div id="animsvgbox"><svg id="animsvg" viewBox="0 0 1300 700" xmlns="http://www.w3.org/2000/svg"></svg></div>
+  <div class="aleg">
+    <span><i style="background:#378ADD"></i>agua de proceso</span>
+    <span><i style="background:#1D9E75"></i>permeado / flush</span>
+    <span><i style="background:#EF9F27"></i>químico</span>
+    <span><i style="background:#7F77DD"></i>salmuera</span>
+    <span><i style="background:#1D9E75;height:2px"></i>señal PLC energizada (cable punteado)</span>
+    <span>◉ sensor pulsando = vigilado por la lógica</span>
+    <span><b>Q x.y</b> = salida digital 24 V del PLC · <b>QW x</b> = salida analógica 4-20 mA (velocidad/posición) — clic en la etiqueta para su ficha</span><span style="margin-left:auto">clic en cualquier símbolo abre su ficha</span>
+  </div>
+</div>
+<div id="pidwrap" style="display:none;position:absolute;inset:0;top:0;flex:1"><iframe id="pidframe" title="P&amp;ID planta" style="width:100%;height:100%;border:0;background:#F7F5F0"></iframe></div>
+<div id="senwrap" style="display:none;position:absolute;inset:0;top:0;bottom:0;overflow:auto;background:#F7F5F0"></div>
+<div id="lcp41wrap"><iframe id="lcp41frame" title="Tablero LCP 4.1 — Esquemático eléctrico interactivo" style="width:100%;height:100%;border:0;display:block"></iframe></div>
+<div id="tabwrap"><iframe id="tabframe" title="Tablero LCP 4.1 — Vista física interactiva" style="width:100%;height:100%;border:0;display:block"></iframe></div>
+<div id="plcwrap"><iframe id="plcframe" title="Conexionado PLC — Módulos ET200SP" style="width:100%;height:100%;border:0;display:block"></iframe></div>
+<div id="rackwrap"><iframe id="rackframe" title="Vista Rack PLC — ET200SP" style="width:100%;height:100%;border:0;display:block"></iframe></div>
+<div id="ovl"><div id="dlg">
+  <div id="dhead"><div class="ic" id="dic"></div><div style="flex:1"><h2 id="dtt"></h2><div class="dsub" id="dss"></div></div><button class="x" id="dback" onclick="backM()" title="volver a la ficha anterior" style="display:none">←</button><button class="x" onclick="printM()" title="imprimir esta ficha">🖨</button><button class="x" onclick="closeM()">✕</button></div>
+  <div id="dbody"></div>
+  <div id="dfoot">Fuente: memorias de análisis (Documentacion/Programacion/Memorias) · programa TIA Portal + programas S7-200 + planos CWT-PRM-DEL-004A · Esc o clic afuera para cerrar</div>
+</div></div>
+
+<script>
+/* ================= ICONOS SVG ================= */
+const IC = {
+  b:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2.4"/><path d="M12 7l4.5 7h-9L12 7z" fill="currentColor"/></svg>',
+  v:'<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5l9 7-9 7V5zm18 0l-9 7 9 7V5z"/></svg>',
+  i:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2.4"/><path d="M12 12L16 8" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/></svg>',
+  s:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="3" y="8" width="18" height="8" rx="4" stroke="currentColor" stroke-width="2.4"/><circle cx="16" cy="12" r="2.6" fill="currentColor"/></svg>',
+  x:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2.4"/><path d="M8 8l8 8M16 8l-8 8" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>',
+  plc:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="2.5" stroke="currentColor" stroke-width="2"/><rect x="8.5" y="8.5" width="7" height="7" rx="1" fill="currentColor"/><path d="M9 1.5v2.5M15 1.5v2.5M9 20v2.5M15 20v2.5M1.5 9H4M1.5 15H4M20 9h2.5M20 15h2.5" stroke="currentColor" stroke-width="2"/></svg>',
+  hmi:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="2.5" y="4" width="19" height="13" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 20.5h8M12 17v3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M6 9h6M6 12.5h9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+  net:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="5" r="2.6" stroke="currentColor" stroke-width="2"/><circle cx="5" cy="19" r="2.6" stroke="currentColor" stroke-width="2"/><circle cx="19" cy="19" r="2.6" stroke="currentColor" stroke-width="2"/><path d="M10.5 7L6 16.5M13.5 7L18 16.5M7.6 19h8.8" stroke="currentColor" stroke-width="2"/></svg>'
+};
+const TYPE_NAME = {b:'Bomba / motor', v:'Válvula', i:'Instrumento', s:'Switch / seguridad', x:'Paro de emergencia'};
+const TYPE_HEAD = {b:'#0F6E56', v:'#185FA5', i:'#854F0B', s:'#5F5E5A', x:'#A32D2D', plc:'#04342C', hmi:'#534AB7', peer:'#993C1D'};
+
+/* ================= BASE DE DATOS ================= */
+/* Equipo: t=tag, s=sub, y=tipo, fn=función, kw, io, vr=variables, lg=lógica, wn=hallazgo, nt=nota */
+const DB = {};
+function eq(o){ DB[o.id]=o; return o; }
+
+const NODES = {
+hmi: eq({id:'hmi', y:'hmi', t:'HMI TP1200 Comfort + acceso remoto', s:'Supervisión · en puerta del tablero principal LCP4.1',
+  sec:[
+   ['Hardware', {kv:[['Panel','SIMATIC TP1200 Comfort (6AV2 124-0MC01-0AX0), 12"'],['Red','Ethernet 192.168.3.30 · CPU en .31 · switch MOXA EDS-205A'],['Acceso remoto','CBOX-G Haiwell (.253) + router 4G HF9606 (.254) → Internet'],['Enlace externo','fibra óptica 2 hilos hacia el cliente']]}],
+   ['Cómo se comunica', {tx:'Acceso directo a los dos bloques de datos del PLC: <b>DB1 «MV»</b> (equipos y secuencias) y <b>DB2 «AIO»</b> (analógicas y consignas). No hay DB de intercambio intermedio: cada faceplate está ligado al struct del equipo.'}],
+   ['Qué puede hacer el operador', {li:['Arrancar/parar trenes: <span class="io">MV.RO1.cmd / MV.RO2.cmd</span> (1=marcha, 2=paro)','Lanzar CIP: <span class="io">CIPSELECT</span> (0=SF, 1=RO1, 2=RO2) + <span class="io">CIPSTART</span> · química: <span class="io">CFSTART</span>','Pasar cualquier equipo a manual y operarlo: <span class="io">OP_AM + OP_Start</span>','Ajustar límites de alarma SET1-28, tiempos SFT1-8, ciclos RO1T1/RO2T1 (720 min), consignas de velocidad BCExxxS','Diagnosticar: paso de cada secuencia (step) y condición que impide arrancar (cdn[])']}],
+   ['Hallazgos', {wn:'La marca <b>Test (M5.0)</b> simula todo el campo y es visible/escribible desde HMI y OPC UA — sin protección. El acceso remoto 4G es una puerta a la red de control: verificar si está activo y quién lo administra. Los ajustes hechos en HMI se pierden en un corte de energía (sin remanencia).'}]
+  ]}),
+plc: eq({id:'plc', y:'plc', t:'PLC maestro — S7-1500 CPU 1512SP-1 PN', s:'Tablero principal LCP4.1 · el único cerebro del proceso',
+  sec:[
+   ['Hardware (rack ET 200SP)', {kv:[['CPU','1512SP-1 PN (6ES7 512-1DK01) + memory card 954-8LF03'],['Maestro DP','CM DP (6ES7 545-5DA00) · PROFIBUS 187.5 kbit/s · 7 esclavos'],['E/S locales','5×DI16 (I0-9) · 2×DQ16 (Q0-3) · AI 8×4-20 mA (IW10-24) · AQ 2 (QW4)'],['Alimentación','51 kW desde LCP5.1 · trafo 440/220 1.6 kVA · 2 fuentes 24 V']]}],
+   ['Programa (432 segmentos, KOP)', {li:['<b>Capa secuencia</b>: FC3 RO1 · FC4 RO2 · FC57 suavizadores ×3 · FC5 CIP · FC6 química — escriben el .ON de cada equipo y las consignas','<b>Capa equipo</b>: FC1 «devices» + drivers FC51 motor / FC52 válvula / FC61 motorizada / FC53-54 analógicas — autorizan con ¬fallo·¬Bad·remoto','<b>Soporte</b>: FC50 (pulsos de tiempo, alternancia A/B cada 24 h) · FC100 GET/PUT','<b>Diagnóstico</b>: FC2 — heartbeat de tableros (~6 s) y ESTOP → fuerza .Bad']}],
+   ['Datos', {kv:[['DB1 «MV»','structs de 90 equipos + secuenciadores (step/cmd/cdn) + tiempos'],['DB2 «AIO»','PV de 24 instrumentos + SET1-28 + consignas/rampas + totalizadores m³'],['Control','SIN PID: ON/OFF con histéresis + rampas en lazo abierto + tiempos']]}],
+   ['Hallazgos', {wn:'PT501/502/509 (alta presión) y FT501/508 (bajo caudal) se calculan pero NO detienen los trenes (cdn 12-14 fuera del disparo). Sin remanencia. OB86 vacío: la caída de un esclavo DP no deja rastro (origen probable de los disparos fantasma). GET/PUT sin reporte de error.'}]
+  ]}),
+evap: eq({id:'evap', y:'peer', t:'PLC Evaporator', s:'Planta vecina · par S7, control propio',
+  sec:[['Intercambio de datos', {tx:'El maestro le <b>escribe</b> 100 bytes cada segundo (PUT, conexión 16#101): buffer local <span class="io">DB1000.DBB100-199</span> → remoto DB1000.DBB0-99. La lógica del evaporador NO está en este programa.'}],['Hallazgo', {wn:'La comunicación no reporta errores: si el enlace cae, los datos se congelan sin aviso.'}]]}),
+mbr: eq({id:'mbr', y:'peer', t:'PLC MBR', s:'Planta vecina · par S7, control propio',
+  sec:[['Intercambio de datos', {tx:'El maestro le <b>lee</b> 100 bytes cada segundo (GET, conexión 16#100): remoto DB1000.DBB100-199 → buffer local <span class="io">DB1001 «Mbr»</span>.'}],['Hallazgo', {wn:'Igual que Evaporator: sin manejo de error de comunicación.'}]]})
+};
+
+/* Tableros: detalle propio para su modal */
+const TAB = [
+ {id:'t40', name:'E/S LOCAL — LCP4.1', ss:'ET 200SP · área 400 · I0-9 / Q0-3 · IW10-24 / QW4',
+  det:{kv:[['Función','Pretratamiento (área 400) + bombas compartidas + CIP'],['E/S','Cableado directo al rack del maestro: DI I0-9 · DQ Q0-3 · AI IW10-24 (4X, fusible por lazo) · AQ QW4'],['Potencia','17 circuitos de motor con selector Local-Off-Remote, contactor KM y guardamotor QF · BCE401 30 kW con térmico LRD · BCE406 con VFD ACS310'],['Seguridad','ESTOP LCP41 = I1.7 (sin heartbeat: es el tablero de la CPU)'],['Alimentación','51 kW desde la acometida LCP5.1']],
+      wn:'El ESTOP entra sin filtro de tiempo: microcortes se ven como emergencia (hallazgo disparos falsos).'},
+  grp:[
+   {h:'Bombas (17 circuitos)', it:[
+    {id:'bce401',t:'BCE401 A/B',s:'alim. RO1 · 30 kW',y:'b',fn:'Bombas de alimentación del tren RO1 (pareja con alternancia cada 24 h)',kw:'30 kW · circ. 15/16 · térmico LRD350C',io:'A: rem I5.4 · run I5.5 · flt I5.6 → start Q1.6 | B: I6.0-6.2 → Q1.7',vr:'MV.BCE401A / MV.BCE401B (UMOT)',lg:'FC3 s49: ON en pasos 12-25 con nivel LT401.B2 · reserva promovida por A_AB/B_AB · su RDY es parte del permiso cdn[10]'},
+    {id:'bce406',t:'BCE406',s:'CIP · 15 kW VFD',y:'b',fn:'Bomba de limpieza CIP (destino seleccionable: suavizadores, RO1 o RO2)',kw:'15 kW · circ. 17 · VFD ABB ACS310',io:'rem I6.3 · run I6.4 · flt I6.5 → start Q2.0 · velocidad QW4 (4-20 mA)',vr:'MV.BCE406 · AIO.BCE406 (actual) / BCE406S (consigna)',lg:'FC5 s7-9: CIPSEL · LS406L∨LS407L · CIPSTART · CIPRUNT<CIPT1 · rampa +1.0/s hasta receta (SF 20% · RO1 60% · RO2 25%)'},
+    {id:'bce507',t:'BCE507 A/B',s:'alim. RO2 · 5.5 kW',y:'b',fn:'Bombas de alimentación del tren RO2',kw:'5.5 kW · circ. 4/5',io:'A: I1.1-1.3 → Q0.3 | B: I1.4-1.6 → Q0.4',vr:'MV.BCE507A/B',lg:'FC4 s42: pasos 12-25 · LT507.B2 · FCV503.OPN'},
+    {id:'bce403',t:'BCE403 A/B',s:'salmuera NaCl',y:'b',fn:'Bombas de salmuera para regenerar los suavizadores',kw:'2.2 kW · circ. 8/9',io:'A: I2.6-3.0 → Q0.7 | B: I3.1-3.3 → Q1.0',vr:'MV.BCE403A/B (parámetro «NaCL Pump» de FC57)',lg:'FC57 s31-32: paso 22 (inyección de salmuera) · enclavadas con nivel LS403L del tanque de sal'},
+    {id:'bce405',t:'BCE405 A/B',s:'regeneración',y:'b',fn:'Bombas de agua de regeneración de suavizadores',kw:'2.2 kW · circ. 10/11',io:'A: I3.4-3.6 → Q1.1 | B: I4.0-4.2 → Q1.2',vr:'MV.BCE405A/B («Reg Pump»)',lg:'FC57 s33-34: pasos 21-22, 24 y 26'},
+    {id:'bce513',t:'BCE513 A/B',s:'transf. 600 · 5.5 kW',y:'b',fn:'Transferencia hacia el área química 600',kw:'5.5 kW · circ. 6/7',io:'A: I2.0-2.2 → Q0.5 | B: I2.3-2.5 → Q0.6',vr:'MV.BCE513A/B',lg:'FC6 s13: permisos CF (CFCDN) · LT513.B2 · LT615.B2'},
+    {id:'bce506',t:'BCE506',s:'servicio RO2',y:'b',fn:'Bomba auxiliar del tren RO2',kw:'1.5 kW · circ. 12',io:'I4.3-4.5 → Q1.3',vr:'MV.BCE506',lg:'FC4 s49: acompaña a BCE507.Runing'},
+    {id:'bce404',t:'BCE404 A/B',s:'0.75 kW',y:'b',fn:'Pareja auxiliar sin secuencia asignada',kw:'0.75 kW · circ. 13/14',io:'A: I4.6-5.0 → Q1.4 | B: I5.1-5.3 → Q1.5',vr:'MV.BCE404A/B',lg:'Ningún bloque escribe su .ON — operación solo manual desde HMI (OP_AM/OP_Start)'},
+    {id:'bdo402',t:'BDO402 A/B',s:'dosif. pretrat.',y:'b',fn:'Dosificación química del pretratamiento',kw:'0.37 kW · circ. 2/3',io:'A: I0.3-0.5 → Q0.1 | B: I0.6-1.0 → Q0.2',vr:'MV.BDO402A/B',lg:'FC3 s55: arrancan cuando la bomba HP marcha (BCE504.Runing)'},
+    {id:'bdo408',t:'BDO408',s:'dosif. CIP pH↑',y:'b',fn:'Dosificación CIP cuando el pH está alto',kw:'0.37 kW · circ. 1',io:'I0.0-0.2 → Q0.0',vr:'MV.BDO408',lg:'FC5 s13: PH406.B1 (histéresis alta) · LS408L · BCE406.Runing'}]},
+   {h:'Instrumentos (4-20 mA)', it:[
+    {id:'lt401',t:'LT401',s:'tanque alim.',y:'i',fn:'Nivel del tanque de alimentación de los trenes',io:'IW18 (borne 4X)',vr:'AIO.LT401 (UAI) · límites SET1-3',lg:'FC3 cdn[8]: permiso de arranque · B2 (histéresis LL/L) = permiso de bombas'},
+    {id:'lt507',t:'LT507',s:'permeado',y:'i',fn:'Nivel del tanque de permeado/intermedio',io:'IW22',vr:'AIO.LT507 · SET7-9 + SET21 (HH) + SET22 (M)',lg:'FC3 cdn[8] (B1) · FC4 cdn[8] (B3) · permisos B2 de bombas RO2'},
+    {id:'lt513',t:'LT513',s:'tanque 600',y:'i',fn:'Nivel del tanque del área química',io:'IW24',vr:'AIO.LT513 · SET10-12',lg:'FC4 cdn[8] (B1) · FC6 CFCDN[0] (B2)'},
+    {id:'lt404',t:'LT404',s:'',y:'i',fn:'Nivel (tanque auxiliar)',io:'IW20',vr:'AIO.LT404 · SET4-6',lg:'—',wn:'Se escala y tiene alarmas pero ningún bloque usa sus bits: solo indicación. Confirmar si debía enclavar algo.'},
+    {id:'ph406',t:'PH406',s:'pH CIP',y:'i',fn:'pH del circuito de limpieza CIP',io:'IW12',vr:'AIO.PH406',lg:'FC5: B1 (alto) dosifica BDO408 · B2 (bajo) dosifica BDO407 — control ON/OFF con histéresis'},
+    {id:'orp401',t:'ORP401',s:'cloro',y:'i',fn:'Potencial redox: detecta cloro en la alimentación',io:'IW10',vr:'AIO.ORP401',lg:'FC3 cdn[2]: ORP alto 5 s DISPARA el tren RO1 — protege las membranas de oxidación'}]},
+   {h:'Switches / seguridad', it:[
+    {id:'ls4x',t:'LS402-408',s:'niveles químicos',y:'s',fn:'Switches de nivel alto/bajo de 5 tanques de químicos',io:'LS402 I8.0/.1 · LS403 I8.2/.3 · LS406 I8.4/.5 · LS407 I8.6/.7 · LS408 I9.0/.1 (borne 3X)',vr:'MV.LSxxxH/L + AIO.LSxxx (80/50/20% para HMI)',lg:'LS402L → permiso químico RO1 (cdn[9]) · LS403 → salmuera FC57 · LS406/407 → tanques CIP (permiso BCE406 y llenado FCV424/425) · LS408 → dosificación BDO408'},
+    {id:'es41',t:'ESTOP LCP41',s:'',y:'x',fn:'Paro de emergencia del tablero principal',io:'I1.7',vr:'MV.LCP41ESTOP',lg:'FC2 s9-10: dispara RO1 y RO2 (cdn[15]) y fuerza .Bad en todos los equipos del área 400',wn:'Sin filtro de tiempo: un microcorte del bus que ponga la señal en 0 dispara todo (plan: filtro 200-300 ms)'}]}
+  ]},
+
+ {id:'t41', name:'LCB4.1 — SF1', ss:'esclavo DP 3 · ST30 · 24 VDC · I110-112 / Q50-51 · ♥ I112.7',
+  det:{kv:[['Función','Isla de 9 válvulas neumáticas del suavizador 1'],['PLC','S7-200 SMART ST30 + EM DP01 · pasarela pura (5 networks) con watchdog: sin bus 4 s → válvulas cierran'],['Dirección DP','3 (interruptores rotativos del EM DP01)'],['E/S en maestro','I110-112 (18 señales) / Q50-51 (9 mandos + eco heartbeat Q51.7)'],['Alimentación','24 VDC desde LCP4.1 (KVVP 2×1.0)'],['Mando local','Selector On-Off-Remote por válvula: «On» abre SIN pasar por el maestro']],
+      wn:'IP Ethernet 192.168.3.38 duplicada en los 4 S7-200 documentados (solo importa si se conectan a la red).'},
+  grp:[{h:'Válvulas suavizador 1 (FC57 · MV.Filter1)', it:[
+    {id:'fcv401',t:'FCV401',s:'Upper Inlet',y:'v',fn:'Entrada superior — servicio',io:'rem I110.0 · opened I111.1 → start Q50.0',vr:'MV.FCV401 (UVLV)',lg:'FC57: abierta en servicio (pasos 11-12) · driver FC52: fallo si no confirma en 6 s'},
+    {id:'fcv402',t:'FCV402',s:'Upper Drain',y:'v',fn:'Drenaje superior — regeneración',io:'I110.1 / I111.2 → Q50.1',vr:'MV.FCV402',lg:'FC57: pasos 21-22'},
+    {id:'fcv403',t:'FCV403',s:'Lower Inlet',y:'v',fn:'Entrada inferior — contralavado',io:'I110.2 / I111.3 → Q50.2',vr:'MV.FCV403',lg:'FC57: pasos 24 y 26'},
+    {id:'fcv404',t:'FCV404',s:'Lower Drain',y:'v',fn:'Drenaje inferior',io:'I110.3 / I111.4 → Q50.3',vr:'MV.FCV404',lg:'FC57: pasos 24-25'},
+    {id:'fcv405',t:'FCV405',s:'Outlet',y:'v',fn:'Salida a servicio',io:'I110.4 / I111.5 → Q50.4',vr:'MV.FCV405',lg:'FC57: servicio 11-12'},
+    {id:'fcv406',t:'FCV406',s:'Reg Inlet',y:'v',fn:'Entrada de regenerante',io:'I110.5 / I111.6 → Q50.5',vr:'MV.FCV406',lg:'FC57: pasos 21-22'},
+    {id:'fcv407',t:'FCV407',s:'Exhaust',y:'v',fn:'Venteo/enjuague',io:'I110.6 / I111.7 → Q50.6',vr:'MV.FCV407',lg:'FC57: pasos 25-26'},
+    {id:'fcv422',t:'FCV422',s:'Collection (común)',y:'v',fn:'Colección — compartida por los 3 suavizadores',io:'I110.7 / I112.0 → Q50.7',vr:'MV.FCV422',lg:'FC57: paso 24 (contralavado) de cualquier SF'},
+    {id:'fcv423',t:'FCV423',s:'Drain (común)',y:'v',fn:'Drenaje común de los 3 suavizadores',io:'I111.0 / I112.1 → Q51.0',vr:'MV.FCV423',lg:'FC57: pasos 21-22 y 25'}]}]},
+
+ {id:'t42', name:'LCB4.2 — SF2', ss:'esclavo DP 4 · ST30 · I120-122 / Q60-61 · ♥ I122.7',
+  det:{kv:[['Función','Válvulas del suavizador 2 + llenado de tanques CIP'],['PLC','ST30 + EM DP01 · programa idéntico a LCB4.1 (verificado por diff)'],['Dirección DP','4'],['E/S en maestro','I120-122 / Q60-61 · eco heartbeat Q61.7'],['Alimentación','24 VDC desde LCP4.1']]},
+  grp:[{h:'Válvulas (FC57 · MV.Filter2 + FC5)', it:[
+    {id:'fcv4814',t:'FCV408-414',s:'7 válvulas SF2',y:'v',fn:'Mismas 7 funciones que SF1 (Upper/Lower Inlet-Drain, Outlet, Reg, Exhaust)',io:'rem I120.0-.6 · opened I121.1-.7 → start Q60.0-.6',vr:'MV.FCV408…FCV414',lg:'FC57 con instancia MV.Filter2 — regeneración en 7 pasos con tiempos SFT2-7'},
+    {id:'fcv2425',t:'FCV424/425',s:'llenado CIP',y:'v',fn:'Llenado automático de los tanques CIP (LS406 y LS407)',io:'FCV424: I120.7/I122.0 → Q60.7 · FCV425: I121.0/I122.1 → Q61.0',vr:'MV.FCV424 / MV.FCV425',lg:'FC5 s14-15: abren con nivel bajo (LS406L/LS407L) y cierran en nivel alto'}]}]},
+
+ {id:'t43', name:'LCB4.3 — SF3', ss:'esclavo DP 5 · ST30 · I130-132 / Q70-71 · ♥ I132.7',
+  det:{kv:[['Función','Válvulas del suavizador 3'],['PLC','ST30 + EM DP01 · misma pasarela'],['Dirección DP','5'],['E/S en maestro','I130-132 / Q70-71 · eco Q71.7'],['Nota','La tabla de símbolos declara E/S que la ST30 no tiene (sobrantes de edición — limpiar)']]},
+  grp:[{h:'Válvulas (FC57 · MV.Filter3)', it:[
+    {id:'fcv1521',t:'FCV415-421',s:'7 válvulas SF3',y:'v',fn:'Mismas 7 funciones del patrón de suavizador',io:'rem I130.0-.6 · opened I131.1-.7 → start Q70.0-.6',vr:'MV.FCV415…FCV421',lg:'FC57 con MV.Filter3'}]}]},
+
+ {id:'t51', name:'LCB5.1 — TREN RO1', ss:'esclavo DP 6 · ST30+AE08+AQ04 · I70-89 / Q30-39 · ♥ I72.7',
+  det:{kv:[['Función','Tren de ósmosis 1: bombas de alta presión + instrumentación'],['PLC','ST30 + EM AE08 (8 AI) + EM AQ04 (4 AQ) + EM DP01 · pasarela con watchdog: sin bus 4 s → consignas de velocidad a 0'],['Dirección DP','6'],['E/S en maestro','I70-89 (20 B con analógicas IW74-88) / Q30-39 (QW32-38)'],['Potencia','60 kW desde LCP5.1 · 2 variadores ABB ACS510'],['Seguridad','ESTOP LCB51 I71.1 · PSL501 I71.2']],
+      wn:'PT501/502 y FT501 vigilan pero no disparan (hallazgo #1).'},
+  grp:[
+   {h:'Bombas (VFD ACS510)', it:[
+    {id:'bce504',t:'BCE504',s:'HP · 45 kW',y:'b',fn:'Bomba de alta presión del tren RO1 — el corazón del tren',kw:'45 kW · VFD ACS510 · cable 3×35+16',io:'rem I70.2 · run I70.0 · flt I70.1 → start Q30.0 · velocidad QW32 (4-20 mA)',vr:'MV.BCE504 · AIO.BCE504 (actual) / BCE504S (consigna HMI 20-60%)',lg:'FC3 s30-32: rampa +0.67%/s en paso 13 hasta consigna · .ON pasos 13-22 (s50) · su Runing habilita las dosificadoras BDO402/502/503 · timeout de arranque → cdn[3]'},
+    {id:'bce505',t:'BCE505',s:'booster · 15 kW',y:'b',fn:'Bomba booster / segunda etapa RO1',kw:'15 kW · VFD ACS510',io:'rem I70.5 · run I70.3 · flt I70.4 → start Q30.1 · velocidad QW34',vr:'MV.BCE505 · AIO.BCE505/BCE505S',lg:'FC3 s32-34: rampa +4.0%/s en paso 14 · .ON pasos 14-21 (s51)'}]},
+   {h:'Válvulas', it:[
+    {id:'fcv502',t:'FCV502',s:'alimentación',y:'v',fn:'Válvula motorizada on/off de alimentación del tren',io:'rem I70.6 · opened I71.3 → start Q30.2',vr:'MV.FCV502 · driver FC61 (Mvalve: fallo a los 30 s)',lg:'FC3 s27: abre en paso 10 y su OPN habilita el paso 11 · s53: ON con step ≤23 o ≥26'},
+    {id:'fcv501',t:'FCV501',s:'flush 0-100%',y:'v',fn:'Válvula proporcional de flush/enjuague de membranas',io:'mando QW36 (0-100%) · posición IW86',vr:'AIO.FCV501 (mando) / FCV501AI (posición, FC59)',lg:'FC3 s52: 100% en pasos 10-22 y 26+, 0% en 23-25 · s38: posición ≥3% avanza el flush'}]},
+   {h:'Instrumentos / seguridad', it:[
+    {id:'ft501',t:'FT501',s:'caudal alim.',y:'i',fn:'Caudal de alimentación del tren',io:'IW74',vr:'AIO.FT501 + totalizador FT501cum (m³, FC58)',lg:'FC3 cdn[12]: <64 m³/h por 10 s en producción',wn:'Condición calculada pero NO incluida en el disparo (seg. 26/46)'},
+    {id:'ft504',t:'FT504',s:'permeado',y:'i',fn:'Caudal de permeado',io:'IW76',vr:'AIO.FT504 + FT504cum',lg:'Indicación y totalización'},
+    {id:'ph501',t:'PH501',s:'',y:'i',fn:'pH de alimentación RO1',io:'IW78',vr:'AIO.PH501',lg:'cdn[1]: HH∨LL 5 s DISPARA · B1 dosifica BDO501 (histéresis)'},
+    {id:'ct502',t:'CT502',s:'conductividad',y:'i',fn:'Conductividad',io:'IW80',vr:'AIO.CT502',lg:'Indicación (calidad de permeado en HMI)'},
+    {id:'pt5012',t:'PT501/502',s:'presiones',y:'i',fn:'Presión antes/después de membranas',io:'IW82 / IW84',vr:'AIO.PT501 / PT502',lg:'cdn[13]/cdn[14]: HH 2 s',nt:'✅ Lectura verificada en campo 24-jul-2026: PT5.01 = 13.9 bar, PT5.02 = 11.6 bar, coinciden con el HMI. Los sensores están BIEN.',wn:'Pendiente es de CÓDIGO, no del sensor: cdn[13]/cdn[14] se calculan pero NO están en la agregación de disparo → la bomba de 45 kW puede operar contra membrana tapada; además falta alarma de baja (L/LL=0).'},
+    {id:'psl501',t:'PSL501',s:'baja succión',y:'s',fn:'Presostato de baja presión de succión',io:'I71.2',vr:'MV.PSL501',lg:'FC3 cdn[11]: TON 5 s en pasos 13-19 — SÍ dispara (protege la bomba de cavitación)'},
+    {id:'es51',t:'ESTOP LCB51',s:'',y:'x',fn:'Emergencia del tablero RO1',io:'I71.1',vr:'MV.LCB51ESTOP',lg:'cdn[15] + .Bad en BCE504/505/FCV502',wn:'Sin filtro de tiempo (disparos falsos)'}]}
+  ]},
+
+ {id:'t52', name:'LCB5.2 — TREN RO2', ss:'esclavo DP 7 · ST30+AE08+AQ04 · I90-109 / Q40-49 · ♥ I92.7',
+  det:{kv:[['Función','Tren de ósmosis 2 (el grande: membranas de mayor presión)'],['PLC','ST30 + AE08 + AQ04 + EM DP01 (programa no disponible — pedir respaldo)'],['Dirección DP','7'],['E/S en maestro','I90-109 / Q40-49 (QW42-48)'],['Potencia','121 kW desde LCP5.1 · VFDs ACS510 de 110 y 11 kW'],['Seguridad','ESTOP LCB52 I91.1 · PSL508 I91.2']],
+      wn:'FT508 y PT509 no disparan; TT507/509 (temperatura) sí.'},
+  grp:[
+   {h:'Bombas (VFD ACS510)', it:[
+    {id:'bce511',t:'BCE511',s:'HP · 110 kW',y:'b',fn:'Bomba de alta presión RO2 — el motor más grande de la planta',kw:'110 kW · VFD ACS510 · 0QF 250 A',io:'rem I90.2 · run I90.0 · flt I90.1 → start Q40.0 · velocidad QW42',vr:'MV.BCE511 · AIO.BCE511/BCE511S',lg:'FC4: rampa en paso 13 · .ON pasos 13-22'},
+    {id:'bce512',t:'BCE512',s:'recirc. · 11 kW',y:'b',fn:'Bomba de recirculación RO2',kw:'11 kW · VFD ACS510',io:'rem I90.5 · run I90.3 · flt I90.4 → start Q40.1 · velocidad QW44',vr:'MV.BCE512 · AIO.BCE512/BCE512S',lg:'FC4: rampa paso 14 · .ON 14-21 · su Runing gobierna la proporcional FCV507'}]},
+   {h:'Válvulas', it:[
+    {id:'fcv503',t:'FCV503',s:'alimentación',y:'v',fn:'Válvula de alimentación del tren',io:'rem I90.6 · opened I91.3 → Q40.2',vr:'MV.FCV503',lg:'FC4: abre en paso 10 · su OPN es permiso de BCE507'},
+    {id:'fcv504',t:'FCV504',s:'enfriamiento',y:'v',fn:'Válvula de agua de enfriamiento',io:'rem I90.7 · opened I91.4 → Q40.3',vr:'MV.FCV504',lg:'FC4 s52: abre/cierra por temperatura TT507 (histéresis H/L) durante producción'},
+    {id:'fcv506',t:'FCV506',s:'',y:'v',fn:'Válvula de servicio',io:'rem I91.0 · opened I91.5 → Q40.4 (vía M20.0)',vr:'MV.FCV506',lg:'FC4 s46: ON permanente (AlwaysTRUE)'},
+    {id:'fcv505',t:'FCV505',s:'flush',y:'v',fn:'Proporcional de flush RO2',io:'mando QW46 · posición IW108',vr:'AIO.FCV505 / FCV505AI',lg:'FC4 s45: 100/0% según paso (como FCV501 en RO1)'},
+    {id:'fcv507',t:'FCV507',s:'proporcional',y:'v',fn:'Válvula proporcional auxiliar',io:'mando QW48',vr:'AIO.FCV507',lg:'FC4 s47: apertura en función de BCE512.Runing'}]},
+   {h:'Instrumentos / seguridad', it:[
+    {id:'ft508',t:'FT508/512',s:'caudales',y:'i',fn:'Caudal de alimentación y permeado RO2',io:'IW94 / IW96',vr:'AIO.FT508/FT512 + totalizadores',lg:'FT508 → cdn[12] bajo caudal',wn:'cdn[12] no incluido en el disparo'},
+    {id:'ph506',t:'PH506',s:'',y:'i',fn:'pH del tren RO2',io:'IW98',vr:'AIO.PH506',lg:'cdn[0]: HH∨LL DISPARA · B1 dosifica BDO508 · también permiso de la química CF'},
+    {id:'ct511',t:'CT511',s:'conductividad',y:'i',fn:'Conductividad RO2',io:'IW100',vr:'AIO.CT511',lg:'Indicación'},
+    {id:'pt509',t:'PT509',s:'presión',y:'i',fn:'Presión de membranas RO2',io:'IW102',vr:'AIO.PT509',lg:'cdn[13] HH',wn:'No dispara (hallazgo #1)'},
+    {id:'tt507',t:'TT507/509',s:'temperaturas',y:'i',fn:'Temperaturas del tren',io:'IW104 / IW106',vr:'AIO.TT507/TT509',lg:'cdn[14]: HH SÍ dispara (única protección térmica activa) · TT507 además abre FCV504'},
+    {id:'psl508',t:'PSL508',s:'baja succión',y:'s',fn:'Presostato de succión RO2',io:'I91.2',vr:'MV.PSL508',lg:'FC4 cdn[11] — dispara'},
+    {id:'es52',t:'ESTOP LCB52',s:'',y:'x',fn:'Emergencia del tablero RO2',io:'I91.1',vr:'MV.LCB52ESTOP',lg:'cdn[15] + .Bad',wn:'Sin filtro de tiempo'}]}
+  ]},
+
+ {id:'t5d', name:'LCP5.1 — DOSIFICACIÓN RO', ss:'esclavo DP 8 (fin de línea) · ST40+2×DE16 · I60-66 / Q20-21 · ♥ I62.7',
+  det:{kv:[['Función','13 dosificadoras de químicos de ambos trenes + ACOMETIDA GENERAL de la planta'],['PLC','ST40 + 2×EM DE16 + EM DP01 (programa no disponible — pedir)'],['Dirección DP','8 · extremo de la cadena (terminación ON)'],['E/S en maestro','I60-66 / Q20-21 · eco Q21.7'],['Potencia','Recibe los 440 V del cliente: 0QF 500 A + medidor PD2222L; desde aquí se alimentan todos los tableros']]},
+  grp:[
+   {h:'Dosificadoras 0.37 kW', it:[
+    {id:'bdo501',t:'BDO501 A/B',s:'pH RO1',y:'b',fn:'Dosificación por pH del tren RO1',io:'A: I60.0-.2 → Q20.0 | B: I60.3-.5 → Q20.1',vr:'MV.BDO501A/B',lg:'FC3 s57: BCE504.Runing + PH501.B1 (histéresis)'},
+    {id:'bdo502',t:'BDO502 A/B',s:'',y:'b',fn:'Química RO1 (antiincrustante/bisulfito)',io:'A: I60.6-61.0 → Q20.2 | B: I61.1-.3 → Q20.3',vr:'MV.BDO502A/B',lg:'FC3 s55: con la bomba HP'},
+    {id:'bdo503',t:'BDO503 A/B',s:'',y:'b',fn:'Química RO1',io:'A: I61.4-.6 → Q20.4 | B: I61.7-62.1 → Q20.5',vr:'MV.BDO503A/B',lg:'FC3 s55'},
+    {id:'bdo508',t:'BDO508 A/B',s:'pH RO2',y:'b',fn:'Dosificación por pH del tren RO2',io:'A: I63.0-.2 → Q20.6 | B: I63.3-.5 → Q20.7',vr:'MV.BDO508A/B',lg:'FC4 s51: + PH506.B1'},
+    {id:'bdo509',t:'BDO509 A/B',s:'',y:'b',fn:'Química RO2',io:'A: I63.6-64.0 → Q21.0 | B: I64.1-.3 → Q21.1',vr:'MV.BDO509A/B',lg:'FC4 s49: con la bomba de alimentación RO2'},
+    {id:'bdo510',t:'BDO510 A/B',s:'',y:'b',fn:'Química RO2',io:'A: I64.4-.6 → Q21.2 | B: I64.7-65.1 → Q21.3',vr:'MV.BDO510A/B',lg:'FC4 s49'},
+    {id:'bdo407',t:'BDO407',s:'CIP pH↓',y:'b',fn:'Dosificación CIP cuando el pH está bajo',io:'I65.2-.4 → Q21.4',vr:'MV.BDO407',lg:'FC5 s11: PH406.B2 · LS501L · BCE406.Runing'}]},
+   {h:'Switches / seguridad', it:[
+    {id:'ls5x',t:'LS501-503',s:'químicos RO',y:'s',fn:'Niveles alto/bajo de los 3 tanques de químicos RO',io:'I66.0-.5',vr:'MV.LS501-503 H/L',lg:'Su nivel bajo (TOF 5 s) es el permiso cdn[9] de ambos trenes: sin químicos, no hay ósmosis'},
+    {id:'es5d',t:'ESTOP LCP51',s:'',y:'x',fn:'Emergencia del tablero de dosificación',io:'I65.5',vr:'MV.LCP51ESTOP',lg:'cdn[15] de ambos trenes + .Bad en las 13 dosificadoras',wn:'Sin filtro de tiempo'}]}
+  ]},
+
+ {id:'t6', name:'LCP6.1 — QUÍMICA 600', ss:'esclavo DP 2 (fin de línea) · ST40+DT32+3×DE16+AE08 · I30-57 / Q10-13 · ♥ I32.7',
+  det:{kv:[['Función','Química continua del área 600 (tanques, mezcla, dosificación, soplado)'],['PLC','ST40 + EM DT32 + 3×EM DE16 + EM AE08 + EM DP01 (programa no disponible)'],['Dirección DP','2 · extremo de la cadena (terminación ON)'],['E/S en maestro','I30-57 (28 B con IW42-50) / Q10-13'],['Seguridad','ESTOP LCP61 I39.3'],['Nota','Los relés 25-28KB comandan los solenoides de las bombas neumáticas BNM']]},
+  grp:[
+   {h:'Dosificadoras (pH / nivel)', it:[
+    {id:'bdo601',t:'BDO601 A/B',s:'pH 601',y:'b',fn:'Dosificación por PH601',io:'A: I30.0-.2 → Q10.0 | B: I30.3-.5 → Q10.1',vr:'MV.BDO601A/B',lg:'FC6 s17: PH601.B1 · LS611L'},
+    {id:'bdo602',t:'BDO602 A/B',s:'',y:'b',fn:'Dosificación con transferencia activa',io:'A: I30.6-31.0 → Q10.2 | B: I31.1-.3 → Q10.3',vr:'MV.BDO602A/B',lg:'FC6 s19: b2 (BCE513∨BCE615 marchando) · LS612L'},
+    {id:'bdo607',t:'BDO607 A/B',s:'pH 607',y:'b',fn:'Dosificación por PH607',io:'A: I31.4-.6 → Q10.4 | B: I31.7-32.1 → Q10.5',vr:'MV.BDO607A/B',lg:'FC6 s26: PH607.B1 · LS611L'},
+    {id:'bdo613',t:'BDO613 A/B',s:'',y:'b',fn:'Dosificación por nivel',io:'A: I33.0-.2 → Q10.6 | B: I33.3-.5 → Q10.7',vr:'MV.BDO613A/B',lg:'FC6 s21: b2 · LS613L'},
+    {id:'bdo614',t:'BDO614 A/B',s:'pH 605',y:'b',fn:'Dosificación por PH605',io:'A: I33.6-34.0 → Q11.0 | B: I34.1-.3 → Q11.1',vr:'MV.BDO614A/B',lg:'FC6 s23: PH605.B1 · LS614L'}]},
+   {h:'Bombas / mezcladores / soplador', it:[
+    {id:'bce606',t:'BCE606 A/B',s:'0.75 kW',y:'b',fn:'Bombas con ciclado programable',io:'A: I34.4-.6 → Q11.2 | B: I34.7-35.1 → Q11.3',vr:'MV.BCE606A/B',lg:'FC6 s24: LS606L · ciclado ONOFF (FC60 con CFON/CFOFF)'},
+    {id:'sop606',t:'SOP606',s:'soplador 1.1 kW',y:'b',fn:'Soplador de aire',io:'I35.2-.4 → Q11.4',vr:'MV.SOP606',lg:'FC6 s24: acompaña a BCE606.Runing'},
+    {id:'bce610',t:'BCE610 A/B',s:'1.5 kW',y:'b',fn:'Bombas por nivel',io:'A: I35.5-.7 → Q11.5 | B: I36.0-.2 → Q11.6',vr:'MV.BCE610A/B',lg:'FC6 s31: LS610L'},
+    {id:'bce615',t:'BCE615 A/B',s:'0.75 kW',y:'b',fn:'Transferencia secundaria',io:'A: I36.3-.5 → Q11.7 | B: I36.6-37.0 → Q12.0',vr:'MV.BCE615A/B',lg:'FC6 s14: LT513.B2 · LT615.B1'},
+    {id:'mx1',t:'MX601-607',s:'mezcladores',y:'b',fn:'Agitadores de tanques (2.2 / 5.5 / 1.1 / 1.1 kW)',io:'MX601 I37.1→Q12.1 · MX604 I37.4→Q12.2 · MX605 I37.7→Q12.3 · MX607 I38.2→Q12.4',vr:'MV.MX601/604/605/607',lg:'FC6 s15: con permisos CF (b3)'},
+    {id:'mx2',t:'MX612/613',s:'con retardo',y:'b',fn:'Agitadores con arranque retardado',io:'I38.5→Q12.5 · I39.0→Q12.6',vr:'MV.MX612/MX613',lg:'FC6 s18/s20: TON 10 y 30 min después de habilitar en manual (OP_AM)'},
+    {id:'bnm604',t:'BNM604 A/B',s:'neumáticas',y:'b',fn:'Bombas neumáticas de diafragma (mandadas por solenoide de aire, sin feedback eléctrico)',io:'solo salida: Q13.0 / Q13.1 (relés 25/26KB → solenoides)',vr:'MV.BNM604A/B (run = su propio Q)',lg:'FC6 s27: ciclado FC60 con tiempos CFOFF/CFON · b2 · LS609H'},
+    {id:'bnm609',t:'BNM609 A/B',s:'neumáticas',y:'b',fn:'Bombas neumáticas de diafragma',io:'Q13.2 / Q13.3 (relés 27/28KB)',vr:'MV.BNM609A/B',lg:'FC6 s29: LS609L · FPS610H'}]},
+   {h:'Instrumentos / switches', it:[
+    {id:'ph6x',t:'PH601/605/607',s:'',y:'i',fn:'Tres lazos de pH del área',io:'IW42 / IW44 / IW46',vr:'AIO.PH601/605/607',lg:'B1 (histéresis) dosifica su pareja BDO · HH∨LL → CFCDN[3] DISPARA la química'},
+    {id:'lt6x',t:'LT608/615',s:'niveles',y:'i',fn:'Niveles de los tanques del área',io:'IW48 (SET13-16) / IW50 (SET17-20)',vr:'AIO.LT608 / LT615',lg:'LT608.B1 → CFCDN[0] · LT615 B1/B2 gobiernan transferencias BCE615/BCE513'},
+    {id:'ls6x',t:'LS606-614',s:'switches',y:'s',fn:'8 switches de nivel de tanques',io:'LS606 I39.4/.5 · LS609 I39.6/.7 · LS610-613 I40.0-.7 · LS614 I32.2/.3',vr:'MV.LS6xxH/L',lg:'Permisos y mandos de bombas del área · CFCDN[1] = TOF de LS611-614L'},
+    {id:'fps610',t:'FPS610',s:'H/F',y:'s',fn:'Switch de un equipo de 2.2 kW con arrancador propio (sin control del PLC)',io:'I32.4 / I32.5',vr:'MV.FPS610H/F',lg:'FPS610H es condición de las BNM609'},
+    {id:'es6',t:'ESTOP LCP61',s:'',y:'x',fn:'Emergencia del tablero de química',io:'I39.3',vr:'MV.LCP61ESTOP',lg:'CFCDN[4] + .Bad en toda el área 600',wn:'Sin filtro de tiempo'}]}
+  ]}
+];
+
+/* ================= RENDER DEL ÁRBOL ================= */
+function chip(o){
+  return `<button class="eq ${o.y}${o.wn?' hasw':''}" data-id="${o.id}" title="${o.fn||''}">${IC[o.y]||''}<span>${o.t}${o.s?`<small>${o.s}</small>`:''}</span>${o.wn?'<i class="wdot" title="hallazgo"></i>':''}</button>`;
+}
+// color y área por tablero
+const AREA_OF = {t40:'400',t41:'400',t42:'400',t43:'400',t51:'500',t52:'500',t5d:'5d',t6:'600'};
+function cardHTML(tb){
+  const area = AREA_OF[tb.id]||'';
+  const groups = tb.grp.map(g=>`<div class="grp"><h4>${g.h}</h4><div class="chips">${g.it.map(it=>{DB[it.id]=it; it._tab=tb; return chip(it);}).join('')}</div></div>`).join('');
+  return `<li><div class="card" data-tab="${tb.id}"${area?` data-area="${area}"`:''}><div class="chead" data-id="tab:${tb.id}"><div class="tt">${tb.name}</div><div class="ss">${tb.ss}</div><span class="more">ⓘ ficha</span></div>${groups}</div></li>`;
+}
+// guía visual de arquitectura (aparece encima del árbol)
+const archGuide = `<div id="archguide">
+<div class="archguide-inner">
+  <div class="ag-layer" style="cursor:pointer" data-id="plc">
+    <div class="ag-title">📐 Cómo leer este árbol</div>
+    <b>Cada nodo = dispositivo real</b>
+    <small>Las líneas muestran quién controla a quién.<br>Clic en cualquier elemento → ficha completa.</small>
+  </div>
+  <div class="ag-arr">→</div>
+  <div class="ag-layer" style="cursor:pointer" data-id="plc">
+    <div class="ag-title">PLC Maestro · tablero LCP 4.1</div>
+    <b>S7-1500 ET200SP</b>
+    <small>IP 192.168.3.31 · lógica central<br>FC3 RO1 · FC4 RO2 · FC57 SF · FC5 CIP · FC6 CF</small>
+  </div>
+  <div class="ag-arr">↓ Profibus DP 187.5 kbit/s</div>
+  <div>
+    <div class="ag-slaves">
+      <span class="ag-slave" style="background:#1a5c4a;color:#9FE1CB"><b>LCB 4.1</b><small>SF1 DP3</small></span>
+      <span class="ag-slave" style="background:#1a5c4a;color:#9FE1CB"><b>LCB 4.2</b><small>SF2 DP4</small></span>
+      <span class="ag-slave" style="background:#1a5c4a;color:#9FE1CB"><b>LCB 4.3</b><small>SF3 DP5</small></span>
+      <span class="ag-slave" style="background:#154a8a;color:#D0E8FF"><b>LCB 5.1</b><small>RO1 DP6</small></span>
+      <span class="ag-slave" style="background:#154a8a;color:#D0E8FF"><b>LCB 5.2</b><small>RO2 DP7</small></span>
+      <span class="ag-slave" style="background:#6b3e10;color:#FFD9A0"><b>LCB 4.RF1</b><small>Dosif. DP8</small></span>
+      <span class="ag-slave" style="background:#3d1a5a;color:#E4C0FF"><b>LCB 4.RF3</b><small>Química DP9</small></span>
+    </div>
+    <div class="ag-note">+ E/S locales en LCP 4.1: 80 DI · 24 DQ · 8 AI · 2 AQ · 17 motores<br>
+    <span style="background:#E1F5EE;color:#04342C;border-radius:5px;padding:0 5px">⬛ Área 400</span>
+    <span style="background:#E6F1FB;color:#185FA5;border-radius:5px;padding:0 5px">⬛ Área 500</span>
+    <span style="background:#FAEEDA;color:#854F0B;border-radius:5px;padding:0 5px">⬛ Dosificación</span>
+    <span style="background:#EEEDFE;color:#534AB7;border-radius:5px;padding:0 5px">⬛ Área 600</span>
+    — color de borde en cada tablero abajo</div>
+  </div>
+  <div style="margin-left:auto;display:flex;flex-direction:column;gap:6px;font-size:10px">
+    <button onclick="toggleLcp41()" style="background:#0A5844;color:#9FE1CB;border:1px solid #1D9E75;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:11px;font-weight:bold">⚡ Ver LCP 4.1 interactivo</button>
+    <span style="opacity:.6;font-size:9px">Esquemático eléctrico completo:<br>potencia · motores · E/S PLC · red · campo</span>
+  </div>
+</div></div>`;
+
+// agrupación por área para el árbol (sin separadores inline, usan borde de color en cardHTML)
+function treeWithSeps(){ return TAB.map(cardHTML).join(''); }
+
+document.getElementById('tree').innerHTML = archGuide + `
+<ul class="root"><li>
+  <div class="node n-hmi" data-id="hmi"><span class="more">ⓘ ficha</span><div class="tt">${IC.hmi} HMI TP1200 + acceso remoto 4G</div><div class="ss">lee/escribe DB1 «MV» y DB2 «AIO» · Ethernet 192.168.3.x · mandos cmd / CIP / CF · manual OP_AM</div></div>
+  <ul><li>
+    <div class="node n-plc" data-id="plc"><span class="more">ⓘ ficha</span><div class="tt">${IC.plc} PLC MAESTRO — S7-1500 (1512SP-1 PN) · LCP 4.1 <button onclick="event.stopPropagation();toggleLcp41()" style="background:#1D9E75;color:#fff;border:none;border-radius:6px;padding:2px 8px;font-size:9.5px;cursor:pointer;margin-left:6px">⚡ interactivo</button></div><div class="ss">Toda la lógica: FC3/FC4 trenes RO · FC57 suavizadores · FC5 CIP · FC6 química · FC2 vigilancia<br>PROFIBUS DP 187.5 kbit/s — cadena: LCB4.1(3)·LCB4.2(4)·LCB4.3(5)·LCB5.1(6)·LCB5.2(7)·LCB4.RF1(8)·LCB4.RF3(9)</div></div>
+    <ul>
+      ${treeWithSeps()}
+      <li><div class="node n-peer" data-id="evap"><span class="more">ⓘ</span><div class="tt">${IC.net} PLC Evaporator</div><div class="ss">par S7 · PUT 100 B (DB1000)<br>control propio</div></div></li>
+      <li><div class="node n-peer" data-id="mbr"><span class="more">ⓘ</span><div class="tt">${IC.net} PLC MBR</div><div class="ss">par S7 · GET 100 B (DB1001)</div></div></li>
+    </ul>
+  </li></ul>
+</li></ul>`;
+
+/* ================= MODAL ================= */
+const ovl=document.getElementById('ovl'), dtt=document.getElementById('dtt'), dss=document.getElementById('dss'), dbody=document.getElementById('dbody'), dhead=document.getElementById('dhead'), dic=document.getElementById('dic');
+function secHTML(s){
+  const [h,c]=s; let out=`<h3>${h}</h3>`;
+  if(c.kv) out+=`<div class="kv">${c.kv.map(r=>`<b>${r[0]}</b><span>${r[1]}</span>`).join('')}</div>`;
+  if(c.tx) out+=`<div>${c.tx}</div>`;
+  if(c.li) out+=`<ul style="margin:4px 0;padding-left:18px">${c.li.map(x=>`<li style="margin:3px 0">${x}</li>`).join('')}</ul>`;
+  if(c.wn) out+=`<div class="wbox"><b>⚠ </b>${c.wn}</div>`;
+  return out;
+}
+/* ===== Condiciones de lectura / normalización (verificado en FC1 · FC53/FC59) =====
+   Todos los transmisores son 4–20 mA. El rango del CANAL difiere:
+   · locales (ET 200SP slot 10): canal en 4–20 mA → CH_L=0
+   · remotos (EM AE08 vía PROFIBUS): canal en 0–20 mA → CH_L=5530 (el 4 mA = 5530 cuentas)
+   CH_H=27648 en todos. Escala L→H = PV_L→PV_H (unidad de ingeniería). */
+const RD={
+ orp401:[{t:'ORP401',n:'Tag_328',iw:'%IW10',s:96, d:'FC53',cl:0,   L:'−1000',H:'1000',u:'mV',   m:'AI local · slot 10'}],
+ ph406: [{t:'PH406', n:'Tag_329',iw:'%IW12',s:97, d:'FC53',cl:0,   L:'0',H:'14',   u:'pH',   m:'AI local · slot 10'}],
+ lt401: [{t:'LT401', n:'Tag_330',iw:'%IW18',s:98, d:'FC53',cl:0,   L:'0',H:'6',    u:'m',    m:'AI local · slot 10'}],
+ lt404: [{t:'LT404', n:'Tag_331',iw:'%IW20',s:99, d:'FC53',cl:0,   L:'0',H:'6',    u:'m',    m:'AI local · slot 10'}],
+ lt507: [{t:'LT507', n:'Tag_332',iw:'%IW22',s:101,d:'FC53',cl:0,   L:'0',H:'6',    u:'m',    m:'AI local · slot 10'}],
+ lt513: [{t:'LT513', n:'Tag_333',iw:'%IW24',s:102,d:'FC53',cl:0,   L:'0',H:'6',    u:'m',    m:'AI local · slot 10'}],
+ ft501: [{t:'FT501', n:'Tag_334',iw:'%IW74',s:103,d:'FC53',cl:5530,L:'0',H:'120',  u:'m³/h', m:'EM AE08 · LCB5.1'}],
+ ft504: [{t:'FT504', n:'Tag_335',iw:'%IW76',s:104,d:'FC53',cl:5530,L:'0',H:'100',  u:'m³/h', m:'EM AE08 · LCB5.1'}],
+ ph501: [{t:'PH501', n:'Tag_336',iw:'%IW78',s:105,d:'FC53',cl:5530,L:'0',H:'14',   u:'pH',   m:'EM AE08 · LCB5.1'}],
+ ct502: [{t:'CT502', n:'Tag_337',iw:'%IW80',s:106,d:'FC53',cl:5530,L:'0',H:'1500', u:'µS/cm',m:'EM AE08 · LCB5.1'}],
+ pt5012:[{t:'PT501', n:'Tag_338',iw:'%IW82',s:107,d:'FC53',cl:5530,L:'0',H:'20',   u:'bar',  m:'EM AE08 · LCB5.1'},
+         {t:'PT502', n:'Tag_339',iw:'%IW84',s:108,d:'FC53',cl:5530,L:'0',H:'20',   u:'bar',  m:'EM AE08 · LCB5.1'}],
+ fcv501:[{t:'FCV501AI',n:'Tag_410',iw:'%IW86',s:92,d:'FC59',cl:5530,L:'0',H:'100', u:'%',    m:'EM AE08 · LCB5.1'}],
+ ft508: [{t:'FT508', n:'Tag_340',iw:'%IW94',s:109,d:'FC53',cl:5530,L:'0',H:'30',   u:'m³/h', m:'EM AE08 · LCB5.2'},
+         {t:'FT512', n:'Tag_341',iw:'%IW96',s:110,d:'FC53',cl:5530,L:'0',H:'24',   u:'m³/h', m:'EM AE08 · LCB5.2'}],
+ ph506: [{t:'PH506', n:'Tag_342',iw:'%IW98',s:111,d:'FC53',cl:5530,L:'0',H:'14',   u:'pH',   m:'EM AE08 · LCB5.2'}],
+ ct511: [{t:'CT511', n:'Tag_343',iw:'%IW100',s:112,d:'FC53',cl:5530,L:'0',H:'5000',u:'µS/cm',m:'EM AE08 · LCB5.2'}],
+ pt509: [{t:'PT509', n:'Tag_344',iw:'%IW102',s:113,d:'FC53',cl:5530,L:'0',H:'100', u:'bar',  m:'EM AE08 · LCB5.2'}],
+ tt507: [{t:'TT507', n:'Tag_345',iw:'%IW104',s:114,d:'FC53',cl:5530,L:'0',H:'60',  u:'°C',   m:'EM AE08 · LCB5.2'},
+         {t:'TT509', n:'Tag_346',iw:'%IW106',s:115,d:'FC53',cl:5530,L:'0',H:'150', u:'°C',   m:'EM AE08 · LCB5.2'}],
+ fcv505:[{t:'FCV505AI',n:'Tag_411',iw:'%IW108',s:94,d:'FC59',cl:5530,L:'0',H:'100',u:'%',    m:'EM AE08 · LCB5.2'}],
+ ph6x:  [{t:'PH601', n:'Tag_347',iw:'%IW42',s:116,d:'FC53',cl:5530,L:'0',H:'14',   u:'pH',   m:'EM AE08 · LCP6.1'},
+         {t:'PH605', n:'Tag_348',iw:'%IW44',s:117,d:'FC53',cl:5530,L:'0',H:'14',   u:'pH',   m:'EM AE08 · LCP6.1'},
+         {t:'PH607', n:'Tag_349',iw:'%IW46',s:118,d:'FC53',cl:5530,L:'0',H:'14',   u:'pH',   m:'EM AE08 · LCP6.1'}],
+ lt6x:  [{t:'LT608', n:'Tag_350',iw:'%IW48',s:119,d:'FC53',cl:5530,L:'0',H:'6',    u:'m',    m:'EM AE08 · LCP6.1'},
+         {t:'LT615', n:'Tag_351',iw:'%IW50',s:120,d:'FC53',cl:5530,L:'0',H:'6',    u:'m',    m:'EM AE08 · LCP6.1'}]
+};
+function rdHTML(id){
+  const rows=RD[id].map(r=>{
+    const rango = r.cl===0 ? '0…27648' : '5530…27648';
+    return `<tr><td><b>${r.t}</b></td><td class="io">${r.n}</td><td class="io">${r.iw}</td>`+
+           `<td>FC1 · s${r.s}<br><small>${r.d}</small></td><td>4–20 mA</td>`+
+           `<td class="io">${rango}</td><td><b>${r.L} → ${r.H}</b> ${r.u}</td><td>${r.m}</td></tr>`;
+  }).join('');
+  return `<h3>Condiciones de lectura y normalización</h3>`+
+    `<table class="rdt"><thead><tr><th>Lazo</th><th>Tag var.</th><th>Entrada</th><th>Bloque·Seg</th><th>Señal</th><th>Rango crudo (CH_L…CH_H)</th><th>Escala L→H</th><th>Módulo</th></tr></thead><tbody>${rows}</tbody></table>`+
+    `<div class="rdnote"><b>Normalización FC53</b> (lineal, sin offset ni filtro): PV = (crudo − CH_L)/(27648 − CH_L) × (H − L) + L. `+
+    `Todos los transmisores son <b>4–20 mA</b>; el rango del canal difiere: los locales (slot 10) con CH_L=0 (canal en 4–20 mA) y los remotos AE08 con CH_L=5530 (canal en 0–20 mA, donde el 4 mA = 5530 cuentas).</div>`;
+}
+let hist=[], curOpen=null;
+function openM(id, fromBack){
+  let o = DB[id.replace('tab:','')];
+  let isTab = id.startsWith('tab:');
+  let isSys = id.startsWith('sys:');
+  if(isTab){ o = TAB.find(t=>t.id===id.slice(4)); }
+  if(isSys){ o = SYS.find(t=>t.id===id.slice(4)); }
+  if(!o) return;
+  if(ovl.classList.contains('on') && curOpen && curOpen!==id && !fromBack) hist.push(curOpen);
+  curOpen=id;
+  document.getElementById('dback').style.display = hist.length? '':'none';
+  if(isTab||isSys){
+    dhead.style.background = isSys? '#0F6E56' : TYPE_HEAD.plc; dic.innerHTML = isSys? IC.net : IC.plc;
+    dtt.textContent = o.name; dss.textContent = o.ss;
+    let b = '';
+    if(o.det){ b += `<h3>Ficha del tablero</h3><div class="kv">${o.det.kv.map(r=>`<b>${r[0]}</b><span>${r[1]}</span>`).join('')}</div>`;
+      if(o.det.wn) b += `<div class="wbox"><b>⚠ </b>${o.det.wn}</div>`; }
+    b += `<h3>Equipos (${o.grp.reduce((n,g)=>n+g.it.length,0)} fichas — clic en el árbol para el detalle)</h3><div class="tagrow">${o.grp.map(g=>g.it.map(i=>`<span class="xl" data-id="${i.id}">${i.t}</span>`).join('')).join('')}</div>`;
+    b += isSys? `<div class="gbox">${o.foot||''}</div>` : `<div class="gbox">Vigilancia: heartbeat cada 3 s hacia el maestro (declara OFF a los 6 s) y watchdog local de 4 s que pone las salidas a cero si pierde el bus. Un tablero OFF o en emergencia fuerza .Bad en todos sus equipos.</div>`;
+    dbody.innerHTML = b;
+  } else if(o.sec){
+    dhead.style.background = TYPE_HEAD[o.y]||TYPE_HEAD.plc;
+    dic.innerHTML = o.y==='hmi'?IC.hmi:(o.y==='peer'?IC.net:IC.plc);
+    dtt.textContent = o.t; dss.textContent = o.s;
+    dbody.innerHTML = o.sec.map(secHTML).join('');
+  } else {
+    dhead.style.background = TYPE_HEAD[o.y]||'#0F6E56';
+    dic.innerHTML = IC[o.y]||'';
+    dtt.textContent = o.t + (o.s? ' — '+o.s : '');
+    dss.textContent = (TYPE_NAME[o.y]||'') + (o._tab? ' · '+o._tab.name : '');
+    let b = `<h3>Función</h3><div>${o.fn||'—'}</div>`;
+    if(o.kw) b += `<h3>Datos eléctricos</h3><div>${o.kw}</div>`;
+    b += `<h3>E/S físicas</h3><div class="io" style="display:inline-block;padding:6px 10px">${o.io||'—'}</div>`;
+    if(RD[o.id]) b += rdHTML(o.id);
+    if(o.vr) b += `<h3>Variables del programa</h3><div>${o.vr}</div>`;
+    if(o.lg) b += `<h3>Lógica que lo gobierna</h3><div>${o.lg}</div>`;
+    if(o.nt) b += `<div class="nbox">${o.nt}</div>`;
+    if(o.wn) b += `<div class="wbox"><b>⚠ Hallazgo: </b>${o.wn}</div>`;
+    b += `<div class="gbox" style="font-size:11px">Cadena de mando: campo → pasarela S7-200 → PROFIBUS → driver (FC51/FC52) actualiza el struct → la secuencia pide .ON → el driver autoriza (¬fallo·¬Bad·remoto) → relé KB → contactor/solenoide.</div>`;
+    dbody.innerHTML = b;
+  }
+  linkify(dbody, id);
+  ovl.classList.add('on');
+}
+function closeM(){ ovl.classList.remove('on'); hist=[]; curOpen=null; }
+function backM(){ if(hist.length) openM(hist.pop(), true), document.getElementById('dback').style.display = hist.length? '':'none'; }
+function printM(){
+  const w=window.open('','_blank');
+  w.document.write('<html><head><title>'+dtt.textContent+'</title><style>body{font-family:Arial;color:#2C2C2A;padding:26px;line-height:1.6;font-size:13px}h1{font-size:19px;color:#04342C;margin:0 0 2px}.sub{color:#5F5E5A;font-size:12px;margin-bottom:14px}h3{font-size:11px;letter-spacing:.8px;text-transform:uppercase;color:#0F6E56;margin:15px 0 5px;border-bottom:1px solid #D9EDE4;padding-bottom:3px}.kv{display:grid;grid-template-columns:150px 1fr;gap:4px 12px}.kv b{color:#5F5E5A;font-size:11px}.io{font-family:Consolas,monospace;background:#F1F5F3;padding:2px 6px;border-radius:4px}.wbox{border:1.5px solid #A32D2D;color:#793030;border-radius:8px;padding:8px 11px;margin-top:8px}.gbox,.nbox{border:1px solid #C9E6DA;border-radius:8px;padding:8px 11px;margin-top:8px;color:#04342C}.xl{color:#0F6E56;font-weight:bold;text-decoration:none}.tagrow span{border:1px solid #D3D1C7;border-radius:12px;padding:1px 8px;font-size:10.5px;margin-right:4px}footer{margin-top:20px;color:#9A9890;font-size:10px;border-top:1px solid #E8E5DB;padding-top:8px}</style></head><body>');
+  w.document.write('<h1>'+dtt.textContent+'</h1><div class="sub">'+dss.textContent+'</div>'+dbody.innerHTML);
+  w.document.write('<footer>Sistema de control Ósmosis Inversa Permoda · ficha generada desde Diagrama-Arbol-Osmosis.html · fuente: memorias de análisis jul-2026</footer></body></html>');
+  w.document.close(); w.focus(); setTimeout(()=>w.print(), 300);
+}
+ovl.addEventListener('click', e=>{ if(e.target===ovl) closeM(); });
+window.addEventListener('keydown', e=>{ if(e.key==='Escape') closeM(); });
+document.addEventListener('click', e=>{
+  const el = e.target.closest('[data-id]');
+  if(el){ e.stopPropagation(); openM(el.dataset.id); }
+});
+
+/* ================= ZOOM / PAN ================= */
+let scale=1;
+const canvas=document.getElementById('canvas'), vp=document.getElementById('viewport');
+function apply(){ canvas.style.transform=`scale(${scale})`; }
+function zoom(d){ scale=Math.min(1.7,Math.max(.3,scale+d)); apply(); }
+function fit(){ canvas.style.transform='scale(1)'; scale=Math.min(1,(vp.clientWidth-20)/canvas.scrollWidth); apply(); vp.scrollLeft=0; }
+window.addEventListener('load',fit); window.addEventListener('resize',fit);
+let drag=false,sx=0,sy=0,sl=0,st=0;
+vp.addEventListener('mousedown',e=>{ if(e.target.closest('[data-id]'))return; drag=true; vp.classList.add('drag'); sx=e.pageX; sy=e.pageY; sl=vp.scrollLeft; st=vp.scrollTop; });
+window.addEventListener('mouseup',()=>{ drag=false; vp.classList.remove('drag'); });
+window.addEventListener('mousemove',e=>{ if(!drag)return; vp.scrollLeft=sl-(e.pageX-sx); vp.scrollTop=st-(e.pageY-sy); });
+vp.addEventListener('wheel',e=>{ if(!e.ctrlKey)return; e.preventDefault(); zoom(e.deltaY<0?.08:-.08); },{passive:false});
+
+
+/* ================= ENLACES CRUZADOS ================= */
+const ALIAS = {};
+(function(){
+  const reg=(names,id)=>names.forEach(n=>ALIAS[n]=id);
+  for(const id in DB){ const o=DB[id]; if(!o.t) continue;
+    const t=o.t;
+    if(/^[A-Z]{2,4}[0-9]{3}$/.test(t)) reg([t],id);
+    else if(t.endsWith(' A/B')) reg([t.slice(0,-4)],id);
+  }
+  reg(['PT501','PT502'],'pt5012'); reg(['FT508','FT512'],'ft508'); reg(['TT507','TT509'],'tt507');
+  reg(['MX601','MX604','MX605','MX607'],'mx1'); reg(['MX612','MX613'],'mx2');
+  reg(['PH601','PH605','PH607'],'ph6x'); reg(['LT608','LT615'],'lt6x');
+  reg(['LS402','LS403','LS406','LS407','LS408'],'ls4x');
+  reg(['LS501','LS502','LS503'],'ls5x');
+  reg(['LS606','LS609','LS610','LS611','LS612','LS613','LS614'],'ls6x');
+  reg(['FCV408','FCV409','FCV410','FCV411','FCV412','FCV413','FCV414'],'fcv4814');
+  reg(['FCV424','FCV425'],'fcv2425');
+  reg(['FCV415','FCV416','FCV417','FCV418','FCV419','FCV420','FCV421'],'fcv1521');
+  reg(['BNM604'],'bnm604'); reg(['BNM609'],'bnm609'); reg(['FPS610'],'fps610');
+})();
+const TAGRE = new RegExp('\\b('+Object.keys(ALIAS).sort((a,b)=>b.length-a.length).join('|')+')','g');
+function linkify(root, curId){
+  const cur=(curId||'').replace('tab:','');
+  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,null);
+  const nodes=[]; let n;
+  while(n=walker.nextNode()){ if(!n.parentElement.closest('.io,.xl,h2')) nodes.push(n); }
+  nodes.forEach(node=>{
+    const txt=node.nodeValue; if(!TAGRE.test(txt)) return; TAGRE.lastIndex=0;
+    const frag=document.createDocumentFragment(); let last=0, m;
+    while((m=TAGRE.exec(txt))){
+      const id=ALIAS[m[1]];
+      frag.appendChild(document.createTextNode(txt.slice(last,m.index)));
+      if(id && id!==cur){ const a=document.createElement('span'); a.className='xl'; a.dataset.id=id; a.textContent=m[1]; frag.appendChild(a); }
+      else frag.appendChild(document.createTextNode(m[1]));
+      last=m.index+m[1].length;
+    }
+    frag.appendChild(document.createTextNode(txt.slice(last)));
+    node.parentNode.replaceChild(frag,node);
+  });
+}
+
+/* ================= PANEL DE HALLAZGOS ================= */
+(function(){
+  const items=[]; for(const id in DB){ const o=DB[id]; if(o.wn && o.t) items.push(o); }
+  const pn=document.createElement('div'); pn.id='wpanel';
+  pn.innerHTML='<div class="whead">⚠ Hallazgos del análisis ('+items.length+') — clic para abrir la ficha</div><div class="wlist">'+
+    items.map(o=>'<div class="wit" data-id="'+o.id+'"><b>'+o.t+(o._tab?' · '+o._tab.name:'')+'</b>'+o.wn+'</div>').join('')+
+    '<div style="font-size:10.5px;color:#9A9890;padding:4px 2px">Detalle completo en Memorias/Hallazgos-y-Observaciones.md</div></div>';
+  document.body.appendChild(pn);
+})();
+function toggleW(){
+  const on=!document.body.classList.contains('wmode');
+  document.body.classList.toggle('wmode',on);
+  document.getElementById('wpanel').classList.toggle('on',on);
+  document.getElementById('wbtn').classList.toggle('on',on);
+  if(on){ seqSel.value=''; seqApply(); }
+}
+
+/* ================= MODO SECUENCIA ================= */
+const SEQ={
+ro1:{steps:[
+ {k:'0 · Reposo',d:'Espera la orden del HMI (<b>MV.RO1.cmd=1</b>). Se evalúan permisos: niveles LT401/LT507, químicos LS402/LS501-503, equipos listos (cdn 8-10).',on:[],w:['lt401','lt507','ls4x','ls5x','fcv502','bce401','bce504','bce505']},
+ {k:'10 · Alimentación',d:'Abre la válvula motorizada <b>FCV502</b>; su confirmación OPN habilita el siguiente paso.',on:['fcv502'],w:['lt401']},
+ {k:'11 · Permisos SF',d:'Espera <b>≥2 suavizadores en servicio</b> (SF_QTY). Regeneración vencida → dispara cdn[0].',on:['fcv502'],w:['fcv401','fcv4814','fcv1521']},
+ {k:'12 · Bomba booster',d:'Arranca <b>BCE401 A/B</b> (confirmación en 10 s o falla cdn[3]) y estabiliza 60 s.',on:['fcv502','bce401'],w:['lt401','psl501']},
+ {k:'13 · Rampa HP',d:'<b>BCE504</b> sube +0.67%/s hasta la consigna (20-60%). Desde aquí se vigilan pH, ORP, presiones, caudal y succión.',on:['fcv502','bce401','bce504'],w:['psl501','ph501','orp401','ft501','pt5012']},
+ {k:'14 · Rampa 2ª etapa',d:'<b>BCE505</b> sube +4%/s.',on:['fcv502','bce401','bce504','bce505'],w:['psl501','ph501','orp401','ft501','pt5012']},
+ {k:'15 · PRODUCCIÓN',d:'720 min (RO1T1). Dosificación automática activa (BDO402/501/502/503) y flush FCV501 al 100%. ⚠ PT501/502 y FT501 se vigilan pero hoy no disparan.',on:['fcv502','bce401','bce504','bce505','fcv501','bdo402','bdo501','bdo502','bdo503'],w:['ph501','orp401','psl501','ft501','pt5012','lt401','lt507','ct502']},
+ {k:'21-22 · Rampa bajada',d:'Baja BCE505 y luego BCE504 hasta ≤20.5%.',on:['fcv502','bce401','bce504','bce505'],w:[]},
+ {k:'23-26 · Flush',d:'Enjuague de membranas: FCV501 a 0%, verificación de posición (FCV501AI) y tiempos de lavado. FCV502 cierra y reabre al final.',on:['fcv501','fcv502'],w:[]},
+ {k:'27 · Fin / reciclo',d:'Si el paro fue por tiempo (cdn[6]) vuelve al paso 10 y produce otro ciclo; si fue orden o disparo, queda en reposo.',on:[],w:[]}]},
+ro2:{steps:[
+ {k:'0 · Reposo',d:'Espera <b>MV.RO2.cmd=1</b>. Permisos: LT507.B3, LT513.B1, químicos LS501-503, equipos listos.',on:[],w:['lt507','lt513','ls5x','fcv503','bce507','bce511','bce512']},
+ {k:'10 · Alimentación',d:'Abren <b>FCV506</b> y <b>FCV503</b>; la confirmación de FCV503 habilita el arranque.',on:['fcv503','fcv506'],w:['lt507']},
+ {k:'12 · Bomba alimentación',d:'Arranca <b>BCE507 A/B</b> con FCV503 abierta y nivel LT507.B2.',on:['fcv503','fcv506','bce507'],w:['lt507','psl508']},
+ {k:'13 · Rampa HP 110 kW',d:'<b>BCE511</b> (el motor más grande de la planta) sube en rampa hasta su consigna.',on:['fcv503','fcv506','bce507','bce511'],w:['psl508','ph506','ft508','pt509','tt507']},
+ {k:'14 · Recirculación',d:'<b>BCE512</b> entra en rampa; su marcha gobierna la proporcional FCV507.',on:['fcv503','fcv506','bce507','bce511','bce512','fcv507'],w:['psl508','ph506','ft508','pt509','tt507']},
+ {k:'15 · PRODUCCIÓN',d:'720 min (RO2T1). Dosificación BDO508/509/510 + BCE506. FCV504 abre/cierra por temperatura TT507. ⚠ FT508 y PT509 no disparan; TT507/509 sí.',on:['fcv503','fcv506','bce507','bce511','bce512','fcv507','fcv504','bdo508','bdo509','bdo510','bce506','fcv505'],w:['ph506','tt507','pt509','ft508','psl508','lt507','lt513','ct511']},
+ {k:'21-22 · Rampa bajada',d:'Baja BCE512 y luego BCE511.',on:['fcv503','fcv506','bce507','bce511','bce512'],w:[]},
+ {k:'23-26 · Flush',d:'Enjuague con FCV505 (proporcional) y tiempos de lavado.',on:['fcv505','fcv503','fcv506'],w:[]},
+ {k:'27 · Fin / reciclo',d:'Reciclo automático si el paro fue por tiempo.',on:[],w:[]}]},
+sf:{steps:[
+ {k:'11-12 · SERVICIO',d:'Suavizador filtrando: <b>Upper Inlet + Outlet</b> abiertas. Cuenta minutos de servicio hasta SFT1 (1800 min). RO1 exige ≥2 unidades en este estado.',on:['fcv401','fcv405'],w:['ls4x']},
+ {k:'20 · Turno de regeneración',d:'Al vencer SFT1 pide turno (<b>Filter wash_No</b>): solo un suavizador regenera a la vez. Requiere válvulas y bombas listas + nivel de salmuera LS403.',on:[],w:['ls4x','bce403','bce405','fcv402','fcv406','fcv423']},
+ {k:'21 · Drenado (SFT2)',d:'Abren <b>Upper Drain + Reg Inlet + Drain</b> y arrancan las bombas de regeneración BCE405.',on:['fcv402','fcv406','fcv423','bce405'],w:['ls4x']},
+ {k:'22 · Salmuera (SFT3)',d:'Entra la sal: arrancan las <b>bombas de NaCl BCE403</b> junto a las de regeneración.',on:['fcv402','fcv406','fcv423','bce405','bce403'],w:['ls4x']},
+ {k:'23 · Lavado lento (SFT4)',d:'Desplazamiento lento de la salmuera por el lecho de resina.',on:['bce405'],w:[]},
+ {k:'24 · Contralavado (SFT5)',d:'<b>Lower Inlet + Lower Drain + Collection</b> con bombas de regeneración.',on:['fcv403','fcv404','fcv422','bce405'],w:[]},
+ {k:'25 · Purga (SFT6)',d:'<b>Lower Drain + Exhaust + Drain</b>.',on:['fcv404','fcv407','fcv423'],w:[]},
+ {k:'26 · Enjuague rápido (SFT7)',d:'<b>Lower Inlet + Exhaust</b> con bombas de regeneración (2700 s).',on:['fcv403','fcv407','bce405'],w:[]},
+ {k:'27 · Fin',d:'Libera el turno (wash_No=0) y vuelve a servicio.',on:['fcv401','fcv405'],w:[]}]},
+cip:{steps:[
+ {k:'Selección de receta',d:'El operador elige destino en el HMI: <b>CIPSELECT</b> 0=Suavizadores (20% · 30 s), 1=RO1 (60% · 1800 s), 2=RO2 (25% · 1800 s). Se cargan consigna y tiempo.',on:[],w:['ls4x','ph406']},
+ {k:'Marcha CIP',d:'<b>BCE406</b> (15 kW, VFD) arranca con CIPSTART si hay nivel en los tanques (LS406/LS407) y rampa +1%/s hasta la receta. Cuenta CIPRUNT hasta CIPT1.',on:['bce406'],w:['ls4x','ph406']},
+ {k:'Dosificación por pH',d:'PH406 corrige la solución: pH alto → <b>BDO408</b> (con LS408L) · pH bajo → <b>BDO407</b> (con LS501L). Ambas requieren BCE406 en marcha.',on:['bce406','bdo408','bdo407'],w:['ph406','ls4x','ls5x']},
+ {k:'Llenado de tanques',d:'Si un tanque CIP queda bajo, <b>FCV424/FCV425</b> lo rellenan automáticamente hasta nivel alto.',on:['fcv2425'],w:['ls4x']}]},
+cf:{steps:[
+ {k:'Permisos (CFCDN)',d:'Niveles LT513/LT608/LT615, switches LS611-614, equipos listos, pH en rango (PH506/601/605/607) y sin emergencia. Master: <b>CFSTART</b>.',on:[],w:['lt513','lt6x','ls6x','ph6x','ph506']},
+ {k:'Transferencias',d:'<b>BCE513</b> (LT615.B2) o <b>BCE615</b> (LT615.B1) mueven producto entre tanques según niveles.',on:['bce513','bce615'],w:['lt513','lt6x']},
+ {k:'Mezcla',d:'<b>MX601/604/605/607</b> con permisos; <b>MX612/613</b> entran 10 y 30 min después de habilitarlos.',on:['mx1','mx2'],w:['ls6x']},
+ {k:'Dosificación por pH',d:'Cada pareja BDO corrige su lazo: <b>BDO601</b>←PH601 · <b>BDO614</b>←PH605 · <b>BDO607</b>←PH607 · <b>BDO602/613</b> con transferencia activa, todas enclavadas por nivel LS61x.',on:['bdo601','bdo602','bdo607','bdo613','bdo614'],w:['ph6x','ls6x']},
+ {k:'Aireación y neumáticas',d:'<b>BCE606+SOP606</b> con ciclado ONOFF · <b>BNM604</b> ciclada por CFON/CFOFF con LS609H · <b>BNM609</b> por LS609L+FPS610H · <b>BCE610</b> por LS610L.',on:['bce606','sop606','bnm604','bnm609','bce610'],w:['ls6x','fps610']}]}
+};
+const seqSel=document.getElementById('seqSel'), stepSel=document.getElementById('stepSel'), seqTxt=document.getElementById('seqTxt'), seqleg=document.getElementById('seqleg');
+seqSel.addEventListener('change',()=>{
+  const sq=SEQ[seqSel.value];
+  if(typeof playStop==='function') playStop();
+  document.getElementById('playBtn').style.display=sq?'':'none';
+  stepSel.innerHTML=''; stepSel.style.display=sq?'':'none'; seqleg.style.display=sq?'':'none';
+  if(sq){ sq.steps.forEach((st,i)=>{ const op=document.createElement('option'); op.value=i; op.textContent=st.k; stepSel.appendChild(op); });
+    document.body.classList.remove('wmode'); document.getElementById('wpanel').classList.remove('on'); document.getElementById('wbtn').classList.remove('on'); }
+  seqApply();
+});
+stepSel.addEventListener('change',seqApply);
+let playT=null;
+const playBtn=document.getElementById('playBtn');
+function playStop(){ if(playT){clearInterval(playT); playT=null;} playBtn.classList.remove('playing'); playBtn.textContent='▶ Reproducir'; }
+function playToggle(){
+  if(playT){ playStop(); return; }
+  if(!SEQ[seqSel.value]) return;
+  playBtn.classList.add('playing'); playBtn.textContent='⏸ Pausar';
+  playT=setInterval(()=>{
+    const n=stepSel.options.length;
+    stepSel.value = (parseInt(stepSel.value||0)+1) % n;
+    seqApply();
+  }, 3500);
+}
+function seqApply(){
+  const sq=SEQ[seqSel.value];
+  document.querySelectorAll('.eq').forEach(b=>b.classList.remove('seqon','seqw','sdim'));
+  if(!sq){ seqTxt.innerHTML='Elige una secuencia y recorre sus pasos: el árbol ilumina qué equipos actúan y qué señales se vigilan en cada momento.'; return; }
+  const st=sq.steps[stepSel.value||0];
+  seqTxt.innerHTML='<b>'+st.k+':</b> '+st.d;
+  document.querySelectorAll('.eq').forEach(b=>{
+    const id=b.dataset.id;
+    if(st.on.includes(id)) b.classList.add('seqon');
+    else if(st.w.includes(id)) b.classList.add('seqw');
+    else b.classList.add('sdim');
+  });
+}
+
+
+/* ================= VISTA POR SISTEMA (panel extra) ================= */
+const SYS=[
+ {id:'pre', name:'1 · PRETRATAMIENTO (área 400)', ss:'recepción y acondicionamiento del agua cruda',
+  det:{kv:[['Qué hace','Recibe el agua cruda, dosifica química de pretratamiento y la almacena en el tanque de alimentación'],['Tableros','LCP4.1 (E/S local) · LCP5.1 (dosificación)'],['Señal clave','LT401 — permiso de arranque de los trenes (cdn[8])'],['Riesgo vigilado','ORP401: cloro alto dispara RO1 para proteger membranas']]},
+  foot:'El agua pasa de aquí a los suavizadores. Sin nivel en LT401 no arranca ningún tren.',
+  grp:[{h:'Equipos', it:['bdo402','lt401','orp401']},{h:'Seguridad', it:['es41']}]},
+ {id:'sfs', name:'2 · SUAVIZADORES SF1-SF3', ss:'intercambio iónico · regeneración con salmuera NaCl',
+  det:{kv:[['Qué hace','3 unidades en paralelo ablandan el agua; cada 1800 min de servicio regeneran con salmuera (7 pasos, una a la vez)'],['Tableros','LCB4.1 / 4.2 / 4.3 (islas de válvulas) · bombas en LCP4.1'],['Secuencia','FC57 — Modo secuencia «Regeneración suavizador»'],['Enclave con RO1','Se exigen ≥2 en servicio; regeneración vencida dispara cdn[0]']]},
+  foot:'Válvulas FCV422/423 y bombas BCE403/405 son compartidas por las 3 unidades: solo una puede regenerar a la vez (turno Filter wash_No).',
+  grp:[{h:'Válvulas SF1', it:['fcv401','fcv402','fcv403','fcv404','fcv405','fcv406','fcv407']},
+       {h:'Válvulas SF2 / SF3', it:['fcv4814','fcv1521']},
+       {h:'Compartidos', it:['fcv422','fcv423','bce403','bce405','ls4x']}]},
+ {id:'ro1', name:'3 · TREN RO1', ss:'ósmosis 45+15 kW · FC3',
+  det:{kv:[['Qué hace','Produce permeado en ciclos de 720 min con flush automático de membranas'],['Tableros','LCB5.1 (bombas HP + instrumentos) · LCP4.1 (BCE401) · LCP5.1 (dosificación)'],['Secuencia','FC3 — Modo secuencia «Tren RO1» (pasos reales del PLC)'],['Salida','Permeado al tanque LT507']]},
+  foot:'⚠ Hallazgo #1: PT501/PT502 (presión) y FT501 (caudal) se vigilan pero hoy no disparan el tren.',
+  grp:[{h:'Bombeo', it:['bce401','bce504','bce505']},
+       {h:'Válvulas', it:['fcv502','fcv501']},
+       {h:'Instrumentación', it:['ft501','ft504','ph501','ct502','pt5012','psl501','orp401','lt401','lt507']},
+       {h:'Dosificación', it:['bdo402','bdo501','bdo502','bdo503']},
+       {h:'Seguridad', it:['es51']}]},
+ {id:'ro2', name:'4 · TREN RO2', ss:'ósmosis 110+11 kW · FC4',
+  det:{kv:[['Qué hace','Segundo tren (membranas de mayor presión), ciclos de 720 min'],['Tableros','LCB5.2 · LCP4.1 (BCE507/BCE506) · LCP5.1 (dosificación)'],['Secuencia','FC4 — Modo secuencia «Tren RO2»'],['Salida','Permeado a LT507 / LT513']]},
+  foot:'⚠ FT508 y PT509 no disparan; TT507/TT509 (temperatura) sí — única protección térmica activa, con enfriamiento por FCV504.',
+  grp:[{h:'Bombeo', it:['bce507','bce511','bce512','bce506']},
+       {h:'Válvulas', it:['fcv503','fcv504','fcv505','fcv506','fcv507']},
+       {h:'Instrumentación', it:['ft508','ph506','ct511','pt509','tt507','psl508','lt507','lt513']},
+       {h:'Dosificación', it:['bdo508','bdo509','bdo510']},
+       {h:'Seguridad', it:['es52']}]},
+ {id:'cip', name:'5 · CIP (transversal)', ss:'limpieza química de SF, RO1 o RO2 · FC5',
+  det:{kv:[['Qué hace','Recircula solución de limpieza por el subsistema elegido, corrigiendo pH con dos dosificadoras'],['Tableros','LCP4.1 (bomba, PH406, tanques LS406/407/408, BDO408) · LCP5.1 (BDO407) · LCB4.2 (llenado FCV424/425)'],['Recetas','CIPSELECT: 0=SF (20%·30 s) · 1=RO1 (60%·1800 s) · 2=RO2 (25%·1800 s)'],['Nota','Sus tanques solo tienen switches de nivel; LT404 (sin uso en lógica) es candidato a ser su transmisor — confirmar en campo']]},
+  foot:'Sistema bajo demanda desde el HMI: no tiene tablero propio, por eso sus piezas viven repartidas en tres tableros.',
+  grp:[{h:'Bombeo y control', it:['bce406','ph406']},
+       {h:'Dosificación', it:['bdo407','bdo408']},
+       {h:'Tanques y llenado', it:['ls4x','fcv2425','lt404']}]},
+ {id:'cf', name:'6 · QUÍMICA CONTINUA (área 600)', ss:'tanques, mezcla y dosificación · FC6',
+  det:{kv:[['Qué hace','Mantiene la química del área 600: transferencias entre tanques, agitación, dosificación por pH y aireación'],['Tableros','LCP6.1 · bombas de transferencia BCE513 en LCP4.1'],['Lógica','FC6 — permisos CFCDN + histéresis de pH (etapas conceptuales en Modo secuencia)'],['Entrada','Recibe del tanque LT513']]},
+  foot:'Opera en continuo mientras CFSTART y los permisos (niveles, pH en rango, equipos listos, sin emergencia) se mantengan.',
+  grp:[{h:'Transferencia y mezcla', it:['bce513','bce615','mx1','mx2']},
+       {h:'Dosificación por pH/nivel', it:['bdo601','bdo602','bdo607','bdo613','bdo614']},
+       {h:'Aireación y neumáticas', it:['bce606','sop606','bce610','bnm604','bnm609']},
+       {h:'Instrumentación', it:['ph6x','lt6x','ls6x','fps610','lt513']},
+       {h:'Seguridad', it:['es6']}]},
+ {id:'com', name:'COMUNES / SIN SECUENCIA', ss:'equipos fuera de las secuencias de proceso',
+  det:{kv:[['Contenido','Equipos sin .ON en las secuencias o de soporte general'],['Nota','BCE404 A/B solo opera en manual desde el HMI']]},
+  foot:'También pertenecen aquí los PLCs pares (Evaporator y MBR) y la infraestructura de comunicación — ver la vista por tablero.',
+  grp:[{h:'Equipos', it:['bce404','es5d']}]}
+];
+function sysCard(sy){
+  const groups = sy.grp.map(g=>`<div class="grp"><h4>${g.h}</h4><div class="chips">${g.it.map(i=>chip(DB[i])).join('')}</div></div>`).join('');
+  return `<li><div class="card" style="border-color:#CFE5F8"><div class="chead" data-id="sys:${sy.id}" style="background:linear-gradient(180deg,#EAF2FB,#DCEAF8);border-color:#CFE5F8"><div class="tt" style="color:#0C447C">${sy.name}</div><div class="ss" style="color:#185FA5">${sy.ss}</div><span class="more" style="color:#378ADD">ⓘ ficha</span></div>${groups}</div></li>`;
+}
+document.getElementById('tree2').innerHTML = `
+<ul class="root"><li>
+  <div class="node n-plc" data-id="plc"><span class="more">ⓘ ficha</span><div class="tt">${IC.net} VISTA POR SISTEMA — flujo del proceso</div><div class="ss">los mismos equipos, agrupados como opera la planta (un equipo puede aparecer en más de un sistema) · el color azul del encabezado indica agrupación de proceso, no tablero</div></div>
+  <ul>${SYS.map(sysCard).join('')}</ul>
+</li></ul>`;
+let sysView=false;
+function toggleView(){
+  sysView=!sysView;
+  document.getElementById('tree').style.display = sysView?'none':'';
+  document.getElementById('tree2').style.display = sysView?'':'none';
+  document.getElementById('viewBtn').textContent = sysView? '⇄ Por tablero':'⇄ Por sistema';
+  fit(); seqApply();
+}
+
+
+/* ================= PANEL DE ANIMACION (circuito) ================= */
+const A={
+tank:(id,x,y,w,h,tag,dbid,sub)=>`<g data-id="${dbid||''}"><rect class="tankb" x="${x}" y="${y}" width="${w}" height="${h}" rx="8"/><rect class="tankw" x="${x+4}" y="${y+h*0.35}" width="${w-8}" height="${h*0.6}" rx="5"/><text class="albl" x="${x+w/2}" y="${y-8}" text-anchor="middle">${tag}</text>${sub?`<text class="albs" x="${x+w/2}" y="${y+h+14}" text-anchor="middle">${sub}</text>`:''}</g>`,
+hval:(id,cx,cy,tag,dbid)=>`<g id="${id}" class="aval" data-id="${dbid}"><line class="wire" x1="${cx}" y1="${cy-13}" x2="${cx}" y2="${cy-24}" style="stroke:#8B897F"/><rect class="vact" x="${cx-10}" y="${cy-38}" width="20" height="14" rx="3"/><path class="vbody" d="M${cx-20},${cy-13} L${cx},${cy} L${cx-20},${cy+13} Z M${cx+20},${cy-13} L${cx},${cy} L${cx+20},${cy+13} Z"/><line class="vx" x1="${cx-7}" y1="${cy-7}" x2="${cx+7}" y2="${cy+7}"/><line class="vx" x1="${cx+7}" y1="${cy-7}" x2="${cx-7}" y2="${cy+7}"/><text class="albs" x="${cx}" y="${cy+30}" text-anchor="middle" style="font-weight:bold">${tag}</text></g>`,
+vval:(id,cx,cy,tag,dbid)=>`<g id="${id}" class="aval" data-id="${dbid}" transform="rotate(90 ${cx} ${cy})"><path class="vbody" d="M${cx-20},${cy-13} L${cx},${cy} L${cx-20},${cy+13} Z M${cx+20},${cy-13} L${cx},${cy} L${cx+20},${cy+13} Z"/><line class="vx" x1="${cx-7}" y1="${cy-7}" x2="${cx+7}" y2="${cy+7}"/><line class="vx" x1="${cx+7}" y1="${cy-7}" x2="${cx-7}" y2="${cy+7}"/></g><text class="albs" x="${cx+28}" y="${cy+4}" style="font-weight:bold">${tag}</text>`,
+pump:(id,cx,cy,tag,dbid,vfd)=>`<g id="${id}" class="apmp" data-id="${dbid}"><circle class="pbody" cx="${cx}" cy="${cy}" r="25"/><g class="rot"><line x1="${cx}" y1="${cy-17}" x2="${cx}" y2="${cy+17}"/><line x1="${cx-15}" y1="${cy-8.5}" x2="${cx+15}" y2="${cy+8.5}"/><line x1="${cx-15}" y1="${cy+8.5}" x2="${cx+15}" y2="${cy-8.5}"/></g><text class="albl" x="${cx}" y="${cy+44}" text-anchor="middle">${tag}</text>${vfd?`<rect class="vfdbox" x="${cx-33}" y="${cy+50}" width="66" height="18" rx="4"/><text id="${id}_pct" class="vfdtx" x="${cx}" y="${cy+63}" text-anchor="middle">VFD 0%</text>`:''}</g>`,
+sen:(id,cx,cy,tag,dbid,ty)=>`<g id="${id}" class="asen" data-id="${dbid}"><line x1="${cx}" y1="${cy+12}" x2="${cx}" y2="${ty}" style="stroke:#C9C6BB;stroke-width:1.6"/><circle class="sens" cx="${cx}" cy="${cy}" r="12"/><text class="senst" x="${cx}" y="${cy-18}" text-anchor="middle">${tag}</text></g>`,
+memb:(id,x,y,w,h,tag)=>`<g data-id="${id}"><rect class="memb" x="${x}" y="${y}" width="${w}" height="${h}" rx="10"/><line x1="${x+14}" y1="${y+h-8}" x2="${x+w-14}" y2="${y+8}" style="stroke:#378ADD;stroke-width:1.6;stroke-dasharray:5 4"/><text class="albl" x="${x+w/2}" y="${y+h/2+4}" text-anchor="middle" style="fill:#0C447C">${tag}</text></g>`,
+pipe:(id,d,cls)=>`<g id="${id}" class="apipe ${cls||''}"><path class="pipe" d="${d}"/><path class="flowl" d="${d}"/></g>`,
+wire:(id,d,label,lx,ly,sx,sy)=>`<g id="${id}" class="awr" data-sig="${id}"><path class="wire" d="${d}"/><circle class="wled" cx="${sx}" cy="${sy}" r="4.5"/><text class="wlab" x="${lx}" y="${ly}">${label} ⓘ</text></g>`,
+plc:(x,y,w,h,label)=>`<g data-id="plc"><rect class="plcb" x="${x}" y="${y}" width="${w}" height="${h}" rx="10"/><text class="plct" x="${x+18}" y="${y+30}">${label}</text><text id="a_stepchip" class="stepchip" x="${x+w-18}" y="${y+30}" text-anchor="end"></text><text class="albs" x="${x+18}" y="${y+52}" style="fill:#5DCAA5">las líneas punteadas verdes son las salidas energizadas del PLC · clic en los símbolos abre su ficha</text></g>`,
+arrow:(x,y,txt,anchor)=>`<path d="M${x},${y} l14,-7 v14 Z" fill="#8B897F"/><text class="albs" x="${x+20}" y="${y+4}" text-anchor="${anchor||'start'}">${txt}</text>`
+};
+
+const ANIM={
+ro1:{
+ build(){ return [
+  A.tank('a_lt401t',45,120,115,145,'Tanque alimentación','lt401'),
+  A.pipe('p_f1','M160,212 H236'), A.pipe('p_f2','M281,212 H344'), A.pipe('p_f3','M396,212 H554'),
+  A.pipe('p_f4','M606,212 H704'), A.pipe('p_f5','M756,212 H878'),
+  A.pipe('p_perm','M1042,212 H1145','perm'),
+  A.pipe('p_fl1','M960,238 V332','perm'), A.pipe('p_fl2','M960,380 V446','perm'),
+  A.pipe('p_dos','M148,472 H184 M236,472 H500 V220','chem'),
+  A.hval('a_fcv502',258,212,'FCV502','fcv502'),
+  A.pump('a_bce401',370,212,'BCE401 A/B','bce401'),
+  A.pump('a_bce504',580,212,'BCE504 · 45 kW','bce504',1),
+  A.pump('a_bce505',730,212,'BCE505 · 15 kW','bce505',1),
+  A.memb('x',878,186,164,52,'MEMBRANAS RO1'),
+  A.tank('a_lt507t',1145,118,112,140,'Tanque permeado','lt507'),
+  A.vval('a_fcv501',960,356,'FCV501 flush','fcv501'),
+  A.arrow(946,470,'a drenaje'),
+  A.tank('a_chem',60,430,88,85,'Químicos','ls5x','LS402 · LS501-503'),
+  A.pump('a_bdo',210,472,'BDO402 · 501-503','bdo502'),
+  A.sen('a_orp401',436,150,'ORP401','orp401',206), A.sen('a_ph501',482,150,'PH501','ph501',206),
+  A.sen('a_psl501',528,150,'PSL501','psl501',206), A.sen('a_pt501',652,150,'PT501','pt5012',206),
+  A.sen('a_pt502',794,150,'PT502','pt5012',206), A.sen('a_ft501',838,150,'FT501','ft501',206),
+  A.sen('a_ft504',1078,152,'FT504','ft504',208), A.sen('a_ct502',1118,152,'CT502','ct502',208),
+  A.wire('w_fcv502','M258,575 V248','Q30.2',264,566,258,575),
+  A.wire('w_bce401','M330,575 V212 H344','Q1.6·Q1.7',300,566,330,575),
+  A.wire('w_bce504','M580,575 V282','Q30.0 · QW32',540,566,580,575),
+  A.wire('w_bce505','M730,575 V282','Q30.1 · QW34',690,566,730,575),
+  A.wire('w_fcv501','M998,575 V356 H982','QW36',1004,566,998,575),
+  A.wire('w_bdo','M210,575 V500','Q0.1 · Q20.0-5',120,566,210,575),
+  A.plc(60,575,1180,75,'PLC S7-1500 · FC3 — secuenciador MV.RO1.step')
+ ].join(''); },
+ wmap:{a_fcv502:'w_fcv502',a_bce401:'w_bce401',a_bce504:'w_bce504',a_bce505:'w_bce505',a_fcv501:'w_fcv501',a_bdo:'w_bdo'},
+ steps:[
+  {k:'step 0 · Reposo',d:'Todo detenido. El PLC evalúa permisos: nivel del tanque (LT401), químicos y equipos listos. Espera <b>MV.RO1.cmd=1</b> desde el HMI.',on:[],fl:[],w:['a_lt401t']},
+  {k:'step 10 · Alimentación',d:'Se energiza <b>Q30.2</b>: abre FCV502 (motorizada). Aún no hay flujo — se espera su confirmación OPN.',on:['a_fcv502'],fl:[],w:[]},
+  {k:'step 11 · Permisos SF',d:'Con la válvula confirmada, se verifica que haya ≥2 suavizadores en servicio (SF_QTY).',on:['a_fcv502'],fl:[],w:[]},
+  {k:'step 12 · Bomba de alimentación',d:'<b>Q1.6/Q1.7</b> arranca BCE401 A/B: el agua llega hasta la succión de la bomba HP. 60 s de estabilización.',on:['a_fcv502','a_bce401'],fl:['p_f1','p_f2','p_f3'],w:['a_psl501']},
+  {k:'step 13 · Rampa HP',d:'<b>Q30.0</b> arranca BCE504 y <b>QW32</b> sube la velocidad +0.67%/s hasta la consigna. Se vigilan succión, pH, cloro y presión.',on:['a_fcv502','a_bce401','a_bce504'],fl:['p_f1','p_f2','p_f3','p_f4'],w:['a_psl501','a_ph501','a_orp401','a_pt501'],tx:{a_bce504_pct:'VFD ↑ rampa'}},
+  {k:'step 14 · Segunda etapa',d:'<b>Q30.1/QW34</b>: BCE505 entra en rampa (+4%/s). El agua alcanza las membranas; el flush FCV501 está al 100% (QW36).',on:['a_fcv502','a_bce401','a_bce504','a_bce505','a_fcv501'],fl:['p_f1','p_f2','p_f3','p_f4','p_f5','p_fl1','p_fl2'],w:['a_psl501','a_ph501','a_orp401','a_pt501','a_pt502','a_ft501'],tx:{a_bce504_pct:'VFD 60%',a_bce505_pct:'VFD ↑ rampa'}},
+  {k:'step 15 · PRODUCCIÓN (720 min)',d:'Permeado hacia el tanque LT507. <b>Q20.x</b> dosifica químicos automáticamente (BDO con la bomba HP en marcha). ⚠ PT501/502 y FT501 se vigilan pero hoy no disparan.',on:['a_fcv502','a_bce401','a_bce504','a_bce505','a_fcv501','a_bdo'],fl:['p_f1','p_f2','p_f3','p_f4','p_f5','p_perm','p_fl1','p_fl2','p_dos'],w:['a_ph501','a_orp401','a_psl501','a_pt501','a_pt502','a_ft501','a_ft504','a_ct502','a_lt401t','a_lt507t'],tx:{a_bce504_pct:'VFD 60%',a_bce505_pct:'VFD 60%'}},
+  {k:'steps 21-22 · Rampa de bajada',d:'QW34 y luego QW32 reducen velocidad hasta el mínimo. La dosificación se detiene al parar la HP.',on:['a_fcv502','a_bce401','a_bce504','a_bce505'],fl:['p_f1','p_f2','p_f3','p_f4','p_f5'],w:[],tx:{a_bce504_pct:'VFD ↓',a_bce505_pct:'VFD ↓'}},
+  {k:'steps 23-26 · Flush',d:'Con las HP detenidas, BCE401 empuja agua a través de las membranas (FCV501 cierra en 23-25): enjuague que protege las membranas antes del paro.',on:['a_fcv502','a_bce401'],fl:['p_f1','p_f2','p_f3','p_f4','p_f5','p_perm'],w:['a_ft504'],tx:{a_bce504_pct:'VFD 0%',a_bce505_pct:'VFD 0%'}},
+  {k:'step 27 · Fin / reciclo',d:'Si el paro fue por tiempo (cdn[6]), vuelve al paso 10 y encadena otro ciclo de 720 min; si fue orden o disparo, queda en reposo.',on:[],fl:[],w:[]}]
+},
+ro2:{
+ build(){ return [
+  A.tank('b_lt507t',45,120,115,145,'Tanque LT507','lt507'),
+  A.pipe('q_f1','M160,212 H236'), A.pipe('q_f2','M281,212 H344'), A.pipe('q_f3','M396,212 H554'),
+  A.pipe('q_f4','M606,212 H878'),
+  A.pipe('q_loop','M1042,226 H1090 V320 H700 V226 H606','','loop'),
+  A.pipe('q_perm','M1042,198 H1145','perm'),
+  A.pipe('q_fl1','M930,238 V332','perm'), A.pipe('q_fl2','M930,380 V446','perm'),
+  A.pipe('q_cool','M700,90 V180'),
+  A.pipe('q_dos','M148,472 H184 M236,472 H500 V220','chem'),
+  A.hval('b_fcv503',258,212,'FCV503','fcv503'),
+  A.pump('b_bce507',370,212,'BCE507 A/B','bce507'),
+  A.pump('b_bce511',580,212,'BCE511 · 110 kW','bce511',1),
+  A.pump('b_bce512',830,320,'BCE512 · 11 kW','bce512',1),
+  A.hval('b_fcv507',760,320,'FCV507','fcv507'),
+  A.hval('b_fcv504',700,64,'FCV504 refrig.','fcv504'),
+  A.memb('x2',878,186,164,52,'MEMBRANAS RO2'),
+  A.tank('b_lt513t',1145,104,112,140,'Tanque LT513','lt513'),
+  A.vval('b_fcv505',930,356,'FCV505 flush','fcv505'),
+  A.arrow(916,470,'a drenaje'),
+  A.tank('b_chem',60,430,88,85,'Químicos','ls5x','LS501-503'),
+  A.pump('b_bdo',210,472,'BDO508-510','bdo508'),
+  A.sen('b_psl508',436,150,'PSL508','psl508',206), A.sen('b_ph506',482,150,'PH506','ph506',206),
+  A.sen('b_ft508',528,150,'FT508','ft508',206), A.sen('b_pt509',652,150,'PT509','pt509',206),
+  A.sen('b_tt507',794,150,'TT507/509','tt507',206),
+  A.sen('b_ft512',1078,140,'FT512·CT511','ft508',194),
+  A.wire('x_fcv503','M258,575 V248','Q40.2',264,566,258,575),
+  A.wire('x_bce507','M330,575 V212 H344','Q0.3·Q0.4',290,566,330,575),
+  A.wire('x_bce511','M580,575 V282','Q40.0 · QW42',540,566,580,575),
+  A.wire('x_bce512','M830,575 V388','Q40.1 · QW44',840,566,830,575),
+  A.wire('x_fcv505','M968,575 V356 H952','QW46',974,566,968,575),
+  A.wire('x_fcv507','M760,575 V352','QW48',766,566,760,575),
+  A.wire('x_fcv504','M1240,64 H723 ','Q40.3',1180,58,1240,64),
+  A.wire('x_bdo','M210,575 V500','Q20.6-21.3',120,566,210,575),
+  A.plc(60,575,1180,75,'PLC S7-1500 · FC4 — secuenciador MV.RO2.step')
+ ].join(''); },
+ wmap:{b_fcv503:'x_fcv503',b_bce507:'x_bce507',b_bce511:'x_bce511',b_bce512:'x_bce512',b_fcv505:'x_fcv505',b_fcv507:'x_fcv507',b_fcv504:'x_fcv504',b_bdo:'x_bdo'},
+ steps:[
+  {k:'step 0 · Reposo',d:'Permisos: LT507 (alimenta este tren), LT513 (recibe el permeado), químicos y equipos listos. Espera <b>MV.RO2.cmd=1</b>.',on:[],fl:[],w:['b_lt507t','b_lt513t']},
+  {k:'step 10 · Alimentación',d:'<b>Q40.2</b> abre FCV503 (FCV506 permanece abierta por diseño).',on:['b_fcv503'],fl:[],w:[]},
+  {k:'step 12 · Bomba de alimentación',d:'<b>Q0.3/Q0.4</b>: BCE507 A/B lleva agua del tanque LT507 hasta la succión de la HP.',on:['b_fcv503','b_bce507'],fl:['q_f1','q_f2','q_f3'],w:['b_psl508']},
+  {k:'step 13 · Rampa HP 110 kW',d:'<b>Q40.0/QW42</b>: BCE511 (el motor más grande de la planta) sube en rampa. Se vigilan succión, pH, presión y caudal.',on:['b_fcv503','b_bce507','b_bce511'],fl:['q_f1','q_f2','q_f3','q_f4'],w:['b_psl508','b_ph506','b_pt509','b_ft508'],tx:{b_bce511_pct:'VFD ↑ rampa'}},
+  {k:'step 14 · Recirculación',d:'<b>Q40.1/QW44</b>: BCE512 recircula concentrado sobre las membranas (lazo) y <b>QW48</b> modula FCV507.',on:['b_fcv503','b_bce507','b_bce511','b_bce512','b_fcv507'],fl:['q_f1','q_f2','q_f3','q_f4','q_loop'],w:['b_psl508','b_ph506','b_pt509','b_ft508','b_tt507'],tx:{b_bce511_pct:'VFD 60%',b_bce512_pct:'VFD ↑ rampa'}},
+  {k:'step 15 · PRODUCCIÓN (720 min)',d:'Permeado hacia LT513, dosificación <b>Q20.6-21.3</b> activa, y <b>Q40.3</b> abre FCV504 si TT507 sube (único disparo térmico activo de la planta). ⚠ FT508/PT509 no disparan.',on:['b_fcv503','b_bce507','b_bce511','b_bce512','b_fcv507','b_fcv504','b_bdo','b_fcv505'],fl:['q_f1','q_f2','q_f3','q_f4','q_loop','q_perm','q_cool','q_dos','q_fl1','q_fl2'],w:['b_ph506','b_tt507','b_pt509','b_ft508','b_psl508','b_lt507t','b_lt513t','b_ft512'],tx:{b_bce511_pct:'VFD 60%',b_bce512_pct:'VFD 60%'}},
+  {k:'steps 21-22 · Rampa de bajada',d:'Bajan BCE512 y luego BCE511.',on:['b_fcv503','b_bce507','b_bce511','b_bce512'],fl:['q_f1','q_f2','q_f3','q_f4','q_loop'],w:[],tx:{b_bce511_pct:'VFD ↓',b_bce512_pct:'VFD ↓'}},
+  {k:'steps 23-26 · Flush',d:'Enjuague de membranas con la bomba de alimentación y la proporcional FCV505 (QW46).',on:['b_fcv503','b_bce507','b_fcv505'],fl:['q_f1','q_f2','q_f3','q_f4','q_perm','q_fl1','q_fl2'],w:[],tx:{b_bce511_pct:'VFD 0%',b_bce512_pct:'VFD 0%'}},
+  {k:'step 27 · Fin / reciclo',d:'Reciclo automático si el paro fue por tiempo; si no, reposo.',on:[],fl:[],w:[]}]
+},
+sf:{
+ build(){ return [
+  `<rect x="548" y="196" width="184" height="212" rx="16" class="tankb"/>`,
+  `<rect x="556" y="250" width="168" height="150" rx="10" fill="#F5E9C8" opacity=".8"/>`,
+  `<text class="albl" x="640" y="230" text-anchor="middle">SUAVIZADOR SF1</text>`,
+  `<text class="albs" x="640" y="246" text-anchor="middle">lecho de resina</text>`,
+  A.pipe('s_in','M300,160 H408'), A.pipe('s_in2','M453,160 H600 V196'),
+  A.pipe('s_out','M732,300 H792'), A.pipe('s_out2','M838,300 H952'),
+  A.pipe('s_td','M690,196 V150 H746'), A.pipe('s_td2','M792,150 H860 V300'),
+  A.pipe('s_hdr','M860,300 V488'), A.pipe('s_coll','M860,330 H932'), A.pipe('s_coll2','M978,330 H1040'),
+  A.pipe('s_bd','M690,408 V470 H746'), A.pipe('s_bd2','M792,470 H860'),
+  A.pipe('s_bi','M300,470 H446','',''), A.pipe('s_bi2','M492,470 H600 V408'),
+  A.pipe('s_reg','M354,300 H548','brine'), A.pipe('s_regw','M224,470 H278 M280,470 V300 H308','brine'),
+  A.pipe('s_brine','M148,300 H176 M224,300 H308','brine'),
+  A.pipe('s_exh','M590,196 V120 H540'), A.pipe('s_exh2','M494,120 H430'),
+  A.hval('sv_401',430,160,'FCV401 entrada','fcv401'),
+  A.hval('sv_402',770,150,'FCV402 dren.sup','fcv402'),
+  A.hval('sv_403',470,470,'FCV403 entr.inf','fcv403'),
+  A.hval('sv_404',770,470,'FCV404 dren.inf','fcv404'),
+  A.hval('sv_405',815,300,'FCV405 salida','fcv405'),
+  A.hval('sv_406',330,300,'FCV406 regen.','fcv406'),
+  A.hval('sv_407',518,120,'FCV407 venteo','fcv407'),
+  A.hval('sv_422',955,330,'FCV422 colección','fcv422'),
+  A.vval('sv_423',860,512,'FCV423 drenaje','fcv423'),
+  A.pump('sp_403',200,300,'BCE403 A/B salmuera','bce403'),
+  A.pump('sp_405',200,470,'BCE405 A/B regen.','bce405'),
+  A.tank('s_brinet',60,240,88,110,'Salmuera','ls4x','LS403'),
+  A.arrow(250,160,'de pretratamiento',''),
+  `<text class="albs" x="300" y="152" text-anchor="end">agua cruda</text>`,
+  A.arrow(60,470,'agua de regeneración',''),
+  A.arrow(960,300,'a servicio / LT401'),
+  A.arrow(1048,330,'a colección'),
+  A.arrow(846,556,'drenaje común'),
+  A.sen('s_ls403',104,218,'LS403','ls4x',240),
+  A.wire('y_401','M430,575 V186','Q50.0',436,566,430,575),
+  A.wire('y_402','M902,575 V80 H770 V112','Q50.1',908,566,902,575),
+  A.wire('y_403','M470,575 V496','Q50.2',476,566,470,575),
+  A.wire('y_404','M770,575 V496','Q50.3',776,566,770,575),
+  A.wire('y_405','M815,575 V326','Q50.4',821,566,815,575),
+  A.wire('y_406','M330,575 V326','Q50.5',336,566,330,575),
+  A.wire('y_407','M518,575 V540 H1240 V40 H518 V86','Q50.6',530,566,518,575),
+  A.wire('y_422','M955,575 V356','Q50.7',961,566,955,575),
+  A.wire('y_423','M890,575 V512 H882','Q51.0',896,566,890,575),
+  A.wire('y_403p','M200,575 V522','Q0.7·Q1.0 / Q1.1·Q1.2',80,566,200,575),
+  A.plc(60,575,1180,75,'PLC S7-1500 · FC57 — secuenciador MV.Filter1.step (válvulas vía tablero LCB4.1)')
+ ].join(''); },
+ wmap:{sv_401:'y_401',sv_402:'y_402',sv_403:'y_403',sv_404:'y_404',sv_405:'y_405',sv_406:'y_406',sv_407:'y_407',sv_422:'y_422',sv_423:'y_423',sp_403:'y_403p',sp_405:'y_403p'},
+ steps:[
+  {k:'steps 11-12 · SERVICIO',d:'Entrada superior (FCV401) y salida (FCV405) abiertas: el agua atraviesa la resina y sale ablandada. Cuenta minutos hasta SFT1 (1800 min).',on:['sv_401','sv_405'],fl:['s_in','s_in2','s_out','s_out2'],w:[]},
+  {k:'step 20 · Turno de regeneración',d:'Vencido el tiempo de servicio pide turno (Filter wash_No): solo un suavizador regenera a la vez. Verifica salmuera (LS403) y equipos listos.',on:[],fl:[],w:['s_ls403','s_brinet']},
+  {k:'step 21 · Drenado (SFT2)',d:'<b>Q50.1/Q50.5/Q51.0</b>: abre drenaje superior, entrada de regeneración y drenaje común; BCE405 impulsa agua de regeneración.',on:['sv_402','sv_406','sv_423','sp_405'],fl:['s_regw','s_reg','s_td','s_td2','s_hdr'],w:[]},
+  {k:'step 22 · Salmuera (SFT3)',d:'Arrancan las bombas de NaCl <b>BCE403</b>: la salmuera entra al lecho por FCV406 (línea violeta).',on:['sv_402','sv_406','sv_423','sp_405','sp_403'],fl:['s_brine','s_regw','s_reg','s_td','s_td2','s_hdr'],w:['s_ls403']},
+  {k:'step 23 · Lavado lento (SFT4)',d:'Desplazamiento lento de la salmuera a través de la resina (representación esquemática).',on:['sv_406','sv_423','sp_405'],fl:['s_regw','s_reg'],w:[]},
+  {k:'step 24 · Contralavado (SFT5)',d:'<b>Q50.2/Q50.3/Q50.7</b>: entrada inferior + colección: el agua sube a contracorriente y expande el lecho.',on:['sv_403','sv_404','sv_422','sp_405'],fl:['s_regw','s_bi','s_bi2','s_bd','s_bd2','s_hdr','s_coll','s_coll2'],w:[]},
+  {k:'step 25 · Purga (SFT6)',d:'Drenaje inferior + venteo (FCV407) + drenaje común.',on:['sv_404','sv_407','sv_423'],fl:['s_exh','s_exh2','s_bd','s_bd2','s_hdr'],w:[]},
+  {k:'step 26 · Enjuague rápido (SFT7 = 2700 s)',d:'Entrada inferior con venteo abierto: enjuague final de la resina.',on:['sv_403','sv_407','sp_405'],fl:['s_regw','s_bi','s_bi2','s_exh','s_exh2'],w:[]},
+  {k:'step 27 · Fin → servicio',d:'Libera el turno (wash_No=0) y la unidad vuelve a servicio (FCV401+FCV405).',on:['sv_401','sv_405'],fl:['s_in','s_in2','s_out','s_out2'],w:[]}]
+}
+};
+
+
+/* ================= FICHAS DE SEÑALES Q/QW ================= */
+const SIG={
+w_fcv502:{a:'Q30.2',t:'Salida digital 24 V',tab:'LCB5.1 — Tren RO1 (esclavo DP 6)',ruta:'CPU 1512SP → PROFIBUS DP → S7-200 de LCB5.1 (buffer V-memory) → salida física Q0.2 → relé 3KB → actuador motorizado de FCV502',hace:'Orden de apertura de la válvula de alimentación del tren RO1',eq:'fcv502',lg:'La escribe FC1/FC61 cuando FC3 pide MV.FCV502.ON (paso 10 y ≤23 o ≥26)'},
+w_bce401:{a:'Q1.6 · Q1.7',t:'Salidas digitales 24 V (E/S local ET 200SP)',tab:'LCP4.1 — tablero principal',ruta:'CPU → tarjeta DQ local → relés 15KB/16KB → contactores 15KM/16KM (con guardamotor y térmico LRD)',hace:'Marcha de las bombas de alimentación BCE401 A y B (30 kW)',eq:'bce401',lg:'FC51 la activa si MV.BCE401x.ON=1 y el equipo está sano, remoto y sin Bad'},
+w_bce504:{a:'Q30.0 + QW32',t:'Digital (marcha) + analógica 4-20 mA (velocidad)',tab:'LCB5.1 — Tren RO1',ruta:'Q30.0: → relé 1KA → entrada Start del variador ACS510 · QW32: → AQ del S7-200 (AQW32) → entrada de referencia del VFD',hace:'Arranque y consigna de velocidad de la bomba HP BCE504 (45 kW)',eq:'bce504',lg:'La velocidad viene de AIO.BCE504 (rampa de FC3, escalada por FC54: 0-27648 ↔ 4-20 mA)'},
+w_bce505:{a:'Q30.1 + QW34',t:'Digital + analógica 4-20 mA',tab:'LCB5.1 — Tren RO1',ruta:'Relé 2KA → Start del ACS510 · QW34 → AQW34 → referencia del VFD',hace:'Arranque y velocidad del booster BCE505 (15 kW)',eq:'bce505',lg:'Rampa +4%/s en el paso 14 (FC3 s32-34)'},
+w_fcv501:{a:'QW36',t:'Salida analógica 4-20 mA (posición 0-100%)',tab:'LCB5.1 — Tren RO1',ruta:'CPU → DP → AQW36 del S7-200 → posicionador de la válvula proporcional',hace:'Apertura de la válvula de flush FCV501; su posición real se lee por IW86 (FCV501AI)',eq:'fcv501',lg:'FC3 s52 escribe AIO.FCV501: 100% en pasos 10-22/26+, 0% en 23-25'},
+w_bdo:{a:'Q0.1-Q0.2 · Q20.0-20.5',t:'Salidas digitales 24 V',tab:'LCP4.1 (BDO402) y LCP5.1 — Dosificación (BDO501-503, esclavo DP 8)',ruta:'Cada salida → relé KB → contactor de la dosificadora (0.37 kW)',hace:'Marcha de las dosificadoras de químicos del tren RO1',eq:'bdo502',lg:'FC3 s55/s57: arrancan con la bomba HP; BDO501 además exige PH501.B1'},
+x_fcv503:{a:'Q40.2',t:'Salida digital 24 V',tab:'LCB5.2 — Tren RO2 (esclavo DP 7)',ruta:'CPU → DP → S7-200 de LCB5.2 → relé 3KB → solenoide FCV503',hace:'Apertura de la válvula de alimentación del tren RO2',eq:'fcv503',lg:'FC4: paso 10; su confirmación es permiso de BCE507'},
+x_bce507:{a:'Q0.3 · Q0.4',t:'Salidas digitales (E/S local)',tab:'LCP4.1 — tablero principal',ruta:'Tarjeta DQ local → relés 4KB/5KB → contactores',hace:'Marcha de las bombas de alimentación BCE507 A/B (5.5 kW)',eq:'bce507',lg:'FC4 s42: pasos 12-25 con LT507.B2 y FCV503 abierta'},
+x_bce511:{a:'Q40.0 + QW42',t:'Digital + analógica 4-20 mA',tab:'LCB5.2 — Tren RO2',ruta:'Relé 1KA → Start ACS510 (110 kW) · QW42 → AQW32 del esclavo → referencia del VFD',hace:'Arranque y velocidad de la bomba HP BCE511 — el motor más grande de la planta',eq:'bce511',lg:'Rampa en paso 13 (FC4); consigna AIO.BCE511S del HMI'},
+x_bce512:{a:'Q40.1 + QW44',t:'Digital + analógica',tab:'LCB5.2 — Tren RO2',ruta:'Relé 2KA → ACS510 · QW44 → referencia',hace:'Bomba de recirculación BCE512 (11 kW) sobre las membranas',eq:'bce512',lg:'Paso 14; su marcha además gobierna la proporcional FCV507'},
+x_fcv505:{a:'QW46',t:'Analógica 4-20 mA (0-100%)',tab:'LCB5.2 — Tren RO2',ruta:'AQW36 del esclavo → posicionador',hace:'Válvula proporcional de flush FCV505 (posición leída por IW108)',eq:'fcv505',lg:'FC4 s45 por pasos'},
+x_fcv507:{a:'QW48',t:'Analógica 4-20 mA',tab:'LCB5.2 — Tren RO2',ruta:'AQW38 del esclavo → posicionador',hace:'Válvula proporcional FCV507 del lazo de recirculación',eq:'fcv507',lg:'FC4 s47: apertura en función de BCE512.Runing'},
+x_fcv504:{a:'Q40.3',t:'Salida digital 24 V',tab:'LCB5.2 — Tren RO2',ruta:'Relé 4KB → solenoide',hace:'Válvula de agua de enfriamiento FCV504',eq:'fcv504',lg:'FC4 s52: abre por temperatura TT507 alta (histéresis) en producción'},
+x_bdo:{a:'Q20.6 - Q21.3',t:'Salidas digitales 24 V',tab:'LCP5.1 — Dosificación (esclavo DP 8)',ruta:'Cada salida → relé KB → contactor de dosificadora',hace:'Marcha de BDO508-510 A/B (químicos del tren RO2)',eq:'bdo508',lg:'FC4 s49/s51: con la bomba de alimentación; BDO508 exige PH506.B1'},
+y_401:{a:'Q50.0',t:'Salida digital 24 V',tab:'LCB4.1 — SF1 (esclavo DP 3)',ruta:'CPU → DP → S7-200 de LCB4.1 → relé 1KB → solenoide neumático (borne 1X con fusible)',hace:'Abre FCV401 (entrada superior — servicio)',eq:'fcv401',lg:'FC57: pasos 11-12'},
+y_402:{a:'Q50.1',t:'Salida digital 24 V',tab:'LCB4.1 — SF1',ruta:'Relé 2KB → solenoide',hace:'Abre FCV402 (drenaje superior — regeneración)',eq:'fcv402',lg:'FC57: pasos 21-22'},
+y_403:{a:'Q50.2',t:'Salida digital 24 V',tab:'LCB4.1 — SF1',ruta:'Relé 3KB → solenoide',hace:'Abre FCV403 (entrada inferior — contralavado/enjuague)',eq:'fcv403',lg:'FC57: pasos 24 y 26'},
+y_404:{a:'Q50.3',t:'Salida digital 24 V',tab:'LCB4.1 — SF1',ruta:'Relé 4KB → solenoide',hace:'Abre FCV404 (drenaje inferior)',eq:'fcv404',lg:'FC57: pasos 24-25'},
+y_405:{a:'Q50.4',t:'Salida digital 24 V',tab:'LCB4.1 — SF1',ruta:'Relé 5KB → solenoide',hace:'Abre FCV405 (salida a servicio)',eq:'fcv405',lg:'FC57: pasos 11-12'},
+y_406:{a:'Q50.5',t:'Salida digital 24 V',tab:'LCB4.1 — SF1',ruta:'Relé 6KB → solenoide',hace:'Abre FCV406 (entrada de regenerante/salmuera)',eq:'fcv406',lg:'FC57: pasos 21-22'},
+y_407:{a:'Q50.6',t:'Salida digital 24 V',tab:'LCB4.1 — SF1',ruta:'Relé 7KB → solenoide',hace:'Abre FCV407 (venteo/enjuague)',eq:'fcv407',lg:'FC57: pasos 25-26'},
+y_422:{a:'Q50.7',t:'Salida digital 24 V',tab:'LCB4.1 — SF1',ruta:'Relé 8KB → solenoide',hace:'Abre FCV422 (colección — común a los 3 suavizadores)',eq:'fcv422',lg:'FC57: paso 24'},
+y_423:{a:'Q51.0',t:'Salida digital 24 V',tab:'LCB4.1 — SF1',ruta:'Relé 9KB → solenoide',hace:'Abre FCV423 (drenaje común)',eq:'fcv423',lg:'FC57: pasos 21-22 y 25'},
+y_403p:{a:'Q0.7·Q1.0 / Q1.1·Q1.2',t:'Salidas digitales (E/S local)',tab:'LCP4.1 — tablero principal',ruta:'Tarjeta DQ local → relés KB → contactores (guardamotor GV2PM)',hace:'Marcha de BCE403 A/B (salmuera NaCl, 2.2 kW) y BCE405 A/B (agua de regeneración, 2.2 kW)',eq:'bce403',lg:'FC57 s31-34 según el paso de regeneración'}
+};
+function openSig(id){
+  const g=SIG[id]; if(!g) return;
+  dhead.style.background='#04342C'; dic.innerHTML=IC.plc;
+  dtt.textContent='Señal '+g.a; dss.textContent=g.t;
+  dbody.innerHTML =
+    '<h3>Qué es</h3><div>Dirección de salida en el PLC maestro. '+g.t+'. Los nombres <span class="io">Q x.y</span> son bits digitales (24 V) y <span class="io">QW x</span> palabras analógicas (0-27648 ↔ 4-20 mA).</div>'+
+    '<h3>Tablero por el que sale</h3><div>'+g.tab+'</div>'+
+    '<h3>Recorrido físico</h3><div>'+g.ruta+'</div>'+
+    '<h3>Qué acciona</h3><div>'+g.hace+' — <span class="xl" data-id="'+g.eq+'">abrir ficha del equipo</span></div>'+
+    '<h3>Quién la escribe en el programa</h3><div>'+g.lg+'</div>'+
+    '<div class="gbox" style="font-size:11px">Recorrido general: la secuencia pide .ON → el driver (FC51/FC52) autoriza → FC1 escribe esta salida → viaja por PROFIBUS al tablero → relé KB → contactor/solenoide/VFD.</div>';
+  ovl.classList.add('on');
+}
+document.addEventListener('click', e=>{
+  const el=e.target.closest('[data-sig]');
+  if(el && !e.target.closest('[data-id]')){ e.stopPropagation(); openSig(el.dataset.sig); }
+});
+
+const animSvg=document.getElementById('animsvg'), animScene=document.getElementById('animScene'), animStep=document.getElementById('animStep'), animTxt=document.getElementById('animTxt');
+let animOn=false, animT=null;
+function animBuild(){
+  const sc=ANIM[animScene.value];
+  animSvg.innerHTML=sc.build();
+  animStep.innerHTML='';
+  sc.steps.forEach((st,i)=>{ const o=document.createElement('option'); o.value=i; o.textContent=st.k; animStep.appendChild(o); });
+  animApply();
+}
+function animApply(){
+  const sc=ANIM[animScene.value], st=sc.steps[animStep.value||0];
+  animSvg.querySelectorAll('g.aval,g.apmp').forEach(g=>g.classList.remove('on'));
+  animSvg.querySelectorAll('g.apipe').forEach(g=>g.classList.remove('f-on'));
+  animSvg.querySelectorAll('g.asen, g[data-id="lt401"],g[data-id="lt507"],g[data-id="lt513"],g[data-id="ls4x"],g[data-id="ls5x"]').forEach(g=>g.classList.remove('watch'));
+  animSvg.querySelectorAll('g.awr').forEach(g=>g.classList.remove('hot'));
+  animSvg.querySelectorAll('.vfdtx').forEach(t=>t.textContent='VFD 0%');
+  st.on.forEach(id=>{ const el=document.getElementById(id); if(el) el.classList.add('on');
+    const w=sc.wmap[id]; if(w){ const we=document.getElementById(w); if(we) we.classList.add('hot'); } });
+  st.fl.forEach(id=>{ const el=document.getElementById(id); if(el) el.classList.add('f-on'); });
+  (st.w||[]).forEach(id=>{ const el=document.getElementById(id); if(el) el.classList.add('watch'); });
+  if(st.tx) for(const k in st.tx){ const el=document.getElementById(k); if(el) el.textContent=st.tx[k]; }
+  const chipEl=document.getElementById('a_stepchip'); if(chipEl) chipEl.textContent=st.k;
+  animTxt.innerHTML='<b>'+st.k+':</b> '+st.d;
+}
+function animPlayStop(){ if(animT){clearInterval(animT); animT=null;} const b=document.getElementById('animPlay'); b.classList.remove('playing'); b.textContent='▶ Reproducir'; }
+function animPlayToggle(){
+  if(animT){ animPlayStop(); return; }
+  const b=document.getElementById('animPlay'); b.classList.add('playing'); b.textContent='⏸ Pausar';
+  animT=setInterval(()=>{ animStep.value=(parseInt(animStep.value||0)+1)%animStep.options.length; animApply(); },4000);
+}
+/* zoom y pan del circuito (viewBox) */
+const AVB={x:0,y:0,w:1300,h:700};
+function animVB(){ animSvg.setAttribute('viewBox',`${AVB.x} ${AVB.y} ${AVB.w} ${AVB.h}`); }
+function animFit(){ AVB.x=0; AVB.y=0; AVB.w=1300; AVB.h=700; animVB(); }
+function animZoom(f,px,py){
+  const nw=Math.min(2600,Math.max(260,AVB.w/f));
+  const nh=nw*700/1300;
+  const cx=(px!==undefined)?px:AVB.x+AVB.w/2, cy=(py!==undefined)?py:AVB.y+AVB.h/2;
+  AVB.x=cx-(cx-AVB.x)*(nw/AVB.w); AVB.y=cy-(cy-AVB.y)*(nh/AVB.h);
+  AVB.w=nw; AVB.h=nh; animVB();
+}
+const abox=document.getElementById('animsvgbox');
+function animPt(e){
+  const r=animSvg.getBoundingClientRect();
+  const sc=Math.min(r.width/AVB.w, r.height/AVB.h);
+  const ox=(r.width-AVB.w*sc)/2, oy=(r.height-AVB.h*sc)/2;
+  return {x:AVB.x+(e.clientX-r.left-ox)/sc, y:AVB.y+(e.clientY-r.top-oy)/sc, sc:sc};
+}
+abox.addEventListener('wheel',e=>{
+  e.preventDefault();
+  const pt=animPt(e);
+  animZoom(e.deltaY<0?1.18:0.85, pt.x, pt.y);
+},{passive:false});
+let aDrag=false,aMoved=false,aLX=0,aLY=0;
+abox.addEventListener('mousedown',e=>{ aDrag=true; aMoved=false; aLX=e.clientX; aLY=e.clientY; abox.classList.add('drag'); });
+window.addEventListener('mousemove',e=>{
+  if(!aDrag) return;
+  const dx=e.clientX-aLX, dy=e.clientY-aLY;
+  if(Math.abs(dx)+Math.abs(dy)>4) aMoved=true;
+  if(!aMoved) return;
+  const pt=animPt(e);
+  AVB.x-=dx/pt.sc; AVB.y-=dy/pt.sc; animVB();
+  aLX=e.clientX; aLY=e.clientY;
+});
+window.addEventListener('mouseup',()=>{ aDrag=false; abox.classList.remove('drag'); });
+abox.addEventListener('click',e=>{ if(aMoved){ e.stopPropagation(); e.preventDefault(); aMoved=false; } },true);
+
+animScene.addEventListener('change',()=>{ animPlayStop(); animBuild(); });
+animStep.addEventListener('change',animApply);
+function toggleAnim(){
+  animOn=!animOn;
+  if(animOn){ _closeLcp(); _closeTab(); _closePlc(); _closeRack(); }
+  document.getElementById('viewport').style.display=animOn?'none':'';
+  document.getElementById('seqbar').style.display=animOn?'none':'';
+  document.getElementById('animwrap').style.display=animOn?'flex':'none';
+  document.getElementById('animBtn').style.background=animOn?'#EF9F27':'';
+  document.getElementById('animBtn').style.color=animOn?'#412402':'';
+  if(animOn && !animSvg.innerHTML) animBuild();
+  if(!animOn){ animPlayStop(); fit(); }
+}
+
+/* ================= PANEL P&ID (esquemático de proceso) ================= */
+let pidOn=false;
+function togglePid(){
+  pidOn=!pidOn;
+  if(pidOn && typeof senOn!=='undefined' && senOn){ senOn=false; document.getElementById('senwrap').style.display='none'; document.getElementById('senBtn').style.background=''; document.getElementById('senBtn').style.color=''; }
+  if(pidOn && typeof lcpOn!=='undefined' && lcpOn){ lcpOn=false; document.getElementById('lcp41wrap').style.display='none'; document.getElementById('lcpBtn').style.background=''; document.getElementById('lcpBtn').style.color=''; }
+  if(pidOn) _closeTab();
+  if(pidOn){ _closePlc(); _closeRack(); }
+  const f=document.getElementById('pidframe');
+  if(pidOn && !f.src) f.src='Esquematico_RO_Permoda.html';
+  // apagar animación si estaba activa
+  if(pidOn && typeof animOn!=='undefined' && animOn){ toggleAnim(); }
+  document.getElementById('pidwrap').style.display = pidOn?'block':'none';
+  document.getElementById('viewport').style.display = pidOn?'none':(typeof animOn!=='undefined'&&animOn?'none':'');
+  document.getElementById('seqbar').style.display = pidOn?'none':(typeof animOn!=='undefined'&&animOn?'none':'');
+  document.getElementById('animwrap').style.display = pidOn?'none':(typeof animOn!=='undefined'&&animOn?'flex':'none');
+  document.getElementById('pidBtn').style.background = pidOn?'#EF9F27':'';
+  document.getElementById('pidBtn').style.color = pidOn?'#412402':'';
+  if(!pidOn) fit();
+}
+
+/* ================= PANEL SENSORES ================= */
+let senOn=false, senBuilt=false;
+const SEN_CRIT={r:['#FCEBEB','#A32D2D','crítica'],o:['#FAEEDA','#BA7515','alta'],y:['#FBF7E8','#7a6a1f','media'],g:['#E1F5EE','#0F6E56','ok']};
+// Sensores cuyo pendiente se resuelve en el PROGRAMA del PLC (no en campo)
+const SEN_PROG=new Set(['FT501','FT504','FT508','FT512','PT501','PT502','PT509']);
+const PROGTAG='<span style="display:inline-block;background:#EEEDFE;color:#534AB7;border:1px solid #C7C3F2;padding:0 7px;border-radius:11px;font-size:9.5px;font-weight:bold;white-space:nowrap;vertical-align:middle">⚙ PROGRAMACIÓN</span>';
+const SEN_GROUPS=[
+ ['🔴 Módulo AI local — Slot 10 ET 200SP (EN FALLA: estos 8 leen 0)', [
+   ['ORP401','Potencial redox / oxidantes totales (cloro, cloraminas, ozono, peróxidos)','%IW10 · AI slot 10','Protección RO1: H=+150 mV → cdn[2] dispara','🔴 Lee 0 por módulo caído → planta CIEGA a oxidantes','r'],
+   ['PH406','pH del circuito CIP','%IW12 · AI slot 10','Dosifica NaOH/HCl del CIP (B1/B2)','🔴 Lee 0 → dosificación CIP errónea','r'],
+   ['LT401','Nivel tanque alimentación TAQ-4.01','%IW18 · AI slot 10','Permiso arranque RO1 (cdn[8])','🔴 Lee 0 → bloquea/cae RO1','r'],
+   ['LT507','Nivel concentrado RO1 / alim. RO2','%IW22 · AI slot 10','Permiso RO1 y RO2 (cdn[8])','🔴 Lee 0 → afecta ambos trenes','r'],
+   ['LT513','Nivel del TAQ-5.13 (tanque de rechazo/concentrado)','%IW24 · AI slot 10','Permiso RO2 (cdn[8] con LT507) · química CFCDN[0] · transferencias BCE513/BCE615','🟠 Lee 0 por módulo slot 10 → bloquea RO2/CF','o'],
+   ['LT404','Nivel (tanque a confirmar)','%IW20 · AI slot 10','Sin uso en la lógica','🟢 Lee 0 pero no se usa','g'],
+ ]],
+ ['Tren RO1 (tablero LCB5.1)', [
+   ['FT501','Caudal alimentación RO1','%IW74 · AE08 RO1','cdn[12] bajo caudal + totalizador','⚠️ cdn[12] NO dispara · totalizador deriva (Real 32b)','o'],
+   ['FT504','Caudal permeado RO1','%IW76 · AE08 RO1','Indicación + totalizador','🟡 totalizador deriva','y'],
+   ['PH501','pH alimentación RO1','%IW78 · AE08 RO1','HH=8.5 → cdn[1] dispara RO1 · dosifica BDO501','✅ (paro de tren, no general)','g'],
+   ['CT502','Conductividad permeado RO1','%IW80 · AE08 RO1','Solo indicación','🟠 alarma en 1000 µS/cm, meta <500 → no avisa','o'],
+   ['PT501','Presión alimentación RO1','%IW82 · AE08 RO1','HH=16 bar → cdn[13]','✅ lectura OK campo=HMI (13.9 bar, 24-jul) · ⚠️ código: cdn[13] no dispara + sin alarma de baja (L/LL=0)','o'],
+   ['PT502','Presión entrada etapa 2 RO1','%IW84 · AE08 RO1','HH=20 bar → cdn[14]','✅ lectura OK campo=HMI (11.6 bar, 24-jul) · ⚠️ código: cdn[14] no dispara; HH=20 = tope de escala','o'],
+ ]],
+ ['Tren RO2 (tablero LCB5.2)', [
+   ['FT508','Caudal alimentación RO2','%IW94 · AE08 RO2','cdn[12] + totalizador','⚠️ cdn[12] NO dispara · totalizador deriva','o'],
+   ['FT512','Caudal permeado RO2','%IW96 · AE08 RO2','Indicación + totalizador','🟡 totalizador deriva','y'],
+   ['PH506','pH RO2','%IW98 · AE08 RO2','HH=8.5 → cdn[0] dispara RO2 · dosifica BDO508','✅','g'],
+   ['CT511','Conductividad permeado RO2','%IW100 · AE08 RO2','Indicación','✅ alarma 3000 = meta','g'],
+   ['PT509','Presión operación RO2','%IW102 · AE08 RO2','HH=65 bar → cdn[13]','🔴 NO dispara + HH=65 absurdo (opera 15-25 bar)','r'],
+   ['TT507/509','Temperatura RO2','%IW104/106 · AE08 RO2','HH=40 → cdn[14] dispara · controla FCV504','✅ única protección térmica activa','g'],
+ ]],
+ ['Química 600 · niveles · switches', [
+   ['PH601 / 605 / 607','pH lazos área 600 (alcalino / ácido / neutro)','%IW42/44/46 · LCP6.1','Dosifican BDO · HH∨LL → CFCDN[3]','✅','g'],
+   ['LT608 / LT615','Nivel TAQ-6.08 (CF) / TAQ-6.15 (transferencias) — área química 600','%IW48/50 · AE08 LCP6.1','LT608.B1→CFCDN[0] · LT615 B1/B2/B3 gobiernan BCE615/BCE513','✅ leen bien (AE08, NO dependen del slot 10)','g'],
+   ['PSL501 / PSL508','Presostatos baja succión RO1/RO2','%I71.2 / %I91.2','cdn[11] → dispara (protege bombas)','✅','g'],
+   ['LS402…LS614','Niveles de tanques químicos (switches H/L)','%I8-9, %I66, %I39-40','Permisos de químicos (cdn[9]) y mandos','✅','g'],
+   ['FPS610','Switch flujo/presión (equipo con arranque propio)','%I32.4/.5','Condición de BNM609','🟡 equipo sin control del PLC','y'],
+ ]],
+];
+const SEN_DONE=[
+ ['FT5.01','Totalizador por pulsos (Promag 10L)','Instructivo-Totalizador-FT501-Pulsos.md'],
+ ['CT5.02','Escalado 4-20 mA (HMI ≠ sensor)','Sensor-CT502-Conductividad.md'],
+ ['FT5.04','Span (99.9 vs 21.58) + totalizador congelado','Sensor-FT504-Caudal.md'],
+ ['LT4.01','Llega en 0 → módulo AI slot 10','Sensor-LT401-Nivel-TAQ401.md'],
+ ['PT5.01 / PT5.02','Lectura verificada en campo = HMI (13.9 / 11.6 bar)','24-jul-2026 · falta cablear disparo (código)','prog'],
+];
+const SEN_PEND=[
+ ['r','ALTA','CT5.11 — conductividad RO2, lee −1250 (lazo caído)'],
+ ['r','ALTA','ORP4.01 — oxidantes/protección (0 por módulo slot 10)'],
+ ['r','ALTA','LT5.07 — nivel, permiso RO1+RO2 (0 por módulo)'],
+ ['r','ALTA','PT5.09 — no dispara + umbral absurdo (HH=65, opera 15-25 bar)','prog'],
+ ['o','MEDIA','FT5.08 / FT5.12 — totalizador (código) + verificar span en campo','prog'],
+ ['o','MEDIA','PH5.01 / PH5.06 / PH4.06 — calibración (PH4.06 en 0 por módulo)'],
+ ['o','MEDIA','FCV5.01AI / FCV5.05AI — posición (FCV5.01 mostraba −0.0%)'],
+ ['o','MEDIA','LT5.13 (TAQ5.13 rechazo · slot 10, hoy en 0) · LT6.08/6.15 (tanques CF área 600, OK)'],
+ ['g','BAJA','LT4.04 (huérfano) · TT5.07/5.09 · PH6.01/6.05/6.07'],
+ ['g','BAJA','Switches: PSL5.01/5.08 · LS4.02… · LS5.01… · LS6.06… · FPS6.10'],
+];
+const SEN_RANK=[
+ ['1','Módulo AI slot 10 caído (8 señales en 0)','Hardware','r','Reponer módulo — bajo'],
+ ['2','OB83/OB86 vacíos → fallas silenciosas','Código','r','Programar — bajo'],
+ ['3','PT/FT no disparan + sin alarma de presión baja','Código','r','Agregar cdn al disparo — bajo'],
+ ['4','ORP/pH solo paran su tren (no paro general)','Código','o','Definir con operación — medio'],
+ ['5','CT502 alarma 1000 vs meta 500','Config','o','Ajustar umbral — bajo'],
+ ['6','Lazo ORP→bisulfito abierto (dosis fija)','Código','y','Lógica dosificación — medio'],
+ ['7','Totalizadores derivan (Real 32b)','Código/HW','y','Pulsos + tipo de dato — medio'],
+ ['8','Filtro 5 µm sin ΔP digital','Instrum.','y','Instrumentar — medio'],
+];
+function senRow(r){
+  const c=SEN_CRIT[r[5]];
+  const isProg=SEN_PROG.has(r[0]);
+  const tagCell='<td style="padding:7px 9px;font-weight:bold;color:#2C2C2A;white-space:nowrap">'+r[0]+(isProg?'<br>'+PROGTAG:'')+'</td>';
+  return '<tr style="border-bottom:1px solid #EDEAE0">'+
+    tagCell+
+    '<td style="padding:7px 9px;color:#5F5E5A">'+r[1]+'</td>'+
+    '<td style="padding:7px 9px;font-family:Consolas,monospace;font-size:11px;color:#0A5844;white-space:nowrap">'+r[2]+'</td>'+
+    '<td style="padding:7px 9px;color:#5F5E5A">'+r[3]+'</td>'+
+    '<td style="padding:7px 9px;background:'+c[0]+';color:'+c[1]+';font-size:11.5px">'+r[4]+'</td></tr>';
+}
+function buildSen(){
+  if(senBuilt) return; senBuilt=true;
+  let h='<div style="max-width:1080px;margin:0 auto;padding:20px 24px 60px">';
+  h+='<h1 style="font-size:22px;color:#2C2C2A;margin:0 0 4px">Sensores — estado, uso e impacto</h1>';
+  h+='<div style="color:#5F5E5A;font-size:12.5px;margin-bottom:14px">Instrumentación verificada contra el código (bloque, dirección, escala, umbrales) y su criticidad según el proceso. Fuente: memorias Sensores-Catalogo-Completo y Sensores-Analisis-Impacto.</div>';
+  // banner incidente
+  h+='<div style="background:#FCEBEB;border:1px solid #F0997B;border-radius:12px;padding:13px 16px;margin-bottom:16px;color:#501313">'+
+     '<b style="font-size:14px">🔴 Incidente activo (23-jul-2026): módulo AI del Slot 10 (ET 200SP) en falla</b><br>'+
+     '<span style="font-size:12.5px;color:#793030">Los 8 lazos analógicos locales leen <b>0</b>: ORP401 (oxidantes), PH406 (pH CIP), LT401, LT404, LT507, LT513. La planta queda ciega en oxidantes y pH, y los niveles en 0 bloquean/‌disparan RO1 y RO2. La CPU no se detuvo ni alarmó porque <b>OB83/OB86 están vacíos</b>. Reponer 6ES7 134-6GF00-0AA1 + activar OB83/OB86.</span></div>';
+  // leyenda
+  h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;font-size:10.5px">';
+  ['r','o','y','g'].forEach(k=>{const c=SEN_CRIT[k]; h+='<span style="background:'+c[0]+';color:'+c[1]+';padding:2px 10px;border-radius:14px;font-weight:bold">'+c[2]+'</span>';});
+  h+='<span style="color:#5F5E5A">·</span>'+PROGTAG+'<span style="color:#7A8A83;font-size:10px">= el pendiente se resuelve en el PROGRAMA del PLC, no en campo</span>';
+  h+='</div>';
+  // ===== revisión de campo: hecho vs pendiente =====
+  h+='<h2 style="font-size:18px;color:#2C2C2A;margin:20px 0 8px">Revisión de campo — hecho vs. pendiente</h2>';
+  h+='<div style="color:#5F5E5A;font-size:12px;margin-bottom:10px">Estado de la revisión detallada (modelo, cableado, correcciones) por sensor. 4 de 24 lazos analógicos revisados a fondo. Fuente: Sensores-Pendientes-Revision.md.</div>';
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:6px">';
+  // done card
+  h+='<div style="background:#E1F5EE;border:1px solid #A9DCC9;border-radius:10px;padding:12px 14px">';
+  h+='<b style="color:#0F6E56;font-size:13px">✅ Revisados a detalle (con archivo)</b><div style="margin-top:7px;font-size:12px;line-height:1.7;color:#2C2C2A">';
+  SEN_DONE.forEach(d=>{h+='<div style="border-bottom:1px solid #CDEADE;padding:3px 0"><b>'+d[0]+'</b> — '+d[1]+' <span style="color:#7A8A83;font-size:10.5px">('+d[2]+')</span>'+(d[3]==='prog'?' '+PROGTAG:'')+'</div>';});
+  h+='</div></div>';
+  // pending card
+  h+='<div style="background:#fff;border:1px solid #E3E0D6;border-radius:10px;padding:12px 14px">';
+  h+='<b style="color:#A32D2D;font-size:13px">⏳ Pendientes — por prioridad</b><div style="margin-top:7px">';
+  SEN_PEND.forEach(p=>{const c=SEN_CRIT[p[0]]; h+='<div style="margin:5px 0"><span style="background:'+c[0]+';color:'+c[1]+';padding:1px 8px;border-radius:11px;font-size:10px;font-weight:bold">'+p[1]+'</span> <span style="font-size:11.5px;color:#5F5E5A">'+p[2]+'</span>'+(p[3]==='prog'?' '+PROGTAG:'')+'</div>';});
+  h+='</div></div>';
+  h+='</div>';
+  h+='<div style="background:#F4F8F6;border:1px solid #D9EDE4;border-radius:9px;padding:9px 13px;font-size:11.5px;color:#3A5A50;margin-bottom:4px">Dos atajos: reponer el <b>módulo AI slot 10</b> resuelve ORP401, LT507, PH406 y LT404 a la vez; y el arreglo de <b>totalizador/span</b> de FT5.04 aplica igual a FT5.08 y FT5.12.</div>';
+  // grupos
+  SEN_GROUPS.forEach(g=>{
+    h+='<h3 style="font-size:14px;color:#04342C;margin:16px 0 6px">'+g[0]+'</h3>';
+    h+='<div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:12.5px;background:#fff;border:1px solid #E3E0D6;border-radius:10px;overflow:hidden">';
+    h+='<tr style="background:#0F6E56;color:#fff"><th style="padding:7px 9px;text-align:left">Tag</th><th style="padding:7px 9px;text-align:left">Qué mide</th><th style="padding:7px 9px;text-align:left">Dirección / módulo</th><th style="padding:7px 9px;text-align:left">Uso en la lógica</th><th style="padding:7px 9px;text-align:left">Estado / problema</th></tr>';
+    g[1].forEach(r=>h+=senRow(r));
+    h+='</table></div>';
+  });
+  // analisis de causales
+  h+='<h2 style="font-size:18px;color:#2C2C2A;margin:26px 0 8px">Análisis de causales — qué provoca cada falla en el código</h2>';
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">';
+  const chains=[
+    ['Módulo AI caído → 8 señales en 0','Un solo módulo tumba 4 permisos de nivel + protección de oxidantes + pH CIP. Como FC53 fuerza 0 ante fuera-de-rango y OB83/86 están vacíos, se ve idéntico a "nivel/ORP/pH = 0" reales. La planta "no arranca / se cae" sin causa aparente (muy parecido a los disparos fantasma).','r'],
+    ['Presión/caudal calculados que no disparan','PT501/502/509 y FT501/508 ponen cdn[12/13/14] en 1, pero la agregación de disparo (FC3 s26/46, FC4 s18/38) NO los incluye. La bomba de alta sigue contra sobrepresión. Sin alarma de presión baja (L/LL=0).','r'],
+    ['Conductividad con umbral flojo','CT502 alarma en 1000 µS/cm; la meta es <500. Producto fuera de especificación pasa al tanque de reúso sin aviso.','o'],
+    ['Totalizadores derivan','FC58 integra el 4-20 mA en Real de 32 bits → pierde precisión y se rezaga; no coincide con el totalizador del instrumento. Corregir con la salida de pulsos.','y'],
+    ['ORP/pH detienen solo su tren','cdn[2]/cdn[1]/cdn[0] están en la agregación de su tren, no en un paro general. Operación los describe como paro de emergencia de toda la planta.','o'],
+    ['Bisulfito sin control por ORP','BDO402 se enciende con la bomba de alta, no modulado por ORP. Dosis fija → sobre/subdosificación de reductor.','y'],
+  ];
+  chains.forEach(c=>{const col=SEN_CRIT[c[2]]; h+='<div style="background:#fff;border:1px solid #E3E0D6;border-left:4px solid '+col[1]+';border-radius:10px;padding:11px 13px"><b style="color:#2C2C2A;font-size:12.5px">'+c[0]+'</b><div style="color:#5F5E5A;font-size:11.5px;margin-top:4px;line-height:1.5">'+c[1]+'</div></div>';});
+  h+='</div>';
+  // ranking
+  h+='<h2 style="font-size:18px;color:#2C2C2A;margin:26px 0 8px">Ranking de criticidad (qué atacar primero)</h2>';
+  h+='<table style="width:100%;border-collapse:collapse;font-size:12.5px;background:#fff;border:1px solid #E3E0D6;border-radius:10px;overflow:hidden">';
+  h+='<tr style="background:#0F6E56;color:#fff"><th style="padding:7px 9px">#</th><th style="padding:7px 9px;text-align:left">Problema</th><th style="padding:7px 9px;text-align:left">Tipo</th><th style="padding:7px 9px;text-align:left">Criticidad</th><th style="padding:7px 9px;text-align:left">Esfuerzo</th></tr>';
+  SEN_RANK.forEach(r=>{const c=SEN_CRIT[r[3]]; h+='<tr style="border-bottom:1px solid #EDEAE0"><td style="padding:7px 9px;text-align:center;font-weight:bold">'+r[0]+'</td><td style="padding:7px 9px">'+r[1]+'</td><td style="padding:7px 9px;color:#5F5E5A">'+r[2]+'</td><td style="padding:7px 9px"><span style="background:'+c[0]+';color:'+c[1]+';padding:1px 9px;border-radius:12px;font-weight:bold">'+c[2]+'</span></td><td style="padding:7px 9px;color:#5F5E5A">'+r[4]+'</td></tr>';});
+  h+='</table>';
+  h+='<div style="color:#9A9890;font-size:11px;margin-top:14px">Detalle completo en Documentacion/Programacion/Memorias: Sensores-Catalogo-Completo.md · Sensores-Analisis-Impacto.md · Sensor-*.md</div>';
+  h+='</div>';
+  document.getElementById('senwrap').innerHTML=h;
+}
+function toggleSen(){
+  senOn=!senOn;
+  if(senOn){ buildSen(); if(pidOn) togglePid(); if(typeof animOn!=='undefined'&&animOn) toggleAnim(); if(typeof lcpOn!=='undefined'&&lcpOn){ lcpOn=false; document.getElementById('lcp41wrap').style.display='none'; document.getElementById('lcpBtn').style.background=''; document.getElementById('lcpBtn').style.color=''; } _closeTab(); _closePlc(); _closeRack(); }
+  document.getElementById('senwrap').style.display=senOn?'block':'none';
+  document.getElementById('viewport').style.display=senOn?'none':(pidOn?'none':'');
+  document.getElementById('seqbar').style.display=senOn?'none':'';
+  document.getElementById('senBtn').style.background=senOn?'#EF9F27':'';
+  document.getElementById('senBtn').style.color=senOn?'#412402':'';
+}
+
+/* ================= PANEL LCP 4.1 — ESQUEMÁTICO ELÉCTRICO ================= */
+function _closeTab(){ if(typeof tabOn!=='undefined'&&tabOn){ tabOn=false; document.getElementById('tabwrap').style.display='none'; document.getElementById('tabBtn').style.background=''; document.getElementById('tabBtn').style.color=''; } }
+function _closeLcp(){ if(typeof lcpOn!=='undefined'&&lcpOn){ lcpOn=false; document.getElementById('lcp41wrap').style.display='none'; document.getElementById('lcpBtn').style.background=''; document.getElementById('lcpBtn').style.color=''; } }
+function _closePlc(){ if(typeof plcOn!=='undefined'&&plcOn){ plcOn=false; document.getElementById('plcwrap').style.display='none'; document.getElementById('plcBtn').style.background=''; document.getElementById('plcBtn').style.color=''; } }
+function _closeRack(){ if(typeof rackOn!=='undefined'&&rackOn){ rackOn=false; document.getElementById('rackwrap').style.display='none'; document.getElementById('rackBtn').style.background=''; document.getElementById('rackBtn').style.color=''; } }
+
+let lcpOn = false;
+function toggleLcp41(){
+  lcpOn = !lcpOn;
+  if(lcpOn){ if(pidOn) togglePid(); if(typeof senOn!=='undefined'&&senOn) toggleSen(); if(typeof animOn!=='undefined'&&animOn) toggleAnim(); _closeTab(); _closePlc(); _closeRack(); }
+  const fr = document.getElementById('lcp41frame');
+  if(lcpOn && !fr.src) fr.src = 'Esquematico-Electrico-LCP41.html';
+  document.getElementById('lcp41wrap').style.display = lcpOn ? 'flex' : 'none';
+  document.getElementById('viewport').style.display = lcpOn ? 'none' : (pidOn?'none':(typeof senOn!=='undefined'&&senOn?'none':''));
+  document.getElementById('seqbar').style.display  = lcpOn ? 'none' : (pidOn?'none':(typeof animOn!=='undefined'&&animOn?'none':(typeof senOn!=='undefined'&&senOn?'none':'')));
+  document.getElementById('lcpBtn').style.background = lcpOn ? '#0A5844' : '';
+  document.getElementById('lcpBtn').style.color      = lcpOn ? '#9FE1CB' : '';
+  if(!lcpOn) fit();
+}
+
+/* ================= PANEL TABLERO — VISTA FÍSICA INTERACTIVA ================= */
+let tabOn = false;
+function toggleTablero(){
+  tabOn = !tabOn;
+  if(tabOn){ if(pidOn) togglePid(); if(typeof senOn!=='undefined'&&senOn) toggleSen(); if(typeof animOn!=='undefined'&&animOn) toggleAnim(); _closeLcp(); _closePlc(); _closeRack(); }
+  const fr = document.getElementById('tabframe');
+  if(tabOn && !fr.src) fr.src = 'Tablero-Visual-LCP41.html';
+  document.getElementById('tabwrap').style.display = tabOn ? 'flex' : 'none';
+  document.getElementById('viewport').style.display = tabOn ? 'none' : (pidOn?'none':(typeof senOn!=='undefined'&&senOn?'none':''));
+  document.getElementById('seqbar').style.display  = tabOn ? 'none' : (pidOn?'none':(typeof animOn!=='undefined'&&animOn?'none':(typeof senOn!=='undefined'&&senOn?'none':'')));
+  document.getElementById('tabBtn').style.background = tabOn ? '#1A2A4A' : '';
+  document.getElementById('tabBtn').style.color      = tabOn ? '#A0C0FF' : '';
+  if(!tabOn) fit();
+}
+
+/* ================= PANEL CONEXIONADO PLC ================= */
+let plcOn = false;
+function togglePlc(){
+  plcOn = !plcOn;
+  if(plcOn){ if(pidOn) togglePid(); if(typeof senOn!=='undefined'&&senOn) toggleSen(); if(typeof animOn!=='undefined'&&animOn) toggleAnim(); _closeLcp(); _closeTab(); _closeRack(); }
+  const fr = document.getElementById('plcframe');
+  if(plcOn && !fr.src) fr.src = 'PLC-Wiring-Modulos.html';
+  document.getElementById('plcwrap').style.display = plcOn ? 'flex' : 'none';
+  document.getElementById('viewport').style.display = plcOn ? 'none' : (pidOn?'none':(typeof senOn!=='undefined'&&senOn?'none':''));
+  document.getElementById('seqbar').style.display  = plcOn ? 'none' : (pidOn?'none':(typeof animOn!=='undefined'&&animOn?'none':(typeof senOn!=='undefined'&&senOn?'none':'')));
+  document.getElementById('plcBtn').style.background = plcOn ? '#0A2A4A' : '';
+  document.getElementById('plcBtn').style.color      = plcOn ? '#9FE1CB' : '';
+  if(!plcOn) fit();
+}
+
+/* ================= PANEL VISTA RACK PLC ================= */
+let rackOn = false;
+function toggleRack(){
+  rackOn = !rackOn;
+  if(rackOn){ if(pidOn) togglePid(); if(typeof senOn!=='undefined'&&senOn) toggleSen(); if(typeof animOn!=='undefined'&&animOn) toggleAnim(); _closeLcp(); _closeTab(); _closePlc(); }
+  const fr = document.getElementById('rackframe');
+  if(rackOn && !fr.src) fr.src = 'PLC-Rack-Visual.html';
+  document.getElementById('rackwrap').style.display = rackOn ? 'flex' : 'none';
+  document.getElementById('viewport').style.display = rackOn ? 'none' : (pidOn?'none':(typeof senOn!=='undefined'&&senOn?'none':''));
+  document.getElementById('seqbar').style.display  = rackOn ? 'none' : (pidOn?'none':(typeof animOn!=='undefined'&&animOn?'none':(typeof senOn!=='undefined'&&senOn?'none':'')));
+  document.getElementById('rackBtn').style.background = rackOn ? '#0A2A4A' : '';
+  document.getElementById('rackBtn').style.color      = rackOn ? '#9FE1CB' : '';
+  if(!rackOn) fit();
+}
+
+/* ================= BÚSQUEDA ================= */
+const q=document.getElementById('q'), qn=document.getElementById('qn');
+q.addEventListener('input',()=>{
+  const t=q.value.trim().toLowerCase(); let n=0;
+  document.querySelectorAll('.eq').forEach(b=>{
+    const o=DB[b.dataset.id];
+    const rd=RD[o.id]?RD[o.id].map(r=>r.t+' '+r.n+' '+r.iw).join(' '):'';
+    const hay=(o.t+' '+(o.s||'')+' '+(o.io||'')+' '+(o.vr||'')+' '+(o.lg||'')+' '+(o.fn||'')+' '+rd).toLowerCase();
+    const hit=t && hay.includes(t);
+    b.classList.toggle('hit',hit); b.classList.toggle('dim', t && !hit);
+    if(hit)n++;
+  });
+  document.querySelectorAll('.card').forEach(c=>{
+    const any=c.querySelector('.eq.hit'); c.classList.toggle('dim', t && !any && !c.textContent.toLowerCase().includes(t));
+  });
+  qn.textContent = t? n+' coincidencias' : '';
+});
+</script>
+</body>
+</html>

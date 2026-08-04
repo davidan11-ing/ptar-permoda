@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>LCP 4.1 — Panel interactivo</title>
+<style>
+:root{
+  --bg:#F5F3EE;--ink:#1E1E1C;--mut:#6B6960;--line:#DDD9CE;
+  --g0:#04342C;--g1:#0F6E56;--g2:#1A9977;--gL:#E1F5EE;--gB:#A9DCC9;
+  --am:#854F0B;--amL:#FAEEDA;--amB:#E4C489;
+  --rd:#A32D2D;--rdL:#FCEBEB;
+  --bl:#1E4FAB;--blL:#EEF2FB;--blB:#AABDE8;
+  --vi:#534AB7;--viL:#EEEDFE;
+  --gy:#6B7B8A;--gyL:#EEF0F4;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;font-family:-apple-system,'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:13px}
+#hdr{display:flex;align-items:center;gap:10px;padding:7px 14px;background:var(--g0);color:#fff;height:48px;flex-shrink:0;position:relative;z-index:60}
+.hlogo{font-size:15px;font-weight:700;white-space:nowrap;letter-spacing:-.3px}
+.hlogo span{font-size:10px;font-weight:400;color:var(--gB);display:block;line-height:1.1}
+#srch{flex:1;max-width:440px;padding:5px 14px 5px 34px;border-radius:20px;border:1.5px solid #1a6b52;background:rgba(255,255,255,.12);color:#fff;font-size:13px;outline:none}
+#srch::placeholder{color:#7ABCA9}
+#srch:focus{background:rgba(255,255,255,.2);border-color:var(--gB)}
+.srch-wrap{position:relative;flex:1;max-width:440px}
+.srch-wrap::before{content:"🔍";position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:12px;pointer-events:none}
+#sdrop{position:absolute;top:calc(100% + 8px);left:0;width:520px;background:#fff;border:1px solid var(--gB);border-radius:10px;box-shadow:0 10px 36px rgba(4,52,44,.22);max-height:340px;overflow-y:auto;display:none;z-index:500}
+#sdrop.open{display:block}
+.si{display:flex;align-items:flex-start;gap:10px;padding:8px 12px;border-bottom:1px solid #F0EDE6;cursor:pointer}
+.si:hover{background:var(--gL)}
+.si:last-child{border-bottom:none}
+.si-id{font-family:Consolas,monospace;font-size:11px;font-weight:700;color:var(--g1);min-width:88px;padding-top:1px}
+.si-nm{font-size:12px;color:var(--ink);line-height:1.3}
+.si-cat{font-size:10px;color:var(--mut);margin-left:auto;padding-top:2px;white-space:nowrap}
+.hbadge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:12px;font-size:10px;font-weight:600;background:rgba(255,255,255,.12);color:#B8E0D4;white-space:nowrap}
+#app{display:flex;flex-direction:column;height:100vh}
+#body{display:flex;flex:1;overflow:hidden}
+#nav{width:44px;background:var(--g0);display:flex;flex-direction:column;align-items:center;padding:6px 0;gap:2px;flex-shrink:0}
+.nb{width:34px;height:34px;border-radius:8px;border:none;background:transparent;color:#7ABCA9;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.nb:hover{background:#0A5844;color:#fff}
+.nb.on{background:#127A5F;color:#fff}
+#main{flex:1;overflow:hidden;position:relative}
+.panel{display:none;width:100%;height:100%;overflow-y:auto;padding:16px 20px 60px}
+.panel.on{display:block}
+.pt{font-size:18px;font-weight:700;color:var(--g0);margin-bottom:2px}
+.ps{font-size:12px;color:var(--mut);margin-bottom:14px}
+h4.sh{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--vi);margin:18px 0 6px;border-bottom:1px solid var(--line);padding-bottom:4px}
+.tw{overflow-x:auto;border-radius:10px;border:1px solid var(--line);margin-bottom:18px}
+table{border-collapse:collapse;width:100%;font-size:12px}
+thead tr{background:var(--g0);color:#fff}
+th{padding:8px 10px;text-align:left;font-size:11px;font-weight:600;letter-spacing:.3px;white-space:nowrap}
+td{padding:6px 10px;border-bottom:1px solid #EAE7DF;vertical-align:top;line-height:1.5}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--gL);cursor:pointer}
+.m{font-family:Consolas,monospace;font-size:11px;color:var(--g1);font-weight:600}
+.addr{font-family:Consolas,monospace;font-size:10px;color:var(--vi)}
+.warn{color:var(--rd);font-size:10px}
+.note{color:var(--mut);font-size:10.5px}
+.b{display:inline-block;padding:1px 6px;border-radius:5px;font-size:10px;font-weight:600;white-space:nowrap}
+.b-pwr{background:var(--gL);color:var(--g1)}
+.b-prot{background:var(--amL);color:var(--am)}
+.b-plc{background:var(--blL);color:var(--bl)}
+.b-field{background:var(--gyL);color:var(--gy)}
+.b-net{background:var(--viL);color:var(--vi)}
+.b-warn{background:var(--rdL);color:var(--rd)}
+.t1{background:#FFF8E7;color:#8A5A00}
+.t2{background:#E8F4FD;color:#1A5E8A}
+.t3{background:#EDF7EE;color:#1B5E20}
+.t4{background:#F3E5FF;color:#6A1B9A}
+.pnode{border-radius:10px;border:1.5px solid var(--line);background:#fff;padding:10px 14px;cursor:pointer;transition:all .2s;position:relative}
+.pnode:hover{border-color:var(--g1);box-shadow:0 3px 12px rgba(15,110,86,.12)}
+.pn-id{font-family:Consolas,monospace;font-size:11px;font-weight:700;color:var(--g0)}
+.pn-nm{font-size:12px;color:var(--ink);margin-top:1px}
+.pn-sub{font-size:10.5px;color:var(--mut);margin-top:2px}
+.pow-row{display:flex;gap:10px;flex-wrap:wrap}
+.pow-col{display:flex;flex-direction:column;gap:8px;min-width:180px}
+.arrow-down{text-align:center;color:var(--gB);font-size:16px;line-height:1}
+.bus-bar{background:var(--g0);color:#fff;border-radius:8px;padding:7px 14px;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px}
+.bus-bar:hover{background:var(--g1)}
+#det{position:fixed;right:14px;top:56px;width:350px;max-height:calc(100vh - 70px);overflow-y:auto;background:#fff;border:2px solid var(--gB);border-radius:14px;box-shadow:0 12px 40px rgba(4,52,44,.2);padding:14px 16px;z-index:300;display:none}
+#det.open{display:block}
+#det-close{float:right;width:24px;height:24px;border:none;background:#F0EDE6;color:var(--mut);border-radius:50%;cursor:pointer;font-size:13px;line-height:24px;text-align:center}
+#det-close:hover{background:#E0DDD4}
+#det h2{font-size:15px;color:var(--g0);line-height:1.3;margin-bottom:2px}
+#det .dt{font-size:11px;color:var(--mut);margin-bottom:12px}
+#det h5{font-size:9.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--vi);margin:12px 0 5px;border-bottom:1px solid #EAE7DF;padding-bottom:3px}
+#det .kv{font-size:11.5px;line-height:1.9}
+#det .kv b{color:var(--ink)}
+.path-list{list-style:none}
+.path-list li{display:flex;gap:8px;padding:4px 0;font-size:11.5px;border-bottom:1px dashed #EEE}
+.path-list li:last-child{border:none}
+.path-list .pi{font-size:15px;flex-shrink:0;width:20px;text-align:center}
+.path-list .pn{flex:1}
+.path-list .pn b{display:block;color:var(--ink)}
+.path-list .pn small{color:var(--mut)}
+.det-warn{background:var(--rdL);border:1px solid #F0B5B5;color:#7a2b2b;border-radius:8px;padding:7px 10px;font-size:11px;margin-top:8px}
+.filter-row{display:flex;gap:8px;margin-bottom:10px;align-items:center;flex-wrap:wrap}
+.fi{padding:5px 10px;border-radius:7px;border:1px solid var(--line);background:#fff;font-size:12px;outline:none;color:var(--ink)}
+.fi:focus{border-color:var(--g1)}
+.fb{padding:5px 12px;border-radius:7px;border:1px solid var(--line);background:#fff;font-size:11px;cursor:pointer;color:var(--mut);font-weight:600;transition:all .15s}
+.fb:hover,.fb.on{background:var(--g0);color:#fff;border-color:var(--g0)}
+.net-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:14px}
+.ncard{background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer}
+.ncard:hover{border-color:var(--vi);background:var(--viL)}
+.ncard .nc-id{font-family:Consolas,monospace;font-size:11px;color:var(--vi);font-weight:700}
+.ncard .nc-nm{font-size:13px;font-weight:600;color:var(--ink);margin:2px 0}
+.ncard .nc-ip{font-family:Consolas,monospace;font-size:12px;color:var(--g1);margin-bottom:4px}
+.ncard .nc-sub{font-size:11px;color:var(--mut)}
+.dp-row{background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px;font-size:12px}
+.dp-row .dp-id{font-family:Consolas,monospace;font-size:11px;color:var(--vi);font-weight:700;min-width:90px}
+.dp-row .dp-nm{flex:1}
+.dp-row .dp-addr{font-family:Consolas,monospace;font-size:11px;color:var(--mut)}
+</style>
+</head>
+<body>
+<div id="app">
+<div id="hdr">
+  <div class="hlogo">LCP 4.1 <span>Osmosis Inversa · PERMODA</span></div>
+  <div class="srch-wrap">
+    <input id="srch" placeholder="Buscar: 1DI3, BCE-4.05A, 7KM, L1+, LT-4.01, ACS310…" autocomplete="off">
+    <div id="sdrop"></div>
+  </div>
+  <div class="hbadge">⚡ 440V / 24VDC</div>
+  <div class="hbadge">🔧 17 motores</div>
+  <div class="hbadge">📡 ET200SP</div>
+</div>
+<div id="body">
+  <div id="nav">
+    <button class="nb on" data-tab="pwr" title="Potencia">⚡</button>
+    <button class="nb" data-tab="mot" title="Motores">🔧</button>
+    <button class="nb" data-tab="io" title="PLC I/O">📡</button>
+    <button class="nb" data-tab="net" title="Red">🌐</button>
+    <button class="nb" data-tab="fld" title="Campo">🔌</button>
+  </div>
+  <div id="main">
+    <div class="panel on" id="tab-pwr">
+      <div class="pt">Distribución de potencia</div>
+      <div class="ps">440V AC → protecciones → 24VDC → buses → módulos PLC. Clic en cualquier elemento para ver su cadena completa.</div>
+      <div id="pwr-diagram"></div>
+    </div>
+    <div class="panel" id="tab-mot">
+      <div class="pt">Motores 1 – 17</div>
+      <div class="ps">Circuitos de mando y potencia. Clic en fila para ver la cadena completa.</div>
+      <div class="filter-row">
+        <input class="fi" id="mot-f" placeholder="Filtrar: motor, contactor, campo, tipo…" style="flex:1;max-width:320px">
+        <button class="fb on" data-mf="all">Todos</button>
+        <button class="fb" data-mf="1">Tipo 1</button>
+        <button class="fb" data-mf="2">Tipo 2</button>
+        <button class="fb" data-mf="3">Tipo 3</button>
+        <button class="fb" data-mf="4">VFD</button>
+      </div>
+      <div class="tw"><table id="mot-tbl">
+        <thead><tr><th>#</th><th>Tipo</th><th>Breaker</th><th>Contactor</th><th>Rel.Term.</th><th>DQ salida</th><th>DI Remote</th><th>DI Run</th><th>DI Fault</th><th>Equipo campo</th><th>Cable</th><th>Regleta</th></tr></thead>
+        <tbody id="mot-body"></tbody>
+      </table></div>
+    </div>
+    <div class="panel" id="tab-io">
+      <div class="pt">PLC I/O — ET200SP</div>
+      <div class="ps">CPU 1512SP-1 PN · IP 192.168.3.31 · 5×DI16 + 1×DQ16 + 1×DQ8 + AI8 + AQ2.</div>
+      <div class="filter-row">
+        <input class="fi" id="io-f" placeholder="Buscar canal, tag, dirección, motor…" style="flex:1;max-width:320px">
+        <button class="fb on" data-io="all">Todos</button>
+        <button class="fb" data-io="DI">DI</button>
+        <button class="fb" data-io="DQ">DQ</button>
+        <button class="fb" data-io="AI">AI</button>
+        <button class="fb" data-io="AQ">AQ</button>
+      </div>
+      <div id="io-content"></div>
+    </div>
+    <div class="panel" id="tab-net">
+      <div class="pt">Red y comunicaciones</div>
+      <div class="ps">Ethernet 192.168.3.x + Profibus DP hacia tableros remotos + acceso 4G.</div>
+      <h4 class="sh">Dispositivos Ethernet — subred 192.168.3.x</h4>
+      <div class="net-grid" id="net-eth"></div>
+      <h4 class="sh">Profibus DP — Maestro: CM DP (slot 2)</h4>
+      <div id="net-dp"></div>
+    </div>
+    <div class="panel" id="tab-fld">
+      <div class="pt">Cableado a campo</div>
+      <div class="ps">Regletas X1–X6 del LCP 4.1 hacia equipos de campo.</div>
+      <div class="filter-row">
+        <input class="fi" id="fld-f" placeholder="Buscar: BCE, DOI, LS, LT, cable, regleta…" style="flex:1;max-width:320px">
+      </div>
+      <div class="tw"><table>
+        <thead><tr><th>Regleta</th><th>Terminal</th><th>Señal</th><th>Destino</th><th>Cable</th><th>Tipo</th><th>Canal PLC</th></tr></thead>
+        <tbody id="fld-body"></tbody>
+      </table></div>
+    </div>
+  </div>
+</div>
+</div>
+<div id="det">
+  <button id="det-close">✕</button>
+  <h2 id="det-title">—</h2>
+  <div class="dt" id="det-type">—</div>
+  <div id="det-body"></div>
+</div>
+
+<script>
+const CAT_LABEL={source:'Fuente/Acometida',breaker:'Interruptor',fuse:'Fusible',psu:'Fuente DC',bus:'Bus DC',plc:'CPU PLC',plc_di:'Módulo DI',plc_dq:'Módulo DQ',plc_ai:'Módulo AI',plc_aq:'Módulo AQ',di_ch:'Canal DI',dq_ch:'Canal DQ',ai_ch:'Canal AI',aq_ch:'Canal AQ',contactor:'Contactor',relay:'Relé mando',relay_th:'Relé térmico',selector:'Selector',vfd:'Variador',field:'Equipo campo',sensor:'Sensor',field_box:'Tablero/Dosificadora',network:'Dispositivo red'};
+const CAT_ICON={source:'⚡',breaker:'🔴',fuse:'🔴',psu:'🔋',bus:'🚌',plc:'🖥️',plc_di:'📥',plc_dq:'📤',plc_ai:'📊',plc_aq:'📈',di_ch:'→',dq_ch:'←',ai_ch:'〰',aq_ch:'〜',contactor:'⊙',relay:'◉',relay_th:'🌡',selector:'⊕',vfd:'🔁',field:'⚙',sensor:'📡',field_box:'📦',network:'🌐'};
+
+const N={};
+function n(id,cat,name,sub,parent,extra){N[id]={id,cat,name,sub:sub||'',parent:parent||null,...(extra||{})}}
+
+// POWER CHAIN
+n('LCP51','source','LCP 5.1 — Acometida 440V','Origen energía 440V/3~/60Hz al LCP 4.1',null);
+n('0QF','breaker','0QF — Interruptor principal','125A/3P · 440V AC · cabecera del tablero','LCP51',{model:'iC60N 125A/3P',rating:'125A/3P'});
+n('TR1','psu','TR1 — Transformador 440/220V','1600VA · alimenta circuito auxiliar CA','0QF',{model:'440→220V/1600VA'});
+n('50QF','breaker','50QF — Secundario 20A','20A/2P · protege fuentes DC','TR1',{rating:'20A/2P'});
+n('51QF','breaker','51QF → Bus 51L (señales campo)','10A/1P · 51L: ESB1, TS1, PS1, LH1, selectores nSC','50QF',{rating:'10A/1P',bus:'51L'});
+n('52QF','breaker','52QF → AD1','10A/1P · fuente DC #1','50QF',{rating:'10A/1P'});
+n('53QF','breaker','53QF → AD2','10A/1P · fuente DC #2','50QF',{rating:'10A/1P'});
+n('54QF','breaker','54QF → Bus 54L (mando)','10A/1P · 54L: bobinas contactores','50QF',{rating:'10A/1P',bus:'54L'});
+n('AD1','psu','AD1 — Fuente 24VDC/10A','Alimenta L1+ (PLC) y L2+ (instrumentos)','52QF',{model:'24VDC/10A'});
+n('AD2','psu','AD2 — Fuente 24VDC/10A','Alimenta L3+ (Ethernet/HMI)','53QF',{model:'24VDC/10A'});
+n('1F','fuse','1F — Fusible 4A → L1+','PLC: CPU+módulos ET200SP','AD1',{rating:'4A'});
+n('2F','fuse','2F — Fusible 4A → L2+','Transmisores 4-20mA campo','AD1',{rating:'4A'});
+n('3F','fuse','3F — Fusible 4A → L3+','HMI, switch, router, 4G','AD2',{rating:'4A'});
+n('L1P','bus','Bus L1+ · PLC Power 24VDC','CPU 1512SP + CM-DP + módulos 1DI–5DI + 1DQ–2DQ + 1AI + 1AQ. Base CLARA en slot 3 (1DI)','1F');
+n('L2P','bus','Bus L2+ · Instrument 24VDC','Transmisores 4-20mA: LT-4.01, LT-5.07, LT-5.13, ORP-4.01, pH-4.06. Fusibles 1A/lazo en 4X','2F');
+n('L3P','bus','Bus L3+ · Ethernet/HMI 24VDC','EH1 (switch), TP1200 (HMI), DTU1 (4G), HF9606 (router)','3F');
+n('51L','bus','Bus 51L · Señales campo CA','Selectores nSC Local/Off/Remote, ESB1, TS1, PS1, LH1','51QF');
+n('54L','bus','Bus 54L · Mando contactores CA','Bobinas nKM activadas vía relés nKB (DQ)','54QF');
+
+// PLC
+n('CPU','plc','CPU ET200SP 1512SP-1 PN','IP 192.168.3.31 · PLC maestro','L1P',{model:'6ES7 512-1DK01-0AB0',ip:'192.168.3.31',slot:1});
+n('CMDP','plc_di','CM DP — Maestro Profibus','Slot 2 · Maestro DP → 7 tableros LCB remotos','L1P',{model:'6ES7 545-5DA00',slot:2});
+n('1DI','plc_di','1DI — DI16 Slot 3','Base CLARA (L+). 16 DI 24VDC. Motores 1-5 + ESB1','L1P',{model:'6ES7 131-6BF01-0BA0',slot:3});
+n('2DI','plc_di','2DI — DI16 Slot 4','Base oscura. 16 DI. Motores 6-10','L1P',{model:'6ES7 131-6BF01-0BA0',slot:4});
+n('3DI','plc_di','3DI — DI16 Slot 5','Base oscura. 16 DI. Motores 11-15','L1P',{model:'6ES7 131-6BF01-0BA0',slot:5});
+n('4DI','plc_di','4DI — DI16 Slot 6','Base oscura. 16 DI. Motores 16-17 + campo','L1P',{model:'6ES7 131-6BF01-0BA0',slot:6});
+n('5DI','plc_di','5DI — DI16 Slot 7','Base oscura. 16 DI. Sensores campo (LS, PS, TS, DOI)','L1P',{model:'6ES7 131-6BF01-0BA0',slot:7});
+n('1DQ','plc_dq','1DQ — DQ16 Slot 8','16 DO. Relés 1KB–16KB → motores 1-16','L1P',{model:'6ES7 132-6BS01-0BA0',slot:8});
+n('2DQ','plc_dq','2DQ — DQ8 Slot 9','8 DO. Relés 17KB–24KB (VFD + auxiliares)','L1P',{model:'6ES7 132-6BS01-0BA0',slot:9});
+n('1AI','plc_ai','1AI — AI8 Slot 10','8 AI 4-20mA. L+ por barra interna','L1P',{model:'6ES7 134-6GD00-0AB1',slot:10});
+n('1AQ','plc_aq','1AQ — AQ2 Slot 11','2 AO. AQ1 → velocidad VFD motor 17','L1P',{model:'6ES7 135-6GB00-0BA1',slot:11});
+
+// NETWORK
+n('TP1200','network','TP1200 — HMI 12"','IP 192.168.3.30 · Pantalla táctil · operación proceso RO','L3P',{model:'Siemens 6AV2 121-0MC10-0AN0',ip:'192.168.3.30'});
+n('EH1','network','EH1 — Switch Ethernet','Switch red local 192.168.3.x','L3P',{model:'Switch 8p'});
+n('HF9606','network','HF9606 — Router WAN','IP 192.168.3.254 · Gateway internet','L3P',{model:'HF9606',ip:'192.168.3.254'});
+n('DTU1','network','DTU1 — Módem 4G','IP 192.168.3.253 · Acceso remoto celular','L3P',{model:'DTU 4G',ip:'192.168.3.253'});
+n('FIBER','network','Fibra óptica /01E01','2 hilos · cliente externo Permoda','EH1',{model:'FO 2 hilos'});
+
+// DI CHANNELS
+const DI_RAW=[
+  ['1DI.1','1DI','1SC Remote — Motor 1','Selector M1 en REMOTO','%I0.0',1,'remote'],
+  ['1DI.2','1DI','1KM Running — Motor 1','Ctc.aux. contactor M1 EN MARCHA','%I0.1',1,'run'],
+  ['1DI.3','1DI','1QF Fault — Motor 1','Ctc.aux. breaker M1 DISPARO','%I0.2',1,'fault'],
+  ['1DI.4','1DI','2SC Remote — Motor 2','','%I0.3',2,'remote'],
+  ['1DI.5','1DI','2KM Running — Motor 2','','%I0.4',2,'run'],
+  ['1DI.6','1DI','2QF Fault — Motor 2','','%I0.5',2,'fault'],
+  ['1DI.7','1DI','3SC Remote — Motor 3','','%I0.6',3,'remote'],
+  ['1DI.8','1DI','3KM Running — Motor 3','','%I0.7',3,'run'],
+  ['1DI.9','1DI','3QF Fault — Motor 3','','%I1.0',3,'fault'],
+  ['1DI.10','1DI','4SC Remote — Motor 4','','%I1.1',4,'remote'],
+  ['1DI.11','1DI','4KM Running — Motor 4','','%I1.2',4,'run'],
+  ['1DI.12','1DI','4QF Fault — Motor 4','','%I1.3',4,'fault'],
+  ['1DI.13','1DI','5SC Remote — Motor 5','','%I1.4',5,'remote'],
+  ['1DI.14','1DI','5KM Running — Motor 5','','%I1.5',5,'run'],
+  ['1DI.15','1DI','5QF Fault — Motor 5','','%I1.6',5,'fault'],
+  ['1DI.16','1DI','ESB1 — Paro de emergencia','XD2-BD3414 NC · hongo puerta tablero','%I1.7',0,'esb'],
+  ['2DI.1','2DI','6SC Remote — Motor 6','','%I2.0',6,'remote'],
+  ['2DI.2','2DI','6KM Running — Motor 6','','%I2.1',6,'run'],
+  ['2DI.3','2DI','6QF Fault — Motor 6','','%I2.2',6,'fault'],
+  ['2DI.4','2DI','7SC Remote — Motor 7','','%I2.3',7,'remote'],
+  ['2DI.5','2DI','7KM Running — Motor 7','','%I2.4',7,'run'],
+  ['2DI.6','2DI','7QF Fault — Motor 7','','%I2.5',7,'fault'],
+  ['2DI.7','2DI','8SC Remote — Motor 8','','%I2.6',8,'remote'],
+  ['2DI.8','2DI','8KM Running — Motor 8','','%I2.7',8,'run'],
+  ['2DI.9','2DI','8QF Fault — Motor 8','','%I3.0',8,'fault'],
+  ['2DI.10','2DI','9SC Remote — Motor 9','','%I3.1',9,'remote'],
+  ['2DI.11','2DI','9KM Running — Motor 9','','%I3.2',9,'run'],
+  ['2DI.12','2DI','9QF Fault — Motor 9','','%I3.3',9,'fault'],
+  ['2DI.13','2DI','10SC Remote — Motor 10','','%I3.4',10,'remote'],
+  ['2DI.14','2DI','10KM Running — Motor 10','','%I3.5',10,'run'],
+  ['2DI.15','2DI','10QF Fault — Motor 10','','%I3.6',10,'fault'],
+  ['2DI.16','2DI','Reserva','Sin conectar','%I3.7',0,'spare'],
+  ['3DI.1','3DI','11SC Remote — Motor 11','','%I4.0',11,'remote'],
+  ['3DI.2','3DI','11KM Running — Motor 11','','%I4.1',11,'run'],
+  ['3DI.3','3DI','11QF Fault — Motor 11','','%I4.2',11,'fault'],
+  ['3DI.4','3DI','12SC Remote — Motor 12','','%I4.3',12,'remote'],
+  ['3DI.5','3DI','12KM Running — Motor 12','','%I4.4',12,'run'],
+  ['3DI.6','3DI','12QF Fault — Motor 12','','%I4.5',12,'fault'],
+  ['3DI.7','3DI','13SC Remote — Motor 13','','%I4.6',13,'remote'],
+  ['3DI.8','3DI','13KM Running — Motor 13','','%I4.7',13,'run'],
+  ['3DI.9','3DI','13QF Fault — Motor 13','','%I5.0',13,'fault'],
+  ['3DI.10','3DI','14SC Remote — Motor 14','','%I5.1',14,'remote'],
+  ['3DI.11','3DI','14KM Running — Motor 14','','%I5.2',14,'run'],
+  ['3DI.12','3DI','14QF Fault — Motor 14','','%I5.3',14,'fault'],
+  ['3DI.13','3DI','15SC Remote — Motor 15','','%I5.4',15,'remote'],
+  ['3DI.14','3DI','15KM Running — Motor 15','','%I5.5',15,'run'],
+  ['3DI.15','3DI','15QF Fault — Motor 15','','%I5.6',15,'fault'],
+  ['3DI.16','3DI','Reserva','Sin conectar','%I5.7',0,'spare'],
+  ['4DI.1','4DI','16SC Remote — Motor 16','','%I6.0',16,'remote'],
+  ['4DI.2','4DI','16KM Running — Motor 16','','%I6.1',16,'run'],
+  ['4DI.3','4DI','16QF Fault — Motor 16','','%I6.2',16,'fault'],
+  ['4DI.4','4DI','17SC Remote — VFD Motor 17','Selector REMOTO para ACS310','%I6.3',17,'remote'],
+  ['4DI.5','4DI','17VFD Running — Motor 17','Señal RUN del variador ACS310','%I6.4',17,'run'],
+  ['4DI.6','4DI','17VFD Fault — Motor 17','Señal FAULT del variador ACS310','%I6.5',17,'fault'],
+  ['4DI.7-16','4DI','Reserva ch7–16','Sin conectar','%I6.6+',0,'spare'],
+  ['5DI.1','5DI','LS.4.02 — Nivel TAQ','Interruptor flotador nivel','%I8.0',0,'sensor'],
+  ['5DI.2','5DI','LS.4.03 — Nivel TAQ','Interruptor flotador nivel','%I8.1',0,'sensor'],
+  ['5DI.3','5DI','LS.4.06 — Nivel permeado','Interruptor nivel producto','%I8.2',0,'sensor'],
+  ['5DI.4','5DI','LS.4.07 — Nivel concentrado','Interruptor nivel concentrado','%I8.3',0,'sensor'],
+  ['5DI.5','5DI','LS.4.08 — Nivel (4M)','Interruptor nivel','%I8.4',0,'sensor'],
+  ['5DI.6','5DI','DOI.4.02A — Dosificadora A','Señal estado/falla dosificadora A','%I8.5',0,'sensor'],
+  ['5DI.7','5DI','DOI.4.02B — Dosificadora B','Señal estado/falla dosificadora B','%I8.6',0,'sensor'],
+  ['5DI.8','5DI','LH1 — Nivel alto','Interruptor flotador nivel alto','%I8.7',0,'sensor'],
+  ['5DI.9','5DI','PS1 — Presostato proceso','Interruptor de presión','%I9.0',0,'sensor'],
+  ['5DI.10','5DI','TS1 — Termostato KTS011','Temperatura interior tablero','%I9.1',0,'sensor'],
+  ['5DI.11-16','5DI','Reserva ch11–16','Sin conectar','%I9.2+',0,'spare'],
+];
+DI_RAW.forEach(([id,mod,name,sub,addr,motor,sig])=>{N[id]={id,cat:'di_ch',name,sub,parent:mod,addr,motor:motor||0,sig,type:'DI'};});
+
+const DQ_RAW=[
+  ['1DQ.1','1DQ','1KB → Bobina 1KM','Arranque motor 1','%Q0.0',1],
+  ['1DQ.2','1DQ','2KB → Bobina 2KM','','%Q0.1',2],
+  ['1DQ.3','1DQ','3KB → Bobina 3KM','','%Q0.2',3],
+  ['1DQ.4','1DQ','4KB → Bobina 4KM','','%Q0.3',4],
+  ['1DQ.5','1DQ','5KB → Bobina 5KM','','%Q0.4',5],
+  ['1DQ.6','1DQ','6KB → Bobina 6KM','','%Q0.5',6],
+  ['1DQ.7','1DQ','7KB → Bobina 7KM','','%Q0.6',7],
+  ['1DQ.8','1DQ','8KB → Bobina 8KM','','%Q0.7',8],
+  ['1DQ.9','1DQ','9KB → Bobina 9KM','','%Q1.0',9],
+  ['1DQ.10','1DQ','10KB → Bobina 10KM','','%Q1.1',10],
+  ['1DQ.11','1DQ','11KB → Bobina 11KM','','%Q1.2',11],
+  ['1DQ.12','1DQ','12KB → Bobina 12KM','','%Q1.3',12],
+  ['1DQ.13','1DQ','13KB → Bobina 13KM','','%Q1.4',13],
+  ['1DQ.14','1DQ','14KB → Bobina 14KM','','%Q1.5',14],
+  ['1DQ.15','1DQ','15KB → Bobina 15KM','','%Q1.6',15],
+  ['1DQ.16','1DQ','16KB → Bobina 16KM','','%Q1.7',16],
+  ['2DQ.1','2DQ','17KB → Start VFD ACS310','Arranque variador M17 vía relé 17KA (RP23S)','%Q2.0',17],
+  ['2DQ.2','2DQ','18KB — Libre','Sin conectar','%Q2.1',0],
+  ['2DQ.3','2DQ','19KB — Libre','Sin conectar','%Q2.2',0],
+  ['2DQ.4','2DQ','20KB — Libre','Sin conectar','%Q2.3',0],
+  ['2DQ.5','2DQ','21KB — Libre','Sin conectar','%Q2.4',0],
+  ['2DQ.6','2DQ','22KB — Libre','Sin conectar','%Q2.5',0],
+  ['2DQ.7','2DQ','23KB — Libre','Sin conectar','%Q2.6',0],
+  ['2DQ.8','2DQ','24KB — Libre','Sin conectar','%Q2.7',0],
+];
+DQ_RAW.forEach(([id,mod,name,sub,addr,motor])=>{N[id]={id,cat:'dq_ch',name,sub,parent:mod,addr,motor:motor||0,type:'DQ'};});
+
+const AI_RAW=[
+  ['1AI.1','1AI','1AI ch1 — ORP-4.01','Transmisor redox/oxidantes 4-20mA','%IW10','ORP-4.01','KVVP 4×1.0','L2P'],
+  ['1AI.2','1AI','1AI ch2 — pH-4.06','Transmisor pH CIP 4-20mA','%IW12','pH-4.06','KVVP 4×1.0','L2P'],
+  ['1AI.3','1AI','1AI ch3 — Reserva','Sin conectar','%IW14','—','—','L2P'],
+  ['1AI.4','1AI','1AI ch4 — Reserva','Sin conectar','%IW16','—','—','L2P'],
+  ['1AI.5','1AI','1AI ch5 — LT-4.01','Nivel TAQ-4.01 · Permiso RO1 4-20mA','%IW18','LT-4.01','KVVP 2×1.0','L2P'],
+  ['1AI.6','1AI','1AI ch6 — LT-4.04','Nivel indicación 4-20mA','%IW20','LT-4.04','KVVP 2×1.0','L2P'],
+  ['1AI.7','1AI','1AI ch7 — LT-5.07','Nivel concentrado · Permiso RO1+RO2 4-20mA','%IW22','LT-5.07','KVVP 2×1.0','L2P'],
+  ['1AI.8','1AI','1AI ch8 — LT-5.13','Nivel TAQ-5.13 · Permiso RO2+química 4-20mA','%IW24','LT-5.13','KVVP 2×1.0','L2P'],
+];
+AI_RAW.forEach(([id,mod,name,sub,addr,tag,cable,bus])=>{N[id]={id,cat:'ai_ch',name,sub,parent:mod,addr,tag,cable,bus,type:'AI'};});
+
+N['1AQ.1']={id:'1AQ.1',cat:'aq_ch',name:'1AQ ch1 — Velocidad Motor 17',sub:'Referencia velocidad VFD ACS310 · 0-10V o 4-20mA',parent:'1AQ',addr:'%QW0',motor:17,type:'AQ'};
+N['1AQ.2']={id:'1AQ.2',cat:'aq_ch',name:'1AQ ch2 — Libre',sub:'Sin conectar',parent:'1AQ',addr:'%QW2',motor:0,type:'AQ'};
+
+const MOTORS=[
+  {n:1, tp:1,qf:'1QF', qfm:'iC60N C10A/2P',   km:'1KM', kmm:'LC1D09A7C',fr:'—',       dq:'1DQ.1',dqa:'%Q0.0',dir:'1DI.1 %I0.0', dik:'1DI.2 %I0.1', dif:'1DI.3 %I0.2',campo:'Verificar TAG-P1',cable:'YJVR 4×1.5',term:'1X'},
+  {n:2, tp:1,qf:'2QF', qfm:'iC60N C10A/2P',   km:'2KM', kmm:'LC1D09A7C',fr:'—',       dq:'1DQ.2',dqa:'%Q0.1',dir:'1DI.4 %I0.3', dik:'1DI.5 %I0.4', dif:'1DI.6 %I0.5',campo:'Verificar TAG-P1',cable:'YJVR 4×1.5',term:'1X'},
+  {n:3, tp:1,qf:'3QF', qfm:'iC60N C10A/2P',   km:'3KM', kmm:'LC1D09A7C',fr:'—',       dq:'1DQ.3',dqa:'%Q0.2',dir:'1DI.7 %I0.6', dik:'1DI.8 %I0.7', dif:'1DI.9 %I1.0',campo:'DOI.4.02B',       cable:'YJVR 4×1.5',term:'2X'},
+  {n:4, tp:2,qf:'4QF', qfm:'GV2F010G+GVA41', km:'4KM', kmm:'LC1D09A7C',fr:'—',       dq:'1DQ.4',dqa:'%Q0.3',dir:'1DI.10 %I1.1',dik:'1DI.11 %I1.2',dif:'1DI.12 %I1.3',campo:'Verificar TAG-P1',cable:'YJVR 4×1.5',term:'2X'},
+  {n:5, tp:2,qf:'5QF', qfm:'GV2F010G+GVA41', km:'5KM', kmm:'LC1D09A7C',fr:'—',       dq:'1DQ.5',dqa:'%Q0.4',dir:'1DI.13 %I1.4',dik:'1DI.14 %I1.5',dif:'1DI.15 %I1.6',campo:'Verificar TAG-P1',cable:'YJVR 4×1.5',term:'2X'},
+  {n:6, tp:2,qf:'6QF', qfm:'GV2F010G+GVA41', km:'6KM', kmm:'LC1D09A7C',fr:'—',       dq:'1DQ.6',dqa:'%Q0.5',dir:'2DI.1 %I2.0', dik:'2DI.2 %I2.1', dif:'2DI.3 %I2.2', campo:'Verificar TAG-P1',cable:'YJVR 4×1.5',term:'2X'},
+  {n:7, tp:2,qf:'7QF', qfm:'GV2F010G+GVA41', km:'7KM', kmm:'LC1D09A7C',fr:'—',       dq:'1DQ.7',dqa:'%Q0.6',dir:'2DI.4 %I2.3', dik:'2DI.5 %I2.4', dif:'2DI.6 %I2.5', campo:'BCE.5.13B',      cable:'YJVR 4×2.5',term:'2X'},
+  {n:8, tp:2,qf:'8QF', qfm:'GV2F010G+GVA41', km:'8KM', kmm:'LC1D09A7C',fr:'—',       dq:'1DQ.8',dqa:'%Q0.7',dir:'2DI.7 %I2.6', dik:'2DI.8 %I2.7', dif:'2DI.9 %I3.0', campo:'BCE.4.03A',      cable:'YJVR 4×1.5',term:'2X'},
+  {n:9, tp:2,qf:'9QF', qfm:'GV2F010G+GVA41', km:'9KM', kmm:'LC1D09A7C',fr:'—',       dq:'1DQ.9',dqa:'%Q1.0',dir:'2DI.10 %I3.1',dik:'2DI.11 %I3.2',dif:'2DI.12 %I3.3',campo:'BCE.4.05A',      cable:'YJVR 4×1.5',term:'2X'},
+  {n:10,tp:2,qf:'10QF',qfm:'GV2F010G+GVA41', km:'10KM',kmm:'LC1D09A7C',fr:'—',       dq:'1DQ.10',dqa:'%Q1.1',dir:'2DI.13 %I3.4',dik:'2DI.14 %I3.5',dif:'2DI.15 %I3.6',campo:'BCE.4.05B',     cable:'YJVR 4×1.5',term:'2X'},
+  {n:11,tp:2,qf:'11QF',qfm:'GV2F010G+GVA41', km:'11KM',kmm:'LC1D09A7C',fr:'—',       dq:'1DQ.11',dqa:'%Q1.2',dir:'3DI.1 %I4.0', dik:'3DI.2 %I4.1', dif:'3DI.3 %I4.2', campo:'Verificar TAG-P1',cable:'YJVR 4×1.5',term:'3X'},
+  {n:12,tp:2,qf:'12QF',qfm:'GV2F010G+GVA41', km:'12KM',kmm:'LC1D09A7C',fr:'—',       dq:'1DQ.12',dqa:'%Q1.3',dir:'3DI.4 %I4.3', dik:'3DI.5 %I4.4', dif:'3DI.6 %I4.5', campo:'BCE.5.07A',      cable:'YJVR 4×2.5',term:'3X'},
+  {n:13,tp:2,qf:'13QF',qfm:'GV2P086+GVA41',  km:'13KM',kmm:'LC1D09A7C',fr:'—',       dq:'1DQ.13',dqa:'%Q1.4',dir:'3DI.7 %I4.6', dik:'3DI.8 %I4.7', dif:'3DI.9 %I5.0', campo:'BCE.4.04B',      cable:'YJVR 4×1.5',term:'3X'},
+  {n:14,tp:2,qf:'14QF',qfm:'GV2P086+GVA41',  km:'14KM',kmm:'LC1D09A7C',fr:'—',       dq:'1DQ.14',dqa:'%Q1.5',dir:'3DI.10 %I5.1',dik:'3DI.11 %I5.2',dif:'3DI.12 %I5.3',campo:'BCE.4.04A',      cable:'YJVR 4×1.5',term:'3X'},
+  {n:15,tp:3,qf:'15QF',qfm:'iC60N C10A/3P',  km:'15KM',kmm:'LC1D0987C',fr:'15FR LRD3506',dq:'1DQ.15',dqa:'%Q1.6',dir:'3DI.13 %I5.4',dik:'3DI.14 %I5.5',dif:'3DI.15 %I5.6',campo:'BCE.4.01A ⚠ALTA POT.',cable:'YJV 4×16',term:'6X'},
+  {n:16,tp:3,qf:'16QF',qfm:'iC60N C10A/3P',  km:'16KM',kmm:'LC1D0987C',fr:'16FR LRD3506',dq:'1DQ.16',dqa:'%Q1.7',dir:'4DI.1 %I6.0', dik:'4DI.2 %I6.1', dif:'4DI.3 %I6.2', campo:'BCE.5.13A 2do piso',cable:'YJVR 4×2.5',term:'6X'},
+  {n:17,tp:4,qf:'17QF',qfm:'iC60N C10A/3P',  km:'17VFD',kmm:'ABB ACS310',fr:'Interno VFD',dq:'2DQ.1',dqa:'%Q2.0',dir:'4DI.4 %I6.3', dik:'4DI.5 %I6.4', dif:'4DI.6 %I6.5', campo:'Motor variador (ver plano)',cable:'Salida VFD',term:'6X'},
+];
+
+const FIELD=[
+  {term:'1X',pin:'1–3,PE',sig:'Motores 1-3 potencia monofásica',dest:'Campo (equipos piso 1)',cable:'YJVR 4×1.5 / TAG-P1',tipo:'Potencia 1F',plc:'1DQ.1–3'},
+  {term:'1X',pin:'ESB1',sig:'Paro emergencia NC',dest:'Hongo puerta tablero',cable:'Cable señal',tipo:'Seguridad DI',plc:'1DI.16 %I1.7'},
+  {term:'2X',pin:'3.N/PE',sig:'Motor 3 — DOI.4.02B',dest:'DOI.4.02B — Dosificadora B',cable:'YJVR 4×1.5 / TAG-P1',tipo:'Potencia 1F',plc:'1DQ.3 %Q0.2'},
+  {term:'2X',pin:'7.U/V/W/PE',sig:'Motor 7 — Potencia 3F',dest:'BCE.5.13B',cable:'YJVR 4×2.5 / TAG-P1',tipo:'Potencia motor 3F',plc:'1DQ.7 %Q0.6'},
+  {term:'2X',pin:'8.U/V/W/PE',sig:'Motor 8 — Potencia 3F',dest:'BCE.4.03A',cable:'YJVR 4×1.5 / TAG-P1',tipo:'Potencia motor 3F',plc:'1DQ.8 %Q0.7'},
+  {term:'2X',pin:'9.U/V/W/PE',sig:'Motor 9 — Potencia 3F',dest:'BCE.4.05A',cable:'YJVR 4×1.5 / TAG-P1',tipo:'Potencia motor 3F',plc:'1DQ.9 %Q1.0'},
+  {term:'2X',pin:'10.U/V/W/PE',sig:'Motor 10 — Potencia 3F',dest:'BCE.4.05B',cable:'YJVR 4×1.5 / TAG-P1',tipo:'Potencia motor 3F',plc:'1DQ.10 %Q1.1'},
+  {term:'2X',pin:'nSC/nKM/nQF',sig:'Control motores 4-10',dest:'BCE.4.xx / BCE.5.xx selectores',cable:'KVVP 4×1.0 / TAG-C1',tipo:'Control 24VDC',plc:'1DI–2DI señales'},
+  {term:'3X',pin:'12.U/V/W/PE',sig:'Motor 12 — Potencia 3F',dest:'BCE.5.07A',cable:'YJVR 4×2.5 / TAG-P1',tipo:'Potencia motor 3F',plc:'1DQ.12 %Q1.3'},
+  {term:'3X',pin:'13.U/V/W/PE',sig:'Motor 13 — Potencia 3F',dest:'BCE.4.04B',cable:'YJVR 4×1.5 / TAG-P1',tipo:'Potencia motor 3F',plc:'1DQ.13 %Q1.4'},
+  {term:'3X',pin:'14.U/V/W/PE',sig:'Motor 14 — Potencia 3F',dest:'BCE.4.04A',cable:'YJVR 4×1.5 / TAG-P1',tipo:'Potencia motor 3F',plc:'1DQ.14 %Q1.5'},
+  {term:'3X',pin:'nSC/nKM/nQF',sig:'Control motores 11-14',dest:'BCE.4.xx campo',cable:'KVVP 4×1.0 / TAG-C1',tipo:'Control 24VDC',plc:'3DI señales'},
+  {term:'4X',pin:'1AI1+/1AI2+',sig:'ORP-4.01 + pH-4.06 — Analógico',dest:'Transmisores proceso',cable:'KVVP 4×1.0 / TAG-C1',tipo:'Analógico 4-20mA',plc:'1AI ch1, ch2'},
+  {term:'4X',pin:'1AI5–8 / +24V',sig:'LT-4.01, LT-4.04, LT-5.07, LT-5.13',dest:'Transmisores nivel',cable:'KVVP 2×1.0 / TAG-C1',tipo:'Analógico 4-20mA',plc:'1AI ch5–ch8 / L2+'},
+  {term:'4X',pin:'5DI.1–5',sig:'LS.4.02/03/06/07/08',dest:'Interruptores de nivel',cable:'KVVP 4×1.0 / TAG-C1',tipo:'Digital DI',plc:'5DI ch1–ch5'},
+  {term:'4X',pin:'5DI.6–7',sig:'DOI.4.02A / DOI.4.02B estado',dest:'Dosificadoras A y B',cable:'KVVP 4×1.0 / TAG-C1',tipo:'Digital DI',plc:'5DI ch6–ch7'},
+  {term:'5X',pin:'Profibus DP',sig:'Bus Profibus DP Maestro',dest:'LCB.4.1/4.2/4.3, LCB.5.1/5.2, LCB.4.RF1/RF3',cable:'Cable DP apantallado',tipo:'Profibus',plc:'CM DP (slot 2)'},
+  {term:'5X',pin:'LCB.4.1',sig:'Señales control tablero local',dest:'LCB.4.1 — Tablero local piso 1A',cable:'KVVP 2×1.0 / TAG-C1',tipo:'Control',plc:'5DI (parcial)'},
+  {term:'5X',pin:'LCB.4.2',sig:'Señales control tablero local',dest:'LCB.4.2 — Tablero local piso 1B',cable:'KVVP 2×1.0 / TAG-C1',tipo:'Control',plc:'5DI (parcial)'},
+  {term:'6X',pin:'15.U/V/W/PE',sig:'Motor 15 — ALTA POTENCIA',dest:'BCE.4.01A — Bomba principal',cable:'YJV 4×16 / TAG-P1',tipo:'Potencia motor 3F',plc:'1DQ.15 %Q1.6'},
+  {term:'6X',pin:'16.U/V/W/PE',sig:'Motor 16 — 2do piso',dest:'BCE.5.13A',cable:'YJVR 4×2.5 / TAG-P1',tipo:'Potencia motor 3F',plc:'1DQ.16 %Q1.7'},
+  {term:'6X',pin:'17VFD salida',sig:'Motor 17 — Variador VFD',dest:'Motor controlado por ACS310',cable:'Salida VFD 6X',tipo:'VFD',plc:'2DQ.1 %Q2.0'},
+  {term:'6X',pin:'1AQ1+/1AQ1-',sig:'Referencia velocidad M17',dest:'17VFD ACS310 entrada analógica',cable:'KVVP 2×1.0',tipo:'Analógico AQ',plc:'1AQ ch1 %QW0'},
+];
+
+const DP_SLAVES=[
+  {id:'LCB.4.1',nm:'Tablero local CIP piso 1A',addr:'DP addr 3'},
+  {id:'LCB.4.2',nm:'Tablero local CIP piso 1B',addr:'DP addr 4'},
+  {id:'LCB.4.3',nm:'Tablero local piso 1C',addr:'DP addr 5'},
+  {id:'LCB.5.1',nm:'Tablero local 2do piso A',addr:'DP addr 6'},
+  {id:'LCB.5.2',nm:'Tablero local 2do piso B',addr:'DP addr 7'},
+  {id:'LCB.4.RF1',nm:'Tablero remoto RF1',addr:'DP addr 8'},
+  {id:'LCB.4.RF3',nm:'Tablero remoto RF3',addr:'DP addr 9'},
+];
+
+// ── Build children map ────────────────────────────────────
+const CHILDREN={};
+Object.values(N).forEach(nd=>{if(nd.parent){if(!CHILDREN[nd.parent])CHILDREN[nd.parent]=[];CHILDREN[nd.parent].push(nd.id);}});
+
+// ── Path tracing ─────────────────────────────────────────
+function upstream(id){const p=[];let c=id;while(c){p.unshift(c);c=N[c]?.parent||null;}return p;}
+
+// ── Detail card ──────────────────────────────────────────
+function showDetail(id){
+  const nd=N[id];if(!nd)return;
+  const det=document.getElementById('det');
+  document.getElementById('det-title').textContent=nd.name||id;
+  document.getElementById('det-type').textContent=(CAT_ICON[nd.cat]||'')+'  '+(CAT_LABEL[nd.cat]||nd.cat);
+  let html='';
+  const props=[];
+  if(nd.model)props.push(['Modelo',nd.model]);
+  if(nd.rating)props.push(['Calibre',nd.rating]);
+  if(nd.ip)props.push(['IP',nd.ip]);
+  if(nd.addr)props.push(['Dirección PLC',nd.addr]);
+  if(nd.slot)props.push(['Slot ET200SP',nd.slot]);
+  if(nd.cable)props.push(['Cable',nd.cable]);
+  if(nd.tag)props.push(['TAG campo',nd.tag]);
+  if(nd.bus)props.push(['Bus/Línea',nd.bus]);
+  if(nd.sub)props.push(['Descripción',nd.sub]);
+  if(nd.motor&&nd.motor>0)props.push(['Motor asociado','#'+nd.motor]);
+  if(props.length){html+='<h5>Propiedades</h5><div class="kv">';props.forEach(([k,v])=>{html+=`<b>${k}:</b> ${v}<br>`;});html+='</div>';}
+  const up=upstream(id);
+  if(up.length>1){
+    html+='<h5>⬆ Ruta desde la fuente</h5><ul class="path-list">';
+    up.forEach((uid,i)=>{const u=N[uid];if(!u)return;const icon=i===0?'🔌':i===up.length-1?'⭐':'→';html+=`<li><div class="pi">${icon}</div><div class="pn"><b>${uid}</b><small>${u.name.split('—')[0].trim()}</small></div></li>`;});
+    html+='</ul>';
+  }
+  const kids=CHILDREN[id]||[];
+  if(kids.length){
+    html+='<h5>⬇ Conecta hacia</h5><ul class="path-list">';
+    kids.slice(0,12).forEach(kid=>{const kd=N[kid];if(!kd)return;html+=`<li><div class="pi">→</div><div class="pn"><b>${kid}</b><small>${(kd.name||'').split('—')[0].trim()}</small></div></li>`;});
+    if(kids.length>12)html+=`<li><div class="pi">…</div><div class="pn"><small>+${kids.length-12} más</small></div></li>`;
+    html+='</ul>';
+  }
+  if(nd.motor&&nd.motor>0){const m=MOTORS.find(x=>x.n===nd.motor);if(m){html+=`<h5>Contexto Motor ${m.n}</h5><div class="kv"><b>Breaker:</b> ${m.qf} (${m.qfm})<br><b>Contactor:</b> ${m.km} (${m.kmm})<br><b>Rel.term.:</b> ${m.fr}<br><b>Salida DQ:</b> ${m.dq} ${m.dqa}<br><b>Campo:</b> ${m.campo}<br><b>Cable:</b> ${m.cable} → ${m.term}</div>`;}}
+  document.getElementById('det-body').innerHTML=html;
+  det.classList.add('open');
+}
+
+function showMotorDetail(mn){
+  const m=MOTORS.find(x=>x.n===mn);if(!m)return;
+  const TL={1:'Monofásico',2:'Trifásico DOL',3:'Trifásico + Rel.Térmico',4:'Variador VFD'};
+  document.getElementById('det-title').textContent=`Motor ${m.n}`;
+  document.getElementById('det-type').textContent=`⚙  Tipo ${m.tp} — ${TL[m.tp]}`;
+  document.getElementById('det-body').innerHTML=`
+    <h5>⬆ Cadena de potencia</h5>
+    <ul class="path-list">
+      <li><div class="pi">⚡</div><div class="pn"><b>LCP 5.1 → 0QF (125A)</b><small>Acometida 440V 3~/60Hz</small></div></li>
+      <li><div class="pi">→</div><div class="pn"><b>54QF → Bus 54L</b><small>10A/1P mando contactores</small></div></li>
+      <li><div class="pi">→</div><div class="pn"><b>${m.qf}</b><small>${m.qfm} — Protección + seccionamiento</small></div></li>
+      ${m.fr!=='—'?`<li><div class="pi">→</div><div class="pn"><b>${m.fr}</b><small>Protección sobrecarga térmica</small></div></li>`:''}
+      <li><div class="pi">→</div><div class="pn"><b>${m.km}</b><small>${m.kmm}</small></div></li>
+      <li><div class="pi">→</div><div class="pn"><b>Regleta ${m.term}</b><small>${m.cable}</small></div></li>
+      <li><div class="pi">🏭</div><div class="pn"><b>${m.campo}</b><small>Equipo de campo</small></div></li>
+    </ul>
+    <h5>📡 Señales PLC</h5>
+    <div class="kv">
+      <b>Salida DQ:</b> <span class="m">${m.dq}</span> <span class="addr">${m.dqa}</span> → relé → bobina ${m.km}<br>
+      <b>DI Remote:</b> <span class="addr">${m.dir}</span> ← selector<br>
+      <b>DI Run:</b> <span class="addr">${m.dik}</span> ← ctc.aux. contactor<br>
+      <b>DI Fault:</b> <span class="addr">${m.dif}</span> ← ctc.aux. breaker
+      ${m.tp===4?`<br><b>AO Velocidad:</b> <span class="addr">1AQ.1 %QW0</span> → VFD ACS310`:''}
+    </div>
+    ${m.tp===4?'<div class="det-warn">⚠ Motor 17 es controlado por variador ABB ACS310. La velocidad se comanda desde 1AQ.1. El relé 17KA (RP23S) hace interfaz PLC↔VFD. Verificar config. ACS310 para 0-10V vs 4-20mA.</div>':''}
+    ${m.campo.includes('Verificar')?`<div class="det-warn">⚠ Equipo de campo no confirmado en los planos digitalizados. Verificar en plano físico regleta ${m.term} TAG-P1.</div>`:''}
+  `;
+  document.getElementById('det').classList.add('open');
+}
+
+// ── Global search ─────────────────────────────────────────
+const srch=document.getElementById('srch');
+const sdrop=document.getElementById('sdrop');
+
+function searchAll(q){
+  if(!q||q.length<2){sdrop.classList.remove('open');return;}
+  q=q.toLowerCase();
+  const res=[];
+  Object.values(N).forEach(nd=>{
+    const hay=[nd.id,nd.name,nd.sub,nd.model||'',nd.addr||'',nd.ip||'',nd.tag||'',nd.cable||'',nd.bus||''].join(' ').toLowerCase();
+    if(hay.includes(q))res.push({id:nd.id,nm:nd.name,cat:CAT_LABEL[nd.cat]||nd.cat,sub:nd.sub});
+  });
+  MOTORS.forEach(m=>{
+    const hay=[m.n,m.qf,m.km,m.fr,m.dq,m.campo,m.cable,m.term,m.dir,m.dik,m.dif,m.qfm,m.kmm].join(' ').toLowerCase();
+    if(hay.includes(q)&&!res.find(r=>r.id==='MOT'+m.n))res.push({id:'MOT'+m.n,nm:`Motor ${m.n} — ${m.campo}`,cat:'Motor',sub:`Tipo ${m.tp} · ${m.qf} → ${m.km} → regleta ${m.term}`});
+  });
+  FIELD.forEach((f,i)=>{
+    const hay=[f.term,f.pin,f.sig,f.dest,f.cable,f.tipo,f.plc].join(' ').toLowerCase();
+    if(hay.includes(q))res.push({id:'FLD'+i,nm:f.sig+' → '+f.dest,cat:'Cableado campo',sub:`${f.term} · ${f.cable}`});
+  });
+  if(!res.length){sdrop.innerHTML='<div class="si"><span class="si-nm" style="color:var(--mut)">Sin resultados para "'+q+'"</span></div>';sdrop.classList.add('open');return;}
+  sdrop.innerHTML=res.slice(0,18).map(r=>`<div class="si" data-id="${r.id}"><span class="si-id">${r.id}</span><span class="si-nm">${r.nm}${r.sub?`<br><small style="color:var(--mut)">${r.sub.substring(0,70)}</small>`:''}</span><span class="si-cat">${r.cat}</span></div>`).join('');
+  sdrop.classList.add('open');
+  sdrop.querySelectorAll('.si').forEach(el=>{
+    el.addEventListener('click',()=>{
+      const id=el.dataset.id;sdrop.classList.remove('open');srch.value='';
+      if(id.startsWith('MOT')){activateTab('mot');showMotorDetail(parseInt(id.slice(3)));}
+      else if(id.startsWith('FLD')){activateTab('fld');}
+      else{
+        const nd=N[id];
+        if(nd){if(['di_ch','dq_ch','ai_ch','aq_ch','plc_di','plc_dq','plc_ai','plc_aq','plc'].includes(nd.cat))activateTab('io');else if(nd.cat==='network')activateTab('net');else if(['source','breaker','fuse','psu','bus'].includes(nd.cat))activateTab('pwr');}
+        showDetail(id);
+      }
+    });
+  });
+}
+srch.addEventListener('input',()=>searchAll(srch.value.trim()));
+srch.addEventListener('keydown',e=>{if(e.key==='Escape'){sdrop.classList.remove('open');srch.value='';}});
+document.addEventListener('click',e=>{if(!e.target.closest('.srch-wrap'))sdrop.classList.remove('open');});
+
+// ── Tab navigation ────────────────────────────────────────
+function activateTab(tab){
+  document.querySelectorAll('.nb').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('on',p.id==='tab-'+tab));
+}
+document.querySelectorAll('.nb').forEach(b=>b.addEventListener('click',()=>activateTab(b.dataset.tab)));
+
+// ── Power diagram ─────────────────────────────────────────
+function pn(id,badge=''){
+  const nd=N[id];if(!nd)return '';
+  const nm=nd.name.includes('—')?nd.name.split('—').slice(1).join('—').trim():nd.name;
+  return `<div class="pnode" onclick="showDetail('${id}')"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><div class="pn-id">${id}</div><div class="pn-nm">${nm}</div>${nd.sub?`<div class="pn-sub">${nd.sub.substring(0,70)}</div>`:''}</div>${badge?`<div>${badge}</div>`:''}</div></div>`;
+}
+function bus(id,lbl){return `<div class="bus-bar" onclick="showDetail('${id}')">🚌 ${id} <span style="font-size:9px;opacity:.7;font-weight:400">${lbl}</span></div>`;}
+
+// ── Rack SVG (horizontal, módulos uno al lado del otro con cables) ──
+function rackSVG(){
+  var mods=[
+    {id:'CPU', slot:1, label:'CPU',   sub:'1512SP-1 PN',  w:90,  fill:'#04342C',light:'#CCF0E2'},
+    {id:'CMDP',slot:2, label:'CM DP', sub:'Maestro DP',   w:74,  fill:'#1B5FAB',light:'#DCE9F8'},
+    {id:'1DI', slot:3, label:'1DI',   sub:'DI16 · M1-5',  w:62,  fill:'#107857',light:'#DAEDE4'},
+    {id:'2DI', slot:4, label:'2DI',   sub:'DI16 · M6-10', w:62,  fill:'#107857',light:'#DAEDE4'},
+    {id:'3DI', slot:5, label:'3DI',   sub:'DI16 · M11-15',w:62,  fill:'#107857',light:'#DAEDE4'},
+    {id:'4DI', slot:6, label:'4DI',   sub:'DI16 · M16-17',w:62,  fill:'#107857',light:'#DAEDE4'},
+    {id:'5DI', slot:7, label:'5DI',   sub:'DI16 · sensores',w:62, fill:'#107857',light:'#DAEDE4'},
+    {id:'1DQ', slot:8, label:'1DQ',   sub:'DQ16 · M1-16', w:62,  fill:'#4A41A5',light:'#E6E4F8'},
+    {id:'2DQ', slot:9, label:'2DQ',   sub:'DQ8 · M17+aux',w:62,  fill:'#4A41A5',light:'#E6E4F8'},
+    {id:'1AI', slot:10,label:'1AI',   sub:'AI8 · 4-20mA', w:62,  fill:'#7A4700',light:'#F5E8CF'},
+    {id:'1AQ', slot:11,label:'1AQ',   sub:'AQ2 · VFD ref.',w:62, fill:'#9B2020',light:'#F8DEDE'},
+  ];
+  var GAP=4,PAD=10,MOD_H=112,BUS_H=16,TOP=22,BOT=100;
+  var cx=PAD; mods.forEach(function(m){m.x=cx; cx+=m.w+GAP;});
+  var W=cx-GAP+PAD, H=TOP+MOD_H+BUS_H+BOT, busY=TOP+MOD_H;
+  var s='<svg viewBox="0 0 '+W+' '+H+'" width="'+W+'" height="'+H+'" xmlns="http://www.w3.org/2000/svg" style="display:block;font-family:-apple-system,Arial,sans-serif;overflow:visible">';
+  // Defs
+  s+='<defs><linearGradient id="bpGrd" x1="0" y1="0" x2="1" y2="0">';
+  s+='<stop offset="0%" stop-color="#053D2E"/><stop offset="25%" stop-color="#1D9E75"/><stop offset="75%" stop-color="#1D9E75"/><stop offset="100%" stop-color="#053D2E"/>';
+  s+='</linearGradient></defs>';
+  // L1+ bus bar at top
+  s+='<rect x="'+PAD+'" y="2" width="'+(W-2*PAD)+'" height="17" rx="4" fill="#04342C"/>';
+  s+='<text x="'+(W/2)+'" y="13.5" text-anchor="middle" font-size="8" fill="#9FE1CB" font-weight="bold" letter-spacing=".3">L1+ 24 VDC — AD1 → fusible 1F → alimentación backplane ET200SP</text>';
+  // Power drop dashes from L1+ to each module
+  mods.forEach(function(m){var mx=m.x+m.w/2; s+='<line x1="'+mx+'" y1="19" x2="'+mx+'" y2="'+TOP+'" stroke="#2C8A60" stroke-width="1.4" stroke-dasharray="3 2" opacity=".8"/>';});
+  // Rack enclosure (DIN rail housing)
+  s+='<rect x="'+(PAD-4)+'" y="'+(TOP-3)+'" width="'+(W-2*PAD+8)+'" height="'+(MOD_H+BUS_H+6)+'" rx="8" fill="#1E1E1C" stroke="#111" stroke-width="2"/>';
+  s+='<rect x="'+(PAD-1)+'" y="'+(TOP)+'" width="'+(W-2*PAD+2)+'" height="'+(MOD_H)+'" rx="2" fill="#2A2A28"/>';
+  // DIN rail bar
+  s+='<rect x="'+(PAD+2)+'" y="'+(TOP+MOD_H-8)+'" width="'+(W-2*PAD-4)+'" height="8" rx="1" fill="#3A3A38"/>';
+  // MODULES
+  mods.forEach(function(m){
+    var mx=m.x,my=TOP,mw=m.w;
+    // drop shadow
+    s+='<rect x="'+(mx+2)+'" y="'+(my+2)+'" width="'+mw+'" height="'+(MOD_H-4)+'" rx="3" fill="rgba(0,0,0,.35)"/>';
+    // body (clickable)
+    s+='<g style="cursor:pointer" onclick="showDetail(\''+m.id+'\')">';
+    s+='<rect x="'+mx+'" y="'+my+'" width="'+mw+'" height="'+(MOD_H-4)+'" rx="3" fill="'+m.light+'" stroke="'+m.fill+'" stroke-width="1.5"/>';
+    // colored header
+    s+='<rect x="'+mx+'" y="'+my+'" width="'+mw+'" height="32" rx="3" fill="'+m.fill+'"/>';
+    s+='<rect x="'+mx+'" y="'+(my+29)+'" width="'+mw+'" height="3" fill="'+m.fill+'"/>';
+    // module label
+    s+='<text x="'+(mx+mw/2)+'" y="'+(my+17)+'" text-anchor="middle" font-size="'+(mw>78?11:10)+'" fill="#fff" font-weight="700">'+m.label+'</text>';
+    // slot number
+    s+='<text x="'+(mx+mw/2)+'" y="'+(my+28)+'" text-anchor="middle" font-size="7" fill="rgba(255,255,255,.8)">Slot '+m.slot+'</text>';
+    // sub description
+    s+='<text x="'+(mx+mw/2)+'" y="'+(my+50)+'" text-anchor="middle" font-size="7.5" fill="'+m.fill+'" font-weight="600">'+m.sub+'</text>';
+    // LED indicators
+    var ledN=m.id==='CPU'?3:m.id==='CMDP'?2:4;
+    var ledSp=(mw-14)/(ledN+1);
+    for(var i=0;i<ledN;i++){s+='<circle cx="'+(mx+7+ledSp*(i+1))+'" cy="'+(my+68)+'" r="3" fill="#1D9E75" opacity=".85"/>';}
+    // Terminal block (field wiring bornes) — only for I/O modules
+    if(m.id!=='CPU'&&m.id!=='CMDP'){
+      var tN=m.id.indexOf('AI')>=0||m.id.indexOf('AQ')>=0?8:16;
+      var maxT=Math.floor((mw-8)/4);
+      var tSp=(mw-8)/Math.min(tN,maxT);
+      for(var j=0;j<Math.min(tN,maxT);j++){
+        s+='<rect x="'+(mx+4+tSp*j)+'" y="'+(my+MOD_H-24)+'" width="'+(tSp*0.7)+'" height="10" rx="1" fill="'+m.fill+'" opacity=".55"/>';
+      }
+      s+='<text x="'+(mx+mw/2)+'" y="'+(my+MOD_H-5)+'" text-anchor="middle" font-size="6" fill="'+m.fill+'" opacity=".7">bornes campo</text>';
+    }
+    s+='</g>';
+    // Backplane connector lug
+    s+='<rect x="'+(mx+mw/2-12)+'" y="'+(busY-2)+'" width="24" height="10" rx="2" fill="'+m.fill+'" opacity=".9"/>';
+  });
+  // BACKPLANE BUS BAR
+  var bx1=mods[0].x-2, bx2=mods[mods.length-1].x+mods[mods.length-1].w+2;
+  s+='<rect x="'+bx1+'" y="'+busY+'" width="'+(bx2-bx1)+'" height="'+BUS_H+'" rx="3" fill="url(#bpGrd)"/>';
+  s+='<text x="'+((bx1+bx2)/2)+'" y="'+(busY+BUS_H/2+4)+'" text-anchor="middle" font-size="7.5" fill="#fff" font-weight="bold" letter-spacing=".5">BACKPLANE BUS — ET200SP</text>';
+  // ── CABLES ──────────────────────────────────────────────────────────────────
+  var cy=busY+BUS_H+4;
+  // ── CABLE 1: Profibus DP (de CMDP hacia la derecha) ──
+  var cm=mods.find(function(m){return m.id==='CMDP';}), dpY=TOP+50;
+  s+='<line x1="'+(cm.x+cm.w)+'" y1="'+dpY+'" x2="'+(W-8)+'" y2="'+dpY+'" stroke="#1B5FAB" stroke-width="7" stroke-linecap="round" opacity=".65"/>';
+  s+='<line x1="'+(cm.x+cm.w)+'" y1="'+dpY+'" x2="'+(W-8)+'" y2="'+dpY+'" stroke="#6FA3DB" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="7 5"/>';
+  s+='<circle cx="'+(cm.x+cm.w)+'" cy="'+dpY+'" r="5.5" fill="#1B5FAB" stroke="#fff" stroke-width="1"/>';
+  s+='<text x="'+(cm.x+cm.w+10)+'" y="'+(dpY-5)+'" font-size="8.5" fill="#1B5FAB" font-weight="bold">→ Profibus DP 187.5 kbit/s — 7 esclavos remotos</text>';
+  s+='<text x="'+(cm.x+cm.w+10)+'" y="'+(dpY+8)+'" font-size="7" fill="#4A6A8A">LCB4.1(DP3) · LCB4.2(DP4) · LCB4.3(DP5) · LCB5.1(DP6) · LCB5.2(DP7) · LCB4.RF1(DP8) · LCB4.RF3(DP9)</text>';
+  // ── CABLE 2: Ethernet (de CPU hacia la izquierda) ──
+  var cpu=mods.find(function(m){return m.id==='CPU';}), ethY=TOP+50;
+  s+='<line x1="'+PAD+'" y1="'+ethY+'" x2="'+(cpu.x)+'" y2="'+ethY+'" stroke="#4A42A8" stroke-width="6" stroke-linecap="round" opacity=".65"/>';
+  s+='<line x1="'+PAD+'" y1="'+ethY+'" x2="'+(cpu.x)+'" y2="'+ethY+'" stroke="#9490E8" stroke-width="2" stroke-linecap="round" stroke-dasharray="7 4"/>';
+  s+='<circle cx="'+(cpu.x)+'" cy="'+ethY+'" r="5" fill="#4A42A8" stroke="#fff" stroke-width="1"/>';
+  s+='<text x="'+(PAD+4)+'" y="'+(ethY-5)+'" font-size="8" fill="#4A42A8" font-weight="bold">← Ethernet — 192.168.3.31</text>';
+  s+='<text x="'+(PAD+4)+'" y="'+(ethY+8)+'" font-size="7" fill="#6B6960">HMI TP1200 · Router HF9606 · DTU1 4G</text>';
+  // ── CABLE 3: DI (5 módulos → campo, verde) ──
+  var diMods=mods.filter(function(m){return m.id.endsWith('DI');});
+  var diSubs=['M1-5 + ESB','M6-10','M11-15','M16-17','sensores'];
+  diMods.forEach(function(dm,i){
+    var xc=dm.x+dm.w/2;
+    // vaina exterior (sheath)
+    s+='<line x1="'+xc+'" y1="'+cy+'" x2="'+xc+'" y2="'+(cy+62)+'" stroke="#0A5C3A" stroke-width="10" stroke-linecap="round" opacity=".22"/>';
+    // conductores interiores
+    [-4.5,-2,0,2,4.5].forEach(function(off,wi){
+      s+='<line x1="'+(xc+off)+'" y1="'+cy+'" x2="'+(xc+off)+'" y2="'+(cy+58)+'" stroke="#107857" stroke-width="1.6" stroke-linecap="round" opacity="'+(wi===2?1:0.55)+'"/>';
+    });
+    // conector de extremo
+    s+='<rect x="'+(xc-9)+'" y="'+(cy+54)+'" width="18" height="9" rx="2.5" fill="#107857" opacity=".85" stroke="#0A5C3A" stroke-width="1"/>';
+    s+='<text x="'+xc+'" y="'+(cy+74)+'" text-anchor="middle" font-size="7.5" fill="#107857" font-weight="bold">'+diSubs[i]+'</text>';
+  });
+  var diGx=(diMods[0].x+diMods[diMods.length-1].x+diMods[diMods.length-1].w)/2;
+  s+='<line x1="'+(diMods[0].x+10)+'" y1="'+(cy+82)+'" x2="'+(diMods[diMods.length-1].x+diMods[diMods.length-1].w-10)+'" y2="'+(cy+82)+'" stroke="#107857" stroke-width="1" stroke-dasharray="4 3" opacity=".4"/>';
+  s+='<text x="'+diGx+'" y="'+(cy+93)+'" text-anchor="middle" font-size="8.5" fill="#0A5C3A" font-weight="bold">← 80 DI — cables KVVP 4×1.0 / 2×1.0 — señales de campo</text>';
+  // ── CABLE 4: DQ (2 módulos → relés KB, violeta) ──
+  var dqMods=mods.filter(function(m){return m.id.endsWith('DQ');});
+  var dqSubs=['1KB–16KB → KM','17KB + aux.'];
+  dqMods.forEach(function(dm,i){
+    var xc=dm.x+dm.w/2;
+    s+='<line x1="'+xc+'" y1="'+cy+'" x2="'+xc+'" y2="'+(cy+62)+'" stroke="#35308A" stroke-width="10" stroke-linecap="round" opacity=".22"/>';
+    [-5,-2,1,4].forEach(function(off,wi){
+      s+='<line x1="'+(xc+off)+'" y1="'+cy+'" x2="'+(xc+off)+'" y2="'+(cy+58)+'" stroke="#4A41A5" stroke-width="1.7" stroke-linecap="round" opacity="'+(wi===1||wi===2?1:0.55)+'"/>';
+    });
+    s+='<rect x="'+(xc-9)+'" y="'+(cy+54)+'" width="18" height="9" rx="2.5" fill="#4A41A5" opacity=".85" stroke="#35308A" stroke-width="1"/>';
+    s+='<text x="'+xc+'" y="'+(cy+74)+'" text-anchor="middle" font-size="7.5" fill="#4A41A5" font-weight="bold">'+dqSubs[i]+'</text>';
+  });
+  var dqGx=(dqMods[0].x+dqMods[dqMods.length-1].x+dqMods[dqMods.length-1].w)/2;
+  s+='<line x1="'+(dqMods[0].x+8)+'" y1="'+(cy+82)+'" x2="'+(dqMods[dqMods.length-1].x+dqMods[dqMods.length-1].w-8)+'" y2="'+(cy+82)+'" stroke="#4A41A5" stroke-width="1" stroke-dasharray="4 3" opacity=".4"/>';
+  s+='<text x="'+dqGx+'" y="'+(cy+93)+'" text-anchor="middle" font-size="8.5" fill="#35308A" font-weight="bold">→ 24 DQ — relés KB → contactores KM — arranque motores 1–17</text>';
+  // ── CABLE 5: AI (par trenzado apantallado, ámbar) ──
+  var ai=mods.find(function(m){return m.id==='1AI';});
+  if(ai){var xc=ai.x+ai.w/2;
+    s+='<line x1="'+xc+'" y1="'+cy+'" x2="'+xc+'" y2="'+(cy+52)+'" stroke="#7A4700" stroke-width="9" stroke-linecap="round" opacity=".18"/>';
+    // apantallado (trenza exterior)
+    s+='<line x1="'+xc+'" y1="'+cy+'" x2="'+xc+'" y2="'+(cy+50)+'" stroke="#B8810A" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="2 3" opacity=".4"/>';
+    // par interior
+    [-2.5,2.5].forEach(function(off){s+='<line x1="'+(xc+off)+'" y1="'+cy+'" x2="'+(xc+off)+'" y2="'+(cy+48)+'" stroke="#7A4700" stroke-width="2" stroke-dasharray="7 4" stroke-linecap="round" opacity=".9"/>';});
+    s+='<rect x="'+(xc-8)+'" y="'+(cy+44)+'" width="16" height="9" rx="2.5" fill="#7A4700" opacity=".8" stroke="#5C3500" stroke-width="1"/>';
+    s+='<text x="'+xc+'" y="'+(cy+65)+'" text-anchor="middle" font-size="7.5" fill="#7A4700" font-weight="bold">← 8 AI 4-20mA</text>';
+    s+='<text x="'+xc+'" y="'+(cy+76)+'" text-anchor="middle" font-size="6.5" fill="#6B6960">ORP/pH/LT</text>';
+    s+='<text x="'+xc+'" y="'+(cy+86)+'" text-anchor="middle" font-size="6.5" fill="#6B6960">KVVP 2×1.0 ≋</text>';
+  }
+  // ── CABLE 6: AQ (par trenzado, rojo) ──
+  var aq=mods.find(function(m){return m.id==='1AQ';});
+  if(aq){var xc=aq.x+aq.w/2;
+    s+='<line x1="'+xc+'" y1="'+cy+'" x2="'+xc+'" y2="'+(cy+52)+'" stroke="#9B2020" stroke-width="9" stroke-linecap="round" opacity=".18"/>';
+    s+='<line x1="'+xc+'" y1="'+cy+'" x2="'+xc+'" y2="'+(cy+50)+'" stroke="#CC4040" stroke-width="4" stroke-linecap="round" stroke-dasharray="2 3" opacity=".4"/>';
+    [-2.5,2.5].forEach(function(off){s+='<line x1="'+(xc+off)+'" y1="'+cy+'" x2="'+(xc+off)+'" y2="'+(cy+48)+'" stroke="#9B2020" stroke-width="2" stroke-dasharray="7 4" stroke-linecap="round" opacity=".9"/>';});
+    s+='<rect x="'+(xc-8)+'" y="'+(cy+44)+'" width="16" height="9" rx="2.5" fill="#9B2020" opacity=".8" stroke="#6B1414" stroke-width="1"/>';
+    s+='<text x="'+xc+'" y="'+(cy+65)+'" text-anchor="middle" font-size="7.5" fill="#9B2020" font-weight="bold">→ 2 AQ 4-20mA</text>';
+    s+='<text x="'+xc+'" y="'+(cy+76)+'" text-anchor="middle" font-size="6.5" fill="#6B6960">↑ vel. VFD M17</text>';
+    s+='<text x="'+xc+'" y="'+(cy+86)+'" text-anchor="middle" font-size="6.5" fill="#6B6960">YJVR 2×1.0 ≋</text>';
+  }
+  s+='</svg>';
+  return s;
+}
+
+document.getElementById('pwr-diagram').innerHTML=`
+<div style="max-width:1100px">
+<div class="pow-row" style="align-items:flex-start;gap:20px;margin-bottom:22px">
+  <div class="pow-col" style="min-width:230px">
+    ${pn('LCP51','<span class="b b-pwr">ENTRADA</span>')}
+    <div class="arrow-down">▼</div>
+    ${pn('0QF','<span class="b b-prot">125A/3P</span>')}
+    <div class="arrow-down">▼</div>
+    ${pn('TR1','<span class="b b-pwr">440/220V</span>')}
+    <div class="arrow-down">▼</div>
+    ${pn('50QF','<span class="b b-prot">20A/2P</span>')}
+    <div class="arrow-down">▼</div>
+    <div class="pow-row" style="gap:8px;flex-wrap:nowrap">
+      <div class="pow-col" style="min-width:0">
+        ${pn('51QF','<span class="b b-prot">10A</span>')}
+        <div class="arrow-down">▼</div>
+        ${bus('51L','Señales')}
+      </div>
+      <div class="pow-col" style="min-width:0">
+        ${pn('52QF','<span class="b b-prot">10A</span>')}
+        <div class="arrow-down">▼</div>
+        ${pn('AD1')}
+        <div class="arrow-down">▼</div>
+        <div class="pow-row" style="gap:5px;flex-wrap:nowrap">
+          <div class="pow-col" style="min-width:0">${pn('1F','<span class="b b-prot">4A</span>')}<div class="arrow-down">▼</div>${bus('L1P','PLC')}</div>
+          <div class="pow-col" style="min-width:0">${pn('2F','<span class="b b-prot">4A</span>')}<div class="arrow-down">▼</div>${bus('L2P','Instr.')}</div>
+        </div>
+      </div>
+      <div class="pow-col" style="min-width:0">
+        ${pn('53QF','<span class="b b-prot">10A</span>')}
+        <div class="arrow-down">▼</div>
+        ${pn('AD2')}
+        <div class="arrow-down">▼</div>
+        ${pn('3F','<span class="b b-prot">4A</span>')}
+        <div class="arrow-down">▼</div>
+        ${bus('L3P','HMI/Red')}
+      </div>
+      <div class="pow-col" style="min-width:0">
+        ${pn('54QF','<span class="b b-prot">10A</span>')}
+        <div class="arrow-down">▼</div>
+        ${bus('54L','Mando KM')}
+      </div>
+    </div>
+  </div>
+  <div class="pow-col" style="min-width:200px">
+    <h4 class="sh" style="margin-top:0">Red — L3+ / Ethernet</h4>
+    ${['TP1200','EH1','HF9606','DTU1'].map(id=>`<div class="pnode" style="padding:7px 10px;margin-bottom:4px" onclick="showDetail('${id}')"><div class="pn-id">${id}</div><div class="pn-sub">${N[id]?.ip?'IP '+N[id].ip+' — ':''} ${N[id]?.sub?.substring(0,45)||''}</div></div>`).join('')}
+    <h4 class="sh">Profibus DP</h4>
+    ${DP_SLAVES.map(s=>`<div class="pnode" style="padding:5px 10px;margin-bottom:3px;border-color:var(--viL)"><div class="pn-id" style="color:var(--vi)">${s.id}</div><div class="pn-sub">${s.nm}</div></div>`).join('')}
+  </div>
+</div>
+<h4 class="sh" style="margin-top:4px">Rack ET200SP — L1+ 24 VDC · módulos e interconexiones (clic en módulo = ficha)</h4>
+<div style="overflow-x:auto;border-radius:10px;border:1px solid var(--line);background:#fff;padding:10px 14px 8px">
+  ${rackSVG()}
+</div>
+</div>`;
+
+// ── Motors table ──────────────────────────────────────────
+const TIPO_LBL={1:'Tipo 1 (1F)',2:'Tipo 2 (3F)',3:'Tipo 3 (3F+FR)',4:'VFD'};
+const TIPO_CLS={1:'t1',2:'t2',3:'t3',4:'t4'};
+let motFil='all',motTxt='';
+function renderMotors(){
+  document.getElementById('mot-body').innerHTML=MOTORS.filter(m=>{
+    if(motFil!=='all'&&String(m.tp)!==motFil)return false;
+    if(motTxt){const h=[m.n,m.qf,m.km,m.fr,m.dq,m.campo,m.cable,m.term,m.dir,m.dik,m.dif,m.qfm,m.kmm,TIPO_LBL[m.tp]].join(' ').toLowerCase();if(!h.includes(motTxt.toLowerCase()))return false;}
+    return true;
+  }).map(m=>`<tr onclick="showMotorDetail(${m.n})">
+    <td><b>${m.n}</b></td>
+    <td><span class="b ${TIPO_CLS[m.tp]}">${TIPO_LBL[m.tp]}</span></td>
+    <td><span class="m">${m.qf}</span><br><span class="note">${m.qfm}</span></td>
+    <td><span class="m">${m.km}</span><br><span class="note">${m.kmm}</span></td>
+    <td><span class="note">${m.fr}</span></td>
+    <td><span class="m">${m.dq}</span><br><span class="addr">${m.dqa}</span></td>
+    <td><span class="addr">${m.dir}</span></td>
+    <td><span class="addr">${m.dik}</span></td>
+    <td><span class="addr">${m.dif}</span></td>
+    <td>${m.campo.includes('Verificar')?`<span class="warn">⚠ ${m.campo}</span>`:m.campo}</td>
+    <td><span class="m">${m.cable}</span></td>
+    <td><span class="m">${m.term}</span></td>
+  </tr>`).join('');
+}
+renderMotors();
+document.querySelectorAll('[data-mf]').forEach(b=>b.addEventListener('click',()=>{motFil=b.dataset.mf;document.querySelectorAll('[data-mf]').forEach(x=>x.classList.toggle('on',x.dataset.mf===motFil));renderMotors();}));
+document.getElementById('mot-f').addEventListener('input',e=>{motTxt=e.target.value;renderMotors();});
+
+// ── PLC I/O ───────────────────────────────────────────────
+const SIG_LBL={remote:'🎛 Remoto',run:'▶ Marcha',fault:'🔴 Falla',esb:'🛑 Emergencia',sensor:'📡 Sensor',spare:'— Reserva'};
+let ioFil='all',ioTxt='';
+function renderIO(){
+  let html='';
+  const t=ioTxt.toLowerCase();
+  const show=x=>ioFil==='all'||ioFil===x;
+
+  if(show('DI')){
+    ['1DI','2DI','3DI','4DI','5DI'].forEach(mod=>{
+      const rows=DI_RAW.filter(([id,m])=>m===mod).filter(([id,m,name,sub,addr,motor])=>!t||[id,m,name,sub,addr,motor].join(' ').toLowerCase().includes(t));
+      if(!rows.length)return;
+      html+=`<h4 class="sh">${mod} — ${N[mod]?.name.split('—')[1]?.trim()||''}</h4>`;
+      html+=`<div class="tw"><table><thead><tr><th>Canal</th><th>Señal</th><th>Addr.</th><th>Motor</th><th>Tipo</th><th>Descripción</th></tr></thead><tbody>`;
+      rows.forEach(([id,m,name,sub,addr,motor,sig])=>{
+        html+=`<tr onclick="showDetail('${id}')"><td><span class="m">${id}</span></td><td>${name}</td><td><span class="addr">${addr}</span></td><td>${motor>0?`<b>${motor}</b>`:'<span class="note">—</span>'}</td><td>${SIG_LBL[sig]||sig}</td><td class="note">${sub}</td></tr>`;
+      });
+      html+='</tbody></table></div>';
+    });
+  }
+
+  if(show('DQ')){
+    ['1DQ','2DQ'].forEach(mod=>{
+      const rows=DQ_RAW.filter(([id,m])=>m===mod).filter(([id,m,name,sub,addr,motor])=>!t||[id,m,name,sub,addr,motor].join(' ').toLowerCase().includes(t));
+      if(!rows.length)return;
+      html+=`<h4 class="sh">${mod} — ${N[mod]?.name.split('—')[1]?.trim()||''}</h4>`;
+      html+=`<div class="tw"><table><thead><tr><th>Canal</th><th>Señal</th><th>Addr.</th><th>Motor</th><th>Descripción</th></tr></thead><tbody>`;
+      rows.forEach(([id,m,name,sub,addr,motor])=>{
+        html+=`<tr onclick="showDetail('${id}')"><td><span class="m">${id}</span></td><td>${name}</td><td><span class="addr">${addr}</span></td><td>${motor>0?`<b>${motor}</b>`:'<span class="note">—</span>'}</td><td class="note">${sub}</td></tr>`;
+      });
+      html+='</tbody></table></div>';
+    });
+  }
+
+  if(show('AI')){
+    const rows=AI_RAW.filter(([id,m,name,sub,addr,tag,cable])=>!t||[id,m,name,sub,addr,tag,cable].join(' ').toLowerCase().includes(t));
+    if(rows.length){
+      html+=`<h4 class="sh">1AI — Entradas analógicas 4-20mA (Slot 10)</h4>`;
+      html+=`<div class="tw"><table><thead><tr><th>Canal</th><th>TAG</th><th>Descripción</th><th>Addr.</th><th>Bus alim.</th><th>Cable</th></tr></thead><tbody>`;
+      rows.forEach(([id,m,name,sub,addr,tag,cable,bus])=>{
+        html+=`<tr onclick="showDetail('${id}')"><td><span class="m">${id}</span></td><td><b>${tag}</b></td><td>${name.split('—').slice(1).join('—').trim()||name}</td><td><span class="addr">${addr}</span></td><td><span class="b b-pwr">${bus}</span></td><td class="note">${cable}</td></tr>`;
+      });
+      html+='</tbody></table></div>';
+    }
+  }
+
+  if(show('AQ')){
+    if(!t||'1AQ velocidad variador VFD ACS310 QW'.toLowerCase().includes(t)||t.includes('aq')){
+      html+=`<h4 class="sh">1AQ — Salidas analógicas (Slot 11)</h4>`;
+      html+=`<div class="tw"><table><thead><tr><th>Canal</th><th>Descripción</th><th>Addr.</th><th>Motor</th><th>Destino</th></tr></thead><tbody>`;
+      [N['1AQ.1'],N['1AQ.2']].forEach(nd=>{
+        html+=`<tr onclick="showDetail('${nd.id}')"><td><span class="m">${nd.id}</span></td><td>${nd.name.split('—').slice(1).join('—').trim()||nd.name}</td><td><span class="addr">${nd.addr}</span></td><td>${nd.motor>0?`<b>${nd.motor}</b>`:'<span class="note">—</span>'}</td><td class="note">${nd.sub}</td></tr>`;
+      });
+      html+='</tbody></table></div>';
+    }
+  }
+  document.getElementById('io-content').innerHTML=html||'<div class="note" style="padding:20px">Sin resultados</div>';
+}
+renderIO();
+document.querySelectorAll('[data-io]').forEach(b=>b.addEventListener('click',()=>{ioFil=b.dataset.io;document.querySelectorAll('[data-io]').forEach(x=>x.classList.toggle('on',x.dataset.io===ioFil));renderIO();}));
+document.getElementById('io-f').addEventListener('input',e=>{ioTxt=e.target.value;renderIO();});
+
+// ── Network ───────────────────────────────────────────────
+const ETH=[
+  {id:'CPU',nm:'CPU ET200SP 1512SP-1 PN',ip:'192.168.3.31',sub:'PLC maestro del sistema RO'},
+  {id:'TP1200',nm:'HMI TP1200 12"',ip:'192.168.3.30',sub:'Pantalla táctil operación proceso'},
+  {id:'HF9606',nm:'Router HF9606',ip:'192.168.3.254',sub:'Gateway WAN Ethernet'},
+  {id:'DTU1',nm:'Módem DTU1 4G',ip:'192.168.3.253',sub:'Acceso remoto celular'},
+  {id:'EH1',nm:'Switch EH1',ip:'192.168.3.x',sub:'Switch local 8p dentro del tablero'},
+  {id:'FIBER',nm:'Fibra /01E01',ip:'(cliente)',sub:'2 hilos ópticos → cliente externo'},
+];
+document.getElementById('net-eth').innerHTML=ETH.map(d=>`<div class="ncard" onclick="showDetail('${d.id}')"><div class="nc-id">${d.id}</div><div class="nc-nm">${d.nm}</div><div class="nc-ip">${d.ip}</div><div class="nc-sub">${d.sub}</div></div>`).join('');
+document.getElementById('net-dp').innerHTML=DP_SLAVES.map(s=>`<div class="dp-row"><span class="dp-id">${s.id}</span><span class="dp-nm">${s.nm}</span><span class="dp-addr">${s.addr}</span></div>`).join('');
+
+// ── Field wiring ──────────────────────────────────────────
+const TYPE_B={'Potencia motor 3F':'b-prot','Potencia 1F':'b-prot','Control 24VDC':'b-plc','Analógico 4-20mA':'b-field','Digital DI':'b-plc','Profibus':'b-net','Seguridad DI':'b-warn','Analógico AQ':'b-field','VFD':'t4','Control':'b-plc'};
+let fldTxt='';
+function renderField(){
+  const t=fldTxt.toLowerCase();
+  document.getElementById('fld-body').innerHTML=FIELD.filter(f=>!t||[f.term,f.pin,f.sig,f.dest,f.cable,f.tipo,f.plc].join(' ').toLowerCase().includes(t)).map(f=>`<tr><td><span class="m">${f.term}</span></td><td class="note">${f.pin}</td><td>${f.sig}</td><td><b>${f.dest}</b></td><td class="note">${f.cable}</td><td><span class="b ${TYPE_B[f.tipo]||'b-field'}">${f.tipo}</span></td><td><span class="addr">${f.plc}</span></td></tr>`).join('');
+}
+renderField();
+document.getElementById('fld-f').addEventListener('input',e=>{fldTxt=e.target.value;renderField();});
+
+// ── Close detail ──────────────────────────────────────────
+document.getElementById('det-close').addEventListener('click',()=>document.getElementById('det').classList.remove('open'));
+</script>
+</body>
+</html>

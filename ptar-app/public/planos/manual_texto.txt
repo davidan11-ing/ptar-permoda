@@ -1,0 +1,3037 @@
+===== PÁGINA 1 =====
+MANUAL DE OPERACION : PLANTA DE 
+TRATAMIENTO DE AGUAS RESIDUALES 
+ 
+ 
+ 
+ 
+PROYECTO: PERMODA LTDA 
+CLEAN WATER TECHNOLOGY
+
+===== PÁGINA 2 =====
+ÍNDICE 
+1 OBJETIVO ................................ ................................ ................................ ....................... 5 
+2 SECCIÓN DESCRIPTIVA ................................ ................................ ................................  6 
+2.1 Bases de diseño ................................ ................................ ................................ .......... 10 
+2.2 Parámetros a cumplir del agua residual tratada ................................ .......................... 11 
+2.3 Funciones del personal operativo de la PTAR ................ ¡Error! Marcador no definido. 
+3 PRETRATAMIENTO................................ ............................. ¡Error! Marcador no definido. 
+3.1 Propósito general ................................ ........................... ¡Error! Marcador no definido. 
+3.2 Actividades preliminares ................................ ................ ¡Error! Marcador no definido. 
+3.3 Procedimientos rutinarios ................................ ............... ¡Error! Marcador no definido. 
+3.4 Control de la sección de pretratamiento ......................... ¡Error! Marcador no definido. 
+3.5 Mantenimiento General ................................ .................. ¡Error! Marcador no definido. 
+3.6 Paro de operaciones ................................ ...................... ¡Error! Marcador no definido. 
+3.7 Consideraciones Generales de Seguridad ..................... ¡Error! Marcador no definido. 
+4 SISTEMA GEM ................................ ................................ ..... ¡Error! Marcador no definido. 
+4.1 Propósito general ................................ ........................... ¡Error! Marcador no definido. 
+4.2 Procedimientos específicos preparación que deberán realizar antes del arranque del 
+Sistema GEM................................ ................................ ............ ¡Error! Marcador no definido. 
+4.3 Mantenimiento a compresor Hydrovane (Gardner Denver)¡Error! Marcador no 
+definido. 
+4.4 Controles eléctricos ................................ ........................ ¡Error! Marcador no definido. 
+4.5 Operación del sistema ................................ .................... ¡Error! Marcador no definido. 
+4.6 Arranque del sistema ................................ ..................... ¡Error! Marcador no definido. 
+4.7 Paro del sistema ................................ ............................ ¡Error! Marcador no definido. 
+4.7.1 Paro del sistema para efectuar un servicio o una reparación¡Error! Marcador no 
+definido. 
+4.8 Guía de Solución a Problemas ................................ ....... ¡Error! Marcador no definido. 
+4.9 Seguridad ................................ ................................ ....... ¡Error! Marcador no definido. 
+4.10 Química superficial ................................ ......................... ¡Error! Marcador no definido. 
+4.11 Ajuste de pH ................................ ................................ .. ¡Error! Marcador no definido. 
+4.12 Coagulantes ................................ ................................ ... ¡Error! Marcador no definido. 
+4.13 Floculantes (polímeros) ................................ .................. ¡Error! Marcador no definido. 
+4.14 Granular ................................ ................................ ......... ¡Error! Marcador no definido.
+
+===== PÁGINA 3 =====
+4.15 Pruebas de jarras ................................ ........................... ¡Error! Marcador no definido. 
+4.16 Solución de problemas en la dosificación de químicos ... ¡Error! Marcador no definido. 
+4.17 Cuadro de cálculo para inyección químicos en ppm ....... ¡Error! Marcador no definido. 
+4.18 Perfil de condición óptima de dosificación de químicos para la operación del Sistema 
+GEM ¡Error! Marcador no definido. 
+5 SISTEMA DESHIDRATADOR DE LODOS CON SWINGMILL¡Error! Marcador no 
+definido. 
+5.1 Propósito general ................................ ........................... ¡Error! Marcador no definido. 
+5.2 Actividades preliminares ................................ ................ ¡Error! Marcador no definido. 
+5.3 Procedimientos rutinarios ................................ ............... ¡Error! Marcador no definido. 
+5.4 Control del Sistema ................................ ........................ ¡Error! Marcador no definido. 
+5.5 Mantenimiento ................................ ................................  ¡Error! Marcador no definido. 
+5.6 Paro de operaciones ................................ ...................... ¡Error! Marcador no definido. 
+6 REACTOR MBBR-MBR ................................ ....................... ¡Error! Marcador no definido. 
+6.1 Propósito General ................................ .......................... ¡Error! Marcador no definido. 
+1. Secuencia Revisión ................................ ........................ ¡Error! Marcador no definido. 
+6.2 Procedimientos Rutinarios................................ .............. ¡Error! Marcador no definido. 
+1. Rutina de inspección diaria ................................ ............ ¡Error! Marcador no definido. 
+6.3 Parámetros de control del proceso aerobio .................... ¡Error! Marcador no definido. 
+1. Monitoreo de la profundidad de la cama de lodos. ......... ¡Error! Marcador no definido. 
+6.4 Requerimientos para el mantenimiento de lodos aerobios¡Error! Marcador no 
+definido. 
+6.5 Evaluación del funcionamiento ................................ ....... ¡Error! Marcador no definido. 
+6.6 Fallas en el proceso ................................ ....................... ¡Error! Marcador no definido. 
+Tabla 6. Problemas en el sistema de aireación ......................... ¡Error! Marcador no definido. 
+Tabla 7. Problemas en el tanque de membranas. .................... ¡Error! Marcador no definido. 
+Tabla 8. Arrastre de sólidos en el efluente. ..............................  ¡Error! Marcador no definido. 
+Tabla 9. Abultamiento de lodos ................................ ................ ¡Error! Marcador no definido. 
+7. INTERCAMBIO IÓNICO Y OSMOSIS INVERSA ................................ ........................... 13 
+7 19 
+7.1 EL INTERCAMBIADOR DE IONES ................................ ................................ ............. 19 
+8.1.3 Instrumento ................................ ................................ ................................ ............ 37 
+8.1.4 Modo de funcionamiento ................................ ................................ ........................ 37 
+10. ANEXO I: SEGURIDAD ................................ ................................ ................................ . 66
+
+===== PÁGINA 4 =====
+10.1 Generalidades ................................ ................................ ................................ ............. 66 
+10.2 Reglas generales de seguridad ................................ ................................ ................... 66 
+10.3 Equipo de seguridad ................................ ................................ ................................ ... 67 
+10.4 Equipo de protección personal ................................ ................................ .................... 67 
+10.5 Riesgos ................................ ................................ ................................ ....................... 68 
+10.5.1 Reactores, decantador y tanques abiertos ................................ ............................. 69 
+10.6 Maquinaria ................................ ................................ ................................ .................. 69 
+10.7 Trabajo en áreas confinadas ................................ ................................ ....................... 70 
+10.8 Infección y enfermedad ................................ ................................ ...............................  70 
+10.8.1 Prevención ................................ ................................ ................................ ............. 71 
+10.9 Manejo de reactivos químicos ................................ ................................ ..................... 71 
+10.9.1 Laboratorio ................................ ................................ ................................ ............. 72 
+10.10 Gases y líquidos explosivos ................................ ................................ ................... 73 
+10.10.1 Prevención de riesgos de explosión ................................ ................................ ... 73 
+10.10.2 Elementos para un programa de respuesta y operación de emergencia ............ 74 
+10.10.3 Fallas de proceso y equipo ................................ ................................ ................. 75 
+10.10.4 Desastres naturales ................................ ................................ ........................... 76 
+10.10.5 Incendio ................................ ................................ ................................ ............. 77 
+10.10.6 Materiales y sustancias tóxicas ................................ ................................ .......... 77 
+11. REFERENCIAS ................................ ................................ ................................ ............. 79
+
+===== PÁGINA 5 =====
+1 OBJETIVO 
+ 
+El presente Manual de Operación proporciona al personal encargado de la operación y control 
+de la planta de tratamiento de aguas residuales (PTAR)  de la empresa PERMODA LTDA , 
+ubicada en la calle 20 # 69b -27 Bogotá, Colombia, en él se encuentra una comprensión acerca 
+del proceso y las operaciones unitarias que la integran.  
+Tomando en cuenta, que el manual de operación contiene los conceptos fundamentales sobre 
+el proceso y describe los métodos para operar adecuadamente la PTAR, su información deberá 
+ser actualizada conforme se realicen cambios en los procedimientos de operación y 
+mantenimiento de la planta , para que éste sea un documento básico , de apoyo para la 
+operación y la capacitación, así como de referencia sobre el proyecto. Constituye, por lo tanto, 
+una herramienta que deberá estar al alcance del personal responsable de la planta. 
+ 
+Asimismo, lo descrito en este Manual de Operación deberá ser complementado con los 
+manuales de operación de cada uno de los equipos e instrumentos que conforman la PTAR y 
+que fueron proporcionados por los fabricantes de cada uno de ellos.
+
+===== PÁGINA 6 =====
+2 SECCIÓN DESCRIPTIVA 
+ 
+El agua conducida por los canales existentes se recolecta en el pozo de bombeo de 60m3. Este 
+pozo cuenta con dos bombas autocebantes (una en operación  y una en standby) las cuales 
+envían el agua al sistema de cribado fino de 1mm. En la criba de 1mm, el material retenido es 
+descartado hacia la tolva de la criba y el agua pasa a un segundo cribado más fino de 0.25mm 
+donde al igual que en la criba de 1mm, el material retenido es descartado y el agua filtrada cae 
+por gravedad a un tanque de recolección . Del tanque de recolección, el agua es bombeada por 
+medio de dos bombas centrifugas horizontales (una en operación, una en stand by) hacia la 
+torre de enfriamiento de tiro forzado, la cual ajusta la temperatura del agua para poder obtener 
+una buena separación en el Sistema GEM (existente) y evitar inconvenientes con los 
+microorganismos del sistema biológico.  
+ 
+De la torre de enfriamiento, el agua pasa al tanque de homogeneización; en este tanque se 
+regula el caudal, se homogenizan los contaminantes y el pH del agua , por medio del D -loop y 
+su recirculación. Desde este tanque, el agua se envía por medio del D -loop al Sistema GEM 
+150/300. El agua  tratada después del Sistema GEM 150/300 cae por gravedad al tanque 
+anoxico y posteriormente pasa al reactor aerobio MBBR-MBR. Este reactor está compuesto por 
+dos procesos, uno donde se degrada biológicamente el material contaminante presente en el 
+agua residual haciendo uso de oxígeno (MBBR) y otro tanque de filtración (MBR).  
+En su primer tanque el reactor se encuentra lleno parcialmente de bioportadores plásticos en 
+suspensión, los cuales proporcionan una mayor área para la adherencia de microorganismos 
+(requiriendo un menor volumen que un reactor aerobio convencional) y protegiendo los 
+microorganismos; mientras que el segundo tanque cuenta con un sistema de filtración por 
+medio de membrana de ultrafiltración para proporcionar un efluente constante de alta calidad 
+que genera la menor cantidad de lodos de purga biológicos. El primer tanque del reactor MBBR-
+MBR cuenta con una variante que incluye dos (2) fases, una anoxica para desnitrificar 
+(eliminación biológica de nitrógeno) y una aerobia para degradación de material orgánico y 
+nitrificación.
+
+===== PÁGINA 7 =====
+Inicialmente la mayoría de la reducción de la carga orgánica de carbono y nitrógeno del agua 
+residual ocurre en la zona aerobia (segunda fase), mientras una fracción remanente es digerida 
+en la fase de membranas. El agua filtrada pasa al tratamiento terciario complementario 
+compuesto por un intercambiador de iones y dos ósmosis inversas para la remoción de 
+cloruros, el agua permeada por la ósmosis se descarga en un tanque de reúso para que el agua 
+tratada se reincorpore en el proceso productivo y el agua de rechazo se envía provisionalmente 
+a disposición por parte del cliente.   
+ 
+Los lodos fisicoquímicos extraídos en el sistema GEM 150/300, s on enviados a deshidratación 
+por medio del DSM -01 y de allí conducidos a un secador donde por medio de una bomba de 
+calor deshumidificador, se retira el contenido de agua remanente en estos. Los lodos biológicos 
+purgados (biopelícula) serán enviados nuevamente al tanque de homogeneización por medio 
+de las bombas de recirculación de lodos del MBR, para ser retirados por el Sistema GEM como 
+lodos fisicoquímicos; de esta manera solamente se t iene un solo punto de producción de lodos 
+de desecho.  
+ 
+En resumen, el esquema del proceso que sería implementado es el siguiente: 
+ 
+• Cárcamo de bombeo (60 m3) (CBD-01) 
+• Criba Rotatoria Fina (1mm existente en planta) (CBR-01) 
+• Criba Rotatoria Fina (0.25 mm) (CBR-02) 
+• Tanque de alimentación de la torre de enfriamiento (TAQ-01) 
+• Torre de enfriamiento de tiro forzado (TDE-01) 
+• Tanque de Homogenización (HOM-01) 
+• Sistema Primario GEM (Gas Energy Mixing) modelo 150/300 (GEM-01) 
+• Reactor aerobio MBBR-MBR (RAE-01) 
+• Swingmill (DSM-01) 
+• Secador de lodos (SCD-01) 
+• Tanque de alimentación del Ósmosis inversa (TAQ-04) 
+• Intercambiador de iones 
+• Osmosis inversa para 80m3/h (ROS-01) 
+• Osmosis inversa para 20 m3/h (ROS-02) 
+• Evaporador de Triple Efecto de tiro forzado (EVP-01)
+
+===== PÁGINA 8 =====
+Figura 1. Diagrama de bloques
+
+===== PÁGINA 9 =====
+Figura 1. Diagrama de bloques
+
+===== PÁGINA 10 =====
+2.1 Bases de diseño 
+ 
+Los valores de los diferentes parámetros reportados por el cliente para el diseño de la PTAR 
+se muestran en la tabla 1.  
+ 
+Tabla 1. Calidad de agua cruda que ingresaría a la PTAR 
+ 
+PARÁMETRO VALOR UNIDADES 
+Flujo diseño     1920 m3/d 
+Temperatura 70 - 80 °C 
+Cloruros 1580 mg/L Cl 
+Dióxido de carbono 43,1 mg/L CO2 
+Nitrógeno Amoniacal 42,6 mg/L 
+Nitrato 397 mg/L N-NO3 
+Nitrito < 0,010 mg/L N-NO2 
+Nitrógeno Kjeldahl 165 mg/L N 
+Nitrógeno Total 562 mg/L N 
+Ortofosfato 9,98 mg/L P 
+Ph 9,30 Unidad 
+Sulfato 1172 mg/L SO4 
+Sulfuro < 1,00 mg/L S= 
+Aluminio 3,2 mg/L Al 
+Bario < 0,002 mg/L Ba 
+Calcio 37,5 mg/L Ca 
+Cadmio < 0,001 mg/L Cd 
+Cobalto < 0,005 mg/L Co 
+Cromo 0,028 mg/L Cr 
+Cobre 0,274 mg/L Cu 
+Hierro 1,38 mg/L Fe 
+Magnesio 17,60 mg/L Mg 
+Manganeso 1,14 mg/L Mn 
+Níquel 0,021 mg/L Ni 
+Silicio 8,86 mg Si/L 
+Estroncio 0,206 mg Sr/L 
+Zinc 0,446 mg/L Zn 
+BTX < 0,010 mg/L 
+H. Aromáticos Policíclicos (PHA) < 0,001 mg/L 
+Trihalometanos < 0,0050 mg/L 
+Aceites y Grasas 33,5 mg/L 
+Oxígeno disuelto 2,9 mg/L 
+COT 1247 mg/L
+
+===== PÁGINA 11 =====
+DBO (5 días) 1313 mg/L 
+DQO 2500 mg/L 
+Hidrocarburos totales 13 mg/L 
+Detergentes aniónicos 4,46 mg/L SAAM 
+Acidez 9,00 mg/L CaCO3 
+Alcalinidad 635 mg/L CaCO3 
+Bicarbonatos 766 mg/L HCO3 
+Carbonatos 306 mg/L CaCO3 
+Conductividad 4684 us/cm 
+Dureza Cálcica 60 mg/L CaCO3 
+Dureza Total 125 mg/L CaCO3 
+Sólidos sedimentables 3,6 ml/L 
+Sólidos suspendidos totales 496 mg/L 
+Bromuro 0,059 mg/L 
+Boro 1,85 mg B/L 
+Potasio 16,5 mg K/L 
+Sodio 1010 mg Na/L 
+Color  9500 UPC 
+Color Real 436 nm 69,98 Absorbancia 
+Color Real 525 nm 60,96 Absorbancia 
+Color Real 620 nm 38,40 Absorbancia 
+Fenoles Totales 3,45 mg/L 
+Fósforo Total 118,6 mg P/L 
+AOX 3,9 mg/L 
+ 
+ 
+ 
+2.2 Parámetros a cumplir del agua residual tratada  
+ 
+La PTAR podrá cumplir con lo señalado en la tabla 2. teniendo en cuenta que las remociones 
+se garantizan bajo los parámetros del afluente y la experiencia de CWT. Si hay algún cambio 
+de proceso de operación en planta que no haya sido notificado a CWT, estas remociones no 
+serán garantizadas:
+
+===== PÁGINA 12 =====
+Tabla 2. Parámetros del agua residual tratada 
+ 
+PARÁMETRO UNIDADES CALIDAD DE 
+REÚSO 
+VALOR NORMA 
+(631/2015) 
+DQO mg/l < 100,00 600 
+DBO5 mg/l < 35,00 300 
+pH   5,50 - 9,00 6 -9 
+Temperatura °C < 35,00 - 
+Sólidos suspendidos totales mg/l 35,00 75 
+Sólidos disueltos totales mg/l < 500,00 - 
+Sólidos sedimentables ml/l < 15,00 3 
+Grasas y aceites totales mg/l < 10,00 30 
+Boro mg/l < 0,75 - 
+Cloro residual µg/l < 0,10 - 
+Cloruros mg/l < 400,00 1.200 
+Color Pt/Co < 100,00 - 
+Espumas mm < 7,00 - 
+Fluoruros mg/l < 1,50 - 
+Oxígeno disuelto mg/l > 4,00 - 
+Nitratos + Nitritos mg/l < 6,00 - 
+Nitrógeno total no amoniacal mg/l < 5,0 - 
+Fósforo mg/l < 2,00 - 
+Sulfatos mg/l < 350,00 - 
+Sulfuros mg/l < 1,00 1,0 
+Substancias Activas al Azul de Metileno 
+(SAAM ó LAS) mg/l < 0,50 - 
+Metales pesados/tóxicos  
+Aluminio mg/l < 0,10 - 
+Arsénico mg/l < 0,50 - 
+Cadmio mg/l < 0,01 0,02 
+Cianuro mg/l < 0,20 - 
+Cobre mg/l < 1,00 1,0 
+Cromo total mg/l < 0,10 0,50 
+Cromo hexavalente mg/l < 0,05 - 
+Cromo trivalente mg/l < 0,10 - 
+Hierro mg/l < 0,10 - 
+Manganeso mg/l < 0,30 - 
+Mercurio mg/l < 0,001 - 
+Níquel mg/l < 0,20 0,50 
+Plomo mg/l < 0,05 - 
+Selenio mg/l < 0,01 -
+
+===== PÁGINA 13 =====
+Zinc mg/l < 3,00 3,00 
+Biocidas  
+Organoclorados mg/l < 1,50 - 
+Microbiología  
+Organismos Coliformes Fecales NMP/100ml 1000,00 - 
+ 
+ 
+1. INTERCAMBIO IÓNICO Y OSMOSIS INVERSA 
+ 
+ 
+El agua de alimentación del intercambiador de iones es agua de permeado MBR, la 
+capacidad de diseño es de 80 m3 / h, la calidad específica del agua se muestra en la 
+siguiente tabla: 
+pH COD Ca2+ Mg2+ CLO- 
+6-8 50 ≤33mg/L ≤16.5mg/L ≤0.1mg/L 
+ 
+ 
+El flujo de alimentación del diseño del sistema de 1ª ósmosis inversa es de 80 m3 / h, la 
+recuperación es del 75%, el agua de permeado es de 60 m3 / h, la conductividad del 
+permeado de la 1ª ósmosis inversa es normalmente inferior a 500 us/cm. 
+ 
+En el 2ª sistema de ósmosis inversa la alimentación de diseño del de 20 m3 / h, la 
+recuperación es del 80 %, el agua de permeado de 2ª ósmosis inversa es de 16 m3 / h, la 
+conductividad del permeado de 2ª ósmosis inversa es normalmente inferior a 3000 us /cm。 
+ 
+Diagrama de flujo de control de procesos del sistema para diagramas DTI específicos, esta 
+sección será principalmente por el siguiente proceso unitario para una descripción detallada. 
+ 
+● Sistema de disolución y regeneración de resina con NaCL 
+● Filtros suavizantes 
+● Sistema de recolección y cuantificación de descarga de aguas   
+● Sistema de dosificación de desinfectante no oxidante 
+● 1º sistema de ósmosis inversa o RO1
+
+===== PÁGINA 14 =====
+● 2º sistema de ósmosis inversa o RO2 
+● Agua concentrada del 2º sistema de transferencia de ósmosis inversa RO2 
+● Sistema de limpieza química de membrana RO 
+Sobre el intercambiador de iones, los principales equipos se muestran en la siguiente 
+tabla:  
+ 
+No Tag.No. Nombre No Tag. No. Nombre 
+1 BCE-4.01A/B Bomba de alimentación 9 TAQ-4.01 Tanque de efluentes MBR 
+2 BDO-4.02A/B Bomba dosificadora de 
+NaHSO3 
+10 TAQ-4.02 Tanque de NaHSO3  
+3 BCE-4.03A/B NaCL bomba 11 TAQ-4.03 Tanque NaCL  
+4 BCE-4.04A/B Bomba suavizador 
+regenerativo  
+12 TAQ-4.04 Tanque de agua regenerativa 
+de ablandamiento 
+5 BCE-4.05A/B Bomba Regeneración  13 TAQ-4.06 CIP tanque 1 
+6 BCE-4.06 CIP Bomba  14 TAQ-4.07 CIP tanque 2 
+7 SVZ-
+4.01/4.02/4.0
+3 
+Filtro intercambiador de 
+iones 
+15 BDO-4.07 CIP Bomba dosificadora A 
+8 FTP-4.06 RO CIP Filtro seguro 16 BDO-4.08 CIP Bomba dosificadora B 
+ 
+Los principales equipos que soportan el sistema de ósmosis inversa se muestran a continuación en  
+la tabla: 
+No Tag.No. Nombre No Tag. No. Nombre 
+1 BCE-5.04 RO1 Bomba de alta 
+Presión  9 BDO-5.03A/B RO1 Dosificadora del 
+Bactericida  
+2 BCE-5.05 RO1 Bomba booster  10 BDO-5.08A/B RO2 HCL Bomba 
+dosificadora 
+3 BCE-5.07A/B RO2 Bomba de 
+Alimentación 11 BDO-5.09A/B RO2 Bomba dosificadora 
+inhibidor de incrustaciones 
+4 BCE-5.06 pH Bomba de Ajuste 
+RO2 12 BDO-5.10A/B RO2   dosificadora del 
+bactericida 
+5 BCE-5.11 RO2 Bomba de Alta 
+presión  13 FTP-5.01A/B RO1 Filtro seguro 
+6 BCE-5.12 RO2 Bomba de 
+Recirculación  14 FTP-5.07 RO2 Filtro seguro 
+7 BDO-5.01A/B RO1 HCL 
+dosificadora  15 BCE-5.13A/B Bomba de transferencia de 
+concentrado/rechazo RO2 
+8 BDO-5.02A/B 
+RO1 dosificadora 
+Inhibidor de 
+incrustaciones  
+16
+
+===== PÁGINA 15 =====
+Las válvulas automáticas de los intercambiadores de iones: 
+No
+. 
+Tag.No. Nombre No
+. 
+Tag. No. Nombre 
+1 FCV-4.01 Válvula de anfluente / 
+Influent valve of  SVZ-
+4.01 
+14 FCV-4.14 Válvula de venteo / Vent 
+valve of SVZ-4.02 
+2 FCV-4.02 Válvula de drenaje  
+superior / Up drain 
+valve of SVZ-4.01 
+15 FCV-4.15 Válvula de anfluente  / 
+Influent valve of SVZ-4.03 
+3 FCV-4.03 Válvula de enjuague  
+superior / Up wash 
+valve of SVZ-4.01 
+16 FCV-4.16 Válvula de drenaje superior  
+/ Up drain valve of SVZ -
+4.03 
+4 FCV-4.04 Válvula de drenaje 
+inferior / Down drain 
+valve of SVZ-4.01 
+17 FCV-4.17 Válvula de enjuague 
+superior /  Up wash valve of 
+SVZ-4.03 
+5 FCV-4.05 Válvula de eflu ente / 
+Effluent valve of SVZ -
+4.01 
+18 FCV-4.18 Válvula de drenaje inferior /  
+Down drain valve of SVZ -
+4.03 
+6 FCV-4.06 Válvula de enjuague 
+inferior / Down wash 
+valve of SVZ-4.01  
+19 FCV-4.19 Válvula de efluente / 
+Efluent valve of SVZ-4.03 
+7 FCV-4.07 Válvula de venteo / 
+Vent valve of SVZ -
+4.01 
+20 FCV-4.20 Válvula de enjuague inferior 
+/ Down wash valve of SVZ -
+4.03 
+8 FCV-4.08 Válvula de afluente / 
+Influent valve of SVZ -
+4.02 
+21 FCV-4.21 Válvula de venteo / Vent 
+valve of SVZ-4.03 
+9 FCV-4.09 Válvula de drenaje 
+superior  / Up drain 
+valve of SVZ-4.02 
+22 FCV-4.22 Válvula de recolección / 
+Collection valve 
+10 FCV-4.10 Válvula de enjuague 
+superior  / Up wash 
+valve of SVZ-4.02 
+23 FCV-4.23 Válvula de drenaje / Drain 
+valve 
+11 FCV-4.11 Válvula de drenaje 
+inferior / Down drain 
+valve of SVZ-4.02 
+24 FCV-4.24 Válvula de aliemntación 
+tanque CIP 1 / Feed water 
+valve for CIP tank1 
+12 FCV-4.12 Válvula de efluente / 
+Efluent valve of SVZ -
+4.02 
+25 FCV-4.25 Válvula de aliemntación 
+tanque CIP 1 / Feed water 
+valve for CIP tank2 
+13 FCV-4.13 Válvula de enjuague 
+inferior / Down wash 
+valve of SVZ-4.02 
+   
+ 
+Válvulas automáticas del sistema de osmosis inversa：
+
+===== PÁGINA 16 =====
+No
+. 
+Tag.No. Nombre No. Tag. No. Nombre 
+1 FCV5.01 1st RO Válvula de lavado 5 FCV5.05 2nd RO Válvula de lavado 
+2 FCV5.02 1st RO Válvula de salmuera 6 FCV5.06 2nd RO Válvula de 
+salmuera 
+3 FCV5.03 2nd Válvula de alimentación 7 FCV5.07 2nd RO Válvula de 
+recirculación  
+4 FCV5.04 
+Válvula de agua de 
+enfriamiento de la segunda 
+2nd RO 
+  
+ 
+ 
+Instrumentos del intercambio iónico： 
+No. Tag.No. Nombre No. Tag. No. Nombre 
+1 LT-4.01 Sensor de nivel tanque 
+efluente MBR 11 FI4.03 Rotámetro para dosificación 
+de NaCL 
+2 LT-4.04 
+sensor de nivel tanque de 
+agua regenerativa de 
+ablandamiento 
+12 FI4.04 Rotámetro tanque de agua 
+regenerativa de ablandamiento 
+3 LS4.02 Sensor de nivel tanque de 
+NaHSO3  13 FI4.05 Rotámetro agua limpia 
+4 LS4.03 Sensor de nivel para el 
+tanque de NaCL  14 PI4.01 Manómetro para bomba A de 
+alimentación  
+5 LS4.06 Sensor de nivel para 
+tanque de CIP 1  15 PI4.02 Manómetro para bomba B de 
+alimentación  
+6 LS4.07 Sensor de nivel para 
+tanque de CIP 2 16 PI4.06 Manómetro para bomba CIP 
+de alimentación  
+7 LS4.08 Sensor de nivel para 
+tanque de NaOH  17 PI4.07 Manómetro para SVZ-4.01 
+8 LS5.01 Sensor de nivel para 
+tanque de Acido  18 PI4.08 Manómetro para SVZ-4.02 
+9 PH4.06 PH trasmisor CIP 19 PI4.09 Manómetro para SVZ-4.03 
+10 OT-4.01 Medidor de ORP RO1    
+ 
+Instrumentos del sistema de ósmosis inversa： 
+ 
+No Tag.No. Nombre No Tag. No.                   Nombre
+
+===== PÁGINA 17 =====
+1 LT-5.07 
+Sensor de nivel para tanque 
+agua de Concentrado de la 
+RO1  
+20 FI-5.03 Rotámetro de permeado de 
+la 2nda etapa, 1st RO  
+2 LT-5.13 
+Sensor de nivel para tanque 
+agua de Concentrado de la 
+RO 
+21 FI-5.05 Rotámetro de 1st RO 
+concentrado/rechazo 
+3 LS-5.01 Sensor de nivel tanque de 
+Acido  22 FI-5.13 Rotámetro de la 2nd RO 
+concentrado / rechazo 
+4 LS-5.02 Sensor de nivel para tanque 
+de inhibidor 23 FI-5.14 
+Rotámetro transferencia del 
+rechazo a suavizador 
+químico 
+5 LS-5.03 Sensor de nivel tanque de 
+bactericida no oxidante 24 PI-5.01 Manómetro para RO1 filtro 
+seguro A 
+6 PT-5.01 Sensor transmisor de 
+presión para RO1 estado 1 25 PI-5.02 Manómetro para RO1 filtro 
+seguro B 
+7 PT-5.02 Sensor transmisor de 
+presión para RO2 estado 2 26 PI-5.03 Manómetro para 1st RO 
+etapa 1 salmuera 
+8 PT-5.09 Sensor transmisor RO2 27 PI-5.04 manómetro para 1st RO 
+etapa 2 salmuera 
+9 FT-5.01 Caudalímetro de 
+alimentación de RO1  28 PI-5.05 manómetro para 1st RO 
+permeado 
+10 FT-5.04 Transmisor de flujo RO1 
+salida 29 PI-5.06 manómetro para 2nd 
+alimentación bomba A  
+11 FT-5.08 Transmisor de flujo para 
+alimentación RO2 30 PI-5.07 Manómetro para la 2ª bomba 
+de alimentación B 
+12 FT-5.12 Transmisor de flujo para 
+salida RO2 31 PI-5.08 Manómetro para filtro seguro 
+RO2 
+13 PH-5.01 Transmisor de PH para 
+RO1 32 PI-5.10 Manómetro para salmuera de 
+2ª ósmosis inversa 
+14 PH-5.06 Transmisor de PH para 
+RO2 33 PI-5.11 
+Manómetro para el 2º 
+permeado de ósmosis 
+inversa 
+15 TT-5.07 Transmisor de temperatura 
+para alimentación RO2 34 PI-5.12 Manómetro para bomba de 
+trasiego de salmuera A 
+16 TT-5.09 Transmisor de temperatura 
+para reciclaje de RO2 35 PI-5.13 Manómetro para bomba de 
+trasiego de salmuera B 
+17 CT-5.02 CT transmisor para RO1 36 PAL-5.01 Interruptor de baja presión 
+para 1ª ósmosis inversa
+
+===== PÁGINA 18 =====
+18 CT-5.11 CT transmisor para RO2 37 PAL-5.08 Interruptor de baja presión 
+para 2ª ósmosis inversa 
+19 
+FI-5.02 
+Caudalímetro del 1er 
+permeado de ósmosis 
+inversa etapa 1 
+38 
+  
+ 
+Funcionamiento general 
+En l as secciones  siguientes se introducirá gradualmente la puesta en marcha, el 
+funcionamiento, la parada de los equipos de tratamiento de agua y el funcionamiento y las 
+contramedidas cuando se produzcan condiciones anormales.  
+Antes de comenzar el trabajo de operación del proceso, el operador debe estar familiarizado 
+con el principio y el propósito de diseño de cada unidad del proceso, comprender las normas 
+de seguridad y los procedimientos operativos relevantes . Además, para cada dispositivo lea 
+atentamente el manual de su producto. 
+ 
+Arranque  
+Antes de que el equipo de tratamiento de aguas residuales se ponga en marcha, verifique el 
+sistema para garantizar el funcionamiento normal y efectivo del equipo de tratamiento de 
+agua. Revise que la posición de todas las válvulas de proceso sea la correcta para su 
+operación, que los químicos a dosificar tenga n nivel suficiente para operar y todos los 
+selectores de los tableros se encuentren  en posición de accionamiento remoto.  Para 
+encender el equipo desde el HMI del tablero LCP4.1 en la pantalla “Monitor” y oprima los 
+respectivos bot ones de “Start” para cada ósmosis. Cuando todas las condiciones se 
+cumplan, estas iniciarán operación.
+
+===== PÁGINA 19 =====
+Funcionamiento normal 
+Después de que el equipo de tratamiento de agua se enciende y opera de manera normal y 
+efectiva, se deben realizar algunas operaciones de rutina para mantener el funcionamiento 
+normal del equipo de tratamiento de agua. 
+El operador debe realizar un registro todos los días, que incluye principalmente el estado de 
+funcionamiento del equipo, la inspección diaria, la calidad del agua de alimentación y de 
+producción. 
+ 
+Apagar y reiniciar 
+Evite cortes de energía repentinos. Un corte de energía repentino puede causar  daños 
+irreversibles a la membrana. 
+ 
+3.1 EL INTERCAMBIADOR DE IONES  
+ 
+1.1.1 Descripción General
+
+===== PÁGINA 20 =====
+El sistema de intercambio iónico se utiliza principalmente para eliminar los iones de 
+calcio y magnesio de las aguas residuales para evitar la formación de incrustaciones en la 
+membrana de ósmosis inversa. Este sistema se co mpone de 3 filtros (2 en funcionamiento y 
+1 en espera, cada uno con capacidad de procesamiento de 40 m3 / h), sistema de disolución 
+y regeneración de resina con NaCL, sistema de descarga de recolección y cuantificación de 
+aguas residuales de regeneración de resina, sistema de limpieza química de resina y 
+sistema de dosificación de agente reductor. 
+ 
+El sistema está configurado con tres filtros de ablandamiento SVZ -4.01, SVZ -4.02 y 
+SVZ-4.03, con dos utilizados y uno en espera. De acuerdo con la dureza de calcio de la 
+calidad del agua afluente de 100 mg / L, se calcula que cada filtro puede funcionar 
+normalmente durante aproximadamente 1 30 horas, sin embargo,  este parámetro de 
+operación debe ajustarse oportunamente de acuerdo con el cambio de la dureza total del 
+agua afluente y el envejecimiento de la resina.  Motivo por el cual es necesario realizar 
+seguimiento en la dureza de salida de los suavizadores de forma periódica. 
+7.1.2 Objetivo de control de Proceso 
+SVZ-4.01、SVZ-4.02、SVZ-4.03  
+ 
+• Asegurar el proceso de suavizado de agua y proteger a la membrana RO de 
+incrustación； 
+• La regeneración oportuna de acuerdo con las aguas de alimentación y asegurar la 
+estabilización del sistema  
+ 
+7.1.3 Instrumentos 
+Los principales instrumentos de seguimiento para filtros suavizadores incluyen: 
+ 
+Manómetros PI-4.07, PI-4.08 y PI -4.09, ya que cuando la presión aumenta repentinamente, 
+indica que hay contaminación orgánica  o microbiana  de la resina y es necesario limpiar 
+químicamente el filtro de ablandamiento con una solución de hidróxido de sodio  por medio 
+del sistema CIP a tiempo.
+
+===== PÁGINA 21 =====
+7.1.4 Modo de Operación 
+ 
+7.1.4.1 Control Automático 
+  
+En operación normal, el sistema funciona automáticamente y es comandado por el arranque 
+de la ósmosis inversa #1 . El control en automático para regenerar y sacar un filtro de 
+operación está dado por el parámetro de tiempo en operación, configurable por pantalla  y su 
+enlace con el sistema de  regeneración. La limpieza de regeneración de se puede iniciar de 
+forma manual en la pantalla táctil, seleccionando la pestaña inferior RF.  
+ 
+ 
+      Tiempo de operación/servicio 
+      Tiempo de Retrolavado 
+      Tiempo de Regeneración (adición de salmuera) 
+      Tiempo de Espera (reacción de NaCl) 
+      Tiempo de Enjuague 
+Tiempo de Recolección de salmuera 
+Tiempo de llenado con Agua Limpia 
+ 
+7.1.4.2 Control Local  
+ 
+El control local se utiliza para las operaciones iniciales de puesta en marcha, pruebas o 
+mantenimiento, u otras situaciones especiales, pues normalmente se coloca en 
+funcionamiento automático y el control por temporizadores garantiza una rotación adecuada 
+de los filtros en operación.  
+Debido a que los filtros operan de forma automática con el control de la ósmosis No 1, el
+
+===== PÁGINA 22 =====
+control local inicia o detiene la secuencia de regeneración del filtro por medio de los botones  
+“start” y “stop” respectivamente.  Si el sistema se encuentra operando cuando se da el 
+comando de arranque  de regeneración a uno de los recipientes de intercambio iónico , el 
+recipiente saldrá de operación y procederá a iniciar servicio en el recipiente que se encuentre 
+en standby. Para identificar  que recipiente se encuentra en standby, la pantalla de 
+accionamiento cuenta con un pequeño identificador verde sobre los botones del filtro.  
+  
+ 
+ 
+ 
+ 
+ 
+7.1.5 Inicio del programa  
+PASOS OPERATION DETALLADA 
+(1) preparación de 
+seguridad  
+✔ Revise el equipo, para que cada equipo lea detenidamente el 
+manual de su producto, comprenda su uso y mantenimiento. 
+✔ Verifique y asegúrese de que todas las interfaces, válvulas y 
+todo el sistema de tuberías estén libres de fugas.  
+✔ Tome una buena protección personal cuando opere; Use 
+guantes protectores si necesita limpiar instalaciones de 
+tratamiento o realizar otras operaciones que puedan tocar 
+aguas residuales según lo requiera la operación.  
+(2) Revise que todas las 
+válvulas pueden ser 
+abiertas y cerradas 
+libremente  
+✔ En circunstancias normales, todas las válvulas automáticas 
+deben tener el selector en posición automática, cada filtro de 
+ablandamiento tiene una válvula de muestreo separada en la 
+línea de salida hacia la ósmosis para realizar prueba de 
+dureza del efluente.
+
+===== PÁGINA 23 =====
+PASOS OPERATION DETALLADA 
+(3) Cheque filtro suavizador 
+✔  Verifique los datos de dureza del agua con regularidad y 
+ajuste el tiempo de funcionamiento del filtro de ablandamiento 
+a tiempo. 
+✔ Compruebe periódicamente el cambio de presión del filtro de 
+ablandamiento. Si la presión normal supera los 0,5 bar frente 
+a la presión de operación normal, se requiere una limpieza 
+química del filtro. 
+7.1.6 Operación General  
+PASOS OPERACION DETALLADA  
+(1) Revise el Funcionamiento de 
+los filtros todos los días  
+Ya sea que haya puntos de fuga, alarmas, mantenimiento 
+oportuno 
+(2) Revise reportes de Dureza del 
+agua con regularidad 
+Ajuste el tiempo de funcionamiento del filtro de 
+ablandamiento a tiempo según la calidad de agua de 
+entrada  
+(3) Verifique periódicamente el 
+cambio de presión del filtro de 
+ablandamiento 
+La presión normal de 0,5 bar por encima de la normal 
+requiere una limpieza química del filtro. 
+(4) Verifique periódicamente el 
+correcto accionamiento de los 
+actuadores neumáticos  
+Con el fin de evitar inconvenientes durante la operación 
+normal es necesario verificar periódicamente que los 
+distribuidores de aire de alimentación a los actuadores 
+operen correctamente y que las válvulas puedan actuarse 
+sin ninguna interferencia.  
+ 
+7.2 SISTEMA DE DOSIFICACIÓN DEL AGENTE REDUCTOR 
+ 
+7.2.1  Descripción general 
+El sistema de dosificación de agente reductor, está compuesto por las b ombas dosificadoras 
+de agente reductor BDO -4.02A/B, (una en operación  y otra de reserva ), un tanque para 
+preparación y dosificación TAQ-4.02, el sensor de ORP en línea AE -4.01 y un interruptor de 
+nivel bajo LS-4.02. La función de  la dosificación del agente reductor de alimentación es 
+reducir el cloro residual en el agua de producción MBR, para evitar el daño oxidante a la 
+resina ablandadora y la membrana de ósmosis inversa . Monitoree el potencial REDOX del 
+afluente de ósmosis inversa. 
+7.2.2  Objetivo de control del proceso. 
+Objetivo de control de proceso:
+
+===== PÁGINA 24 =====
+• Monitoree la calidad del agua de entrada con la sonda de ORP en línea ORP-4.01.  
+ 
+Instrumentos: 
+ 
+•, interruptor de nivel: LS4.02 (L, H); 
+• Sensor de ORP ORP-4.01. 
+ 
+ 
+7.2.3  Modo de Funcionamiento 
+7.2.3.1 Control Automático 
+ 
+Seleccione el estado de funcionamiento de la bomba dosificadora, Local/Apagado/Remoto, 
+normal 2 bombas dosificadoras pueden funcionar en el estado de control automático 
+después de seleccionar Remoto. Si uno falla o se detiene, el sistema ajustará 
+automáticamente el funcionamiento del otro y el sistema emitirá una alarma. Si ambos fallan, 
+el sistema se detendrá. Cuando el nivel del tanque de dosificación de productos químicos 
+alcanza el nivel bajo, la bomba dosificadora también se detendrá. 
+            7.2.3.2 Control Local  
+El control local se utiliza para las operaciones iniciales de puesta en marcha, pruebas o 
+mantenimiento, u otras situaciones especiales, y normalmente se coloca en funcionamiento 
+automático. 
+Cuando la bomba dosificadora seleccionada se controla manualment e, el funcionamiento de 
+la bomba dosificadora tampoco estará controlado por los procedimientos de protección de 
+nivel y enclavamiento. 
+La carrera de pulso de la bomba debe configurarse manualmente. 
+ Inicio de programa 
+  
+PRECAUCIONES DETALLE DE OPERACION
+
+===== PÁGINA 25 =====
+PRECAUCIONES DETALLE DE OPERACION 
+(1) Preparación para 
+la seguridad 
+✔ Revise el equipo, para que cada equipo lea detenidamente el manual 
+de su producto, comprenda su uso y mantenimiento. 
+✔ Verifique y asegúrese de que todas las interfaces, válvulas y todo el 
+sistema de tuberías estén libres de fugas. 
+✔ Tome una buena prote cción personal cuando opere; Use guantes 
+protectores si necesita limpiar instalaciones de tratamiento o realizar 
+otras operaciones que puedan tocar aguas residuales según lo requiera 
+la operación. 
+Al complementar el producto químico, debe usar gafas protectoras, y el 
+producto químico debe de ser correcto. 
+(2) Compruebe que 
+todas las válvulas se 
+pueden abrir y cerrar 
+libremente y en el 
+estado correcto 
+✔ En condiciones normales, las válvulas VB.4.05, VB.4.06, VB.4.07, 
+VB.4.07, VB.4.08, VB.4.10 están "normalmente abiertas" 
+✔ Cuando una bomba dosificadora esté defectuosa, cierre la válvula 
+manual de entrada y salida correspondiente antes del 
+mantenimiento. 
+(3) Cheque filtro de 
+ablandamiento  
+✔ Si se va a inspeccionar la estructura interna del equipo o si la 
+inspección puede suponer un riesgo de descarga eléctrica, ajuste 
+los interruptores y disyuntores del armario de control eléctrico a la 
+posición de apagado antes de la inspección. 
+✔ Verifique que cada unidad esté bien lubricada y lista para 
+funcionar. Por favor, lea atentamente las instrucciones del 
+producto. 
+✔ Compruebe que todos los motores funcionen correctamente. 
+✔ Tenga en cuenta los riesgos de seguridad, como ejes de 
+transmisión expuestos o piezas giratorias, cables expuestos, 
+dispositivos de seguridad faltantes, etc. Antes de comenzar la 
+operación, realice las modificaciones y ajustes apropiados a los 
+posibles riesgos de seguridad. 
+✔ Después de la verificación, ajuste el dispositivo al estado normal 
+de instalación de acuerdo con el manual de operación de fábrica 
+(4) Proporcionar 
+energía 
+✔ Ajuste el interruptor de encendido de control a la posición de 
+encendido. 
+✔ Ajuste el interruptor de parada de emergencia in situ a la posición de 
+apagado.
+
+===== PÁGINA 26 =====
+PRECAUCIONES DETALLE DE OPERACION 
+(5) Arranque y paro Véase más arriba. La carrera de pulso de la bomba dosificadora debe 
+ajustarse manualmente al arrancar y bloquearse después del ajuste. 
+ 
+7.2.4 Operación general 
+PASOS DETALLE DE OPERACION 
+Verifique el nivel del tanque de 
+productos químicos 
+regularmente todos los días y 
+verifique el estado de 
+funcionamiento de la bomba 
+dosificadora 
+El sistema cuenta con una alarma de operación por ORP 
+cuando el valor del ORP en el sensor es superior a 50 mV. 
+Si el valor registrado es superior aún con la dosificación de 
+agente reductor, aumente el caudal de dosificación de la 
+bomba BDO-4.02A/B 
+ 
+ 
+7.3 SISTEMA DE DISOLUCIÓN Y REGENERACIÓN DE RESINAS NACL  
+7.3.1 Descripción General. 
+Para regenerar los recipientes de intercambio iónico, la planta cuenta con dos  bombas de 
+regeneración BCE-4.05A/B para el sistema de disolución de NaCL, (una en operación y una 
+de reserva), un Tanque de  preparación de salmuera  NaCL TAQ -4.03, dos bombas 
+dosificadoras de NaCL BCE -4.03A / B, u un interruptor de nivel bajo para el tanque de 
+salmuera LS-4.03, una válvula flotadora de admisión de agua suavizada para la preparación 
+e salmuera saturada BFV-4.01 y dos rotámetros FI-4.05 y FI-4.03. 
+En el proceso de regeneración, es necesario agregar oportunamente sal de mesa (NaCl) al 
+tanque de sal disuelta de forma que la concentración en el tanque se mantenga en el punto 
+de saturación (aproximadamente 26% w/v). Para esto se debe garantizar la presencia de sal 
+sin diluir al interior del tanque en todo momento.  Se estima que se requieren alrededor de 
+350 kg de NaCL  para cada filtro de regeneración, y la concentración y el tiempo de 
+regeneración deben ajustarse a tiempo de acuerdo con la contaminación de la resina y las 
+condiciones de envejecimiento. 
+ 
+7.3.2  Objetivo de control del proceso  
+Configure la concentración adecuada de salmuera para garantizar el efecto de regeneración  
+• Agregue NaCL a tiempo para asegurar la concentración de salmuera saturada en el tanque
+
+===== PÁGINA 27 =====
+de sal disuelto. 
+• Suplementación oportuna de agua ablandada para asegurar una adecuada regeneración 
+del agua; 
+• Ajuste la concentración adecuada de salmuera concentrada para la regeneración.  
+ 
+7.3.3 Instrumentos 
+Los principales instrumentos para la disolución de NaCL y los sistemas de regeneración de 
+resina incluyen: 
+● Nivel del tanque de NaCL LS-4.03 (L, H); 
+● FI-4.05 y FI-4.03.  
+Modo de operación 
+ 
+1.3.3.1 Control automático 
+ 
+En la pantalla táctil, se puede seleccionar el estado de funcionamiento de la bomba de 
+regeneración BCE -4.05A/B y la bomba dosificadora de NaCL BCE -4.03A/B. 
+Local/Apagado/Remoto, en modo normal, todas las bombas pueden funcionar bajo control 
+automático después de seleccionar Remoto. Si uno falla o se detiene, el sistema ajustará 
+automáticamente el funcionamiento del otro y el sistema emitirá una alarma. Si ambos fallan, 
+el sistema se detendrá. Cuando el nivel del tanque de productos químicos alcanza el nivel 
+bajo, la bomba también se detendrá. 
+7.3.3.1 Control Local  
+El control local se utiliza para las operaciones iniciales de puesta en marcha, pruebas o 
+mantenimiento, u otras situaciones especiales, y normalmente se coloca en funcionamiento 
+automático. 
+Cuando la bomba dosificadora seleccionada se controla manualmente en el lugar, el 
+funcionamiento de la bomba dosificadora tampoco estará controlado por los procedimientos 
+de protección de nivel y enclavamiento. 
+ Inicio de Programa  
+ 
+PASOS DETALLE DE OPERACION
+
+===== PÁGINA 28 =====
+PASOS DETALLE DE OPERACION 
+(1) Preparación de 
+seguridad 
+✔ Revise el equipo, para que cada equipo lea detenidamente el manual 
+de su producto, comprenda su uso y mantenimiento. 
+✔ Verifique y asegúrese de que todas las interfaces, válvulas y todo el 
+sistema de tuberías estén libres de fugas. 
+✔ Tome una buena prote cción personal cuando opere; Use guantes 
+protectores si necesita limpiar instalaciones de tratamiento o realizar 
+otras operaciones que puedan tocar aguas residuales según lo requiera 
+la operación. 
+Al complementar el producto químico, debe usar gafas protectoras y el 
+producto químico debe ser correcto. 
+ 
+(2) Compruebe que 
+todas las válvulas se 
+pueden abrir y cerrar 
+libremente y en el 
+estado correcto 
+✔ Condiciones normales, las válvulas VB.4.11, VB.4.12, VB.4.13, 
+VB.4.14, VB.4.15, VB.4.16, VB.4.23, VB.4.24, VB.4.25, VB.4.26, 
+VB.4.15, VB.4.16 están "normalmente abiertas" 
+✔ Ajuste la válvula manual de salida de la bomba durante la 
+regeneración, ajuste el caudal de FI-4.05 a 10.5m3/h y el caudal de 
+FI-4.03 a 1.7m3/h.
+
+===== PÁGINA 29 =====
+PASOS DETALLE DE OPERACION 
+(3) Revisión de 
+bombas. 
+ 
+Si se va a inspeccionar la estructura interna del equipo o si la 
+inspección puede suponer un riesgo de descarga eléctrica, ajuste los 
+interruptores y disyuntores del armario de control eléctrico a la posición 
+de apagado antes de la inspección. 
+✔  Verifique que cada unidad esté bien lubricada y lista para 
+funcionar. Por favor, lea atentamente las instrucciones del 
+producto. 
+✔  Tenga en cuenta los riesgos de seguridad, como ejes de 
+transmisión expuestos o piezas giratorias, cables expuestos, 
+dispositivos de seguridad faltantes, etc. Antes de comenzar la 
+operación, realice las modificaciones y ajustes apropiados a los 
+posibles riesgos de seguridad. 
+✔ Después de la verificación, ajuste el dispositivo al estado normal 
+de instalación de acuerdo con el manual de operación de fábrica 
+✔  Compruebe que todos los motores funcionen correctamente. 
+ 
+(4) Proporcionar 
+energía 
+✔ Ajuste el interruptor de encendido de control a la posición de 
+encendido. 
+✔ Ajuste el interruptor de parada de emergencia in situ a la posición de 
+apagado. 
+(5) Inicio y Paro  Toque…Control en la pantalla táctil. 
+ 
+ 
+ 
+7.3.4 Operación General 
+PASOS DETALLES DE OPERACIÓN 
+(1) Verifique regularmente el 
+nivel del tanque de sal disuelta y 
+verifique el funcionamiento de la 
+bomba del sistema de 
+regeneración; 
+Verifique que la línea de agua suavizada cuente con fluido.  
+Si hay puntos de fuga y obstrucciones en la tubería, 
+mantenimiento y limpieza oportunos; 
+(2) Mantenga siempre el tanque 
+de sal disuelta con sal no 
+disuelta 
+Se debe asegurar visualmente que exista una buena 
+cantidad de sal sólida en el fondo del tanque.
+
+===== PÁGINA 30 =====
+7.4 SISTEMA DE RECOGIDA Y CUANTIFICACIÓN DE VERTIDO DE AGUAS RESIDUALES POR 
+REGENERACIÓN DE RESINAS. 
+7.4.1  Descripción General 
+El sistema de agua de regeneración de resinas cuenta con dos  bombas BCE-4.04A/B para 
+recolectar las aguas residuales  de regeneración , una en operación  y otra de reserva , un 
+tanque de agua regenerativa de ablandamiento TAQ -4.04, un transmisor de n ivel de tanque 
+de agua regenerativa de ablandamiento LT-4.04 y un rotámetro para medición del caudal FI -
+4.04. 
+ 
+Flujo de agua regenerativa de ablandamiento FI -4.04, se establece en 200L / h cuando 
+funciona de acuerdo con el flujo de diseño y la calidad del agua. 
+ 
+Las aguas residuales que contienen una gran cantidad de NaCL e iones de calcio y 
+magnesio que deben ser mezclado con agua concentrada de 2ª ósmosis inversa y 
+descargado en el sistema de ablandamiento químico para garantizar la estabilidad de la 
+calidad del agua.  Flujo de agua regenerativa de ablandamiento en el FI-4.04, se  debe 
+establecer en 200L / h. 
+ 
+7.4.2 Objetivo de control de proceso 
+• Controlar el caudal adecuado y la mezcla cuantitativa de l agua de regeneración de las 
+resinas de intercambio iónico con la salmuera concentrada de 2ª ósmosis inversa. 
+ 
+7.4.3 Instrumento  
+Los principales instrumentos incluyen:  
+ 
+● Transmisor de nivel de tanque de agua regenerativa de ablandamiento LT -4.04 (LL, L, H, 
+HH); 
+● Flujo de agua regenerativa de ablandamiento FI-4.04; 
+ 
+7.4.4  Modo de Operación
+
+===== PÁGINA 31 =====
+7.4.4.1 Control Automático  
+ 
+El estado de funcionamiento de la bomba regenerativa de ablandam iento BCE-4.04A/B se 
+seleccionó como Local/Apagado/Remoto, y todas las bombas pudieron funcionar bajo control 
+automático después de seleccionar Remoto. Si uno falla o se detiene, el sistema ajustará 
+automáticamente el funcionamiento del otro y el sistema emitirá una alarma. Si ambos fallan, 
+el sistema se detendrá. Cuando el nivel de agua regenerativa de ablandamiento LT -4.04 
+alcanza el nivel bajo, la bomba regenerativa de ablandamiento A/B BCE -4.04A/B también se 
+detendrá.  
+7.4.4.2 Control Local  
+ 
+El control local se utiliza para las operaciones iniciales de puesta en marcha, pruebas o 
+mantenimiento, u otras situaciones especiales, y normalmente se coloca en funcionamiento 
+automático. 
+Cuando la bomba seleccionada se controla manualmente en su lugar, el funcionamiento de 
+la bomba tampoco estará controlado por los procedimientos correspondientes de protección 
+de nivel y enclavamiento. 
+ 
+ 
+ 
+7.4.5 Inicio de programa  
+PASOS DETALLE DE OPERACION
+
+===== PÁGINA 32 =====
+PASOS DETALLE DE OPERACION  
+(1) Preparación de 
+seguridad 
+✔ Revise el equipo, para que cada equipo lea detenidamente el manual 
+de su producto, comprenda su uso y mantenimiento. 
+✔ Verifique y asegúrese de que todas las interfaces, válvulas y todo 
+el sistema de tuberías estén libres de fugas. 
+✔ Tome una buena protección personal cuando opere; Use guantes 
+protectores si necesita limpiar instalaciones de tratamiento o realizar 
+otras operaciones que puedan tocar aguas residuales según lo 
+requiera la operación. 
+(2) Compruebe que 
+todas las válvulas se 
+pueden abrir y cerrar 
+libremente y en el 
+estado correcto 
+✔  En condiciones normales, las válvulas VB.4.18, VB.4.19, VB.4.20, 
+VB.4.21, VB.4.22 están "normalmente abiertas";  
+✔ Operación de enclavamiento BCE-4.04A / B y BCE-5.13B, es 
+necesario ajustar la válvula manual en la salida de la bomba, ajustar 
+el caudal de FI-4.04 a aproximadamente 200L / h y ajustar 
+oportunamente de acuerdo con la frecuencia de regeneración. 
+(3) Checar Bombas  Si se va a inspeccionar la estructura interna del equipo o si la 
+inspección puede suponer un riesgo de descarga eléctrica, ajuste los 
+interruptores y disyuntores del armario de control eléctrico a la posición 
+de apagado antes de la inspección. 
+✔ Verifique que cada unidad esté bien lubricada y lista para funcionar. 
+Por favor, lea atentamente las instrucciones del producto. 
+✔ Compruebe que todos los motores funcionen correctamente. 
+✔ Tenga en cuenta los riesgos de seguridad, como ejes de transmisi ón 
+expuestos o piezas giratorias, cables expuestos, dispositivos de 
+seguridad faltantes, etc. Antes de comenzar la operación, realice las 
+modificaciones y ajustes apropiados a los posibles riesgos de 
+seguridad. 
+Después de la verificación, ajuste el dispositivo al estado normal de 
+instalación de acuerdo con el manual de operación de fábrica 
+(4) Proporcionar 
+energía 
+✔ Ajuste el interruptor de encendido de control a la posición de 
+encendido. 
+Ajuste el interruptor de parada de emergencia in situ a la posición de 
+apagado. 
+(5) Arranque y Paro Toque…Control en la pantalla táctil
+
+===== PÁGINA 33 =====
+7.4.5.1 Operación general 
+PASOS DETALLE DE OPRACION  
+Verifique el nivel de nivel del 
+tanque de agua regenerativa de 
+ablandamiento con regularidad y 
+verifique el estado de 
+funcionamiento de la bomba 
+regenerativa de ablandamiento 
+A/B BCE-4.04A/B; 
+Si hay puntos de fuga y obstrucciones en la tubería, 
+mantenimiento y limpieza oportunos. 
+Compruebe si el flujo de agua es normal. 
+ 
+ 
+7.5 SISTEMA DE LIMPIEZA QUÍMICA DE RESINA 
+7.5.1 Descripción General  
+El sistema de limpieza química para la resina comparte el sistema de limpieza química (CIP) 
+de las ósmosis inversas.  
+Si el sistema está bien controlado, la contaminación microbiana y orgánica de la resina no es 
+grave, no puede hacer una limpieza química, pero si la contaminación microbiana de la 
+resina o la contaminación orgánica es demasiado grave, el efecto de ablandamiento del agua 
+no es bueno, la diferencia de presión del filtro es demasiado alta, debe realizar una limpieza 
+química oportuna de la resina.   
+ 
+Sistema CIP cuenta con una bomba CIP BCE-4.06, bomba dosificadora CIP para ácido 
+BCE-4.07, bomba dosificadora CIP para NaOH BCE-4.08, válvula de agua de entrada para 
+tanque CIP1 FCV.4.24, válvula de agua de entrada para tanque CIP2 FCV.4.25, tanque CIP 
+1 TAQ-4.06, tanque CIP 2 TAQ-4.07 y filtro de cartuchos FTP-4.06.  
+ 
+Objetivo de control de procesos 
+ 
+Objetivo de control de control de proceso del sistema de limpieza química de la resina: 
+• Utilice el sistema RO CIP para llevar a cabo la limpieza química de la resina, de modo 
+que la resina pueda restaurar el efecto de ablandamiento normal  
+7.5.2 Instrumentos 
+● Nivel del tanque CIP 1 LS-4.06 (L, H);
+
+===== PÁGINA 34 =====
+● Nivel del tanque CIP 2 LS-4.07 (L, H); 
+● Transmisor de pH de CIP pH-4.06 (LL, L, H, HH) 
+● PI-4.06Level of CIP tank 1 LS-4.06（L，H）. 
+ 
+7.5.3  Modo de funcionamiento. 
+7.5.3.1 Control Automático 
+Se puede seleccionar mediante la pantalla táctil, y se selecciona el estado de operación de la 
+apertura, Local / Apagado / Remoto, normal, todas las bombas y válvulas automáticas se 
+pueden operar bajo control automático después de seleccionar el control remoto. Sin 
+embargo, la limpieza química de la resina debe realizarse manualmente.  
+Inicio de programa. 
+PASOS DETALLE DE OPERACION  
+(1) Preparación de 
+seguridad 
+✔ Revise el equipo, para que cada equipo lea detenidamente el 
+manual de su producto, comprenda su uso y mantenimiento. 
+✔  Verifique y asegúrese de que todas las interfaces, válvulas y todo el 
+sistema de tu  
+✔ Tome una buena protección personal cuando opere; Use guantes 
+protectores si necesita limpiar instalaciones de tratamiento o realizar 
+otras operaciones que puedan tocar aguas residuales según lo 
+requiera la operación. 
+✔ Al complementar el producto químico, debe usar gafas protectoras y 
+el producto químico debe ser correcto.  
+✔ Las tuberías estén libres de fugas.  
+ 
+(2) Compruebe que 
+todas las válvulas se 
+pueden abrir y cerrar 
+libremente y en el 
+estado correcto 
+✔ En condiciones normales, las válvulas VM.4.06, VM.4.07, VM.4.08, 
+VM.4.09, VB.4.32, VB.4.35 están "normalmente abiertas"
+
+===== PÁGINA 35 =====
+PASOS DETALLE DE OPERACION  
+(3)   Revisión de 
+Bombas de  
+Si se va a inspeccionar la estructura interna del equipo o si la 
+inspección puede suponer un riesgo de descarga eléctrica, ajuste los 
+interruptores y disyuntores del armario de control eléctrico a la posición 
+de apagado antes de la inspección. 
+✔ Verifique que cada unidad esté bien lubricada y lista para funcionar. 
+Por favor, lea atentamente las instrucciones del producto. 
+✔ Compruebe que todos los motores funcionen correctamente. 
+✔ Tenga en cuenta los riesgos de seguridad, como ejes de transmisi ón 
+expuestos o piezas giratorias, cables expuestos, dispositivos de 
+seguridad faltantes, etc. Antes de comenzar la operación, realice las 
+modificaciones y ajustes apropiados a los posibles riesgos de 
+seguridad. 
+Después de la verificación, ajuste el dispositivo al estado normal de 
+instalación de acuerdo con el manual de operación de fábrica 
+(4) Provide power ✔ Ajuste el interruptor de encendido de control a la posición de 
+encendido. 
+✔ Ajuste el interruptor de parada de emergencia in situ a la posición de 
+apagado. 
+(5) Inicio y Paro  Toque… Control en la pantalla táctil. O control manual del gabinete en 
+el sitio. 
+ 
+7.5.4 Operación General  
+PASOS DETALLE DE OPERACION  
+（1） Alimente con agua limpia Abra la válvula de agua de entrada para el tanque CIP 1 
+FCV.4.24, la válvula de agua limpia de entrada para el 
+tanque CIP 2 FCV.4.25 alimente el nivel del tanque CIP 
+alto. 
+（2） Disolver el producto 
+químico 
+Válvulas abiertas: VM4.14 y VM4.13. 
+Bomba dosificadora de NaOH abierta BDO -4.08 y bomba 
+CIP BCE-4.06 (VFD 25hz) 
+Verifique Ph-4.06, cuando el PH alcance aproximadamente 
+10, detenga la bomba dosificadora BDO-4.08 
+（3） Alimento el químico  Válvula abierta VM4.12 
+Válvulas manuales abiertas in situ: FCV.4.06, FCV.4.07/ 
+FCV.4.13, FCV.4.14/ FCV.4.20, FCV.4.21. 
+Lave solo un filtro de ablandamiento a la vez, cierre las 
+válvulas VM4.14 y VM4.13. 
+Cuando el nivel de agua de ambos tanques CIP sea bajo, 
+apague la bomba CIP BCE-4.06 (VFD 25hz)
+
+===== PÁGINA 36 =====
+（4） Remojo Tiempo de remojo durante al menos 1 hora. 
+（5）  Alimente con agua 
+limpia 
+Abra la válvula de agua de entrada para el tanque CIP 1 
+FCV.4.24, la válvula de agua limpia de entrada para el 
+tanque CIP 2 FCV.4.25 alimente el nivel del tanque CIP 
+alto. 
+（6） Retro lavado  (Válvula abierta FCV.4.02, cierre FCV.4.07) / (Válvula 
+abierta FCV.4.09, cierre FCV.4.14)/ (Válvula abierta 
+FCV.4.16, cierre FCV.4.21). 
+Abrir FCV.4.23 
+Cuando el nivel de agua de ambos tanques CIP sea bajo, 
+apague la bomba CIP BCE-4.06 (VFD 25hz) 
+ 
+（7） Alimente con agua limpia  Abra la válvula de agua de entrada para el tanque CIP 1 
+FCV.4.24, la válvula de agua limpia de entrada para el 
+tanque CIP 2 FCV.4.25 alimente el nivel del tanque CIP 
+alto. 
+（8） Lavado  (Válvulas abiertas FCV.4.03 y FCV4.04, cierre FCV.4.06 y 
+FCV.4.02) / (Válvulas abiertas FCV.4.10 y FCV4.11, cierre 
+FCV.4.13 y FCV.4.09) / (Válvulas abiertas FCV.4.17 y 
+FCV4.18, cierre FCV.4.20 y FCV.4.16). 
+Abrir FCV.4.23 
+Cuando el nivel de agua de ambos tanques CIP sea bajo, 
+apague la bomba CIP BCE-4.06 (VFD 25hz) 
+（9） Repita los pasos (7) (8) Deténgase hasta que se detecte un pH cercano a 7 
+mediante muestreo del filtro 
+2. Sistema Osmosis inversa RO 
+El Sistema de ósmosis inversa consta de un sistema de dosificación de ácido, un sistema de 
+dosificación de inhibidores de incrustaciones, desinfectante no oxidante, un sistema CIP, un 
+tren dos etapas de ósmosis inversa (1st RO), un tren e una etapa de ósmosis inversa para el 
+rechazo de la 1st RO (2nd RO). 
+ 
+2.1  SISTEMA DE DOSIFICACIÓN DE ÁCIDO CLORHÍDRICO 
+2.1.1 Descripción general 
+Bomba dosificadora de ácido CIP BDO -4.07, bomba dosificadora de ósmosis inversa BDO -
+5.01A/B, 2ª bomba dosificadora de ósmosis inversa BDO -5.08A/, Tanque dosificador de 
+ácido TAQ-5.01, interruptor de nivel LS5.01
+
+===== PÁGINA 37 =====
+2.1.2 Objetivo de control de proceso  
+ 
+• Agregar ácido al sistema CIP. 
+• Enclavamiento con la bomba de alta presión BCE -5.04 de 1ª ósmosis inversa para 
+garantizar un pH menor a 8 en la 1ª ósmosis inversa. 
+• Enclavamiento con el 2º Tanque de Alimentación de RO TAQ -5.07'S PH para asegurar un 
+pH menor a 8 en el tanque de alimentación del 2º Sistema de RO.    
+  
+ 
+2.1.3 Instrumentos 
+ 
+Los principales instrumentos para la bomba dosificadora de ácido incluyen: 
+● Tanque dosificador de ácido TAQ-5.01, interruptor de nivel LS5.01 (L, H). 
+● Sensor de PH pH-5.01 (LL, HH). 
+● Sensor de PH pH-5.06 (LL, HH). 
+ 
+2.1.4 Modo de funcionamiento 
+ 
+2.1.4.1 Control Automático  
+ 
+Seleccione el estado de funcionamiento de la bomba dosificadora, Loc al/Apagado/Remoto, 
+normal 2 bombas dosificadoras pueden funcionar en el estado de control automático 
+después de seleccionar Remoto. Si uno falla o se detiene, el sistema ajustará 
+automáticamente el funcionamiento del otro y el sistema emitirá una alarma. Si ambos fallan, 
+el sistema se detendrá. Cuando el nivel del tanque dosificador alcanza el nivel bajo, la 
+bomba dosificadora también se detendrá. 
+2.1.4.2 Control Local 
+ El control local se utiliza para las operaciones iniciales de puesta en marcha, pruebas o 
+mantenimiento, u otras situaciones especiales, y normalmente se coloca en funcionamiento 
+automático. 
+Cuando la bomba dosificadora seleccionada se controla manualmente en el lugar, el
+
+===== PÁGINA 38 =====
+funcionamiento de la bomba dosificadora tampoco estará controlado por los procedimientos 
+de protección de nivel y enclavamiento. 
+La carrera de pulso de la bomba debe configurarse manualmente. 
+Inicio de programa  
+ 
+PASOS DETALLE OPERACION 
+(1) Preparacion 
+de seguridad  
+ 
+✔ Revise el equipo, para que cada equipo lea detenidamente el 
+manual de su producto, comprenda su uso y mantenimiento. 
+✔ Verifique y asegúrese de que todas las interfaces, válvulas y todo el 
+sistema de tuberías estén libres de fugas. 
+ Tome una buena protección personal cuando opere; Use guantes 
+protectores si necesita limpiar instalaciones de tratamiento o realizar 
+otras operaciones que puedan tocar aguas residuales según lo 
+requiera la operación. 
+✔ Al complementar el producto químico, debe usar gafas protectoras y 
+el producto químico debe ser correcto. 
+(2) Compruebe que 
+todas las válvulas se 
+pueden abrir y cerrar 
+libremente y en el 
+estado correcto 
+ 
+✔ En condiciones normales, las válvulas VB.5.41, VB.5.42, VB.5.43, 
+VB.5.44, VB.5.45, VB.5.46, VB.5.46, VB.5.72, VB.5.73, VB.5.74, 
+VB.5.75, VB.5.76, VB.4.30, VB.4.31, VB.4.32 están "normalmente 
+abiertas";  
+✔ Cuando una bomba dosificadora esté defectuosa, cierre la válvula 
+manual de entrada y salida correspondiente antes del 
+mantenimiento
+
+===== PÁGINA 39 =====
+PASOS DETALLE OPERACION 
+(3) Comprobar las 
+bombas 
+ 
+✔ Si se va a inspeccionar la estructura interna del equipo o si la 
+inspección puede suponer un riesgo de descarga eléctrica, ajuste 
+los interruptores y disyuntores del armario de control eléctrico a la 
+posición de apagado antes de la inspección. 
+✔ Verifique que cada unidad esté bien lubricada y lista para 
+funcionar. Por favor, lea atentamente las instrucciones del 
+producto. 
+✔ Compruebe que todos los motores funcionen correctamente. 
+✔ Tenga en cuenta los riesgos de seguridad, como ejes de transmisión 
+expuestos o piezas giratorias, cables expuestos, dispositivos de 
+seguridad faltantes, etc. Antes de comenzar la operación, reali ce las 
+modificaciones y ajustes apropiados a los posibles riesgos de 
+seguridad. 
+Después de la verificación, ajuste el dispositivo al estado normal de 
+instalación de acuerdo con el manual de operación de fábrica 
+ 
+(4) Proporcionar 
+energía 
+✔ Ajuste el interr uptor de encendido de control a la posición de 
+encendido. 
+Ajuste el interruptor de parada de emergencia in situ a la posición de 
+apagado. 
+(5) Comienzo y paro  
+ 
+Véase más arriba. La carrera de pulso de la bomba dosificadora debe 
+ajustarse manualmente al arrancar y bloquearse después del ajuste. 
+ 
+ 
+2.1.5 Operación General 
+PASOS DETALLE DE OPERACION 
+Verifique el nivel del tanque de 
+productos químicos 
+regularmente todos los días y 
+verifique el estado de 
+funcionamiento de la bomba 
+dosificadora 
+Ya sea que haya fugas u obstrucciones en la tubería de 
+dosificación, mantenimiento y limpieza oportunos
+
+===== PÁGINA 40 =====
+2.2    SISTEMA DE DOSIFICACIÓN DEL INHIBIDOR DE INCRUSTACIONES 
+2.2.1  Descripción General  
+RO 1ª bomba dosificadora de inhibidor de incrustaciones A/B BDO -5.02A/B, 2ª bomba 
+dosificadora inhibidora de incrustaciones RO A/B BDO -5.09A/B, tanque dosificador inhibidor 
+de incrustaciones TAQ-5.02, interruptor de nivel LS-5.02    
+ Objetivo del control de proceso 
+• Enclavamiento con la bomba de alta presión BCE -5.04 de 1ª ósmosis inversa para 
+garantizar la estabilidad del sistema de 1ª ósmosis inversa. 
+• Enclavamiento con la 2ª bomba de alimentación de ósmosis inversa BCE -5.07A/B para 
+garantizar la estabilidad del 2º sistema de ósmosis inversa.  
+   
+Instrumentos 
+ 
+Los instrumentos de las bombas dosificadoras inhibidoras de incrustaciones incluyen: 
+• Tanque dosificador TAQ-5.02, 
+• nivel switch: LS5.02 (L, H). 
+ 
+2.2.2 Modo de Operación  
+2.2.2.1 Control Automático. 
+ 
+              Seleccione el estado de funcionamiento de la bomba dosificadora, Local/Apagado/Remoto, 
+normal 2 bombas dosificadoras pueden funcionar en el estado de control automático 
+después de seleccionar Remoto. Si uno falla o se detiene, el sistema ajustará 
+automáticamente el funcionamiento del otro y el sistema emitirá una alarma. Si ambos fallan, 
+el sistema se detendrá. Cuando el nivel del tanque de dosificación de productos químicos 
+alcanza el nivel bajo, la bomba dosificadora también se detendrá. 
+ 
+ 
+2.2.2.2 Control Local
+
+===== PÁGINA 41 =====
+El control local se utiliza para las operaciones iniciales de puesta en marcha, pruebas o 
+mantenimiento, u otras situaciones especiales, y normalmente se coloca en funcionamiento 
+automático. 
+Cuando la bomba dosificadora seleccionada se controla manualmente en el lugar, el 
+funcionamiento de la bomba dosificadora tampoco estará controlado por los procedimientos 
+de protección de nivel y enclavamiento. 
+La carrera de pulso de la bomba debe configurarse manualmente.      
+ 
+Inicio de programa  
+ 
+PASOS DETALLE DE OPERACION 
+(1) preparación de 
+seguridad  
+ 
+✔  Revise el equipo, para que cada equipo lea detenidamente el 
+manual de su producto, comprenda su uso y mantenimiento. 
+✔ Verifique y asegúrese de que todas las interfaces, válvulas y todo el 
+sistema de tuberías estén libres de fugas. 
+✔  Tome una buena protección personal cuando opere; Use guantes 
+protectores si necesita limpiar instalaciones de tratamiento o realizar 
+otras operaciones que puedan tocar aguas residuales según lo 
+requiera la operación. 
+✔ Al complementar el producto químico, debe usar gafas protectoras y 
+el producto químico debe ser correcto. 
+(2) Compruebe que 
+todas las válvulas se 
+pueden abrir y cerrar 
+libremente y en el 
+estado correcto 
+ 
+✔ En condiciones normales, las válvulas VB.5.47, VB.5.48, VB.5.49, 
+VB.5.50, VB.5.51, VB.5.52, VB.5.79, VB.5.80, VB.5.81, VB.5.82, 
+VB.5.83 están "normalmente abiertas". 
+✔ Cuando una bomba dosificadora esté defectuosa, cierre la válvula 
+manual de entrada y salida correspondiente antes del 
+mantenimiento.
+
+===== PÁGINA 42 =====
+PASOS DETALLE DE OPERACION 
+(3) Revisión de 
+Bombas  
+ 
+✔Si se va a inspeccionar la estructura interna del equipo o si la 
+inspección puede suponer un riesgo de descarga eléctrica, ajuste los 
+interruptores y disyuntores del armario de control eléctrico a la posición 
+de apagado antes de la inspección. 
+✔Verifique que cada unidad esté bien lubricada y lista para funcionar. 
+Por favor, lea atentamente las instrucciones del producto 
+✔ Compruebe que todos los motores funcionen correctamente. 
+✔ Tenga en cuenta los riesgos de seguridad, como ejes de transmisión 
+expuestos o piezas giratorias, cables expuestos, dispositivos de 
+seguridad faltantes, etc. Antes de comenzar la operación, realice las 
+modificaciones y ajustes apropiados a los posibles riesgos de 
+seguridad. 
+✔Después de la verificación, ajuste el dispositivo al esta do normal de 
+instalación de acuerdo con el manual de operación de fábrica 
+(4) Proporcionar 
+energía 
+ 
+✔Ajuste el interruptor de encendido de control a la posición de 
+encendido. 
+✔Ajuste el interruptor de parada de emergencia in situ a la posición de 
+apagado. 
+(5) Inicio Paro  
+ 
+✔Véase más arriba. La carrera de pulso de la bomba dosificadora debe 
+ajustarse manualmente al arrancar y bloquearse después del ajuste. 
+ 
+ 
+2.2.3 Operación General  
+PASOS DETALLE DE OPERACION 
+Verifique el nivel del tanque de 
+productos químicos 
+regularmente todos los días y 
+verifique el estado de 
+funcionamiento de la bomba 
+dosificadora 
+Ya sea que haya fugas u obstrucciones en la tubería de 
+dosificación, mantenimiento y limpieza oportunos
+
+===== PÁGINA 43 =====
+2.3 SISTEMA BIOCIDA NO OXIDANTE 
+2.3.1 Modo de Funcionamiento  
+RO 1 Bomba dosificadora de bactericidas no oxidantes A/B BDO -5.03A/B, RO2 Bomba 
+dosificadora de bactericidas no oxidantes A/B BDO -5.10A/B Tanque dosificador TAQ -5.03, 
+interruptor de nivel LS-5.03。 
+2.3.2 Objetivo del control de proceso  
+Objetivo de control de dosificación de bactericidas no oxidantes: 
+ 
+• Enclavamiento con la bomba de alta presión BCE -5.04 de 1ª ósmosis inversa para 
+garantizar la estabilidad del sistema de 1ª ósmosis inversa. 
+• Enclavamie nto con la 2ª bomba de alimentación de ósmosis inversa BCE -5.07A/B 
+para garantizar la estabilidad del 2º sistema de ósmosis inversa.      
+ 
+2.3.3 Instrumentos 
+Bombas dosificadoras de bactericidas no oxidantes  
+• Los instrumentos principales incluyen: 
+• Tanque químico de dosificación TAQ-5.03, 
+•  interruptor de nivel: LS5.03 (L, H).  
+ 
+2.3.4 Modo de Operación  
+2.3.4.1 Control Automático  
+              Seleccione el estado de funcionamiento de la bomba dosificadora, Local/Apagado/Remoto, 
+normal 2 bombas dosificadoras pueden funcionar en el estado de control automático 
+después de seleccionar Remoto. Si uno falla o se detiene, el sistema ajustará 
+automáticamente el funcionamiento del otro y el sistema emitirá una alarma. Si ambos 
+fallan, el sistema se detendrá. Cuando el nivel del tanque de dosificación de productos 
+químicos alcanza el nivel bajo, la bomba dosificadora también se detendrá.
+
+===== PÁGINA 44 =====
+2.3.4.2 Control Local  
+El control local se utiliza para las operaciones iniciales de puesta en marcha, pruebas o 
+mantenimiento, u otras situaciones especiales, y normalmente se coloca en funcionamiento 
+automático. 
+Cuando la bomba dosificadora seleccionada se controla manualmente en el lugar, el 
+funcionamiento de la bomba dosificadora tampoco estará controlado por los procedimientos 
+de protección de nivel y enclavamiento. 
+La carrera de pulso de la bomba debe configurarse manualmente    
+ 
+ 
+ 
+Inicio de programa  
+ 
+PASOS DETALLE DE OPERACION 
+(1) Preparación para 
+la seguridad 
+ 
+✔Revise el equipo, para que cada equipo lea detenidamente el manual 
+de su producto, comprenda su uso y mantenimiento. 
+✔ Verifique y asegúrese de que todas las interfaces, válvulas y todo el 
+sistema de tuberías estén libres de fugas. 
+✔ Tome una buena protec ción personal cuando opere; Use guantes 
+protectores si necesita limpiar instalaciones de tratamiento o realizar 
+otras operaciones que puedan tocar aguas residuales según lo requiera 
+la operación. 
+Al complementar el producto químico, debe usar gafas protectoras y el 
+producto químico debe ser correcto. 
+ 
+(2) Compruebe que 
+todas las válvulas se 
+puedan abrir y cerrar 
+libremente y en el 
+  
+✔En condiciones normales, las válvulas VB.5.53, VB.5.54, VB.5.55, 
+VB.5.56, VB.5.57, VB.5.58, VB.5.84, VB.5.85, VB.5.86, VB.5.87,
+
+===== PÁGINA 45 =====
+PASOS DETALLE DE OPERACION 
+estado correcto VB.5.88 están "normalmente abiertas".  
+✔ Cuando una bomba dosificadora esté defectuosa, cierre la válvula 
+manual de entrada y salida correspondiente antes del 
+mantenimiento. 
+(3) Revisión de 
+Bombas 
+ 
+✔Si se va a inspeccionar la estructura interna del equipo o si la 
+inspección puede suponer un riesgo de descarga eléctrica, ajuste los 
+interruptores y disyuntores del armario de control eléctrico a la posición 
+de apagado antes de la inspección. 
+✔Verifique que cada unidad esté bien lubricada y lista para funcionar. 
+Por favor, lea atentamente las instrucciones del producto 
+✔ Compruebe que todos los motores funcionen correctamente. 
+✔ Tenga en cuenta los riesgos de seguridad, como ejes de transmisión 
+expuestos o piezas giratorias, cables expuestos, dispositivos de 
+seguridad faltantes, etc. Antes de comenzar la operación, realice las 
+modificaciones y ajustes apropiados a los posibles riesgos de 
+seguridad. 
+Después de la verificación, ajuste el dispositivo al estado normal de 
+instalación de acuerdo con el manual de operación de fábrica 
+(4) Proporcionar 
+energía 
+ 
+Ajuste el interruptor de encendido de control a la posición de 
+encendido. 
+Ajuste el interruptor de parada de emergencia in situ a la posición de 
+apagado. 
+ 
+(5) Arranque y 
+Parada 
+ 
+Véase más arriba. La carrera de pulso de la bomba dosificadora debe 
+ajustarse manualmente al arrancar y bloquearse después del ajuste.
+
+===== PÁGINA 46 =====
+2.3.5 Operación General 
+ 
+PASOS DETALLE DE OPERACION  
+Ya sea que haya fugas u 
+obstrucciones en la tubería de 
+dosificación, mantenimiento y 
+limpieza oportunos 
+Ya sea que haya fugas u obstrucciones en la tubería de 
+dosificación, mantenimiento y limpieza oportunos 
+ 
+ 
+2.4  RO1 SISTEMA DE ÓSMOSIS INVERSA #1 
+2.4.1 Modo de Funcionamiento  
+RO1 bombas de alimentación de ósmosis inversa BCE-4.01A/B,1ª bomba de alta presión de 
+ósmosis inversa BCE-5.04, bomba booster de RO1 BCE-5.05, dos filtros de cartuchos FTP-
+5.01A/B, válvula de descarga de 1ª ósmosis inversa FCV -5.01, 1ª válvula de concentrado de 
+ósmosis inversa FCV-5.02。       
+2.4.2 Objetivo del control de proceso 
+ RO1 objetivo de control de proceso de ósmosis inversa: 
+• Operación estable para garantizar la calidad del agua y la calidad del agua del 1er sistema 
+de ósmosis inversa; 
+• Monitorear el funcionamiento del sistema y a justar los parámetros de operación y limpieza 
+química a tiempo        
+  
+Instrumentos. 
+ 
+Los principales instrumentos incluyen: 
+● Nivel de tanque de permeado MBR LT-4.01. 
+● Flujo de alimentación de 1ª RO FT-5.01. 
+● Protección de baja presión de 1ª RO PSL-5.01.
+
+===== PÁGINA 47 =====
+● Transmisor de Presión de primera etapa 1ª RO  PT-5.01. 
+● Transmisor de Presión de la segunda etapa 1ª RO PT-5.02. 
+● Transmisor de conductividad de 1ª RO CT-5.02. 
+● Transmisor de flujo de efluentes de 1ª RO FT-5.04. 
+● Transmisor de nivel del tanque de agua concentrada RO LT-5.07 
+● Rotámetros para medición de Permeado de primera etapa, segunda etapa y rechazo FI -
+5.04, 5.04 y 5.05 respectivamente. 
+ 
+2.4.3 Modo de Operación  
+2.4.3.1 Control Automático  
+ 
+El sistema normal mente debe funcionar de forma automática. En su ope ración automática, 
+sobre los botones de inicio y parada,  la ósmosis cuenta con un a tabla condiciones que se  
+deben cumplir para iniciar. Como confirmación de que todas las condiciones se cumplen los 
+recuadros se iluminarán verdes y si alguna no se cumple se mantendrá gris. 
+ 
+Condiciones de arranque RO #1 
+• Process Request: Hace referencia a que se cumplan las condiciones de proceso 
+(niveles de líquido máximos y minimos) establecidos en la pantalla de configuración 
+de parámetros “Para Set” 
+• Dosing level: Hace referencia a los niveles de químicos a dosificar. Si alguno de estos 
+se encuentra con la señal de interruptor de nivel bajo activado, el sistema no iniciará 
+• Motors & Valves: Hace referencia a que tanto válvulas como motores se encuentren 
+sin alarmas y los selectores de operación estén en pocisión “remote”. 
+• PLS.5.01: Hace referencia al interruptor de presión que protege la bomba de alta. Si
+
+===== PÁGINA 48 =====
+este no se encuntra activado quiere decir que la presión de entrada a la bomba de 
+alta no cumple con el valor configurado o que puede haber un problema en el 
+interruptor. 
+• E-STOP: Indica que alguno o varios de los botones de paro de emergencia, se 
+encuentra activado. 
+• Filter Timeout: Indica que los timepos establecidos para los filtros se han cumplido y 
+estos no pueden realizar regeneración. 
+• pH 5.01: Indica que el valor del pH en la aliemntación está por encima de 8.1 
+• ORP 4.01: indica que el valor registrado por el sensor de ORP se encuentra por 
+encima de 50 mV 
+• Action Timeout: indica un problema en las  rampas de arranque de los VFD de las 
+bombas del sistema 
+En operación normal el filtro operará de corrido hasta que alguno de los parametros 
+anteriores lo detenga o hasta cumplir un tiempo establecido de operación (configurable por 
+pantalla). Una vez alcanza este valor, la osmosis iniciará un ciclo de enjuague. Durante este 
+ciclo de enjuague el sistema admitirá agua de aliemntación pero será ingresada a las 
+membranas sin encender la bomba de alta presión con el fin de regular el gradiente de 
+concentraciones en la membrana y evitar que se puedan precipitar componentes por 
+sobresaturación. Este mismo tipo de enjuague se realiza cada vez que el sistema se detiene 
+(bien sea por accionamiento del botón de parada o por condiciones de proceso). 
+2.4.3.2 Control Local  
+El control local se utiliza para las operaciones iniciales de puesta en marcha, pruebas o 
+mantenimiento, u otras situaciones especiales, y normalmente se coloca en funcionamiento 
+automático.
+
+===== PÁGINA 49 =====
+Inicio de programa  
+ 
+PASOS OPERACION DETALLADA  
+(1) Preparación de 
+seguridad 
+✔ Revise el equipo, para que cada equipo lea detenidamente el 
+manual de su producto, comprenda su uso y mantenimiento. 
+✔ Verifique y asegúrese de que todas las interfaces, válvulas y todo el 
+sistema de tuberías estén libres de fugas. 
+✔ Tome una buena protección personal cuando opere; Use guantes 
+protectores si necesita limpiar instalaciones de tratamiento o realizar 
+otras operaciones que puedan tocar aguas residuales según lo 
+requiera la operación. 
+ 
+(2) Compruebe que 
+todas las válvulas se 
+puedan abrir y cerrar 
+libremente y en el 
+estado correcto 
+✔ Normalmente condición, todas las válvulas automáticas deben ser 
+automáticas, cada carcasa de membrana está equipada con una 
+válvula de muestreo separada, muestreando y probando la 
+conductividad eléctrica del agua efluente. 
+ 
+(3) Comprobar el 
+funcionamiento del 
+1er sistema de 
+ósmosis inversa 
+✔ Verifique los datos de TC del agua permeada de ósmosis inversa 
+con regularidad y ajuste el funcionamiento del 1er sistema de 
+ósmosis inversa a tiempo; 
+✔ Compruebe periódicamente el cambio de presión del 1er sistema 
+de ósmosis inversa.  
+✔ Si el filtro de seguridad supera la presión normal en 0,5 bar, se 
+debe reemplazar otro filtro de seguridad a tiempo. El elemento 
+filtrante bloqueado debe reemplazarse a tiempo. 
+✔ Verifique regularmente la entrada, el agua concentrada y el flujo de 
+agua de permeado del 1er sistema de ósmosis inversa, y ajuste la 
+tasa de recuperación adecuada del sistema. El flujo normal de agua 
+de permeado debe reducirse en un 20%, o la calidad del efluente 
+debe ser mucho peor. Se debe realizar una limpieza química del 1er 
+sistema de ósmosis inversa.
+
+===== PÁGINA 50 =====
+2.4.4 Operación General  
+ 
+PASOS DETALLE DE OPERACION 
+（1） Verifique el estado de 
+funcionamiento del sistema 
+de 1er RO regularmente 
+todos los días; 
+Ya sea que haya puntos de fuga, alarmas, mantenimiento y 
+ajuste oportunos. 
+（2） Verifique los datos de 
+calidad del agua del agua 
+afluente y permeada con 
+regularidad 
+Comprenda oportunamente el estado operativo del 1er 
+sistema RO y ajuste los parámetros operativos. 
+(3) Compruebe regularmente los 
+cambios de presión de 
+filtración del filtro seguro 
+ 
+Normalmente, más de 0,5 bar de presión normal requiere 
+cambiar el funcionamiento del filtro seguro. 
+ 
+(4)  Pasos normales de 
+operación 
+(Cuando la calidad del agua de 
+entrada cumple con los 
+requisitos de diseño) 
+Válvulas abiertas: VM5.01 y VM.5.02 (o VM.5.03 y 
+VM.5.04). 
+Válvulas abiertas: VM.5.05, VM.5.06, VM.5.07, VM.5.08, 
+VB.5.34, VB.5.40, VM.5.09, VM.5.12 
+ 
+Ajuste el valor VFD apropiado de BCE-5.04 y el valor VFD 
+de BCE-5.05 durante la operación para garantizar el flujo 
+operativo, la presión y la producción de agua adecuados.  
+ 
+Durante el funcionamiento, ajuste manualmente la abertura 
+de VA.5.01 al caudal de concentración adecuado FI-5.05. 
+Cuando el caudal de entrada normal FT-5.01 es de 80 
+m3/h, el caudal de FI-5.05 se ajusta a 20 m3/h y la tasa de 
+recuperación es del 75%   
+ 
+También es necesario controlar la producción de agua de 
+los dos caudalímetros de producción de agua, FI5.03 debe 
+controlarse a 41 m3/h y el caudal de FI5.04 se puede 
+controlar a 19 m3/h. El caudal total de agua producida 
+FT5.04 se controla a unos 60m3/h. 
+ 
+Después de que el 1er sistema de ósmosis inversa haya 
+vaciado el aire de admisión, debe ventilarse manualmente 
+antes de comenzar.
+
+===== PÁGINA 51 =====
+（5） Si la calidad del agua 
+afluente es mala 
+ 
+Necesita una válvula abierta VM.5.13, una válvula cerrada 
+WM.5.12. 
+ 
+Si la calidad del agua de entrada es muy mala, es 
+necesario acortar el tiempo del ciclo de lavado. 
+ 
+（6） Si la diferencia de 
+presión de funcionamiento es 
+normal 
+ 
+Controle los valores de PT-5.01 y PT-5.02 durante la 
+ejecución. Si los datos son anormales, ajuste el sistema a 
+tiempo. 
+ 
+Por ejemplo, la diferencia entre PT5.01-PI5.03 es 
+demasiado alta, lo que indica que la membrana de la 1ª 
+etapa está seriamente bloqueada y puede ser necesario 
+quitar y limpiar la membrana de entrada con agua. 
+ 
+Si la diferencia de presión de la 2ª etapa es demasiado alta 
+PT5.02-PI5.04, la membrana de la 2ª etapa puede 
+incrustarse o ensuciarse gravemente, y es necesario ajustar 
+la calidad del agua de entrada y la limpieza química de la 
+membrana en tiempo. 
+ 
+ 
+2.5 RO 2 SISTEMA OSMOSIS INVERSA  
+2.5.1 Modo de Funcionamiento  
+ La 2nd RO cuenta con  dos bombas de alimentación BCE-5.07A/B,  una bomba de ajuste de 
+pH para 2ª RO BCE-5.06 en recirculación del tanque de alimentación TAQ-5.07, dos bombas 
+de dosificación de ácido BDO -5.08A/B, dos bombas de dosificación de antiincrustante BDO-
+5.09A/B, dos bombas de desinfectante no oxidante BDO -5.10, una bomba de alta presión 
+RO BCE-5.11, bomba de recirculación RO2 BCE -5.12, un filtro de cartuchos para 2nd  RO 
+FTP-5.07, un intercambiador de calor HX -5.03, 2ª RO Válvula de alimentación FCV -5.03, 
+Válvula de agua de refrigeración de 2ª RO FCV -5.04, Válvula de descarga de 2ª RO FCV -
+5.05, 2ª Válvula de rechazo RO FCV-5.06 y Válvula de recirculación de 2ª RO FCV-5.07. 
+ 
+2.5.2 Objetivo de control de proceso 
+ 
+• Operación estable para garantizar la calidad del agua y la calidad del agua del 2º sistema 
+de ósmosis inversa.
+
+===== PÁGINA 52 =====
+• Monitorear el funcionamiento del sistema y ajustar los parámetros de operación y limpieza 
+química a tiempo. 
+ 
+Instrumentos  
+ 
+2º Sistema de ósmosis inversa Los principales instrumentos incluyen: 
+● Nivel del 1er tanque de agua concentrada RO LT-5.07. 
+● Temperatura de la alimentación de la 2ª RO TT-5.07. 
+● Flujo de alimentación de la 2ª RO FT-5.08. 
+● Protección de baja presión de 2ª RO PSL-5.08. 
+● Presión de 2ª RO PT-5.09. 
+● Temperatura de 2ª RO TT-5.09. 
+● CT de 2º RO CT-5.11. 
+● Flujo de efluente de 2ª RO FT-5.12. 
+● Nivel del tanque de agua concentrada de 2ª ósmosis inversa LT-5.13 
+ 
+2.5.3 Modo de Operación  
+2.5.3.1 Control Automático  
+ 
+El sistema norma lmente debe funcionar de forma automática. En su operación automática, 
+sobre los botones de inicio y parada, la ósmosis cuenta con una tabla condiciones que se 
+deben cumplir para iniciar. Como confirmación de que todas las condiciones se cumplen los 
+recuadros se iluminarán verdes y si alguna no se cumple se mantendrá gris. 
+ 
+Condiciones de arranque RO #2 
+• Process Request: Hace referencia a que se cumplan las condiciones de proceso 
+(niveles de líquido máximos y minimos) establecidos en la pantalla de configuración
+
+===== PÁGINA 53 =====
+de parámetros “Para Set” 
+• Dosing level: Hace referencia a los niveles de químicos a dosificar. Si alguno de estos 
+se encuentra con la señal de interruptor de nivel bajo activado, el sistema no iniciará 
+• Motors & Valves: Hace referencia a que tanto válvulas como motores se encuentren 
+sin alarmas y los selectores de operación estén en pocisión “remote”. 
+• PLS.5.08: Hace referencia al interruptor de presión que protege la bomba de alta. Si 
+este no se encuntra activado quiere decir que la presión de entrada a la bomba de 
+alta no cumple con el valor configurado o que puede haber un problema en el 
+interruptor. 
+• TT.5.07 & TT.5.09: indican que la te mperatura después de la bomba de recirculación 
+se encuentra sobre 38°C. 
+• E-STOP: Indica que alguno o varios de los botones de paro de emergencia, se 
+encuentra activado. 
+• pH 5.06: Indica que el valor del pH en la aliemntación está por encima de 8.1 
+• Action Timeout: indica un problema en las  rampas de arranque de los VFD de las 
+bombas del sistema 
+En operación normal el filtro operará de corrido hasta que alguno de los parametros 
+anteriores lo detenga o hasta cumplir un tiempo establecido de operación (configurable por 
+pantalla). Una vez alcanza este valor, la osmosis iniciará un ciclo de enjuague. Durante este 
+ciclo de enjuague el sistema admitirá agua de aliemntación pero será ingresada a las 
+membranas sin encender la bomba de alta presión con el fin de regular el gradiente de 
+concentraciones en la membrana y evitar que se puedan precipitar componentes por 
+sobresaturación. Este mismo tipo de enjuague se realiza cada vez que el sistema se detiene 
+(bien sea por accionamiento del botón de parada o por condiciones de proceso).
+
+===== PÁGINA 54 =====
+2.5.3.2 Control Local 
+Se utiliza para operaciones iniciales de puesta en marcha, pruebas o mantenimiento, u otras 
+situaciones especiales, y normalmente se coloca en funcionamiento automático 
+Inicio de programa  
+Pasos Funcionamiento detallado 
+(1) Preparación de 
+seguridad 
+✔ Revise el equipo, para que cada equipo lea detenidamente el 
+manual de su producto, comprenda su uso y mantenimiento. 
+✔ Verifique y asegúrese de que todas las interfaces, válvulas y todo el 
+sistema de tuberías estén libres de fugas. 
+✔ Tome una buena protección personal cuando opere; Use guantes 
+protectores si necesita limpiar instalaciones de tratamiento o realizar 
+otras operaciones que puedan tocar aguas residuales según lo 
+requiera la operación. 
+(2) Compruebe que 
+todas las válvulas se 
+pueden abrir y cerrar 
+libremente y en el 
+estado correcto 
+✔ Normalmente condición, todas las válvulas automáticas deben ser 
+automáticas, cada carcasa de membrana está equipada con una 
+válvula de muestreo separada, muestreando y probando la 
+conductividad eléctrica del agua efluente. 
+ 
+(3) Comprobar el 
+funcionamiento del 
+sistema de ósmosis 
+inversa #2 
+✔ Verifique los datos de TC del agua permeada de ósmosis inversa 
+con regularidad y ajuste el funcionamiento del 1er sistema de 
+ósmosis inversa a tiempo; 
+✔ Compruebe periódicamente el cambio de presión del 2º sistema de 
+ósmosis inversa.  
+✔ Si el filtro de seguridad excede la presión normal en 0,5 bar, el 
+elemento filtrante bloqueado debe reemplazarse a tiempo. 
+✔ Verifique regularmente la entrada, el agua concentrada y el flujo de 
+agua permeada del 2º sistema de ósmosis inversa, y ajuste la tasa 
+de recuperación adecuada del sistema. El flujo normal de agua de 
+permeado debe reducirse en un 20%, la presión de operación se 
+incrementa por encima de 27 bar o la calidad del efluente debe ser 
+mucho peor. Se debe realizar una limpieza química del 2º sistema 
+de ósmosis inversa.
+
+===== PÁGINA 55 =====
+2.5.4 Funcionamiento general 
+Pasos Funcionamiento detallado 
+（1） Verifique el estado de 
+funcionamiento del sistema 
+de 1er RO regularmente 
+todos los días; 
+Si hay puntos de fuga, alarmas, mantenimiento y ajuste 
+oportunos 
+ 
+（2） Verifique los datos de 
+calidad del agua del agua 
+afluente y permeada con 
+regularidad 
+Comprenda oportunamente el estado operativo del 1er 
+sistema RO y ajuste los parámetros operativos. 
+（3） Compruebe 
+regularmente los cambios de 
+presión de filtración del filtro 
+seguro 
+Cuando el valor de lectura de presión en el manómetro 
+instalado en la parte superior del filtro se encuentre 0.5 bar 
+por encima del valor registrado con los cartuchos nuevos, 
+será necesario reemplazarlos. 
+(4) Pasos normales de 
+operación 
+(Cuando la calidad del agua de 
+entrada cumple con los 
+requisitos de diseño) 
+Válvulas abiertas: VB.5.63, VB.5.64, VB.5.65, VB.5.66, 
+VB.5.69, ABIERTAS,VM.5.16, VM.5.17, VB.5.92, VB.5.94, 
+VM.5.18, VM.5.20, VM.5.24. 
+ 
+Ajuste el valor VFD apropiado de BCE-5.11 y el valor VFD 
+de BCE-5.12 durante la operación para garantizar el flujo 
+operativo, la presión y la producción de agua adecuados. 
+ 
+Durante el funcionamiento, ajuste manualmente la abertura 
+de VA.5.02 al caudal de concentración adecuado FI-5.13. 
+Cuando el caudal de entrada normal FT-5.08 es de 20 
+m3/h, el caudal de FI-5.13 se ajusta a 4 m3/h y la tasa de 
+recuperación es del 80% 
+ 
+El medidor de flujo de producción de agua también debe 
+controlarse y FI-5.12 debe controlarse a 16 m3 / h. 
+ 
+Después de que el 2º sistema de ósmosis inversa haya 
+vaciado el aire de admisión, debe ventilarse manualmente 
+antes de arrancar. 
+（5） Si la calidad del agua 
+afluente es mala 
+ 
+Necesita válvula abierta VM.5.23, válvula cerrada WM.5.24. 
+Si la calidad del agua de entrada es muy mala, es 
+necesario acortar el tiempo del ciclo de lavado.
+
+===== PÁGINA 56 =====
+（6） Si la diferencia de 
+presión de funcionamiento es 
+normal 
+ 
+Supervise los valores de PT-5.09 y PT-5.10 durante la 
+ejecución. Si los datos son anormales, ajuste el sistema a 
+tiempo. 
+Por ejemplo, la diferencia entre PT5.09-PI5.10 es 
+demasiado alta, lo que indica que la membrana de 2ª 
+ósmosis inversa está bloqueada/escalada seriamente, y 
+puede ser necesario quitar la membrana en el extremo de 
+entrada de limpieza o ajustar oportunamente la calidad del 
+agua de entrada y la limpieza química de la película. 
+ 
+（7） Si la temperatura de 
+entrada del agua supera los 
+30 °C 
+ 
+Verifique que la red de agua suavizada esté operando 
+correctamente y la válvula de entrada de agua de 
+refrigeración al intercambiador de calor HX-5.03 este 
+operando correctamente. 
+ 
+ 
+ 
+2.6 SISTEMA CIP DE OSMOSIS INVERSA RO  
+2.6.1 Modo de Funcionamiento. 
+Bomba CIP BCE -4.06, Bomba dosificadora CIP A BCE -4.07, Bomba dosificadora CIP B 
+BCE-4.08, Válvula de agua de entrada para tanque CIP1 FCV.4.24, Válvula de agua de 
+entrada para tanque CIP2 FCV.4.25, Tanque CIP 1 TAQ -4.06, Tanque CIP 2 TAQ -4.07, 
+Filtro seguro FTP-4.06. 
+ 
+2.6.2 Objetivo de control de Proceso. 
+ 
+El sistema RO CIP se utiliza para la limpieza química del 1er sistema RO y el 2do 
+sistema RO, lo que permite que la membrana RO recupere el flujo y la tasa de 
+desalinización. 
+ 
+2.6.3 Instrumentos. 
+ 
+● Nivel del tanque CIP 1 LS-4.06 (L, H); 
+● Nivel del tanque CIP 2 LS-4.07 (L, H); 
+● Transmisor de pH de CIP pH-4.06 (LL, L, H, HH) 
+● PI-4.06
+
+===== PÁGINA 57 =====
+2.6.4 Modo de operación 
+ 
+2.6.4.1 Control Automático 
+ 
+Se puede seleccionar mediante la pantalla táctil, y se selecciona el estado  de 
+operación de la apertura, Local / Apagado / Remoto, normal, todas las bombas y 
+válvulas automáticas se pueden operar bajo control automático después de 
+seleccionar el control remoto. Sin embargo, la limpieza química de ósmosis inversa 
+debe realizarse de forma manual y automática. 
+ 
+ 
+Inicio del Programa  
+Pasos Funcionamiento detallado 
+(1) Preparación de 
+seguridad 
+✔ Revise el equipo, para que cada equipo lea detenidamente el manual 
+de su producto, comprenda su uso y mantenimiento. 
+✔ Verifique y asegúrese de que todas las interfaces, válvulas y todo el 
+sistema de tuberías estén libres de fugas. 
+✔ Tome una buena protección personal cuando opere; Use guantes 
+protectores si necesita limpiar instalaciones de tratamiento o realizar 
+otras operaciones que puedan tocar aguas residuales según lo requiera 
+la operación. Al complementar el producto químico, debe usar gafas 
+protectoras y el producto químico debe ser correcto. 
+(2) Compruebe que 
+todas las válvulas se 
+pueden abrir y cerrar 
+libremente y en el 
+estado correcto 
+✔ En condiciones normales, las válvulas VM.4.06, VM.4.07, VM.4.08, 
+VM.4.09, VB.4.32, VB.4.35 están "normalmente abiertas"
+
+===== PÁGINA 58 =====
+Pasos Funcionamiento detallado 
+(3) Verificar bombas 
+Si se va a inspeccionar la estructura interna del equipo o si la 
+inspección puede suponer un riesgo de descarga eléctrica, ajuste los 
+interruptores y disyuntores del armario de control eléctrico a la posición 
+de apagado antes de la inspección. 
+✔ Verifique que cada unidad esté bien lubricada y lista para funcionar. 
+Por favor, lea atentamente las instrucciones del producto. 
+✔ Compruebe que todos los motores funcionen correctamente. 
+✔ Tenga en cuenta los riesgos de seguridad, como ejes de transmisión 
+expuestos o piezas giratorias, cables expuestos, dispositivos de 
+seguridad faltantes, etc. Antes de comenzar la operación, realice las 
+modificaciones y ajustes apropiados a los posibles riesgos de 
+seguridad. 
+Después de la verificación, ajuste el dispositivo al estado normal de 
+instalación de acuerdo con el manual de operación de fábrica 
+(4) Proporcionar 
+energía 
+✔ Ajuste el interruptor de encendido de control a la posición de 
+encendido. 
+Ajuste el interruptor de parada de emergencia in situ a la posición de 
+apagado. 
+(5) Inicio paro  Toque Control en la pantalla táctil. O control manual del gabinete en el 
+sitio. 
+ 
+2.6.5 Operación manual 
+1st RO CIP 
+Pasos Funcionamiento detallado 
+(1)  Agua de alimentación 
+ 
+Abra la válvula de agua de entrada para el tanque CIP 1 
+FCV.4.24 y la válvula de agua de entrada para el tanque 
+CIP 2 FCV.4.25, llene el tanque CIP con agua permeada de 
+ósmosis inversa a alto nivel.
+
+===== PÁGINA 59 =====
+(2) Recirculación de limpieza 
+ 
+Válvulas abiertas: VM.4.06, (use CIP TANK 1), VM4.08, 
+VM.4.09, VM.4.10, VB.5.07, VM5.14, VM.5.11, FCV.5.01, 
+VM.5.10. 
+ 
+Cierre de válvulas: WM5.06, FCA.5.02, VM.5.09. 
+Abra la bomba CIP BCE-4.06 (VFD 60hz).  
+ 
+Ajuste la apertura de la válvula VM.5.1, ajuste el sistema de 
+ósmosis inversa para que funcione a aproximadamente 2 
+bar.  
+ 
+Limpie el material reciclado durante al menos 10 minutos, 
+detenga la bomba CIP, abra VB.4.27. 
+ 
+Después de vaciar el tanque, cierre la válvula de drenaje 
+VB.4.27 y luego abra FCV.4.24 para rellenar el agua. 
+ 
+(3) Preparación de la solución 
+química 
+ 
+Paso (2) Cuando el tanque de agua esté vacío, puede 
+comenzar este paso. 
+ 
+Cierre de válvulas: VM4.06, VM4.10. 
+ 
+Válvulas abiertas: VM.4.07, VM4.14 (use CIP TANK 2). 
+ 
+Bomba dosificadora de NaOH abierta BDO-4.08 o bomba 
+dosificadora de HCL BDO-4.07 y bomba CIP BCE-4.06 
+(VFD 60hz). 
+ 
+Verifique Ph-4.06, cuando el PH alcance 9.5-10.5 o 2-3, 
+detenga la bomba dosificadora BDO-4.08 o BCE-4.07. 
+ 
+Se recomienda utilizar papel de prueba de PH para 
+determinar el valor en PH.
+
+===== PÁGINA 60 =====
+(4) Recircular la solución 
+ 
+Válvulas abiertas: VM4.10, VM.5.10, VM5.11, VM.5.15, 
+FCV.5.01. 
+ 
+Válvulas de cerradas: VM.4.14, VM.5.09, FCV.5.02. 
+ 
+Encienda la bomba CIP BCE-4.06 (VFD 60hz), ajuste la 
+apertura de la válvula VM.5.11 y ajuste el sistema de 
+ósmosis inversa para que funcione a aproximadamente 2 
+bar.  
+ 
+Recicle durante al menos 30 minutos (el tiempo de 
+funcionamiento se puede ajustar de acuerdo con la 
+contaminación de la membrana) y la bomba se detiene. 
+  
+Si el PH del agente cambia rápidamente durante el proceso 
+de limpieza, puede ser necesario reponer el agente a 
+tiempo, repita el paso (3). 
+(5) Drene el tanque CIP químico 
+ 
+Cierre la válvula VM.4.07. 
+ 
+Abra la válvula VB.4.28. 
+ 
+Cierre la válvula VB.4.28 después de vaciar el tanque. 
+ 
+(6) Remojo  
+ 
+ 
+Tiempo de remojo durante 4 horas (este paso, la 
+contaminación de la membrana de ósmosis inversa es muy 
+grave, la limpieza de reciclaje no tiene ningún efecto) 
+ 
+(7) Repetir los pasos  (1) a (5) Repita los pasos cambiando el agente químico de limpieza 
+(Acido/Soda) 
+(8) Repetir （1）~（2） 
+ 
+Finalmente, el agua permeada de la membrana de ósmosis 
+inversa se detiene cuando el pH está cerca de 7. 
+ 
+ 
+2nd RO CIP 
+Pasos Funcionamiento detallado 
+（1） Agua de alimentación 
+ 
+Abra la válvula de agua de entrada para el tanque CIP1 
+FCV.4.24, la válvula de agua de entrada para el tanque 
+CIP2 FCV.4.25, llene el tanque CIP con agua de permeado 
+de ósmosis inversa a un nivel alto.
+
+===== PÁGINA 61 =====
+（2） Recirculación de limpieza 
+ 
+ 
+Válvulas abiertas: VM.4.06, (use CIP TANK 1), VM4.08, 
+VM.4.09, VM.4.11, VB.5.93, VB.5.94, FCV.5.05, VM.5.21, 
+VM.5.1, VM.5.23. 
+ 
+Válvulas de cierre: WM.5.18, FCA.5.06, VM.5.20, VM.5.24, 
+VM.5.22. 
+ 
+Arranque la bomba CIP BCE-4.06 (VFD 60hz).  
+ 
+Ajuste la apertura de la válvula VM.5.21, ajuste el sistema 
+de ósmosis inversa para que funcione a aproximadamente 
+2 bar.  
+ 
+Limpie el material reciclado durante al menos 10 minutos, 
+detenga la bomba CIP, abra VB.4.27. 
+ 
+Después de vaciar el tanque, cierre la válvula de drenaje 
+VB.4.27 y luego abra FCV.4.24 para rellenar el agua. 
+ 
+ 
+ 
+（3） Preparar la solución  
+ 
+ 
+Paso (2) Cuando el tanque de agua esté vacío, puede 
+comenzar este paso. 
+ 
+Cierre de válvulas: VM4.06, VM4.11. 
+ 
+Válvulas abiertas: VM.4.07, VM4.14 (Utilice CIP TANK 2). 
+ 
+Bomba dosificadora de NaOH de arranque BDO-4.08 o 
+bomba dosificadora de HCL BDO-4.07 y bomba CIP 
+BCE-4.06 (VFD 60hz). 
+ 
+Verifique Ph-4.06, cuando el PH alcance 9.5-10.5 o 2-3, 
+detenga la bomba dosificadora BDO-4.08 o BCE-4.07.  
+ 
+Se recomienda utilizar papel de prueba de PH para 
+determinar el valor en PH.
+
+===== PÁGINA 62 =====
+（4） Recirculación del lavado 
+químico 
+ 
+Válvulas abiertas: VM4.11, VM.5.22. 
+ 
+Válvulas de cierre: VM.4.14, VM.5.21. 
+ 
+Inicie la bomba CIP BCE-4.06 (VFD 60hz), ajuste la 
+apertura de la válvula VM.5.22 y ajuste el sistema de 
+ósmosis inversa para que funcione a aproximadamente 2 
+bar.  
+ 
+Recicle durante al menos 30 minutos (el tiempo de 
+funcionamiento se puede ajustar de acuerdo con la 
+contaminación de la membrana) y la bomba se detiene.  
+ 
+Si el PH del agente cambia rápidamente durante el proceso 
+de limpieza, puede ser necesario reponer el agente a 
+tiempo, repita el paso (3). 
+ 
+（5） Drene el químico del 
+tanque CIP  
+ 
+Cierre la válvula VM.4.07. 
+ 
+Abra la válvula VB.4.28. 
+ 
+Cierre la válvula VB.4.28 después de vaciar el tanque. 
+ 
+（6） Remojo  
+ 
+Tiempo de remojo durante 4 horas (este paso, la 
+contaminación de la membrana de ósmosis inversa es muy 
+grave, la limpieza de reciclaje no tiene ningún efecto) 
+ 
+（7） Repita (1) to (5) 
+ 
+Repita los pasos para cambiar entre la limpieza con 
+agentes ácidos y alcalinos. 
+ 
+（8） Repita（1）~（2） 
+ 
+Finalmente, el agua permeada de la membrana de ósmosis 
+inversa se detiene cuando el pH está cerca de 7. 
+ 
+ 
+Nota: Cuando el efecto de limpieza química de la 2ª RO CIP no sea significativo , es 
+necesario parar el CIP y dejar la solución de limpieza en contacto entre 1 – 4 horas. 
+Posteriormente se debe continuar con el procedimiento de lavado. 
+ 
+La configuración de las válvulas para la etapas de servicio , enjuague y CIP para cada una 
+de las osmosis es la siguiente:  
+ 
+ 
+ 
+ 
+Osmosis Inversa 1
+
+===== PÁGINA 63 =====
+Tag Válvula Servicio Enjuague CIP 
+VA 5.01 Abierta1 Abierta1 Abierta1 
+VM 5.05 Abierta Cerrada Cerrada 
+VM 5.06 Abierta Cerrada Cerrada 
+VM 5.07 Abierta Abierta Abierta 
+VM 5.08 Abierta Abierta Abierta 
+VM 5.09 Abierta Cerrada Cerrada 
+VM 5.10 Cerrada Abierta Abierta 
+VM 5.11 Cerrada Abierta Abierta 
+VM 5.12 Abierta Cerrada Cerrada 
+VM 5.13 Cerrada Abierta Cerrada 
+VM 5.14 Cerrada Cerrada Abierta/Cerrada2 
+VM 5.15 Cerrada Cerrada Abierta/Cerrada2 
+VB 5.07 Cerrada Abierta3 Abierta3 
+VB 5.08 Cerrada Cerrada Cerrada 
+VB 5.34 Abierta Abierta Abierta 
+VB 5.40 Abierta Abierta Abierta 
+FCV 5.01 Cerrada Abierta Abierta 
+FCV 5.02 Abierta Cerrada Cerrada 
+ 
+Osmosis Inversa 2 
+ 
+Tag  válvula  Servicio Enjuague CIP 
+VB 5.92 Abierta1 Abierta1 Abierta1 
+VB 5.93 Cerrada Abierta Abierta 
+VB 5.94 Abierta1 Abierta1 Abierta1 
+VA 5.02 Abierta3 Abierta3 Abierta3 
+FCV 5.05 Cerrada Abierta Abierta 
+FCV 5.06 Abierta Cerrada Cerrada 
+FCV 5.07 Abierta Cerrada Cerrada 
+VM 5.17 Abierta Cerrada Cerrada 
+VM 5.18 Abierta Cerrada Cerrada 
+VM 5.19 Cerrada Abierta Abierta 
+VM 5.20 Abierta Abierta Abierta 
+VM 5.21 Cerrada Cerrada Abierta/Cerrada4 
+VM 5.22 Cerrada Cerrada Abierta/Cerrada4 
+VM 5.23 Abierta Abierta Cerrada 
+VM 5.24 Cerrada Cerrada Cerrada 
+VM 5.25 Abierta Abierta3 Abierta3 
+Notas:  
+1. Parcialmente abierta, no tocar  
+2. Si se usa el tanque CIP 1 se abre la válvula VM 5.14 y se cierra la válvula VM 5.15; si se usa el 
+tanque CIP 2 se abre la válvula VM 5.15 y se cierra VM 5.14. 
+3. Parcialmente abierta. La válvula VB 5.07 durante las etapas de enjuague y CIP en la osmosis 1 , 
+debe garantizar una presión de 2 bar . Para la osmosis 2 , la válvula VM 5.25 debe encontrarse abierta 
+en 45º. 
+4.  Si se usa el tanque CIP 1 se abre la válvula VM 5.21 y se cierra la válvula VM 5.22; si se usa el 
+tanque CIP 2 se abre la válvula VM 5.22 y se cierra VM 5.21.
+
+===== PÁGINA 64 =====
+3. Otros 
+3.1 LA CONCENTRACIÓN DE PRODUCTOS QUÍMICOS UTILIZADOS EN EL SISTEMA 
+DE ÓSMOSIS INVERSA Y EL AJUSTE DE LAS BOMBAS DOSIFICADORAS 
+Nombre del químico Effective concentration Use concentration Dilution ratio 
+NaCLO 
+Hipoclorito de sodio 
+15% 7.5% 1:2 
+Fungicida no oxidante 100% 5% 1:19 
+Inhibidor de incrustaciones 100% 5% 1:19 
+NaHSO3 
+Bisulfito de sodio 
+100% 5% 1:20 
+HCL 
+Ácido clorhídrico 
+33% 33% 1:1 
+NaOH 
+Hidróxido sódico 
+50% 10% 1:5 
+ 
+Tag No. Dosing pump name Parameter Dosing pump 
+stroke 
+BDO-04A Bomba dosificadora NaCLO 9 L/H 20% 
+BDO-4.02A/B Bomba dosificadora de NaHSO3 9 L/H 25% 
+BDO-4.07 CIP Bomba dosificadora A 235 L/H 20% 
+BDO-4.08 CIP Bomba dosificadora B 235 L/H 20% 
+BDO-5.01A/B Bomba dosificadora RO1 HCL 50 L/H 30% 
+BDO-5.02A/B RO1 Bomba dosificadora inhibidora de 
+incrustaciones 
+9 L/H 50% 
+BDO-5.03A/B RO1 Bomba dosificadora de bactericida 
+no oxidante 
+9 L/H 50%
+
+===== PÁGINA 65 =====
+BDO-5.08A/B Bomba dosificadora RO2 HCL 50 L/H 20% 
+BDO-5.09A/B Bomba dosificadora inhibidora de 
+incrustaciones RO2 
+9L/H 25% 
+BDO-5.10A/B RO2 Bomba dosificadora de bactericida 
+no oxidante 
+9L/H 25% 
+ 
+3.2 TABLA DE REGISTRO DE PARÁMETROS DE OPERACIÓN 
+  COD pH Dureza 
+(Ca) TDS Conducti
+vidad Note 
+Agua permeada 
+MBR 
+          Todos los días 
+(cuando se use) 
+Filtro suavizador 1 
+ 
+          Todos los días (si se 
+usa) 
+Filtro suavizador 2 
+ 
+          Todos los días (si se 
+usa) 
+Filtro suavizador 3           Todos los días (si se 
+usa) 
+1ª RO Agua afluente           Todos los días 
+(cuando se opere) 
+1ª RO Agua de 
+permeado 
+          Todos los días 
+(cuando se opere) 
+2º Agua afluente de 
+ósmosis inversa 
+          Todos los días 
+(cuando se opere) 
+2º RO Permear el 
+agua 
+          Todos los días 
+(cuando se opere) 
+9.3. PARADAS DEL SISTEMA DE ÓSMOSIS INVERSA 
+9.3.1 Paradas De 24 A 72 Horas 
+Cuando el sistema se detenga por un intervalo de tiempo mayor a 24 horas, se recomienda 
+realizar un enjuague del sistema con agua suavi zada con el fin de evitar que las membranas 
+queden en contacto prolongado con agua cruda ya que esto puede incrustar las membranas. 
+ 
+9.3.2 Paradas mayores a 72 horas 
+Para preservar las membranas es necesario realizar un CIP tanto ácido como alcalino y 
+seguido a este se debe alimentar a un tanque CIP una solución de bisulfito de sodio entre 1 -
+2%. Esta solución se debe recircular 1 hora en las membranas y se debe revisar 
+periódicamente que el pH no caiga por debajo de 3. El pH se debe verificar una vez al mes si 
+la parada dura más de esto y en caso de que  el valor de pH  caiga, será necesario volver a
+
+===== PÁGINA 66 =====
+realizar el procedimiento con la solución de bisulfito. Una vez el sistema vaya a iniciar 
+nuevamente, es necesario enjuagar las membranas hasta obtener un ph de 7, antes de 
+reiniciar su operación 
+ 
+ 
+4. ANEXO I: SEGURIDAD 
+ 
+4.1 Generalidades 
+ 
+En esta sección del manual de operación y mantenimiento se trata el tema de la seguridad 
+dentro de la planta de tratamiento de aguas residuales. Esta sección incluye: 
+ 
+• Un esquema de reglas generales de seguridad de la planta 
+• Una descripción detallada del equipo y prácticas de seguridad en el trabajo 
+• Identificación de riesgos más comunes 
+• Sugerencias para el entrenamiento del personal de la planta 
+• Esbozo de un plan de contingencias, para enfrentar situaciones de emergencia 
+ 
+4.2 Reglas generales de seguridad 
+ 
+Será responsabilidad del personal de prevención y riesgos definir una política que promueva 
+la seguridad, llevarla a los hechos y elegir a aquellos que supervisen el cumplimiento de las 
+políticas establecidas. Por otra parte, será responsabilidad del personal de operación y 
+mantenimiento trabajar de acuerdo con los procedimientos de seguridad establecidos por el 
+personal de prevención de riesgos. 
+ 
+Se recomiendan las siguientes reglas generales para la seguridad del personal de la planta. 
+ 
+• Un esquema de reglas generales de seguridad de la planta 
+• Todos los accidentes o lesiones deben ser reportados 
+• Deben seguirse las recomendaciones para el uso de equipo de protección sugerido 
+en este manual 
+• Un empleado solo puede operar máquinas y equipo para los cuales está autorizado 
+• Todos los señalamientos de procedimientos deben ser obedecidos 
+• Cuando se está realizando un trabajo de altura con una grúa, un polipasto o equipo 
+similar, el área en la cual está siendo utilizado el equipo debe acordonarse o colocar 
+postes con señalamientos. Todo el personal no autorizado debe permanecer fuera 
+del área 
+• No se debe fumar en la planta 
+• Todos los vehículos deben conducirse con seguridad y velocidad razonable 
+• Todos los recipientes a presión deberán ser asegurados debidamente 
+• Las extensiones, cables de las máquinas de soldar o mangueras de agua nunca 
+deben extenderse a través de escaleras, pasillos y otros lugares de paso frecuente
+
+===== PÁGINA 67 =====
+• Siempre que sean usados químicos peligrosos, el área debe marcarse y el personal 
+no autorizado debe permanecer fuera del área restringida 
+• Las áreas de laboratorio y mantenimiento siempre deberán estar limpias y los 
+materiales deberán almacenarse de forma organizada 
+ 
+4.3 Equipo de seguridad 
+ 
+• Se sugiere la adquisición del siguiente equipo de seguridad para ser usado por el 
+personal de la planta de tratamiento 
+• Un indicador portátil de gas combustible y oxígeno (atmósfera segura), con todos sus 
+accesorios incluyendo alarma auditiva, cargador de batería, probador de batería 
+carátula iluminada y eliminador de baterías 
+• Un equipo de respiración autónomo 
+• Un equipo de primeros auxilios 
+• Extintores para diferentes tipos de incendio 
+• Un soplador portátil de empuje de aire fresco con manguera ancha y flexible. Con 
+accesorios de succión y descarga. La unidad debe ser llevada manualmente 
+• Un arnés de seguridad, anillos de izamiento 
+• Salvavidas de arillo para flotación y chalecos, colocados en puntos estratégicos 
+dentro de la planta 
+• Anteojos de seguridad 
+• Señales de advertencia para peligros potenciales 
+ 
+4.4 Equipo de protección personal 
+ 
+Se sugiere tener disponibles los siguientes equipos para ser usados por el personal de 
+operación y mantenimiento, así como por personal de laboratorio de la planta. 
+ 
+Protección de cara y ojos. Deben usarse gafas de seguridad  para protección de los ojos 
+cuando exista la posibilidad de impacto. Así mismo, se deben usar g afas de seguridad o 
+mascarillas para ácido cuando exista peligro de quemadura de ojos por el manejo de 
+químicos o por calor. 
+ 
+Protección de las manos. Además de los riesgos comunes para las manos como raspones, 
+lastimaduras menores y quemaduras, existen las heridas ocasionadas por superficies 
+rugosas, superficies calientes, materiales punzantes o por productos químicos. Es 
+indispensable el uso de guantes de carnaza cuando se trabaje con maquinaria peligrosa. 
+Deben usarse guantes de asbesto para la manipulación de materiales calientes.
+
+===== PÁGINA 68 =====
+Protección de oídos. Se deben usar protectores para los oídos cuando se trabaje cerca de 
+equipos que generen un alto nivel de decibeles, como sopladores y compresores. Las áreas 
+en las que se requiera protección para los oídos deben ser rotuladas apropiadamente. 
+ 
+Protección del cuerpo. Se debe utilizar bata de algodón y delantales engomados como 
+protección durante el manejo de químicos. 
+ 
+Chaleco salvavidas. Utilizarlo cuando se trabaje en tanques abiertos con agua. 
+ 
+Equipo de respiración. Los riesgos respiratorios de la planta de tratamiento incluyen 1) 
+polvos químicos secos, 2) nieblas y humos producto de reacciones químicas, 3) vapores y 
+gases tales como metano, 4) atmósferas deficientes de oxígeno resultantes del agotamiento 
+por reacciones químicas o desplazamiento por otros gases o vapores tales como el metano o 
+sulfuro de hidrógeno. Se debe utilizar máscara con filtro de carbón activado cuando existan 
+nubes de polvo por el manejo de productos químicos secos o en polvo. El filtro de la 
+mascarilla se deberá reemplazar cuando la respiración se dificulte. 
+ 
+Aparato de respiración autónoma. El uso de una máscara de respiración autónoma permite 
+al operador trabajar bajo cualquier condición de deficiencia de oxígeno. 
+ 
+Cinturón de seguridad. El cinturón de seguridad debe ser usado por los operadores y 
+empleados que laboren en lugares elevados o sobre tanques abiertos. Los cinturones deben 
+asegurarse apropiadamente a un soporte firme con el propósito de prevenir lastimaduras 
+serias causadas por una caída. 
+ 
+Equipo de primeros auxilios. En la PTARD debe existir un equipo de primeros auxilios que 
+permita la atención de heridas leves y graves, mientras se logra atención profesional, en el 
+caso de esta última. Los operadores y empleados deben estar informados de su localización 
+y uso adecuado. El contenido de los botiquines debe ser verificado periódicamente y ser 
+reemplazado conforme sea necesario. 
+ 
+Cinturón de carga. Para prevenir lastimaduras de la cintura se sugiere el uso de una faja de 
+carga por cada empleado. El cinturón o faja se debe usar cuando el empleado cargue o 
+levante objetos pesados. 
+ 
+Casco de seguridad. Para prevenir ser golpeados en la cabeza seriamente se sugiere el uso 
+de un casco de seguridad por cada empleado. El casco debe ser utilizado cuando exista 
+riesgo de golpearse la cabeza con algún objeto punzante o rígido. 
+ 
+ 
+ 
+4.5 Riesgos
+
+===== PÁGINA 69 =====
+La siguiente sección describe áreas de la planta de tratamiento en la cuales puede existir 
+condiciones de riesgo. 
+ 
+4.5.1 Reactores, decantador y tanques abiertos 
+ 
+A fin de minimizar el peligro de accidentes en reactores, cárcamos y en general en cualquier 
+tanque abierto, es necesario cumplir las siguientes reglas: 
+ 
+• Aislar el equipo donde se esté trabajando para proteger al personal 
+• Hacer uso de elementos de identificación de unidades fuera de servicio para informar 
+al resto del personal qué trabajos de reparación se están realizando 
+• Cuando se trabaje en registros o tanques, usar arnés de seguridad y trabajar en 
+pareja 
+• Observar los procedimientos para entrar a espacios confinados. Nunca entrar solo 
+• Instruir a los operadores en técnicas de salvamento y primeros auxilios 
+• Mantener siempre cerca los equipos de rescate y primeros auxilios 
+• Identificar y proteger las áreas peligrosas 
+• Utilizar chaleco salvavidas cuando los tanques contengan agua 
+ 
+4.6 Maquinaria 
+ 
+La maquinaria en operación presenta un riesgo potencial; por esta razón las flechas rotativas 
+o reciprocantes, vástagos excéntricos, transmisiones, acoples, volantes y arneses deben ser 
+adecuadamente protegidos con guardas a fin de prevenir el contacto con la parte en 
+movimiento. La succión y descarga del silenciador en el motor del soplador deben ser 
+aisladas o equipadas de una protección para evitar accidentes. 
+ 
+A fin de evitar accidentes con maquinaria es necesario observar las siguientes reglas: 
+ 
+• Usar un mecanismo de aseguramiento y procedimientos de rotulado confiables en el 
+centro de control de motores, identificando adecuadamente el equipo de 
+mantenimiento con un seguro en el panel 
+• Asegurarse de que sólo la (s) persona (s) que esté (n) dando mantenimiento al 
+equipo puedan poner el equipo nuevamente en funcionamiento 
+• Instruir a todo el personal de operación en el uso correcto de la maquinaria (se 
+sugiere un programa de capacitación) 
+ 
+ 
+• Colocar y usar el equipo de soldar en área segura, asignada lejos de combustibles 
+• Mantener en buenas condiciones el equipo mecánico y áreas de trabajo 
+• Usar signos de advertencia cuando las estructuras de concreto se encuentren 
+abiertas o cuando el equipo está siendo reparado
+
+===== PÁGINA 70 =====
+• Desarrollar un programa de mantenimiento preventivo que incluya toda la maquinaria 
+ 
+4.7 Trabajo en áreas confinadas 
+El trabajo en áreas confinadas se realiza en distintas zonas e instalaciones asociadas con la 
+conducción del agua residual, bombeo y tratamiento. Las áreas principales son los cárcamos 
+de bombeo en general, los cuales deben ser limpiados e inspeccionados periódicamente 
+para mantenimiento, o bien ser usados para muestrear o medir flujos, el tanque de 
+homogeneización, el reactor anaerobio, así como el reactor anaerobio cuando estén vacíos. 
+ 
+Los mayores riesgos asociados con trabajos en sitios confinados son los siguientes: 
+• Deficiencia de oxígeno 
+• Gases explosivos y tóxicos 
+• Condiciones resbalosas 
+• Exposición y/o contacto con agua no tratada o lodo. 
+ 
+Para eliminar o reducir los riesgos potenciales, se deben seguir los siguientes 
+procedimientos de operación y mantenimiento: 
+• Asegurarse siempre de que por lo menos dos y de preferencia tres operadores estén 
+asignados y presentes durante los trabajos de mantenimiento en áreas confinadas y 
+el suficiente personal se encuentre cerca para efectos de rescate, en caso de ser 
+requeridos 
+• Ventilar siempre las áreas confinadas antes de entrar y durante los trabajos. Se tiene 
+una correcta ventilación cuando aire limpio es introducido y el aire contaminado es 
+forzado a salir. Utilizar el detector de gases combustibles y oxígeno (atmósfera 
+segura) 
+• Asegurarse que durante el tiempo que dure este tipo de trabajo, se tenga disponible 
+en el lugar un equipo adecuado de primeros auxilios en buenas condiciones de 
+operación y que esté presente al menos una persona debidamente capacitada en 
+primeros auxilios 
+• No permitir fumar, sin excepción 
+• Usar casco de seguridad y ropa apropiada 
+• Usar equipo seguro y probado cuando se realicen reparaciones o inspecciones en 
+sitios subterráneos. Usar iluminación segura y apropiada, nunca utilice para iluminar 
+equipo que genere chispa 
+ 
+ 
+• Usar chaleco salvavidas cuando los tanques en reparación o mantenimiento 
+contengan agua 
+ 
+4.8 Infección y enfermedad 
+ 
+Los empleados de la planta de tratamiento de aguas residuales constantemente estarán
+
+===== PÁGINA 71 =====
+expuestos a agentes infecciosos contenidos en el agua residual. Los lodos, arenas y 
+espumas son fuentes potenciales de infección y enfermedades. 
+ 
+4.8.1 Prevención 
+ 
+Para eliminar o reducir la posibilidad de infección y enfermedad se deben seguir los 
+siguientes procedimientos de operación y mantenimiento. 
+ 
+• El personal de la planta debe utilizar ropa adecuada y bañarse después del turno. Los 
+empleados deben lavarse las manos antes de consumir alimentos, bebidas o antes 
+de fumar, lo cual será siempre fuera del perímetro de la planta de tratamiento. 
+Además, deben guardar la ropa de trabajo separada de la ropa común 
+• En los horarios de servicio o mantenimiento, incluir el llenado de los contenedores de 
+jabón con germicida, suministro de papel higiénico y papel toalla, así como la 
+desinfección de los baños 
+• Proveer de un contenedor de basura y retirarla regularmente 
+• Se sugiere realizar seminarios de higiene para los operadores y mecánicos 
+• Se sugiere realizar procedimientos adecuados de orden y limpieza dentro de la 
+planta. El superintendente de la planta debe inspeccionarla a intervalos regulares, 
+para asegurarse de que todos los empleados son capaces de cumplir con los 
+requerimientos físicos de su puesto y que gocen de buena salud y condición física. 
+Llevar el control de vacunación de los empleados contra tétanos 
+• Mantener siempre limpias las áreas de donde se consuman alimentos. No fumar en 
+ningún caso 
+• Consumir alimentos y bebidas solamente en áreas designadas 
+• Asegurarse de la desinfección adecuada del efluente de la planta que será usada en 
+la misma ETE como control de espumas, lavado y para propósitos de mantenimiento 
+general de la misma 
+ 
+ 
+4.9 Manejo de reactivos químicos 
+ 
+Los reactivos químicos suelen ser corrosivos, venenosos, explosivos o inflamables. Por esta 
+razón es necesario un adecuado almacenamiento, suministro y manejo de los diferentes 
+reactivos para minimizar los riesgos en el manejo de los mismos. 
+ 
+A continuación, se enlistan las reglas a seguir a fin de minimizar riesgos por reactivos 
+químicos: 
+ 
+• Las áreas de almacenamiento de productos químicos deben estar siempre limpias, 
+secas, bien ventiladas e iluminadas. 
+• Todos los cilindros de productos químicos y equipo de carga deben ser del tamaño
+
+===== PÁGINA 72 =====
+adecuado para su manejo. 
+• Los equipos de primeros auxilios y seguridad deben ser colocados en sitios de fácil 
+acceso y deberán estar disponibles cuando sea necesario. 
+• Cuando se trabaja en áreas donde estén presentes productos químicos, el operador 
+debe usar la ropa de protección adecuada (por ejemplo: guantes, botas, ropa 
+resistente a las sustancias manejadas, lentes de seguridad y mascarilla de protección 
+si es necesario) 
+• El operador debe observar todos los avisos e indicaciones visuales con relación a 
+productos químicos 
+• Deben leerse las etiquetas de los cilindros de sustancias químicas y tomarse las 
+acciones correspondientes en caso de accidentes 
+• Asegurarse de que las sustancias químicas que reaccionan violentamente con otras 
+no sean almacenadas juntas 
+• En el área de tratamiento donde los productos químicos son usados, se debe contar 
+con una hoja de datos de materiales de seguridad 
+ 
+4.9.1 Laboratorio 
+ 
+• Para prevenir accidentes, es conveniente que el personal que trabaja en laboratorio 
+esté informado de los materiales peligrosos y de las condiciones existentes para 
+reducir o eliminar los riesgos en el laboratorio: 
+• Nunca pipetear soluciones ácidas o básicas, así como aguas residuales o muestras 
+contaminadas con la boca, utilizar siempre pera de succión (propipeta) para pipetear 
+• Manejar los materiales tóxicos con cuidado, no inhalarlos y colocar los antídotos en 
+sitios de fácil disposición. En caso de ingestión acudir de inmediato con el médico 
+• Almacenar los materiales explosivos o inflamables en un lugar seguro 
+• Desechar el material de cristalería roto o astillado 
+• Usar anteojos o mascarilla durante el desarrollo de cualquier técnica que implique un 
+peligro para los ojos. Nunca mirar hacia el fondo de un tubo de ensayo durante una 
+reacción o calentamiento 
+ 
+ 
+• Utilizar guantes de látex siempre que se esté trabajando en el laboratorio 
+• Revisar siempre las etiquetas de los frascos para asegurarse que el químico 
+seleccionado es correcto. Nunca manipular los químicos (sólidos) directamente con 
+las manos, siempre utilizar espátula, cuchara, tenazas o equipo similar 
+• Asegurar siempre una ventilación adecuada cuando el personal se encuentre 
+trabajando en el laboratorio 
+• Usar guantes de asbesto, tenazas, etc, siempre que manipule material caliente 
+• Mantener las regaderas de emergencia en condiciones de operación 
+• Sujetar adecuadamente los cilindros de gas 
+• Mantener los drenes libres de toda obstrucción
+
+===== PÁGINA 73 =====
+4.10 Gases y líquidos explosivos 
+ 
+Dentro del laboratorio, áreas de mantenimiento y en las áreas donde son almacenados los 
+solventes y líquidos inflamables existe riesgo latente de incendio y/o explosión; de l a misma 
+forma, dentro de la ETE  se encuentran presentes gases inflamables o altamente tóxicos. En 
+la tabla 18 se presentan algunos compuestos que representan cierto grado de peligrosidad. 
+ 
+ 
+Tabla 8. Gases peligrosos en una planta de tratamiento 
+GASES PELIGROSOS DESCRIPCIÓN 
+Metano (CH4) 
+Es un gas más ligero que el aire y uno de los gases combustibles que se 
+generan en la planta de tratamiento. Es producido por la descomposición 
+de la materia orgánica en agua residual o en lodo, cuando el contenido de 
+metano en la atmósfera está entre el 5 y 15%, existe peligro de explosión. 
+Sulfuro de hidrógeno 
+(H2S) 
+Está presente en el carbón, petróleo y en el biogás. Es tóxico, altamente 
+inflamable, corrosivo, más pesado que el aire y presenta peligro de 
+explosión y de envenenamiento. 
+Fosfina (PH3) 
+Puede presentarse cada vez que un sistema de tuberías sea desaguado o 
+desmantelado. Bajo ciertas condiciones y en contacto con el aire, la fosfina 
+puede producir flama espontáneamente 
+Sulfuro ferroso (Fe2S3) 
+Es un residuo que se encuentra en las tuberías de hierro o en otras 
+superficies expuestas a biogás, producto de la reacción entre el sulfuro de 
+hidrógeno y el hierro. Cuando se calienta forma vapores que son un riesgo 
+ya que es una fuente de ignición capaz de producir una reacción 
+exotérmica (combustión espontánea) cuando es expuesto al aire. 
+ 
+ 
+ 
+4.10.1 Prevención de riesgos de explosión 
+ 
+Las siguientes medidas de operación y mantenimiento eliminarán o reducirán los riesgos de 
+explosión: 
+ 
+• Mantener la mejor ventilación posible 
+• Utilizar avisos de NO FUMAR y NO ENCENDER FUEGO en lugares riesgosos como 
+la sección de biogás 
+• Usar herramienta antichispa para dar mantenimiento siempre que sea posible. 
+Realizar una ventilación adecuada por varios minutos antes y durante el periodo en el
+
+===== PÁGINA 74 =====
+que se utilice herramienta antichispa. Utilizar el equipo detector de de gases 
+explosivos o tóxicos (atmósfera segura) 
+• Para el control de la formación de fosfina y/o sulfuro de hierro humedecer 
+perfectamente todas las superficies expuestas cuando realice mantenimiento en las 
+tuberías de lodo y manejo de biogás 
+• Proveer de cubierta a los recipientes de almacenamiento de aceites y materiales de 
+desecho. Vaciar éstos diariamente 
+• Si se debe usar soldadura autógena o de soplete en las áreas donde hay presencia 
+de gases explosivos, y asegurarse de que se ha realizado una adecuada ventilación 
+por un periodo prudente. Para tener atmósferas libres de gases inflamables en las 
+tuberías, purgar con nitrógeno u otro gas inerte antes de proceder a las reparaciones. 
+Para cárcamos o tanques cerrados, utilizar el soplador de ventilación. De ser posible 
+aislar el flujote aguas residuales o retirar el lodo de estas áreas, teniendo cuidado de 
+mantener una ventilación continua positiva en todo momento hasta que los trabajos 
+de reparación estén terminados 
+• En general no utilice luces abiertas o flamas en atmósferas desconocidas o 
+potencialmente peligrosas. Por ejemplo, fugas de gas metano o gas natural, los 
+cuales son más ligeros que el aire, han causado explosiones con consecuencias 
+fatales cuando se han encendido las luces. 
+• Las señales de advertencia deber ser instaladas y mantenidas en buen estado en las 
+áreas donde están colocados líquidos potencialmente explosivos. Todas las 
+sustancias químicas líquidas deben ser claramente etiquetadas 
+• Debe observarse orden y limpieza minuciosos en las cercanías de líquidos explosivos 
+o corrosivos 
+ 
+ 
+4.10.2 Elementos para un programa de respuesta y operación de 
+emergencia 
+ 
+El objetivo de esta sección es proporcionar una guía para la realización de un plan de 
+contingencias. La realización del plan de contingencias será responsabilidad conjunta del 
+personal de seguridad y el personal de operación y mantenimiento de la ETE; el plan deberá 
+identificar todos los posibles riesgos dentro de la planta y contemplar todas las acciones a 
+tomar ante cualquier eventualidad. 
+ 
+Una vez que se ha integrado el plan de contingencias, todo el personal involucrado en la 
+PTAR deberá estar familiarizado con éste. Deberá, conocer los procedimientos en caso de 
+emergencia, así como la localización y el estado de los equipos a utilizar durante su 
+ocurrencia. 
+ 
+Esta sección proporciona información relacionada con:
+
+===== PÁGINA 75 =====
+• Fallas de proceso y de equipo 
+• Desastres naturales 
+• Incendio 
+• Materiales y sustancias tóxicas 
+ 
+4.10.3 Fallas de proceso y equipo 
+ 
+Es importante determinar los procesos y equipos que pueden ser más vulnerables durante 
+una emergencia, a fin de poder implementar las formas de operación alternativa o emergente 
+disponibles, para los cual se debe realizar un análisis de vulnerabilidad. Este se efectúa 
+seleccionando las situaciones de emergencia de alto riesgo y estimando el efecto que cada 
+una de estas situaciones puede tener en los componentes individuales o en el sistema de 
+tratamiento. Los componentes del sistema de tratamiento que potencialmente pueden 
+quedar fuera de servicio durante las emergencias y que son vitales para la correcta 
+operación del sistema son catalogados como los componentes más vulnerables. Por tanto, 
+se debe dar atención especial al mantenimiento, reparación y operación de emergencia de 
+estos componentes. Así mismo se deben considerar las siguientes medidas para reducir la 
+vulnerabilidad de los componentes del sistema. 
+ 
+La integración y ejecución de un programa óptimo de mantenimiento preventivo y prueba de 
+equipos 
+ 
+ 
+ 
+• Una total familiarización con el modo alternativo de operación del sistema, el cual 
+pudiera permitir sacar de operación algún componente 
+• Tener conocimiento de la forma manual de paro para cada equipo o sistema 
+• Tener almacenado un suministro adecuado de reactivos de reserva 
+• El mantenimiento del equipo de relevo y emergencias (ambos para operación y 
+reparación), el cual debe estar listo para el trabajo junto con toda la herramienta y 
+equipo necesario para poner el equipo de reserva o de emergencia en operación 
+• Capacitar a los empleados y personal auxiliar en la operación y usos de equipos de 
+emergencia 
+ 
+4.10.3.1 Fallas de equipos  
+ 
+Cuando se detecte una falla en el equipo, la unidad debe ser desconectada y derivada (by 
+paseada), de ser posible se debe poner en operación la unidad de relevo. En caso de que no 
+exista una unidad de reserva, el equipo a reparar debe aislarse y repararse tan rápido como 
+sea posible. Las unidades de reserva deben incluirse en el inventario de equipos de 
+emergencia antes mencionado.
+
+===== PÁGINA 76 =====
+El plan de emergencia para cada proceso debe incluir el procedimiento operacional con el 
+que se mantenga íntegro el proceso durante un mal funcionamiento del equipo. Se 
+recomienda referirse al manual de operación y mantenimiento del fabricante. 
+ 
+Todo el personal debe estar pendiente de cualquier situación que pudiera indicar una falla en 
+el sistema, tal como equipos fuera de operación o con operación anormal, niveles de líquido 
+anormalmente altos o bajos, exceso de calentamiento, ruido, vibración o fugas. 
+ 
+ 
+4.10.4 Desastres naturales 
+ 
+Al igual que cualquier otra instalación las plantas de tratamiento están sujetas a ciertos tipos 
+de desastres. Estos incluyen sismos, incendios, e inundaciones; por tal motivo el personal de 
+seguridad debe implementar un plan de contingencias que prevea dichos eventos. El plan de 
+contingencias debe identificar los posibles efectos del desastre y las precauciones 
+inmediatas que puedan eliminar o contrarrestar cad a efecto. En la siguiente tabla 19 se 
+presenta una guía de las acciones a tomar ante algunas eventualidades. 
+ 
+Tabla 9. Repuesta a emergencias durante desastres naturales 
+DESASTRE 
+NATURAL EFECTO RESPUESTA 
+Inundación 
+Líneas eléctricas o equipos  
+sumergidos, acceso a la planta 
+bloqueados 
+1) Notificar al supervisor de la planta 
+2) Cortar la corriente de todas las líneas o 
+equipos  
+sumergidos 
+3) Desaguar el área 
+4) No entrar solo a áreas inundadas 
+5) Evaluar los daños e iniciar su reparación 
+Incendio Personal herido, daños a las  
+instalaciones 
+1) Llamar al departamento de bomberos y 
+notificar al  
+supervisor de la planta 
+2) Evacuar a todo el personal y equipo móvil 
+3) Usar extinguidores de fuego, hidrantes de 
+patio y  
+mangueras de agua para el control de fuego 
+4) NO usar agua en incendios eléctricos o 
+de aceites 
+Sismo Incendio, pérdida de energía 
+1) Notificar al supervisor de la planta 
+2) Evacuar a todo el personal del área 
+3) Poner fuera de servicio todos los equipos 
+eléctricos del área 
+4) Alejarse de las áreas de posible derrumbe 
+5) Dar los primeros auxilios y asegurar 
+atención médica a los heridos
+
+===== PÁGINA 77 =====
+4.10.5 Incendio 
+ 
+Frecuentemente los incendios se inician por cortos circuitos eléctricos o mal funcionamiento 
+de equipo eléctrico; sin embargo, otras causas son soldadura y cortado de metales, químicos 
+manejados de forma incorrecta, materiales combustibles/flamables almacenados de forma 
+inapropiada, flamas abiertas, o por fumar en áreas restringidas. 
+ 
+Los expertos advierten que la mejor forma de reducir la posibilidad de fuego es la 
+prevención. Algunas medidas para prevenir el fuego son: 
+ 
+• Eliminación de calor de fuentes de ignición 
+• Separación de materiales incompatibles 
+ 
+ 
+ 
+• Mantener cerca medios adecuados para combatir el fuego (sprinklers, extinguidores, 
+mangueras, etc.) 
+• Sistema de ventilación adecuada para ventear y reducir la formación de vapor 
+• No fumar en áreas prohibidas 
+ 
+En caso de una emergencia por fuego, la PTAR deberá contar con un plan de emergencia 
+donde se plasme la respuesta del personal y la forma de evacuación del mismo. 
+ 
+4.10.6 Materiales y sustancias tóxicas 
+ 
+En el manejo de reactivos químicos se debe identificar el código de colores de los reactivos, 
+ubicando en las etiquetas de los envases a fin de identificar el riesgo que representan, así 
+como el correcto almacenamiento de éstos. 
+ 
+Los reactivos más utilizados en la planta de tratamiento son: Hidróxido de sodio, Bicarbonato 
+de sodio, Cloruro férrico e Hipoclorito de sodio. A continuación, se presentan sus 
+características principales y los cuidados que deben tenerse para el manejo de éstos. 
+ 
+ 
+Hidróxido de sodio (NaOH) 
+ 
+A temperatura ambiente el hidróxido de sodio o sosa cáustica es un sólido blanco, disponible 
+comercialmente en forma de hojuelas, pellets, gránulos o en soluciones acuosas 
+concentradas. 
+ 
+El hidróxido de sodio es una base fuerte. En solución concentrada corroe al aluminio, zinc y
+
+===== PÁGINA 78 =====
+plomo, así como sustancias orgánicas y tejidos animales. Las soluciones concentradas de 
+NaOH también corroen el vidrio, especialmente después de un contacto prolongado, 
+formando silicatos de sodio. 
+ 
+Cuando se diluye en agua, se desprende gran cantidad de calor, lo cual es suficiente para 
+incendiar diversos materiales. Por lo tanto, durante su almacenamiento se le debe alejar de 
+materiales combustibles o inflamables. 
+ 
+A continuación, se presenta una lista de los cuidados que se deben observar durante el 
+manejo de la sosa: 
+ 
+• El personal de la planta debe estar entrenado e instruido en el uso y manejo de la 
+sosa 
+ 
+• Cuando se maneje sosa el personal deberá contar con el siguiente equipo de 
+seguridad: botas de plástico, caretas, gafas de seguridad, overoles de plástico 
+• Asegurarse de que la regadera y lavaojos funcionan adecuadamente antes de 
+trabajar con la sosa 
+• Reportar cualquier problema de fuga de sosas al supervisor de la ETE 
+• En caso de ingestión accidental, tomar gran cantidad de agua para diluir, no induzca 
+el vómito. Obtenga atención médica de inmediato 
+• En caso de derrame tener a la mano un kit de limpieza 
+ 
+ 
+Hipoclorito de sodio (NaClO) 
+ 
+Es un reactivo inestable por tanto se tiene que evitar: calor, luz, ácidos y metales pesados. 
+Es incompatible con el éter y amoniaco ya que reacciona violentamente. Su descomposición 
+libera cloro y ácido hipocloroso. Es de color amarillo pálido. 
+ 
+Los cuidados que se deben de tener con el reactivo son: 
+ 
+• El personal de la planta debe estar entrenado en el uso del hipoclorito de sodio 
+• Al igual que con los otros reactivos el personal deberá contar con: botas de plástico, 
+caretas, gogles de seguridad, overoles de plástico 
+• Evitar el contacto con materiales orgánicos para evitar riesgo de fuego 
+• En el caso del sistema de dosificación de hipoclorito de sodio, antes de poner en 
+servicio el sistema asegurarse de que las válvulas de succión y descarga se 
+encuentren abiertas 
+• Inspeccionar periódicamente el sistema de dosificación a fin de detectar fugas 
+• Reportar cualquier fuga de hipoclorito de sodio al supervisor de la planta 
+• En caso de contaminación de ojos con hipoclorito de sodio enjuagar inmediatamente
+
+===== PÁGINA 79 =====
+por lo menos durante 15 minutos 
+• En caso de ingestión accidental acudir de inmediato con el médico 
+• en caso de derrame enjuagar con agua abundante 
+• Almacenar en recipiente al aire libre, cerrado y limpio, alejado de la luz directa, de 
+productos químicos con los que pueda reaccionar por ejemplo ácidos, metales, éter y 
+amoniaco 
+ 
+La información presentada en esta sección está diseñada únicamente para servir como guía 
+para el desarrollo de un plan de contingencia detallado, el cual debe ser elaborado por el 
+personal de la planta. El desarrollo de un plan de contingencia que atienda completa y 
+adecuadamente las necesidades operacionales del personal de la planta está más allá de la 
+información proporcionada en este manual. 
+ 
+ 
+ 
+5. REFERENCIAS 
+ 
+-Operation of Wastewater Treatment Plants, Chapter 31 on SAFETY, MOP/11 Water 
+Environment Federation, 601 Wythe Street, Alexandria, VA 22314, USA 
+-Occupational Safety & Health Administration Standards 
+-Safety in Wastewaters Woks, Manual of Practice No. 1, Water Environment Federation, 601 
+Wythe Street, Alexandria, VA 22314, USA 
+-Safety in the design, Operation and Maintenance of Wastewater Treatment Works, U.S. EPA 
+-Safe Work Practices for Wastewater Treatment Plants, Frank R. Spellman. Technomic 
+Publishing Co., Inc. 
+-Water Environmental Federation WEF (1993). Sludge stabilization. Manual of practice No. 
+FD-9. USA. 105 pp. 
+-Wastewater Treatment Plant Design, Chapter 3 on Occupational Health and Physical Safety, 
+MOP/8, Water Environment Federation, 601 Wythe Street, Alexandria, VA 22314, USA. 
+-Manual de operación del Sistema GEM. Clean Water Technology. 
+-Manual de operación del DSP. AMCON

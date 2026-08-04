@@ -1,7 +1,7 @@
 /**
  * RegistrosPanel — Panel de revisión y edición de formularios del operario
  * Accesible desde el Dashboard del encargado.
- * 3 tabs: Calidad (F-03) | Reactivos GEM (F-02) | Caudales (F-01)
+ * 4 tabs: Calidad (F-03) | Reactivos GEM (F-02) | Caudales (F-01) | Revisión Técnica (RO)
  */
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -10,8 +10,9 @@ import { ROUTES } from '../../lib/routes';
 import TablaCalidad    from './components/TablaCalidad';
 import TablaReactivos  from './components/TablaReactivos';
 import TablaCaudales   from './components/TablaCaudales';
+import PlanosPanel     from './components/PlanosPanel';
 
-type Tab = 'calidad' | 'reactivos' | 'caudales';
+type Tab = 'calidad' | 'reactivos' | 'caudales' | 'planos';
 
 function defaultFechas() {
   const hoy = new Date();
@@ -31,10 +32,11 @@ export default function RegistrosPanel() {
   const [turno,        setTurno]        = useState('');
   const [buscar,       setBuscar]       = useState(false);
 
-  const tabs: { key: Tab; label: string; badge: string }[] = [
+  const tabs: { key: Tab; label: string; badge: string; accent?: string }[] = [
     { key: 'calidad',   label: 'Calidad del Agua',   badge: 'F-03' },
     { key: 'reactivos', label: 'Reactivos Químicos', badge: 'F-02' },
     { key: 'caudales',  label: 'Caudales',           badge: 'F-01' },
+    { key: 'planos',    label: 'Revisión Técnica',   badge: 'RO',   accent: '#8b5cf6' },
   ];
 
   return (
@@ -62,61 +64,76 @@ export default function RegistrosPanel() {
         </div>
       </div>
 
-      {/* ── Filtros ── */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 12,
-        marginBottom: 18, flexWrap: 'wrap',
-        background: theme.surface, border: `1px solid ${theme.border}`,
-        borderRadius: 8, padding: '12px 16px',
-      }}>
-        <label className="cal-filter-label">Fecha inicio</label>
-        <input type="date" className="cal-filter-input" value={fechaInicio}
-          onChange={e => setFechaInicio(e.target.value)} />
+      {/* ── Filtros (solo en tabs de registros) ── */}
+      {tab !== 'planos' && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 12,
+          marginBottom: 18, flexWrap: 'wrap',
+          background: theme.surface, border: `1px solid ${theme.border}`,
+          borderRadius: 8, padding: '12px 16px',
+        }}>
+          <label className="cal-filter-label">Fecha inicio</label>
+          <input type="date" className="cal-filter-input" value={fechaInicio}
+            onChange={e => setFechaInicio(e.target.value)} />
 
-        <label className="cal-filter-label">Fecha fin</label>
-        <input type="date" className="cal-filter-input" value={fechaFin}
-          onChange={e => setFechaFin(e.target.value)} />
+          <label className="cal-filter-label">Fecha fin</label>
+          <input type="date" className="cal-filter-input" value={fechaFin}
+            onChange={e => setFechaFin(e.target.value)} />
 
-        <label className="cal-filter-label">Turno</label>
-        <select className="cal-filter-select" value={turno}
-          onChange={e => setTurno(e.target.value)} style={{ minWidth: 120 }}>
-          <option value="">Todos</option>
-          <option value="1">Noche</option>
-          <option value="2">Mañana</option>
-          <option value="3">Tarde</option>
-        </select>
+          <label className="cal-filter-label">Turno</label>
+          <select className="cal-filter-select" value={turno}
+            onChange={e => setTurno(e.target.value)} style={{ minWidth: 120 }}>
+            <option value="">Todos</option>
+            <option value="1">Noche</option>
+            <option value="2">Mañana</option>
+            <option value="3">Tarde</option>
+          </select>
 
-        <button
-          onClick={() => setBuscar(b => !b)}
-          style={{
-            background: theme.blue, color: '#fff', border: 'none',
-            borderRadius: 6, padding: '7px 18px', cursor: 'pointer',
-            fontSize: 13, fontWeight: 600,
-          }}
-        >
-          🔍 Buscar
-        </button>
-      </div>
+          <button
+            onClick={() => setBuscar(b => !b)}
+            style={{
+              background: theme.blue, color: '#fff', border: 'none',
+              borderRadius: 6, padding: '7px 18px', cursor: 'pointer',
+              fontSize: 13, fontWeight: 600,
+            }}
+          >
+            🔍 Buscar
+          </button>
+        </div>
+      )}
 
       {/* ── Tabs ── */}
       <div style={{ display: 'flex', gap: 4, marginBottom: 16, borderBottom: `1px solid ${theme.border2}` }}>
-        {tabs.map(t => (
-          <button key={t.key} onClick={() => setTab(t.key)} style={{
-            background: tab === t.key ? theme.chipBlueBg : 'transparent',
-            border: 'none',
-            borderBottom: tab === t.key ? `2px solid ${theme.blue}` : '2px solid transparent',
-            color: tab === t.key ? theme.lblue : theme.muted,
-            padding: '8px 16px', cursor: 'pointer', fontSize: 13, fontWeight: 600,
-            display: 'flex', alignItems: 'center', gap: 8,
-          }}>
-            <span style={{
-              background: tab === t.key ? theme.blue : theme.border,
-              color: '#fff', fontSize: 10, fontWeight: 700,
-              padding: '1px 6px', borderRadius: 4,
-            }}>{t.badge}</span>
-            {t.label}
-          </button>
-        ))}
+        {tabs.map((t, i) => {
+          const isActive  = tab === t.key;
+          const color     = t.accent ?? theme.blue;
+          const chipBg    = isActive ? color : theme.border;
+          const tabBg     = isActive
+            ? (t.accent ? `${t.accent}14` : theme.chipBlueBg)
+            : 'transparent';
+          const textColor = isActive
+            ? (t.accent ?? theme.lblue)
+            : theme.muted;
+          return (
+            <button key={t.key} onClick={() => setTab(t.key)} style={{
+              background: tabBg,
+              border: 'none',
+              borderLeft: i === tabs.length - 1 ? `1px solid ${theme.border2}` : 'none',
+              borderBottom: isActive ? `2px solid ${color}` : '2px solid transparent',
+              color: textColor,
+              padding: '8px 16px', cursor: 'pointer', fontSize: 13, fontWeight: 600,
+              display: 'flex', alignItems: 'center', gap: 8,
+              marginLeft: i === tabs.length - 1 ? 'auto' : 0,
+            }}>
+              <span style={{
+                background: chipBg,
+                color: '#fff', fontSize: 10, fontWeight: 700,
+                padding: '1px 6px', borderRadius: 4,
+              }}>{t.badge}</span>
+              {t.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* ── Contenido del tab ── */}
@@ -142,6 +159,7 @@ export default function RegistrosPanel() {
           trigger={buscar}
         />
       )}
+      {tab === 'planos' && <PlanosPanel />}
     </div>
   );
 }

@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>ET200SP LCP4.1 — Esquemático cableado</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#070708;color:#DDD;font-family:-apple-system,Arial,sans-serif;overflow:hidden}
+#app{display:flex;flex-direction:column;height:100%}
+
+/* ── HEADER ── */
+#hdr{background:linear-gradient(135deg,#071428,#04080F);border-bottom:2px solid #1A3868;
+  padding:7px 14px;display:flex;align-items:center;gap:12px;flex-shrink:0;flex-wrap:wrap}
+.htit{font-size:14px;font-weight:800;color:#7FC4FF;letter-spacing:.3px}
+.hsub{font-size:9px;color:#2A4868;font-weight:500}
+.hbadge{background:#0A1828;border:1px solid #1A3460;border-radius:4px;padding:2px 8px;font-size:9px;color:#3A6090;font-weight:600;white-space:nowrap}
+#back-btn{background:#0E1A2E;border:1px solid #1A3A6A;color:#5A9AE8;border-radius:6px;
+  padding:4px 12px;cursor:pointer;font-size:11px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:5px}
+#hdr-right{margin-left:auto;display:flex;align-items:center;gap:6px}
+#back-btn:hover{background:#152236;color:#80B8FF}
+
+/* ── RACK NAV ── */
+#rack-nav{display:flex;gap:4px;flex-wrap:wrap;padding:2px 0}
+.rnmod{display:flex;flex-direction:column;align-items:center;cursor:pointer;padding:4px 8px 3px;
+  border-radius:5px;border:1px solid transparent;transition:.13s;user-select:none;min-width:58px}
+.rnmod:hover{border-color:#202028;background:#0C0C10}
+.rnmod.active{border-color:#263654;background:#0A1020}
+.rn-chip{width:40px;height:26px;border-radius:3px;display:flex;align-items:center;justify-content:center;
+  font-size:7.5px;font-weight:800;text-align:center;line-height:1.2;margin-bottom:2px;letter-spacing:.3px}
+.rn-lbl{font-size:7.5px;font-weight:700;white-space:nowrap}
+.rn-addr{font-size:6.5px;color:#1C2A38;font-family:monospace;margin-top:1px}
+
+/* ── MAIN ── */
+#main{display:flex;flex:1;min-height:0}
+#wiring-area{flex:1;overflow:auto;padding:10px 14px}
+#mod-desc-bar{display:flex;align-items:center;gap:10px;padding:6px 10px;margin-bottom:10px;
+  background:#09090E;border:1px solid #131320;border-radius:5px;flex-wrap:wrap}
+.mdb-title{font-size:13px;font-weight:700;color:#CCC}
+.mdb-ref{font-size:8px;color:#243040;font-family:monospace;white-space:nowrap}
+.mdb-tags{display:flex;gap:5px;flex-wrap:wrap;margin-left:4px}
+.mdb-tag{border:1px solid;border-radius:3px;padding:1px 6px;font-size:7.5px;font-weight:600;opacity:.85}
+#wsvg-wrap{min-width:1040px}
+
+/* ── DETAIL PANEL ── */
+#det{width:268px;background:#0A0A0A;border-left:1px solid #141414;overflow-y:auto;flex-shrink:0;padding:14px}
+#det-empty{color:#1E1E1E;text-align:center;padding:50px 10px;font-size:11px;line-height:2}
+.dr{display:flex;gap:8px;margin-bottom:7px;font-size:10.5px;align-items:flex-start}
+.dl{color:#666;min-width:58px;flex-shrink:0;padding-top:1px;font-size:10px}
+.dv{color:#BBB;font-weight:600;word-break:break-word;line-height:1.4}
+.dsep{height:1px;background:#111;margin:9px 0}
+#det-pin{font-size:22px;font-weight:800;margin-bottom:2px;letter-spacing:.2px}
+#det-addr{font-size:11px;font-family:monospace;font-weight:700;margin-bottom:3px}
+#det-type{font-size:8px;text-transform:uppercase;letter-spacing:.8px;opacity:.45;margin-bottom:9px}
+#det-sig{font-size:11px;color:#AAA;margin-bottom:10px;line-height:1.5}
+
+/* ── SVG INTERACTION ── */
+.wrow{cursor:pointer;transition:opacity .14s}
+.wrow.dim{opacity:.055!important;pointer-events:none}
+.wrow-avl{cursor:default;opacity:.18;pointer-events:none}
+.wrow:hover .wr-line{opacity:.96!important}
+.wrow.sel .wr-line{opacity:1!important;stroke-width:3!important;stroke-dasharray:14 5;animation:wflow .62s linear infinite}
+.wrow.sel .wr-sig,.wrow.sel .wr-dest,.wrow.sel .wr-addr{opacity:1!important}
+.wrow.sel .wr-dest-bg{stroke-width:1.6!important;opacity:1!important}
+.wrow.sel .wr-pin{opacity:1!important}
+@keyframes wflow{to{stroke-dashoffset:-19}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="hdr">
+    <div><div class="htit">ET200SP · LCP 4.1 — Esquemático de cableado</div>
+         <div class="hsub">CPU 1512SP-1 PN · IP 192.168.3.31 · Cada terminal: pin → señal → destino</div></div>
+    <div id="rack-nav"></div>
+    <span class="hbadge">80 DI · 32 DQ · 8 AI · 2 AQ</span>
+    <div id="hdr-right">
+      <button style="background:#091A0E;border:1px solid #0D3A28;color:#40C878;border-radius:6px;padding:4px 11px;cursor:pointer;font-size:11px;font-weight:600" onclick="window.open('PLC-Rack-Visual.html','_blank')">🖧 Vista Rack</button>
+      <a id="back-btn" href="Tablero-Visual-LCP41.html" target="_self">← Tablero LCP4.1</a>
+    </div>
+  </div>
+  <div id="main">
+    <div id="wiring-area">
+      <div id="mod-desc-bar"><span class="mdb-title" style="color:#3A4A5A">↑ Selecciona un módulo del rack</span></div>
+      <div id="wsvg-wrap"></div>
+    </div>
+    <div id="det"><div id="det-empty">🔌<br><br>Selecciona un módulo arriba,<br>luego clic en un terminal<br>para ver el detalle</div></div>
+  </div>
+</div>
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// MOTOR TAGS — área 400, 17 circuitos
+// ─────────────────────────────────────────────────────────────────────────────
+const MTAG=[
+  null,
+  {n:1,  tag:'BDO4.08', desc:'Bomba dosif. NaOH CIP',       type:'dos',kw:.37, qf:'1QF', km:'1KM', born:'3X:01'},
+  {n:2,  tag:'BDO4.02A',desc:'Bomba dosif. NaHSO₃ A',       type:'dos',kw:.37, qf:'2QF', km:'2KM', born:'3X:04'},
+  {n:3,  tag:'BDO4.02B',desc:'Bomba dosif. NaHSO₃ B',       type:'dos',kw:.37, qf:'3QF', km:'3KM', born:'3X:07'},
+  {n:4,  tag:'BCE4.01A',desc:'Bomba alimentación A',         type:'tri',kw:30,  qf:'4QF', km:'4KM', born:'3X:10'},
+  {n:5,  tag:'BCE4.01B',desc:'Bomba alimentación B',         type:'tri',kw:30,  qf:'5QF', km:'5KM', born:'3X:13'},
+  {n:6,  tag:'BCE4.03A',desc:'Bomba NaCl A',                 type:'tri',kw:2.2, qf:'6QF', km:'6KM', born:'3X:16'},
+  {n:7,  tag:'BCE4.03B',desc:'Bomba NaCl B',                 type:'tri',kw:2.2, qf:'7QF', km:'7KM', born:'3X:19'},
+  {n:8,  tag:'BCE4.05A',desc:'Bomba regeneración A',         type:'tri',kw:2.2, qf:'8QF', km:'8KM', born:'3X:22'},
+  {n:9,  tag:'BCE4.05B',desc:'Bomba regeneración B',         type:'tri',kw:2.2, qf:'9QF', km:'9KM', born:'3X:25'},
+  {n:10, tag:'BCE4.04A',desc:'Bomba suavización reg. A',     type:'tri',kw:2.2, qf:'10QF',km:'10KM',born:'3X:28'},
+  {n:11, tag:'BCE4.04B',desc:'Bomba suavización reg. B',     type:'tri',kw:2.2, qf:'11QF',km:'11KM',born:'3X:31'},
+  {n:12, tag:'BCE4.01A2',desc:'Feed Pump A2',                type:'tri',kw:2.2, qf:'12QF',km:'12KM',born:'3X:34'},
+  {n:13, tag:'—',       desc:'Reserva/pendiente',            type:'avl',kw:0,   qf:'13QF',km:'13KM',born:'3X:37'},
+  {n:14, tag:'—',       desc:'Reserva/pendiente',            type:'avl',kw:0,   qf:'14QF',km:'14KM',born:'3X:40'},
+  {n:15, tag:'—',       desc:'Reserva/pendiente',            type:'avl',kw:0,   qf:'15QF',km:'15KM',born:'3X:43'},
+  {n:16, tag:'—',       desc:'Reserva/pendiente',            type:'avl',kw:0,   qf:'16QF',km:'16KM',born:'3X:46'},
+  {n:17, tag:'BCE4.06', desc:'Bomba CIP (variador ACS310)',  type:'vfd',kw:15,  qf:'17F', km:'17KM',born:'3X:49'},
+];
+
+function diMotor(motN,ch,startPin){
+  const m=MTAG[motN];
+  if(!m||m.type==='avl') return [
+    {addr:ch[0],sig:'—  Disponible',dest:'—',type:'avl',cable:'—',note:'',pin:String(startPin)},
+    {addr:ch[1],sig:'—  Disponible',dest:'—',type:'avl',cable:'—',note:'',pin:String(startPin+1)},
+    {addr:ch[2],sig:'—  Disponible',dest:'—',type:'avl',cable:'—',note:'',pin:String(startPin+2)},
+  ];
+  const re=m.type==='vfd'?'Habilitación VFD':'SC Selector remoto';
+  const rn=m.type==='vfd'?'VFD RUN (en marcha)':'KM Contacto aux. (marcha)';
+  const fl=m.type==='vfd'?'VFD FAULT':`${m.qf} Contacto aux. (fallo)`;
+  return [
+    {addr:ch[0],pin:String(startPin),  sig:`M${motN}·${m.tag} — ${re}`,  dest:`${m.born}→ SC Local-Off-Remote`, type:'di',cable:'KVVP 2×0.75 VD',note:''},
+    {addr:ch[1],pin:String(startPin+1),sig:`M${motN}·${m.tag} — ${rn}`,  dest:`${m.born}→ ${m.km} aux NO`,      type:'di',cable:'KVVP 2×0.75 VD',note:''},
+    {addr:ch[2],pin:String(startPin+2),sig:`M${motN}·${m.tag} — ${fl}`,  dest:`${m.born}→ ${m.qf} aux NC`,      type:'di',cable:'KVVP 2×0.75 VD',note:''},
+  ];
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MÓDULOS ET200SP
+// ─────────────────────────────────────────────────────────────────────────────
+const MODS=[
+{id:'CPU',slot:1,label:'CPU 1512SP-1 PN',ref:'6ES7 512-1DK01-0AB0',
+ cl:'#0A3A20',tc:'#60D090',
+ desc:'Procesador principal · OB1 ciclo ~10ms · Maestro PROFINET · OPC UA / S7com',
+ tags:['IP 192.168.3.31','150kB work','1MB load','OPC UA'],
+ terminals:[
+  {pin:'L+',   addr:'24VDC', sig:'Alimentación CPU 24VDC',         dest:'2F → AD1 L+ (Mean Well NDR-240-24)',type:'pwr',cable:'H07V 1×1.5 AZ',note:'Fusible 2F 4A'},
+  {pin:'M',    addr:'0V',    sig:'Referencia GND lógica',           dest:'AD1 M (común 0V)',                  type:'pwr',cable:'H07V 1×1.5 AZ',note:'Todos módulos comparten M'},
+  {pin:'X1/P1',addr:'ETH',  sig:'PROFINET Port 1',                  dest:'MOXA EDS-205A · Port 1 (192.168.3.x)',type:'eth',cable:'UTP Cat5e',note:'Red HMI / SCADA'},
+  {pin:'X1/P2',addr:'ETH',  sig:'PROFINET Port 2',                  dest:'HMI TP1200 Comfort (192.168.3.30)', type:'eth',cable:'UTP Cat5e',note:'O Port 2 MOXA según topología'},
+  {pin:'MC',   addr:'—',    sig:'Memory card — programa + datos',   dest:'6ES7 954-8LF03-0AA0 (interna)',     type:'pwr',cable:'—',note:'Retención total del programa'},
+  {pin:'RUN',  addr:'LED',  sig:'LED verde — ciclo normal',          dest:'Panel frontal CPU',                 type:'pwr',cable:'—',note:''},
+  {pin:'ERR',  addr:'LED',  sig:'LED rojo — diagnóstico activo',     dest:'Panel frontal CPU',                 type:'pwr',cable:'—',note:''},
+]},
+{id:'CMDP',slot:2,label:'CM DP',ref:'6ES7 545-5DA00-0AB0',
+ cl:'#0A2060',tc:'#6AA8EE',
+ desc:'Maestro Profibus DP · 187.5 kbit/s · 7 esclavos en daisy-chain',
+ tags:['Adr. maestro','187.5 kbit/s','7 esclavos','Adr. 2–8'],
+ terminals:[
+  {pin:'L+',   addr:'24VDC', sig:'Alimentación 24VDC módulo CM',     dest:'Bus L+ interno rack',   type:'pwr',cable:'Interno',note:''},
+  {pin:'M',    addr:'0V',    sig:'Referencia GND',                    dest:'Bus M interno rack',    type:'pwr',cable:'Interno',note:''},
+  {pin:'A(VP)',addr:'DP+',   sig:'Profibus línea A — VP positivo',    dest:'Conector DB9 pin3 → LCB4.1 Adr.3',type:'dp',cable:'6XV1830-0EH10 apant.',note:'Pin 3 del conector Profibus DB9'},
+  {pin:'B(A)', addr:'DP−',   sig:'Profibus línea B — A negativo',     dest:'Conector DB9 pin8 → LCB4.1 Adr.3',type:'dp',cable:'6XV1830-0EH10 apant.',note:'Pin 8 del conector Profibus DB9'},
+  {pin:'SHD',  addr:'PE',    sig:'Apantallamiento cable Profibus',    dest:'Barra tierra PE tablero',          type:'pe',cable:'Blindaje cable DP',note:'Conectar en UN solo extremo'},
+  {pin:'T/R+', addr:'TERM',  sig:'Terminación activa 220Ω',           dest:'OFF — LCP4.1 en MEDIO del bus',    type:'dp',cable:'Interruptor conector',note:'Solo extremos del bus tienen terminación ON'},
+]},
+{id:'DI1',slot:3,label:'1DI · DI 16×24VDC ST',ref:'6ES7 131-6BH01-0BA0',
+ cl:'#0B3016',tc:'#50C878',
+ desc:'Entradas digitales · %I0.0–%I1.7 · Motores M1–M5 + ESTOP',
+ tags:['%I0.0–%I1.7','16 canales','3.2ms','Diag. L+ OFF'],
+ terminals:[
+  ...diMotor(1,['%I0.0','%I0.1','%I0.2'],1),
+  ...diMotor(2,['%I0.3','%I0.4','%I0.5'],4),
+  ...diMotor(3,['%I0.6','%I0.7','%I1.0'],7),
+  ...diMotor(4,['%I1.1','%I1.2','%I1.3'],10),
+  ...diMotor(5,['%I1.4','%I1.5','%I1.6'],13),
+  {pin:'16',addr:'%I1.7',sig:'ESTOP LCP41 — paro emergencia (NC)', dest:'3X → ESB1 pulsador emergencia panel',type:'di',cable:'KVVP 2×1.5 RO',note:'Contacto NC — abierto = emergencia activa'},
+  {pin:'L+',addr:'24VDC',sig:'Alimentación sensor 24VDC',dest:'Bus L+ interno',type:'pwr',cable:'Interno',note:''},
+  {pin:'M', addr:'0V',   sig:'Referencia GND',           dest:'Bus M interno', type:'pwr',cable:'Interno',note:''},
+]},
+{id:'DI2',slot:4,label:'2DI · DI 16×24VDC ST',ref:'6ES7 131-6BH01-0BA0',
+ cl:'#0B3016',tc:'#50C878',
+ desc:'Entradas digitales · %I2.0–%I3.7 · Motores M6–M10 + 1a señal M11',
+ tags:['%I2.0–%I3.7','16 canales','3.2ms'],
+ terminals:[
+  ...diMotor(6, ['%I2.0','%I2.1','%I2.2'],1),
+  ...diMotor(7, ['%I2.3','%I2.4','%I2.5'],4),
+  ...diMotor(8, ['%I2.6','%I2.7','%I3.0'],7),
+  ...diMotor(9, ['%I3.1','%I3.2','%I3.3'],10),
+  ...diMotor(10,['%I3.4','%I3.5','%I3.6'],13),
+  {pin:'16',addr:'%I3.7',sig:'M11·BCE4.04B — SC Selector remoto', dest:'3X:31→ SC Local-Off-Remote',type:'di',cable:'KVVP 2×0.75 VD',note:'1ª señal M11, continúa en 3DI'},
+  {pin:'L+',addr:'24VDC',sig:'Alimentación sensor 24VDC',dest:'Bus L+ interno',type:'pwr',cable:'Interno',note:''},
+  {pin:'M', addr:'0V',   sig:'Referencia GND',           dest:'Bus M interno', type:'pwr',cable:'Interno',note:''},
+]},
+{id:'DI3',slot:5,label:'3DI · DI 16×24VDC ST',ref:'6ES7 131-6BH01-0BA0',
+ cl:'#0B3016',tc:'#50C878',
+ desc:'Entradas digitales · %I4.0–%I5.7 · M11 cont. + M12–M15 + 2 señales M16',
+ tags:['%I4.0–%I5.7','16 canales'],
+ terminals:[
+  {pin:'1',addr:'%I4.0',sig:'M11·BCE4.04B — KM Contacto aux. (marcha)', dest:'3X:31→ 11KM aux NO',type:'di',cable:'KVVP 2×0.75 VD',note:''},
+  {pin:'2',addr:'%I4.1',sig:'M11·BCE4.04B — 11QF Contacto aux. (fallo)',dest:'3X:31→ 11QF aux NC',type:'di',cable:'KVVP 2×0.75 VD',note:''},
+  ...diMotor(12,['%I4.2','%I4.3','%I4.4'],3),
+  ...diMotor(13,['%I4.5','%I4.6','%I4.7'],6),
+  ...diMotor(14,['%I5.0','%I5.1','%I5.2'],9),
+  ...diMotor(15,['%I5.3','%I5.4','%I5.5'],12),
+  {pin:'15',addr:'%I5.6',sig:'M16 — SC Selector remoto',         dest:'3X:46→ SC Local-Off-Remote',type:'di',cable:'KVVP 2×0.75 VD',note:''},
+  {pin:'16',addr:'%I5.7',sig:'M16 — KM Contacto aux. (marcha)',  dest:'3X:46→ 16KM aux NO',        type:'di',cable:'KVVP 2×0.75 VD',note:''},
+  {pin:'L+',addr:'24VDC',sig:'Alimentación sensor 24VDC',dest:'Bus L+ interno',type:'pwr',cable:'Interno',note:''},
+  {pin:'M', addr:'0V',   sig:'Referencia GND',           dest:'Bus M interno', type:'pwr',cable:'Interno',note:''},
+]},
+{id:'DI4',slot:6,label:'4DI · DI 16×24VDC ST',ref:'6ES7 131-6BH01-0BA0',
+ cl:'#0B3016',tc:'#50C878',
+ desc:'Entradas digitales · %I6.0–%I7.7 · M16 fallo + M17 VFD + disponibles',
+ tags:['%I6.0–%I7.7','16 canales'],
+ terminals:[
+  {pin:'1', addr:'%I6.0',sig:'M16 — 16QF Contacto aux. (fallo)',    dest:'3X:46→ 16QF aux NC',            type:'di',cable:'KVVP 2×0.75 VD',note:''},
+  {pin:'2', addr:'%I6.1',sig:'M17·BCE4.06 VFD — SC Habilitación',   dest:'3X:49→ SC selector panel',       type:'di',cable:'KVVP 2×0.75 VD',note:'Variador ACS310'},
+  {pin:'3', addr:'%I6.2',sig:'M17·BCE4.06 VFD — RUN en marcha',     dest:'3X:49→ VFD ACS310 RO1',         type:'di',cable:'KVVP 2×0.75 VD',note:''},
+  {pin:'4', addr:'%I6.3',sig:'M17·BCE4.06 VFD — FAULT fallo',       dest:'3X:49→ VFD ACS310 R1',          type:'di',cable:'KVVP 2×0.75 VD',note:''},
+  {pin:'5', addr:'%I6.4',sig:'—  Disponible',dest:'—',type:'avl',cable:'—',note:''},
+  {pin:'6', addr:'%I6.5',sig:'—  Disponible',dest:'—',type:'avl',cable:'—',note:''},
+  {pin:'7', addr:'%I6.6',sig:'—  Disponible',dest:'—',type:'avl',cable:'—',note:''},
+  {pin:'8', addr:'%I6.7',sig:'—  Disponible',dest:'—',type:'avl',cable:'—',note:''},
+  {pin:'9', addr:'%I7.0',sig:'—  Disponible',dest:'—',type:'avl',cable:'—',note:''},
+  {pin:'10',addr:'%I7.1',sig:'—  Disponible',dest:'—',type:'avl',cable:'—',note:''},
+  {pin:'11',addr:'%I7.2',sig:'—  Disponible',dest:'—',type:'avl',cable:'—',note:''},
+  {pin:'12',addr:'%I7.3',sig:'—  Disponible',dest:'—',type:'avl',cable:'—',note:''},
+  {pin:'13',addr:'%I7.4',sig:'—  Disponible',dest:'—',type:'avl',cable:'—',note:''},
+  {pin:'14',addr:'%I7.5',sig:'—  Disponible',dest:'—',type:'avl',cable:'—',note:''},
+  {pin:'15',addr:'%I7.6',sig:'—  Disponible',dest:'—',type:'avl',cable:'—',note:''},
+  {pin:'16',addr:'%I7.7',sig:'—  Disponible',dest:'—',type:'avl',cable:'—',note:''},
+  {pin:'L+',addr:'24VDC',sig:'Alimentación sensor 24VDC',dest:'Bus L+ interno',type:'pwr',cable:'Interno',note:''},
+  {pin:'M', addr:'0V',   sig:'Referencia GND',           dest:'Bus M interno', type:'pwr',cable:'Interno',note:''},
+]},
+{id:'DI5',slot:7,label:'5DI · DI 16×24VDC ST',ref:'6ES7 131-6BH01-0BA0',
+ cl:'#0B3016',tc:'#50C878',
+ desc:'Entradas digitales · %I8.0–%I9.7 · Switches de nivel LS402–LS408',
+ tags:['%I8.0–%I9.7','LS402–LS408','nivel'],
+ terminals:[
+  {pin:'1', addr:'%I8.0',sig:'LS402 — Nivel alto TAQ402',        dest:'3X:52→ LS402 contacto',type:'di',cable:'KVVP 2×0.75 VD',note:'Float switch NO'},
+  {pin:'2', addr:'%I8.1',sig:'LS403 — Nivel alto TAQ403',        dest:'3X:53→ LS403 contacto',type:'di',cable:'KVVP 2×0.75 VD',note:''},
+  {pin:'3', addr:'%I8.2',sig:'LS404 — Nivel alto TAQ404',        dest:'3X:54→ LS404 contacto',type:'di',cable:'KVVP 2×0.75 VD',note:''},
+  {pin:'4', addr:'%I8.3',sig:'LS405 — Nivel bajo TAQ405 (NC)',   dest:'3X:55→ LS405 contacto',type:'di',cable:'KVVP 2×0.75 VD',note:'NC — abierto = bajo'},
+  {pin:'5', addr:'%I8.4',sig:'LS406 — Nivel alto TAQ406',        dest:'3X:56→ LS406 contacto',type:'di',cable:'KVVP 2×0.75 VD',note:''},
+  {pin:'6', addr:'%I8.5',sig:'LS407 — Nivel alto TAQ407',        dest:'3X:57→ LS407 contacto',type:'di',cable:'KVVP 2×0.75 VD',note:''},
+  {pin:'7', addr:'%I8.6',sig:'LS408 — Nivel bajo TAQ408 (NC)',   dest:'3X:58→ LS408 contacto',type:'di',cable:'KVVP 2×0.75 VD',note:'NC — abierto = bajo'},
+  {pin:'8', addr:'%I8.7',sig:'—  Disponible',dest:'—',type:'avl',cable:'—',note:''},
+  {pin:'9', addr:'%I9.0',sig:'—  Disponible',dest:'—',type:'avl',cable:'—',note:''},
+  {pin:'10',addr:'%I9.1',sig:'—  Disponible',dest:'—',type:'avl',cable:'—',note:''},
+  {pin:'11',addr:'%I9.2',sig:'—  Disponible',dest:'—',type:'avl',cable:'—',note:''},
+  {pin:'12',addr:'%I9.3',sig:'—  Disponible',dest:'—',type:'avl',cable:'—',note:''},
+  {pin:'13',addr:'%I9.4',sig:'—  Disponible',dest:'—',type:'avl',cable:'—',note:''},
+  {pin:'14',addr:'%I9.5',sig:'—  Disponible',dest:'—',type:'avl',cable:'—',note:''},
+  {pin:'15',addr:'%I9.6',sig:'—  Disponible',dest:'—',type:'avl',cable:'—',note:''},
+  {pin:'16',addr:'%I9.7',sig:'—  Disponible',dest:'—',type:'avl',cable:'—',note:''},
+  {pin:'L+',addr:'24VDC',sig:'Alimentación sensor 24VDC',dest:'Bus L+ interno',type:'pwr',cable:'Interno',note:''},
+  {pin:'M', addr:'0V',   sig:'Referencia GND',           dest:'Bus M interno', type:'pwr',cable:'Interno',note:''},
+]},
+{id:'DQ1',slot:8,label:'1DQ · DQ 16×24VDC ST',ref:'6ES7 132-6BH01-0BA0',
+ cl:'#3A0808',tc:'#FF7070',
+ desc:'Salidas digitales 24VDC · %Q0.0–%Q1.7 · → Relés KB → KM · Motores M1–M16',
+ tags:['%Q0.0–%Q1.7','16 canales','0.5A/ch','→ Relés IDEC'],
+ terminals:[
+  ...Array.from({length:16},(_,i)=>{
+    const motN=i+1,m=MTAG[motN];
+    const q=`%Q${i<8?'0':'1'}.${i%8}`;
+    const kb=`${motN}KB`;
+    if(!m||m.type==='avl') return {pin:String(i+1),addr:q,sig:'—  Disponible',dest:'—',type:'avl',cable:'—',note:''};
+    return {pin:String(i+1),addr:q,
+      sig:`M${motN}·${m.tag} — MARCHA bobina ${kb}`,
+      dest:`${kb} (IDEC RJ2S-CL-D24) → ${m.km} bobina`,
+      type:'dq',cable:'H07V 1×0.75 RO',
+      note:`24VDC activa ${kb} → cierra ${m.km} → arranca motor`};
+  }),
+  {pin:'L+',addr:'24VDC',sig:'Alimentación 24VDC salidas',dest:'Bus L+ interno',type:'pwr',cable:'Interno',note:'Fusible 1F 4A'},
+  {pin:'M', addr:'0V',   sig:'Referencia GND',            dest:'Bus M interno', type:'pwr',cable:'Interno',note:''},
+]},
+{id:'DQ2',slot:9,label:'2DQ · DQ 16×24VDC ST',ref:'6ES7 132-6BH01-0BA0',
+ cl:'#3A0808',tc:'#FF7070',
+ desc:'Salidas digitales · %Q2.0–%Q3.7 · Solo %Q2.0 en uso — M17 VFD enable',
+ tags:['%Q2.0–%Q3.7','1 usado','%Q2.0 VFD'],
+ terminals:[
+  {pin:'1',addr:'%Q2.0',sig:'M17·BCE4.06 VFD — MARCHA bobina 17KB',
+    dest:'17KB (IDEC RJ2S-CL-D24) → 17KM → habilita VFD ACS310',
+    type:'dq',cable:'H07V 1×0.75 RO',note:'24VDC → 17KB → KA → VFD Start. Velocidad vía AQ %QW4'},
+  ...Array.from({length:15},(_,i)=>({pin:String(i+2),addr:`%Q${(i+1)<8?'2':'3'}.${(i+1)%8}`,sig:'—  Disponible',dest:'—',type:'avl',cable:'—',note:''})),
+  {pin:'L+',addr:'24VDC',sig:'Alimentación 24VDC salidas',dest:'Bus L+ interno',type:'pwr',cable:'Interno',note:''},
+  {pin:'M', addr:'0V',   sig:'Referencia GND',            dest:'Bus M interno', type:'pwr',cable:'Interno',note:''},
+]},
+{id:'AI1',slot:10,label:'1AI · AI 8×I 4-20mA',ref:'6ES7 134-6GF00-0AA1',
+ cl:'#3C1800',tc:'#FFB050',
+ desc:'Entradas analógicas 4-20mA · %IW10–%IW24 · Diag. L+ y rotura hilo ACTIVOS · Filtrado fuerte · Borne 4X',
+ tags:['%IW10–%IW24','8 canales','4-20mA','2-/4-wire','Diag. activo'],
+ terminals:[
+  {pin:'1',addr:'%IW10',sig:'ORP401 — Sensor ORP/Redox agua proceso',dest:'4X:01→ AIT4.01 GF Signet 9900 I+',type:'ai',cable:'BELDEN 8762 apant.',note:'4-20mA 2 hilos · I− a bus M interno · 0-27648 ↔ mV'},
+  {pin:'2',addr:'%IW12',sig:'PH406 — Sensor pH circuito CIP',        dest:'4X:02→ AIT4.06 GF Signet 9900 I+',type:'ai',cable:'BELDEN 8762 apant.',note:'4-20mA 2 hilos · I− a bus M interno · 0-27648 ↔ pH 0-14'},
+  {pin:'3',addr:'%IW14',sig:'—  Reserva (sin asignar)',              dest:'—',                                type:'avl',cable:'—',               note:'Libre · terminar con 1kΩ si se deja abierto'},
+  {pin:'4',addr:'%IW16',sig:'—  Reserva (sin asignar)',              dest:'—',                                type:'avl',cable:'—',               note:'Libre'},
+  {pin:'5',addr:'%IW18',sig:'LT401 — Nivel depósito TAQ401',         dest:'4X:03→ LT4.01 transmisor I+',     type:'ai',cable:'BELDEN 8762 apant.',note:'4-20mA 2 hilos · I− a bus M · % nivel 0-100%'},
+  {pin:'6',addr:'%IW20',sig:'LT404 — Nivel depósito TAQ404',         dest:'4X:04→ LT4.04 transmisor I+',     type:'ai',cable:'BELDEN 8762 apant.',note:'4-20mA 2 hilos · I− a bus M · depósito suavizadores'},
+  {pin:'7',addr:'%IW22',sig:'LT507 — Nivel TAQ507 (RO, remoto)',     dest:'4X:05→ LT5.07 transmisor I+',     type:'ai',cable:'BELDEN 8762 apant.',note:'4-20mA 2 hilos · señal vía cable LCB5.1-P'},
+  {pin:'8',addr:'%IW24',sig:'LT513 — Nivel TAQ513 (RO, remoto)',     dest:'4X:06→ LT5.13 transmisor I+',     type:'ai',cable:'BELDEN 8762 apant.',note:'4-20mA 2 hilos · señal vía cable LCB5.2-P'},
+  {pin:'L+',addr:'24VDC',sig:'Alimentación 24VDC módulo AI',         dest:'Bus L+ interno',                   type:'pwr',cable:'Interno',          note:'Diag. L+ activo · suministra lazo 24VDC a transmisores'},
+  {pin:'M', addr:'0V',   sig:'Referencia GND — retorno lazo I−',     dest:'Bus M interno',                   type:'pwr',cable:'Interno',          note:'Todos los I− de los 8 canales retornan aquí'},
+]},
+{id:'AQ1',slot:11,label:'1AQ · AQ 2×I 4-20mA',ref:'6ES7 135-6GB00-0BA1',
+ cl:'#4A0808',tc:'#FF9080',
+ desc:'Salidas analógicas 4-20mA · %QW4–%QW6 · %QW4 = referencia velocidad VFD BCE4.06',
+ tags:['%QW4–%QW6','2 canales','4-20mA','→ VFD ACS310'],
+ terminals:[
+  {pin:'1',addr:'%QW4', sig:'BCE4.06 — Ref. velocidad VFD ACS310',
+    dest:'VFD ABB ACS310 AI1 (+) — conector I/O panel variador',
+    type:'aq',cable:'BELDEN 8762 apant.',note:'0-27648 ↔ 4-20mA → 0–60Hz · Desconectar en STOP · (+)'},
+  {pin:'2',addr:'%QW4', sig:'BCE4.06 — Retorno lazo AQ',
+    dest:'VFD ABB ACS310 GND AI1 (−)',
+    type:'aq',cable:'BELDEN 8762',note:'Blindaje en tablero, NO en el variador · (−)'},
+  {pin:'3',addr:'%QW6', sig:'—  Reserva (sin asignar)', dest:'—',type:'avl',cable:'—',note:''},
+  {pin:'4',addr:'%QW6', sig:'—  Reserva',              dest:'—',type:'avl',cable:'—',note:''},
+  {pin:'L+',addr:'24VDC',sig:'Alimentación 24VDC módulo AQ',dest:'Bus L+ interno',type:'pwr',cable:'Interno',note:''},
+  {pin:'M', addr:'0V',   sig:'Referencia GND',              dest:'Bus M interno', type:'pwr',cable:'Interno',note:''},
+]},
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// VISUAL RENDER
+// ─────────────────────────────────────────────────────────────────────────────
+function tc(type){
+  const C={di:'#22BB66',dq:'#FF5555',ai:'#FFB030',aq:'#FF8844',dp:'#CC80EE',eth:'#44AAEE',pwr:'#5A6A88',pe:'#F5A623',avl:'#1E1E1E'};
+  return C[type]||'#555';
+}
+function trunc(s,n){return s&&s.length>n?s.slice(0,n-1)+'…':s||''}
+
+function renderMod(mod){
+  const TS=mod.terminals;
+  const SW=1042, ROW_H=32, HDR_H=64;
+  const SH=HDR_H+TS.length*ROW_H+18;
+
+  // Column X positions
+  const MBX=4, MBW=86;          // module body: 4→90
+  const PNX=MBX+MBW;            // pin nubs start: 90
+  const PNW=10;                  // pin nub width
+  const ADX=PNX+PNW+8;          // address area start: 108
+  const ADW=106;                 // address area width
+  const CBX=ADX+ADW;            // cable start: 214
+  const CBE=SW-272;             // cable end: 770
+  const DSX=CBE+10;             // destination start: 780
+  const DSW=SW-DSX-8;          // destination width: ~254
+
+  let h=`<svg viewBox="0 0 ${SW} ${SH}" width="${SW}" height="${SH}" xmlns="http://www.w3.org/2000/svg">`;
+
+  // Defs
+  h+=`<defs>
+  <filter id="mglo" x="-25%" y="-25%" width="150%" height="150%">
+    <feGaussianBlur stdDeviation="2.5" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>`;
+  ['di','dq','ai','aq','dp','eth','pe'].forEach(t=>{
+    const c=tc(t);
+    h+=`<marker id="ar_${t}" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+      <polygon points="0,0.5 6,3.5 0,6.5" fill="${c}" opacity=".85"/>
+    </marker>`;
+  });
+  h+=`</defs>`;
+
+  // Canvas background
+  h+=`<rect x="0" y="0" width="${SW}" height="${SH}" fill="#070708"/>`;
+
+  // Cable zone background (subtle)
+  h+=`<rect x="${ADX}" y="2" width="${SW-ADX-2}" height="${SH-4}" rx="2" fill="#090910" opacity=".7"/>`;
+
+  // Column separators
+  [ADX-1,CBX-1,DSX-3].forEach(x=>{
+    h+=`<line x1="${x}" y1="2" x2="${x}" y2="${SH-2}" stroke="#12121E" stroke-width="1"/>`;
+  });
+
+  // Column header labels
+  h+=`<text x="${ADX+5}" y="14" fill="#182030" font-size="6.5" font-weight="700" letter-spacing=".7" font-family="-apple-system,Arial,sans-serif">PIN · DIRECCIÓN</text>`;
+  h+=`<text x="${(CBX+CBE)/2}" y="14" fill="#182030" font-size="6.5" font-weight="700" letter-spacing=".7" text-anchor="middle" font-family="-apple-system,Arial,sans-serif">SEÑAL / FUNCIÓN</text>`;
+  h+=`<text x="${DSX+DSW/2}" y="14" fill="#182030" font-size="6.5" font-weight="700" letter-spacing=".7" text-anchor="middle" font-family="-apple-system,Arial,sans-serif">DESTINO / BORNE</text>`;
+
+  // Module body
+  h+=`<rect x="${MBX}" y="6" width="${MBW}" height="${SH-12}" rx="4" fill="${mod.cl}" filter="url(#mglo)" stroke="${mod.tc}" stroke-width="1.2" opacity=".85"/>`;
+  // Module label
+  const mshort=mod.label.split('·')[0].trim();
+  h+=`<text x="${MBX+MBW/2}" y="29" fill="${mod.tc}" font-size="9" font-weight="800" text-anchor="middle" font-family="-apple-system,Arial,sans-serif" letter-spacing=".3">${mshort}</text>`;
+  h+=`<text x="${MBX+MBW/2}" y="43" fill="${mod.tc}" font-size="7" text-anchor="middle" font-family="monospace" opacity=".5">Slot ${mod.slot}</text>`;
+  h+=`<text x="${MBX+MBW/2}" y="57" fill="${mod.tc}" font-size="9" font-weight="700" text-anchor="middle" font-family="monospace" letter-spacing=".8" opacity=".65">${mod.id}</text>`;
+
+  // Alternating row stripes
+  TS.forEach((_,i)=>{
+    if(i%2===0) h+=`<rect x="${ADX}" y="${HDR_H+i*ROW_H}" width="${SW-ADX-2}" height="${ROW_H}" fill="#0C0C14" opacity=".5"/>`;
+  });
+
+  // Terminal rows
+  TS.forEach((t,i)=>{
+    const ry=HDR_H+i*ROW_H+ROW_H/2;
+    const clr=tc(t.type);
+    const isAvl=t.type==='avl';
+    const isPwr=t.type==='pwr'||t.type==='pe';
+    const onclick=isAvl?'':` onclick="clickRow(${i},'${mod.id}')"`;
+
+    h+=`<g class="wrow${isAvl?' wrow-avl':''}" data-idx="${i}"${onclick}>`;
+
+    // Pin nub on module right edge
+    h+=`<rect x="${PNX}" y="${ry-5}" width="${PNW}" height="10" rx="1"
+      fill="${isAvl?'#181818':clr}" opacity="${isAvl?.08:.72}" class="wr-pin"/>`;
+
+    // Pin label inside module
+    h+=`<text x="${MBX+4}" y="${ry+4}" fill="${isAvl?'#1C1C1C':clr}"
+      font-size="6.5" font-family="monospace" font-weight="600"
+      opacity="${isAvl?.15:.55}" class="wr-pin">${trunc(t.pin,10)}</text>`;
+
+    // PLC address
+    h+=`<text x="${ADX+5}" y="${ry+5}" fill="${isAvl?'#1A1A1A':clr}"
+      font-size="${isPwr?'7.5':'9.5'}" font-weight="700" font-family="monospace"
+      opacity="${isAvl?.15:1}" class="wr-addr">${t.addr}</text>`;
+
+    if(!isAvl){
+      if(isPwr){
+        // Short dashed power line
+        h+=`<line x1="${PNX+PNW}" y1="${ry}" x2="${CBX+100}" y2="${ry}"
+          stroke="${clr}" stroke-width="1.2" stroke-dasharray="5 4"
+          opacity=".28" class="wr-line"/>`;
+        h+=`<text x="${CBX+107}" y="${ry+4}" fill="${clr}"
+          font-size="7.5" opacity=".28">⊕ BUS 24VDC · L+/M interno</text>`;
+      } else {
+        // Glow copy
+        h+=`<line x1="${PNX+PNW}" y1="${ry}" x2="${CBE}" y2="${ry}"
+          stroke="${clr}" stroke-width="7" opacity=".05" class="wr-glow"/>`;
+        // Main cable
+        h+=`<line x1="${PNX+PNW}" y1="${ry}" x2="${CBE}" y2="${ry}"
+          stroke="${clr}" stroke-width="1.8" opacity=".62" class="wr-line"
+          marker-end="url(#ar_${t.type})"/>`;
+        // Signal label above cable
+        h+=`<text x="${(PNX+PNW+CBE)/2}" y="${ry-8}" fill="${clr}"
+          font-size="7.5" text-anchor="middle" opacity=".65"
+          font-family="-apple-system,Arial,sans-serif" class="wr-sig">${trunc(t.sig,66)}</text>`;
+        // Destination box
+        h+=`<rect x="${DSX}" y="${ry-12}" width="${DSW}" height="24" rx="3"
+          fill="#07070E" stroke="${clr}" stroke-width=".8" opacity=".88" class="wr-dest-bg"/>`;
+        h+=`<text x="${DSX+6}" y="${ry+4}" fill="${clr}"
+          font-size="8.5" opacity=".88" class="wr-dest">${trunc(t.dest,38)}</text>`;
+        h+=`<text x="${DSX+6}" y="${ry+17}" fill="#2A2A2A"
+          font-size="6.5" opacity=".65">${t.cable}</text>`;
+      }
+    }
+    h+=`</g>`;
+  });
+
+  h+=`</svg>`;
+  return h;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RACK NAV
+// ─────────────────────────────────────────────────────────────────────────────
+function buildRackNav(){
+  const nav=document.getElementById('rack-nav');
+  MODS.forEach(m=>{
+    const d=document.createElement('div');
+    d.className='rnmod'; d.id='rn-'+m.id;
+    d.onclick=()=>selectMod(m.id);
+    const firstSig=m.terminals.find(t=>t.type!=='pwr');
+    const addrShort=firstSig?firstSig.addr.replace('%','').split('.')[0]+'…':'—';
+    d.innerHTML=`
+      <div class="rn-chip" style="background:${m.cl};color:${m.tc}">${m.label.split('·')[0].replace('×24VDC ST','').trim().split(' ').slice(0,2).join(' ')}</div>
+      <div class="rn-lbl" style="color:${m.tc}">${m.id}</div>
+      <div class="rn-addr">${addrShort}</div>`;
+    nav.appendChild(d);
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INTERACTION
+// ─────────────────────────────────────────────────────────────────────────────
+let selModId=null, selRowIdx=null;
+
+function selectMod(id){
+  selModId=id; selRowIdx=null;
+  document.querySelectorAll('.rnmod').forEach(n=>n.classList.remove('active'));
+  document.getElementById('rn-'+id)?.classList.add('active');
+
+  const mod=MODS.find(m=>m.id===id);
+  if(!mod) return;
+
+  // Update desc bar
+  const bar=document.getElementById('mod-desc-bar');
+  const tags=mod.tags.map(t=>`<span class="mdb-tag" style="color:${mod.tc};border-color:${mod.cl}">${t}</span>`).join('');
+  bar.innerHTML=`
+    <div class="mdb-title" style="color:${mod.tc}">${mod.label}</div>
+    <div class="mdb-ref">${mod.ref}</div>
+    <div class="mdb-tags">${tags}</div>
+    <div style="font-size:9px;color:#2A3A4A;margin-left:4px">${mod.desc}</div>`;
+
+  // Render SVG
+  document.getElementById('wsvg-wrap').innerHTML=renderMod(mod);
+
+  // Reset detail
+  document.getElementById('det').innerHTML=`<div id="det-empty">🔌<br><br>Clic en un terminal para ver el detalle</div>`;
+}
+
+function clickRow(idx,modId){
+  // Toggle off if same row
+  if(selRowIdx===idx&&selModId===modId){
+    selRowIdx=null;
+    document.querySelectorAll('.wrow').forEach(g=>g.classList.remove('sel','dim'));
+    document.getElementById('det').innerHTML=`<div id="det-empty">🔌<br><br>Clic en un terminal para ver el detalle</div>`;
+    return;
+  }
+  selRowIdx=idx;
+
+  document.querySelectorAll('.wrow').forEach(g=>{
+    const gi=parseInt(g.dataset.idx);
+    g.classList.remove('sel','dim');
+    if(gi===idx) g.classList.add('sel');
+    else         g.classList.add('dim');
+  });
+
+  const mod=MODS.find(m=>m.id===modId);
+  if(mod) showDet(mod,idx);
+}
+
+function showDet(mod,idx){
+  const t=mod.terminals[idx];
+  const clr=tc(t.type);
+  const typelbl={di:'Entrada Digital',dq:'Salida Digital',ai:'Entrada Analógica',aq:'Salida Analógica',
+    dp:'Profibus DP',eth:'PROFINET ETH',pwr:'Alimentación 24VDC',pe:'Tierra / PE',avl:'Disponible'}[t.type]||t.type.toUpperCase();
+
+  document.getElementById('det').innerHTML=`
+    <div id="det-pin" style="color:${clr}">${t.pin}</div>
+    <div id="det-addr" style="color:${clr};font-size:12px;font-family:monospace;font-weight:700;margin-bottom:2px">${t.addr}</div>
+    <div id="det-type" style="color:${clr};font-size:8px;text-transform:uppercase;letter-spacing:.6px;opacity:.45;margin-bottom:9px">${typelbl}</div>
+    <div id="det-sig" style="font-size:11px;color:#AAA;margin-bottom:10px;line-height:1.5">${t.sig}</div>
+    <div class="dsep"></div>
+    <div class="dr"><span class="dl">Destino</span><span class="dv">${t.dest}</span></div>
+    <div class="dr"><span class="dl">Cable</span><span class="dv" style="font-family:monospace;font-size:9.5px">${t.cable}</span></div>
+    ${t.note?`<div class="dr"><span class="dl">Nota</span><span class="dv" style="color:#4A5A70;font-style:italic;font-size:10px">${t.note}</span></div>`:''}
+    <div class="dsep"></div>
+    <div class="dr"><span class="dl">Módulo</span><span class="dv" style="color:${mod.tc}">${mod.label}</span></div>
+    <div class="dr"><span class="dl">Ref.</span><span class="dv" style="font-family:monospace;font-size:9px;color:#4A4A4A">${mod.ref}</span></div>
+    <div class="dr"><span class="dl">Slot</span><span class="dv">Slot ${mod.slot}</span></div>`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded',()=>{
+  buildRackNav();
+  selectMod('DI1'); // default: first DI module
+});
+</script>
+</body>
+</html>
