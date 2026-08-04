@@ -6,32 +6,32 @@
 <title>Arquitectura del proceso — Osmosis Inversa Permoda</title>
 <style>
   :root{
-    --ink:#2C2C2A; --mut:#5F5E5A; --faint:#9A9890;
-    --teal:#0F6E56; --tealD:#04342C; --tealM:#1D9E75; --tealL:#E1F5EE;
-    --grayL:#F4F2EC; --amber:#854F0B; --amberL:#FAEEDA;
-    --red:#A32D2D; --redL:#FCEBEB; --blue:#185FA5; --blueL:#E6F1FB;
-    --purp:#534AB7; --purpL:#EEEDFE;
+    --ink:#c9d1d9; --mut:#8b949e; --faint:#6e7681;
+    --teal:#1f6feb; --tealD:#070e16; --tealM:#58a6ff; --tealL:#0d2045;
+    --grayL:#161b22; --amber:#d29922; --amberL:#2a1800;
+    --red:#f85149; --redL:#2d0f0f; --blue:#1f6feb; --blueL:#0d2045;
+    --purp:#8b5cf6; --purpL:#1e1040;
   }
   *{box-sizing:border-box}
-  body{margin:0;font-family:Arial,Helvetica,sans-serif;color:var(--ink);background:#fff}
-  header{background:var(--tealD);color:#fff;padding:22px 28px 16px;position:sticky;top:0;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+  body{margin:0;font-family:Arial,Helvetica,sans-serif;color:var(--ink);background:#0d1117}
+  header{background:var(--tealD);color:#fff;padding:22px 28px 16px;position:sticky;top:0;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,.5);border-bottom:1px solid #30363d}
   header h1{margin:0;font-size:20px}
-  header .sub{color:#9FE1CB;font-size:12.5px;margin-top:4px}
+  header .sub{color:#8b949e;font-size:12.5px;margin-top:4px}
   .bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}
-  .bar input{flex:1;min-width:220px;padding:8px 12px;border-radius:8px;border:1px solid #1D9E75;background:#06463B;color:#fff;font-size:13px;outline:none}
-  .bar input::placeholder{color:#5DCAA5}
-  .bar button{padding:8px 14px;border-radius:8px;border:1px solid #1D9E75;background:transparent;color:#9FE1CB;font-size:12.5px;cursor:pointer}
-  .bar button:hover{background:#0F6E56;color:#fff}
+  .bar input{flex:1;min-width:220px;padding:8px 12px;border-radius:8px;border:1px solid #30363d;background:#161b22;color:#fff;font-size:13px;outline:none}
+  .bar input::placeholder{color:#4a7090}
+  .bar button{padding:8px 14px;border-radius:8px;border:1px solid #30363d;background:transparent;color:#8b949e;font-size:12.5px;cursor:pointer}
+  .bar button:hover{background:#1f6feb;color:#fff}
   .legend{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
   .legend .chip{font-size:10.5px}
-  .stats{color:#5DCAA5;font-size:11.5px;margin-top:8px}
+  .stats{color:#8b949e;font-size:11.5px;margin-top:8px}
   main{max-width:1080px;margin:0 auto;padding:20px 24px 60px}
   details{margin:6px 0;border-radius:10px}
-  details>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:10px;background:var(--grayL);border:1px solid #E3E0D6;transition:background .15s}
-  details>summary:hover{background:#ECE9DF}
+  details>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:10px;background:var(--grayL);border:1px solid #30363d;transition:background .15s}
+  details>summary:hover{background:#1c2333}
   details>summary::before{content:"▸";font-size:11px;color:var(--faint);transition:transform .15s;flex:0 0 auto}
   details[open]>summary::before{transform:rotate(90deg)}
-  details>*:not(summary){margin-left:22px;border-left:2px solid #E3E0D6;padding-left:14px}
+  details>*:not(summary){margin-left:22px;border-left:2px solid #30363d;padding-left:14px}
   .t{font-weight:bold;font-size:13.5px}
   .s{color:var(--mut);font-size:11.5px}
   .chip{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:bold;letter-spacing:.4px;flex:0 0 auto}
@@ -40,24 +40,24 @@
   .c-b{background:var(--tealL);color:var(--teal)}
   .c-v{background:var(--blueL);color:var(--blue)}
   .c-i{background:var(--amberL);color:var(--amber)}
-  .c-s{background:#EAE8E0;color:var(--mut)}
+  .c-s{background:#21262d;color:var(--mut)}
   .c-p{background:var(--purpL);color:var(--purp)}
   .c-x{background:var(--redL);color:var(--red)}
   .lvl0>summary{background:var(--tealD);border-color:var(--tealD)}
   .lvl0>summary .t{color:#fff;font-size:15px}
-  .lvl0>summary .s{color:#9FE1CB}
-  .lvl0>summary::before{color:#5DCAA5}
-  .tab>summary{background:var(--tealL);border-color:#BFE8D9}
-  .tab>summary:hover{background:#D2EFE4}
-  .tab>summary .t{color:var(--tealD)}
-  .grp>summary{background:#fff;border-style:dashed}
-  .det{background:#fff;border:1px solid #EDEAE0;border-radius:8px;padding:8px 12px;margin:6px 0;font-size:12px;color:var(--mut);line-height:1.55}
+  .lvl0>summary .s{color:#8b949e}
+  .lvl0>summary::before{color:#8b949e}
+  .tab>summary{background:var(--tealL);border-color:var(--tealL)}
+  .tab>summary:hover{background:#122040}
+  .tab>summary .t{color:#c9d1d9}
+  .grp>summary{background:#161b22;border-style:dashed}
+  .det{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:8px 12px;margin:6px 0;font-size:12px;color:var(--mut);line-height:1.55}
   .det b{color:var(--ink)}
   .det .k{color:var(--teal);font-weight:bold}
   .io{font-family:Consolas,Menlo,monospace;font-size:11.5px;color:var(--ink)}
   .warn{color:var(--red);font-weight:bold}
   .note{background:var(--amberL);color:var(--amber);border:none}
-  mark{background:#FAC775;border-radius:3px;padding:0 2px}
+  mark{background:#5a3a00;color:#e3b341;border-radius:3px;padding:0 2px}
   footer{max-width:1080px;margin:0 auto;padding:0 24px 40px;color:var(--faint);font-size:11px}
 </style>
 </head>
