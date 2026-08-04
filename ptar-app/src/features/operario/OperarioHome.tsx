@@ -1,6 +1,7 @@
-// Pantalla de inicio del operario: accesos a formatos de turno y panel de mantenimiento GFT
+// Pantalla de inicio del operario: accesos a formatos de turno, mantenimiento y revisión técnica RO
 import { Link } from 'react-router-dom';
 import { useState, useEffect, useMemo } from 'react';
+import PlanosPanel from '../encargado/components/PlanosPanel';
 import { useAuth } from '../../state/AuthContext';
 import { useTheme } from '../../state/ThemeContext';
 import { ROUTES } from '../../lib/routes';
@@ -439,6 +440,14 @@ export default function OperarioHome() {
       {/* Panel de Mantenimiento Preventivo */}
       <div style={{ borderTop: `1px solid ${theme.border2}`, marginTop: 28, paddingTop: 22 }}>
         <MttoPanel />
+      </div>
+
+      {/* Revisión Técnica — Ósmosis Inversa */}
+      <div style={{ borderTop: `1px solid ${theme.border2}`, marginTop: 28, paddingTop: 22 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: theme.muted, letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 18 }}>
+          REVISIÓN TÉCNICA — ÓSMOSIS INVERSA
+        </div>
+        <PlanosPanel />
       </div>
     </div>
   );
