@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Dapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -539,20 +540,20 @@ public class ReactivosController(IDbConnectionFactory db) : ControllerBase
 // ── Modelos request ──────────────────────────────────────────────────────────
 public record RegistroReactivoIn(
     DateOnly? fecha,
-    string turno,
-    string usuario,
+    [property: Required, MaxLength(20)]      string turno,
+    [property: Required, MaxLength(100)]     string usuario,
     string? equipo,
-    string id_quimico,
-    string nombre_quimico,
-    string unidad,
-    double densidad_kg,
+    [property: Required, MaxLength(15)]      string id_quimico,
+    [property: Required, MaxLength(100)]     string nombre_quimico,
+    [property: Required, MaxLength(20)]      string unidad,
+    [property: Range(0, 99_999)]             double densidad_kg,
     double nivel_inicial,
     double nivel_final,
-    double kg_consumidos,
-    double precio_kg,
+    [property: Range(0, 99_999)]             double kg_consumidos,
+    [property: Range(0, 99_999_999)]         double precio_kg,
     double horometro_inicial,
     double caudal_tratado_gem,
-    double horas_operacion,
+    [property: Range(0, 24)]                 double horas_operacion,
     string? observaciones,
     double? ingreso_coagulante_l,
     double? trasegado_coagulante_ptap_l,

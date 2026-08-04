@@ -1,3 +1,6 @@
+// Constantes de rutas y mapa de página inicial por rol de usuario
+
+// Rutas absolutas de todas las páginas de la aplicación
 export const ROUTES = {
   LOGIN: '/login',
   // Operario
@@ -20,6 +23,7 @@ export const ROUTES = {
   MANTENIMIENTOS: '/mantenimientos',
 } as const;
 
+// Ruta de inicio por defecto según el rol del usuario autenticado
 export const ROLE_HOME = {
   operario: ROUTES.OPERARIO_HOME,
   encargado: ROUTES.ENCARGADO_DASHBOARD,

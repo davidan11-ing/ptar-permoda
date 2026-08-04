@@ -1,7 +1,10 @@
+// Utilidad de audio: ping de confirmación vía Web Audio API sin dependencias externas
+
 /** Ping de 2 tonos (Do→Mi) vía Web Audio API. Sin dependencias externas. */
 export function playPing() {
   try {
     const ctx = new AudioContext();
+    // Genera un tono a la frecuencia y tiempo indicados con fade-out suave
     const tone = (freq: number, start: number, dur: number) => {
       const osc  = ctx.createOscillator();
       const gain = ctx.createGain();

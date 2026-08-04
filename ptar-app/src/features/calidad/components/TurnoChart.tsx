@@ -1,3 +1,4 @@
+// Gráfica de barras agrupadas: promedio del parámetro por turno (noche/mañana/tarde) a lo largo del tiempo
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer,
@@ -11,17 +12,20 @@ interface Props {
   unidad: string;
 }
 
+// Componente de barras por turno: muestra noche/mañana/tarde para una unidad de tratamiento
 export default function TurnoChart({ data, unidad_medida, unidad }: Props) {
   if (data.length === 0) {
     return <div className="cal-empty">Sin datos para el período / unidad seleccionada</div>;
   }
 
+  // Formateador de fecha: convierte YYYY-MM-DD a DD/MM
   const formatFecha = (f: string) => {
     if (!f) return '';
     const [, m, d] = f.split('-');
     return `${d}/${m}`;
   };
 
+  // Verifica si un turno tiene al menos un registro con valor no nulo
   const hasTurno = (t: string) => data.some(r => (r as unknown as Record<string, unknown>)[t] != null);
 
   // Calcular dominio Y: auto, pero proteger el caso min=max (1 solo dato)
@@ -33,11 +37,13 @@ export default function TurnoChart({ data, unidad_medida, unidad }: Props) {
   }
   const dMin = allVals.length > 0 ? Math.min(...allVals) : 0;
   const dMax = allVals.length > 0 ? Math.max(...allVals) : 1;
+  // Rango fijo cuando min === max para evitar gráfica plana sin referencia visual
   const yDomain: [number | string, number | string] =
     dMin === dMax
       ? [+(dMin * 0.9).toFixed(2), +(dMax * 1.1).toFixed(2)]
       : ['auto', 'auto'];
 
+  // Contenedor con etiqueta de unidad activa y barras por turno
   return (
     <div>
       <div style={{ fontSize: 11, color: '#484f58', marginBottom: 6 }}>
@@ -65,6 +71,7 @@ export default function TurnoChart({ data, unidad_medida, unidad }: Props) {
             formatter={(val: number, name: string) => [`${val} ${unidad_medida}`, name]}
           />
           <Legend wrapperStyle={{ color: '#8b949e', fontSize: 12, paddingTop: 8 }} />
+          {/* Barras condicionales: solo se renderizan los turnos presentes en los datos */}
           {hasTurno('noche')  && <Bar dataKey="noche"  name="Noche"  fill={TURNO_COLORES.noche}  radius={[3,3,0,0]} />}
           {hasTurno('mañana') && <Bar dataKey="mañana" name="Mañana" fill={TURNO_COLORES.mañana} radius={[3,3,0,0]} />}
           {hasTurno('tarde')  && <Bar dataKey="tarde"  name="Tarde"  fill={TURNO_COLORES.tarde}  radius={[3,3,0,0]} />}

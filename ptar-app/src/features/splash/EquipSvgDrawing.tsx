@@ -1,3 +1,5 @@
+// Biblioteca de ilustraciones SVG standalone para cada equipo del modal de detalle
+
 /**
  * Ilustraciones SVG standalone para cada equipo del modal de detalle.
  * Cada dibujo es independiente — no usa el svgBody global del diagrama.
@@ -34,6 +36,7 @@ export function EqSvgDefs() {
   );
 }
 
+// Alias cortos de los gradientes definidos en EqSvgDefs
 const tG = 'url(#eqTankG)';
 const wG = 'url(#eqWaterG)';
 const sG = 'url(#eqSludgeG)';
@@ -85,6 +88,7 @@ function FlowArrow({ x1,y1,x2,y2,color='#00c5e3',dashed=false }:
 
 // ── Dibujos por tipo de equipo ─────────────────────────────────────────
 
+// Tanque pequeño con entrada superior y salida inferior
 function DrawTankSmall({ s }:{ s:Status }) {
   const c = SC[s];
   return <>
@@ -99,6 +103,7 @@ function DrawTankSmall({ s }:{ s:Status }) {
   </>;
 }
 
+// Tanque grande con indicador de volumen en m³
 function DrawTankLarge({ s }:{ s:Status }) {
   const c = SC[s];
   return <>
@@ -114,6 +119,7 @@ function DrawTankLarge({ s }:{ s:Status }) {
   </>;
 }
 
+// Punto de descarga/entrada al proceso con pipe horizontal y medidores
 function DrawInputStream({ s }:{ s:Status }) {
   const c = SC[s];
   return <>
@@ -147,6 +153,7 @@ function DrawInputStream({ s }:{ s:Status }) {
   </>;
 }
 
+// Criba rotativa de tambor giratorio con malla de separación
 function DrawCribaRotativa({ s }:{ s:Status }) {
   const c = SC[s];
   return <>
@@ -176,6 +183,7 @@ function DrawCribaRotativa({ s }:{ s:Status }) {
   </>;
 }
 
+// Criba vibratoria circular con malla animada y descarga de gruesos
 function DrawCribaVibratoria({ s }:{ s:Status }) {
   const c = SC[s];
   return <>
@@ -207,6 +215,7 @@ function DrawCribaVibratoria({ s }:{ s:Status }) {
   </>;
 }
 
+// Torre de enfriamiento con gotas, láminas de relleno y escape de vapor
 function DrawTorre({ s }:{ s:Status }) {
   const c = SC[s];
   return <>
@@ -237,6 +246,7 @@ function DrawTorre({ s }:{ s:Status }) {
   </>;
 }
 
+// Pozo cárcamo con entradas O y R y bomba de salida
 function DrawCarcamo({ s }:{ s:Status }) {
   const c = SC[s];
   return <>
@@ -257,6 +267,7 @@ function DrawCarcamo({ s }:{ s:Status }) {
   </>;
 }
 
+// Tanque homogeneizador 800 m³ con agitador y dosificaciones
 function DrawHomogenizer({ s }:{ s:Status }) {
   const c = SC[s];
   return <>
@@ -286,8 +297,10 @@ function DrawHomogenizer({ s }:{ s:Status }) {
   </>;
 }
 
+// Reactor GEM/DAF con 5 dosificaciones químicas y engranaje mezclador
 function DrawGEM({ s }:{ s:Status }) {
   const c = SC[s];
+  // Puntos de dosificación química
   const dosing = [
     {x:60,  col:'#f85149',  l:'Ácido'},
     {x:80,  col:'#ff6b35',  l:'Decol'},
@@ -327,6 +340,7 @@ function DrawGEM({ s }:{ s:Status }) {
   </>;
 }
 
+// Espesador/Swingmill de lodos con agitador y salidas de clarificado y lodo
 function DrawSwingmill({ s }:{ s:Status }) {
   const c = SC[s];
   return <>
@@ -352,8 +366,10 @@ function DrawSwingmill({ s }:{ s:Status }) {
   </>;
 }
 
+// Biorreactor de membrana (MBR) con módulos de ultrafiltración sumergidos
 function DrawMBR({ s }:{ s:Status }) {
   const c = SC[s];
+  // Color de membrana — naranja si advertencia (colmatación)
   const memColor = s === 'advertencia' ? '#d29922' : '#2a5575';
   return <>
     {/* Tank */}
@@ -386,6 +402,7 @@ function DrawMBR({ s }:{ s:Status }) {
   </>;
 }
 
+// Reactor MBBR con bioportadores plásticos y difusores de burbuja fina
 function DrawMBBR({ s }:{ s:Status }) {
   const c = SC[s];
   return <>
@@ -417,6 +434,7 @@ function DrawMBBR({ s }:{ s:Status }) {
   </>;
 }
 
+// Reactor anóxico sin aireación con indicador de desnitrificación NO3→N2
 function DrawAnoxic({ s }:{ s:Status }) {
   const c = SC[s];
   return <>
@@ -442,6 +460,7 @@ function DrawAnoxic({ s }:{ s:Status }) {
   </>;
 }
 
+// Módulos de ósmosis inversa con tubos de presión — estado alarma en rojo
 function DrawRO({ s }:{ s:Status }) {
   const c = SC[s];
   return <>
@@ -476,6 +495,7 @@ function DrawRO({ s }:{ s:Status }) {
   </>;
 }
 
+// Filtro de cartuchos con housing vertical, diferencial de presión y cabezales
 function DrawCartridgeFilter({ s }:{ s:Status }) {
   const c = SC[s];
   return <>
@@ -506,6 +526,7 @@ function DrawCartridgeFilter({ s }:{ s:Status }) {
   </>;
 }
 
+// Filtros de intercambio iónico — 3 columnas de resina en paralelo
 function DrawIonExchange({ s }:{ s:Status }) {
   const c = SC[s];
   return <>
@@ -535,6 +556,7 @@ function DrawIonExchange({ s }:{ s:Status }) {
   </>;
 }
 
+// Filtro de carbón activado GAC con lecho granular y generación de ozono
 function DrawCarbonFilter({ s }:{ s:Status }) {
   const c = SC[s];
   return <>
@@ -564,6 +586,7 @@ function DrawCarbonFilter({ s }:{ s:Status }) {
   </>;
 }
 
+// Caja de vertimiento que colecta todos los flujos de rechazo y excedentes
 function DrawJunctionBox({ s }:{ s:Status }) {
   const c = SC[s];
   return <>
@@ -587,6 +610,7 @@ function DrawJunctionBox({ s }:{ s:Status }) {
   </>;
 }
 
+// Destino final del agua recuperada hacia producción textil
 function DrawProduccion({ s }:{ s:Status }) {
   const c = SC[s];
   return <>
@@ -618,6 +642,7 @@ function DrawProduccion({ s }:{ s:Status }) {
 
 // ── Dispatcher principal ────────────────────────────────────────────────
 
+// Mapa de equipKey → función de dibujo SVG correspondiente
 const TYPE_MAP: Record<string, (p:{s:Status}) => JSX.Element> = {
   rotativa:     p => <DrawInputStream {...p}/>,
   funza:        p => <DrawInputStream {...p}/>,
@@ -656,6 +681,7 @@ const TYPE_MAP: Record<string, (p:{s:Status}) => JSX.Element> = {
   produccion:   p => <DrawProduccion {...p}/>,
 };
 
+// Componente principal: selecciona el dibujo por equipKey y lo renderiza en SVG 200×200
 export function EquipSvgDrawing({ equipKey, status }: Props) {
   const DrawFn = TYPE_MAP[equipKey];
   const c = SC[status];

@@ -1,4 +1,4 @@
-// Cliente HTTP para el backend .NET de PTAR.
+// Cliente HTTP centralizado para todas las llamadas al backend .NET de PTAR
 // Autenticación via cookie httpOnly — no se maneja token en JS.
 
 // En producción VITE_API_URL debe estar vacío (rutas relativas /api/...).
@@ -8,6 +8,7 @@ const API = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
 // Singleton de refresh: múltiples requests 401 simultáneos comparten UNA sola llamada
 let _refreshPromise: Promise<boolean> | null = null;
 
+// Intento de renovar la sesión vía endpoint de refresh
 function tryRefresh(): Promise<boolean> {
   if (!_refreshPromise) {
     _refreshPromise = fetch(`${API}/api/auth/refresh`, {
@@ -21,6 +22,7 @@ function tryRefresh(): Promise<boolean> {
   return _refreshPromise;
 }
 
+// Wrapper de fetch que siempre incluye credenciales y Content-Type JSON
 async function doFetch(path: string, init?: RequestInit): Promise<Response> {
   return fetch(`${API}${path}`, {
     ...init,
@@ -29,6 +31,7 @@ async function doFetch(path: string, init?: RequestInit): Promise<Response> {
   });
 }
 
+// Función genérica de petición con manejo de 401 y reintento automático
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await doFetch(path, init);
 
@@ -64,6 +67,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
+// Cambio de contraseña del usuario autenticado
 export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
   const res = await fetch(`${API}/api/auth/change-password`, {
     method: 'POST',
@@ -79,6 +83,7 @@ export async function changePassword(currentPassword: string, newPassword: strin
 
 // ─── Interfaces (espejo exacto de las tablas) ─────────────────────────────────
 
+// Registro de lectura de contador de caudales por turno
 export interface RegistroContador {
   id?: string;
   created_at?: string;
@@ -95,6 +100,7 @@ export interface RegistroContador {
   observaciones?: string;
 }
 
+// Registro de consumo de reactivo químico por turno
 export interface RegistroCosto {
   id?: string;
   created_at?: string;
@@ -135,6 +141,7 @@ export interface RegistroCosto {
   manga_cantidad?:  number;
 }
 
+// Registro de parámetro de calidad de agua por turno y unidad de tratamiento
 export interface RegistroCalidad {
   id?: string;
   created_at?: string;
@@ -152,16 +159,19 @@ export interface RegistroCalidad {
 
 // ─── Caudales ─────────────────────────────────────────────────────────────────
 
+// Última lectura registrada por cada contador
 export async function getUltimasLecturas(): Promise<Record<string, number>> {
   return request<Record<string, number>>('/api/caudales/ultimas-lecturas');
 }
 
+// Inserción masiva de lecturas de caudales
 export async function createCaudalesBatch(
   rows: Omit<RegistroContador, 'id' | 'created_at' | 'delta_m3'>[],
 ): Promise<{ inserted: number }> {
   return request('/api/caudales/batch', { method: 'POST', body: JSON.stringify(rows) });
 }
 
+// Lecturas recientes de caudales desde una fecha dada
 export async function getCaudalesRecientes(since: string, limit = 60): Promise<RegistroContador[]> {
   const params = new URLSearchParams({ since, limit: String(limit) });
   return request<RegistroContador[]>(`/api/caudales/?${params}`);
@@ -169,17 +179,20 @@ export async function getCaudalesRecientes(since: string, limit = 60): Promise<R
 
 // ─── Reactivos ────────────────────────────────────────────────────────────────
 
+// Inserción masiva de consumos de reactivos
 export async function createReactivosBatch(
   rows: Omit<RegistroCosto, 'id' | 'created_at' | 'consumo' | 'ppm' | 'costo_operativo'>[],
 ): Promise<{ inserted: number }> {
   return request('/api/reactivos/batch', { method: 'POST', body: JSON.stringify(rows) });
 }
 
+// Registros recientes de reactivos desde una fecha dada
 export async function getReactivosRecientes(since: string, limit = 60): Promise<RegistroCosto[]> {
   const params = new URLSearchParams({ since, limit: String(limit) });
   return request<RegistroCosto[]>(`/api/reactivos/?${params}`);
 }
 
+// Último horómetro registrado del GEM
 export interface UltimoHorometro {
   horometro: number | null;
   fecha: string | null;
@@ -190,6 +203,7 @@ export async function getUltimoHorometro(): Promise<UltimoHorometro> {
   return request<UltimoHorometro>('/api/reactivos/ultimo-horometro');
 }
 
+// Último nivel final registrado para un químico específico
 export interface UltimoNivel {
   nivel_final: number | null;
   fecha: string | null;
@@ -201,6 +215,7 @@ export async function getUltimoNivel(quimico_id: string): Promise<UltimoNivel> {
   return request<UltimoNivel>(`/api/reactivos/ultimo-nivel?${q}`);
 }
 
+// Última lectura de contadores del sistema RO
 export interface UltimaLecturaRO {
   c12:   number | null;
   c13:   number | null;
@@ -216,6 +231,7 @@ export async function getUltimaLecturaRO(): Promise<UltimaLecturaRO> {
   }
 }
 
+// Última lectura de contadores del sistema PTAP
 export interface UltimaLecturaPTAP {
   entrada:  number | null;
   permeado: number | null;
@@ -233,16 +249,19 @@ export async function getUltimaLecturaPTAP(): Promise<UltimaLecturaPTAP> {
 
 // ─── Calidad ──────────────────────────────────────────────────────────────────
 
+// Inserción masiva de registros de calidad
 export async function createCalidadBatch(
   rows: Omit<RegistroCalidad, 'id' | 'created_at'>[],
 ): Promise<{ inserted: number }> {
   return request('/api/calidad/batch', { method: 'POST', body: JSON.stringify(rows) });
 }
 
+// Catálogo de parámetros de calidad disponibles
 export async function getCalidadParametros(): Promise<{ id: number; nombre: string; unidad_medida: string }[]> {
   return request<{ id: number; nombre: string; unidad_medida: string }[]>('/api/calidad/parametros');
 }
 
+// Último valor registrado para un parámetro y unidad de tratamiento
 export interface UltimoValorCalidad {
   valor: number | null;
   fecha: string | null;
@@ -275,6 +294,7 @@ export interface MedicionCalidad {
   usuario: string;
 }
 
+// Consulta de mediciones de calidad en rango de fechas con filtros opcionales
 export async function getCalidadMediciones(params: {
   parametro: string;
   fecha_inicio: string;
@@ -309,6 +329,7 @@ export async function getCalidad(params: {
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
+// KPIs principales del dashboard en un rango de fechas
 export async function getDashboardKpis(params?: {
   fecha_inicio?: string;
   fecha_fin?: string;
@@ -320,8 +341,46 @@ export async function getDashboardKpis(params?: {
   return request(`/api/dashboard/kpis${qs ? '?' + qs : ''}`);
 }
 
+// Fecha más reciente con datos en las tablas principales (para inicializar rangos).
+// Intenta primero el endpoint dedicado; si no existe aún, escanea endpoints existentes.
+export async function getUltimaFechaConDatos(): Promise<string> {
+  const hoy = new Date().toLocaleDateString('en-CA');
+  const hace1anio = (() => { const d = new Date(); d.setFullYear(d.getFullYear() - 1); return d.toLocaleDateString('en-CA'); })();
+
+  // Intento 1: endpoint dedicado (disponible tras reconstruir backend)
+  try {
+    const r = await request<{ fecha: string }>('/api/dashboard/ultima-fecha');
+    if (r?.fecha) return r.fecha;
+  } catch {}
+
+  // Intento 2: GEM eficiencia último año — busca la fecha más reciente con datos
+  try {
+    const rows = await request<Array<{ fecha?: string }>>(
+      `/api/reactivos/gem-eficiencia?fecha_inicio=${hace1anio}&fecha_fin=${hoy}`
+    );
+    if (Array.isArray(rows) && rows.length > 0) {
+      const ultima = [...rows].reverse().find(r => r.fecha)?.fecha;
+      if (ultima) return ultima;
+    }
+  } catch {}
+
+  // Intento 3: caudales último año — fecha más reciente
+  try {
+    const rows = await request<Array<{ fecha?: string }>>(
+      `/api/caudales/?fecha_inicio=${hace1anio}&fecha_fin=${hoy}&limit=2000`
+    );
+    if (Array.isArray(rows) && rows.length > 0) {
+      const ultima = [...rows].reverse().find(r => r.fecha)?.fecha;
+      if (ultima) return ultima;
+    }
+  } catch {}
+
+  return hoy;
+}
+
 // ─── Reportes / PDF ───────────────────────────────────────────────────────────
 
+// URL del informe PDF general (caudales, reactivos, calidad o completo)
 export function getReportePdfUrl(params: {
   fecha_inicio: string;
   fecha_fin: string;
@@ -337,6 +396,7 @@ export function getReportePdfUrl(params: {
 
 // ─── Calidad — Remociones ─────────────────────────────────────────────────────
 
+// Porcentajes de remoción por etapa del tren de tratamiento
 export interface RemocionCalidad {
   fecha: string;
   turno: number;
@@ -354,6 +414,7 @@ export interface RemocionCalidad {
   pct_remocion_global: number | null;
 }
 
+// Consulta de remociones por parámetro y rango de fechas
 export async function getCalidadRemociones(params: {
   fecha_inicio: string;
   fecha_fin: string;
@@ -373,6 +434,7 @@ export async function getCalidadRemociones(params: {
 
 // ─── Calidad — Resumen estadístico ───────────────────────────────────────────
 
+// Estadísticas mensuales de calidad por parámetro y unidad de tratamiento
 export interface CalidadResumenRow {
   anio: number;
   mes: number;
@@ -393,6 +455,7 @@ export interface CalidadResumenRow {
   pct_fuera_limite_vert: number | null;
 }
 
+// Resumen estadístico de calidad en rango de fechas
 export async function getCalidadResumen(params: {
   fecha_inicio: string;
   fecha_fin: string;
@@ -431,6 +494,7 @@ export function getReporteDashboardHtmlUrl(params: {
 
 // ─── Calidad — Dispersión ─────────────────────────────────────────────────────
 
+// Rango min/max/promedio diario de un parámetro por unidad de tratamiento
 export interface DispersionRow {
   fecha: string;
   unidad_tratamiento: string;
@@ -440,6 +504,7 @@ export interface DispersionRow {
   n: number;
 }
 
+// Consulta de dispersión de valores para análisis de variabilidad
 export async function getCalidadDispersion(params: {
   parametro: string;
   fecha_inicio: string;
@@ -455,6 +520,7 @@ export async function getCalidadDispersion(params: {
 
 // ─── Calidad — MBR Eficiencia ─────────────────────────────────────────────────
 
+// Valor promedio de parámetro MBR por turno y unidad de tratamiento
 export interface MbrEficienciaRow {
   fecha: string;
   turno: string;
@@ -463,6 +529,7 @@ export interface MbrEficienciaRow {
   valor_promedio: number;
 }
 
+// Eficiencia del sistema MBR en rango de fechas
 export async function getCalidadMbrEficiencia(params: {
   fecha_inicio: string;
   fecha_fin: string;
@@ -476,6 +543,7 @@ export async function getCalidadMbrEficiencia(params: {
 
 // ─── Balance Hídrico ──────────────────────────────────────────────────────────
 
+// Fila del balance hídrico con todos los contadores y volúmenes por turno
 export interface BalanceHidricoRow {
   fecha: string;
   turno: number;
@@ -506,6 +574,7 @@ export interface BalanceHidricoRow {
   m_tela: number | null;
 }
 
+// Datos del balance hídrico en rango de fechas con filtro de turno opcional
 export async function getBalanceHidrico(params: {
   fecha_inicio: string;
   fecha_fin: string;
@@ -521,6 +590,7 @@ export async function getBalanceHidrico(params: {
   return request<BalanceHidricoRow[]>(`/api/caudales/?${q}`);
 }
 
+// Totales acumulados por medidor en el período
 export interface ResumenBalanceRow {
   medidor: string;
   descripcion: string;
@@ -528,6 +598,7 @@ export interface ResumenBalanceRow {
   n_turnos: number;
 }
 
+// Resumen consolidado del balance hídrico
 export async function getResumenBalance(params: {
   fecha_inicio: string;
   fecha_fin: string;
@@ -541,6 +612,7 @@ export async function getResumenBalance(params: {
 
 // ─── Reactivos — Consumo diario y proyección ──────────────────────────────────
 
+// Consumo diario de un producto químico por sistema
 export interface ConsumoQuimicoDiaRow {
   fecha: string;
   sistema: string;
@@ -554,6 +626,7 @@ export interface ConsumoQuimicoDiaRow {
   caudal_m3_dia: number | null;
 }
 
+// Consumo diario de reactivos en rango de fechas con filtro de sistema
 export async function getConsumoQuimicoDiario(params: {
   fecha_inicio: string;
   fecha_fin: string;
@@ -569,6 +642,7 @@ export async function getConsumoQuimicoDiario(params: {
   return request<ConsumoQuimicoDiaRow[]>(`/api/reactivos/?${q}`);
 }
 
+// Comparativo mensual real vs proyectado por producto y sistema
 export interface RealVsProyectadoRow {
   anio: number;
   mes: number;
@@ -586,6 +660,7 @@ export interface RealVsProyectadoRow {
   desviacion_pct: number | null;
 }
 
+// Proyección de consumo de químicos vs real por año/mes/sistema
 export async function getProyeccionQuimicos(params: {
   anio: number;
   mes?: number;
@@ -597,6 +672,7 @@ export async function getProyeccionQuimicos(params: {
   return request<RealVsProyectadoRow[]>(`/api/reactivos/proyeccion?${q}`);
 }
 
+// Estadísticas diarias de consumo por producto, sistema y mes
 export interface EstadisticasDiaRow {
   anio: number;
   mes: number;
@@ -614,6 +690,7 @@ export interface EstadisticasDiaRow {
   costo_total: number | null;
 }
 
+// Estadísticas de reactivos agrupadas por mes y sistema
 export async function getEstadisticasReactivos(params: {
   anio: number;
   mes?: number;
@@ -651,6 +728,7 @@ export function getReporteCostosHtmlUrl(params: {
 
 // ─── Reactivos — GEM Eficiencia ───────────────────────────────────────────────
 
+// Eficiencia del GEM: caudales, consumos y costos por turno
 export interface GemEficienciaRow {
   fecha: string;
   turno: string;
@@ -681,6 +759,7 @@ export interface GemEficienciaRow {
   pesos_por_m3: number | null;
 }
 
+// Datos de eficiencia del GEM en rango de fechas
 export async function getGemEficiencia(params: {
   fecha_inicio: string;
   fecha_fin: string;
@@ -694,6 +773,7 @@ export async function getGemEficiencia(params: {
 
 // ─── Reactivos — RO Eficiencia ────────────────────────────────────────────────
 
+// Eficiencia del sistema de Ósmosis Inversa por turno
 export interface RoEficienciaRow {
   fecha: string;
   turno: string;
@@ -705,6 +785,7 @@ export interface RoEficienciaRow {
   pesos_por_m3: number | null;
 }
 
+// Datos de eficiencia del sistema RO en rango de fechas
 export async function getRoEficiencia(params: {
   fecha_inicio: string;
   fecha_fin: string;
@@ -718,11 +799,13 @@ export async function getRoEficiencia(params: {
 
 // ─── Condiciones de Operación ─────────────────────────────────────────────────
 
+// Caudales de entrada y salida del sistema RO en un turno específico
 export interface CaudalesROTurno {
   caudal_entrada_mh: number | null;
   caudal_salida_mh:  number | null;
 }
 
+// Caudales y datos de mantenimiento del PTAP en un turno específico
 export interface CaudalesPTAPTurno {
   caudal_entrada_mh: number | null;
   caudal_salida_mh:  number | null;
@@ -732,33 +815,54 @@ export interface CaudalesPTAPTurno {
   cebs_cantidad:     number | null;
 }
 
+// Última condición de operación registrada para el sistema RO
 export interface UltimaCondicionRO {
   ultima_cip?: string | null;
   [key: string]: unknown;
 }
 
+// Caudales RO de un turno específico
 export async function getCaudalesROTurno(fecha: string, turno: string): Promise<CaudalesROTurno> {
   const q = new URLSearchParams({ fecha, turno });
   return request<CaudalesROTurno>(`/api/condiciones/caudales-ro?${q}`);
 }
 
+// Caudales PTAP de un turno específico
 export async function getCaudalesPTAPTurno(fecha: string, turno: string): Promise<CaudalesPTAPTurno> {
   const q = new URLSearchParams({ fecha, turno });
   return request<CaudalesPTAPTurno>(`/api/condiciones/caudales-ptap?${q}`);
 }
 
+// Última condición operacional del sistema RO
 export async function getUltimaCondicionRO(): Promise<UltimaCondicionRO> {
   return request<UltimaCondicionRO>('/api/condiciones/ultima-ro');
 }
 
+// Guarda condiciones de operación del MBR
 export async function saveCondicionesMbr(body: Record<string, unknown>): Promise<void> {
   await request('/api/condiciones/mbr', { method: 'POST', body: JSON.stringify(body) });
 }
 
+// Guarda condiciones de operación del RO
 export async function saveCondicionesRo(body: Record<string, unknown>): Promise<void> {
   await request('/api/condiciones/ro', { method: 'POST', body: JSON.stringify(body) });
 }
 
+// Guarda condiciones de operación del PTAP
 export async function saveCondicionesPtap(body: Record<string, unknown>): Promise<void> {
   await request('/api/condiciones/ptap', { method: 'POST', body: JSON.stringify(body) });
+}
+
+// ─── Dashboard config (Analista → Visualizador) ───────────────────────────────
+
+// Configuración persistida del visualizador de dashboard
+export async function getDashboardConfig(): Promise<import('../types/dashboardConfig').DashboardConfig> {
+  return request<import('../types/dashboardConfig').DashboardConfig>('/api/dashboard/config');
+}
+
+// Persiste la configuración del visualizador de dashboard
+export async function saveDashboardConfig(
+  config: import('../types/dashboardConfig').DashboardConfig,
+): Promise<void> {
+  await request('/api/dashboard/config', { method: 'PUT', body: JSON.stringify(config) });
 }

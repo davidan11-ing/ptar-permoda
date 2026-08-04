@@ -1,9 +1,11 @@
+// Panel de barras de eficiencia por etapa de tratamiento
 import type { EficienciaRow } from '../hooks/useCalidadData';
 
 interface Props {
   eficiencia: EficienciaRow[];
 }
 
+// Barras horizontales de remoción: verde si positivo, rojo si negativo
 export default function EficienciaPanel({ eficiencia }: Props) {
   if (eficiencia.length === 0) {
     return <div className="cal-empty">Sin datos de eficiencia para el período seleccionado</div>;
@@ -12,10 +14,12 @@ export default function EficienciaPanel({ eficiencia }: Props) {
   return (
     <div className="cal-eficiencia">
       {eficiencia.map(row => {
+        // Ancho de la barra acotado a 100% independientemente del signo
         const pct = row.pct;
         const isPositive = pct >= 0;
         const barWidth = Math.min(Math.abs(pct), 100);
 
+        // Fila de etapa: etiqueta + barra de eficiencia
         return (
           <div key={row.etapa} className="cal-ef-row">
             <div className="cal-ef-label">

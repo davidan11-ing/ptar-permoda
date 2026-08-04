@@ -1,3 +1,4 @@
+// Formato F-02: registro de consumo químico GEM, Osmosis (RO) y PTAP con cálculo de PPM y costo
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../state/AuthContext';
@@ -22,9 +23,11 @@ import { QUIMICOS_GEM, QUIMICOS_RO, QUIMICOS_PTAP } from '../../lib/constants/qu
 import { TURNO_LABELS, BITACORA_TURNO, getTurno } from '../../lib/utils/time';
 
 // ─── Tipos auxiliares ────────────────────────────────────────────────────────
+// Unión de los tipos de químico de los tres sistemas (GEM, RO, PTAP)
 type QuimicoItem = typeof QUIMICOS_GEM[number] | typeof QUIMICOS_RO[number] | typeof QUIMICOS_PTAP[number];
 
 // ─── Schema Zod ──────────────────────────────────────────────────────────────
+// Niveles y eventos de un producto individual dentro del formulario
 const productSchema = z.object({
   nivel_inicial:  z.string().optional(),
   nivel_final:    z.string().optional(),
@@ -33,6 +36,7 @@ const productSchema = z.object({
   trasiego_l:     z.string().optional(),
 });
 
+// Contadores y caudal del sistema RO (C-12 entrada, C-13 permeado)
 const caudalesROSchema = z.object({
   c12_actual:          z.string().optional(),
   c13_actual:          z.string().optional(),
@@ -41,6 +45,7 @@ const caudalesROSchema = z.object({
   cartuchos_cambiados: z.boolean().default(false),
 });
 
+// Contadores, caudal y eventos de mantenimiento del sistema PTAP
 const caudalesPTAPSchema = z.object({
   entrada_actual:    z.string().optional(),
   salida_actual:     z.string().optional(),
@@ -52,6 +57,7 @@ const caudalesPTAPSchema = z.object({
   manga_cantidad:    z.string().optional(),
 });
 
+// Esquema raíz del formulario completo de reactivos
 const formSchema = z.object({
   horometro_actual:        z.string().min(1, 'Ingresa el horómetro actual'),
   caudal_mh:               z.string().default('80'),
@@ -64,6 +70,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 // ─── Cálculos por producto ───────────────────────────────────────────────────
+// Resultado de los cálculos derivados para un químico (consumo, PPM, costo, etc.)
 interface ProductComputed {
   active:          boolean;
   consumoL:        number | null;
@@ -76,12 +83,14 @@ interface ProductComputed {
   esIngreso:       boolean;
 }
 
+// Valores nulos para un producto sin datos suficientes
 const NULL_COMPUTED: ProductComputed = {
   active: false, consumoL: null, consumoReal: null,
   kgConsumidos: null, ppm: null, costoOp: null, pesosM3: null,
   fueraCapacidad: false, esIngreso: false,
 };
 
+// Calcula consumo, PPM y costo operativo de un químico dado sus niveles y volumen tratado
 function computeProduct(
   q: QuimicoItem,
   nivelInicialStr: string | undefined,
@@ -115,6 +124,7 @@ function computeProduct(
 }
 
 // ─── Acordeón ────────────────────────────────────────────────────────────────
+// Sección colapsable con título, conteo de químicos y contenido expandible
 function AccordionSection({
   title, color, count, children, defaultOpen = false,
 }: {
@@ -152,6 +162,7 @@ function AccordionSection({
 }
 
 // ─── Componente tarjeta de producto ──────────────────────────────────────────
+// Tarjeta de ingreso de niveles inicial/final, ingreso de producto y métricas calculadas
 function ProductCard({
   q, control, watchProducts, computed, confirmCero, setConfirmCero, showTrasiego,
 }: {
@@ -216,7 +227,7 @@ function ProductCard({
           )}
         </div>
 
-        {/* L Consumidos */}
+        {/* L Consumidos — calculado automáticamente */}
         <div className="form-group">
           <label className="form-label">
             {q.unidad === 'kg' ? 'kg' : 'L'} Consumidos
@@ -305,6 +316,7 @@ function ProductCard({
         </span>
       )}
 
+      {/* Métricas calculadas: kg, PPM, costo operativo y $/m³ */}
       {c.active && (
         <div className="reactivo-computed">
           <div className="reactivo-computed-item">
@@ -348,11 +360,13 @@ function ProductCard({
 }
 
 // ─── Componente Principal ────────────────────────────────────────────────────
+// Formulario unificado de consumo químico GEM + RO + PTAP con cálculo de costos por turno
 export default function FormatoReactivos() {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
   const [saving, setSaving]           = useState(false);
+  // Flag de confirmación cuando algún producto tiene consumo real = 0
   const [confirmCero, setConfirmCero] = useState(false);
   const [ultimoHoro, setUltimoHoro]   = useState<UltimoHorometro | null>(null);
   const [loadingHoro, setLoadingHoro] = useState(true);
@@ -368,6 +382,7 @@ export default function FormatoReactivos() {
   // autoTurno se recalcula cada minuto para detectar cambio de turno mientras
   // el formulario está abierto (ej: se abre en Mañana y se envía en Tarde)
   const [autoTurno, setAutoTurno] = useState<'mañana' | 'tarde' | 'noche'>(getTurno);
+  // Intervalo de 1 minuto que mantiene el turno sincronizado con el reloj
   useEffect(() => {
     const id = setInterval(() => setAutoTurno(getTurno()), 60_000);
     return () => clearInterval(id);
@@ -386,6 +401,7 @@ export default function FormatoReactivos() {
   const TODOS = [...QUIMICOS_GEM, ...QUIMICOS_RO, ...QUIMICOS_PTAP] as QuimicoItem[];
 
   // ── Fetch último horómetro ─────────────────────────────────────────────────
+  // Carga el horómetro del último registro para calcular horas de operación GEM
   useEffect(() => {
     getUltimoHorometro()
       .then(data => setUltimoHoro(data))
@@ -394,12 +410,14 @@ export default function FormatoReactivos() {
   }, []);
 
   // ── Fetch últimas lecturas de contadores RO y PTAP ────────────────────────
+  // Pre-carga lecturas anteriores de C-12/C-13 (RO) y contadores PTAP
   useEffect(() => {
     getUltimaLecturaRO().then(setUltimaLectRO).catch(() => {});
     getUltimaLecturaPTAP().then(setUltimaLectPTAP).catch(() => {});
   }, []);
 
   // ── Fetch último nivel para cada químico ──────────────────────────────────
+  // Pre-carga el nivel_final anterior de cada químico como nivel_inicial de este turno
   useEffect(() => {
     Promise.allSettled(
       TODOS.map(q =>
@@ -416,6 +434,7 @@ export default function FormatoReactivos() {
   }, []);
 
   // ── Valores por defecto del form ──────────────────────────────────────────
+  // Inicializa todos los químicos con campos vacíos para el formulario
   const defaultProducts = Object.fromEntries(
     TODOS.map(q => [q.id, {
       nivel_inicial: '',
@@ -443,6 +462,7 @@ export default function FormatoReactivos() {
   });
 
   // ── Pre-cargar nivel_inicial cuando llegan los datos del backend ──────────
+  // Rellena nivel_inicial de cada químico con el nivel_final del turno anterior
   useEffect(() => {
     TODOS.forEach(q => {
       const ultimo = ultimosNiveles[q.id];
@@ -459,7 +479,7 @@ export default function FormatoReactivos() {
   const watchROCauda  = watch('caudales_ro');
   const watchPTAP     = watch('caudales_ptap');
 
-  // ── GEM ───────────────────────────────────────────────────────────────────
+  // ── GEM — horas de operación y volumen tratado ────────────────────────────
   const horoActual = parseFloat(watchHoro) || 0;
   const horoUltimo = ultimoHoro?.horometro ?? 0;
   const horasOp    = horoActual > 0 && horoUltimo > 0
@@ -492,6 +512,7 @@ export default function FormatoReactivos() {
   const horasOpPTAP     = volPTAPEntrada > 0 && ptapCaudalEnt > 0 ? volPTAPEntrada / ptapCaudalEnt : null;
 
   // ── Computed por químico — usa volumen del sistema correcto ───────────────
+  // Mapa de métricas calculadas para cada químico según su sistema (GEM/RO/PTAP)
   const computed = Object.fromEntries(
     TODOS.map(q => {
       const p = watchProducts[q.id];
@@ -505,6 +526,7 @@ export default function FormatoReactivos() {
     })
   );
 
+  // Subconjuntos de químicos activos (con nivel inicial y final ingresados) por sistema
   const activeGEM  = QUIMICOS_GEM.filter(q => computed[q.id].active);
   const activeRO   = QUIMICOS_RO.filter(q  => computed[q.id].active);
   const activePTAP = QUIMICOS_PTAP.filter(q => computed[q.id].active);
@@ -519,6 +541,7 @@ export default function FormatoReactivos() {
   const canSubmit = allActive.length > 0 && !hasCapacityErrors && missingIngreso.length === 0;
 
   // ── Guardado ───────────────────────────────────────────────────────────────
+  // Construye el lote de registros de costo y lo envía al backend
   const doSave = async (data: FormValues) => {
     if (allActive.length === 0) return;
     if (zeroProducts.length > 0 && !confirmCero) {
@@ -613,6 +636,7 @@ export default function FormatoReactivos() {
     setTimeout(() => navigate(ROUTES.OPERARIO_HOME), 2000);
   };
 
+  // Etiqueta dinámica del botón de envío según el estado actual del formulario
   const submitLabel = (() => {
     if (saving) return 'Guardando...';
     const n = allActive.length;
@@ -779,6 +803,7 @@ export default function FormatoReactivos() {
           <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>
             Completa el nivel final de los productos que apliquen en este turno.
           </p>
+          {/* Tarjetas de químicos GEM */}
           <div className="reactivos-list">
             {QUIMICOS_GEM.map(q => (
               <ProductCard
@@ -943,6 +968,7 @@ export default function FormatoReactivos() {
               )} />
           </div>
 
+          {/* Tarjetas de químicos RO */}
           <div className="reactivos-list">
             {QUIMICOS_RO.map(q => (
               <ProductCard
@@ -1077,7 +1103,7 @@ export default function FormatoReactivos() {
               </div>
             </div>
 
-            {/* Eventos de mantenimiento */}
+            {/* Eventos de mantenimiento PTAP: CEBs y cambio de manga */}
             <div style={{
               padding: '10px 12px', background: 'var(--bg-secondary)',
               borderRadius: 6, border: '1px solid var(--border)',
@@ -1129,6 +1155,7 @@ export default function FormatoReactivos() {
             </div>
           </div>
 
+          {/* Tarjetas de químicos PTAP */}
           <div className="reactivos-list">
             {QUIMICOS_PTAP.map(q => (
               <ProductCard
@@ -1183,11 +1210,13 @@ export default function FormatoReactivos() {
 
         {/* ── Banners de costo por sistema + total general ──────────────── */}
         {allActive.length > 0 && (() => {
+          // Totales de costo operativo agrupados por sistema de tratamiento
           const costoGEM  = activeGEM.reduce((s, q)  => s + (computed[q.id].costoOp ?? 0), 0);
           const costoRO   = activeRO.reduce((s, q)   => s + (computed[q.id].costoOp ?? 0), 0);
           const costoPTAP = activePTAP.reduce((s, q) => s + (computed[q.id].costoOp ?? 0), 0);
           const costoTotal = costoGEM + costoRO + costoPTAP; void costoTotal;
 
+          // Filas de resumen de costo filtradas para mostrar solo sistemas activos
           const sistemaRows: { label: string; color: string; bg: string; costo: number; vol: number; count: number }[] = [
             { label: 'GEM',  color: '#7ec8c8', bg: 'linear-gradient(135deg, #0d1a1a 0%, #0a1e14 100%)', costo: costoGEM,  vol: volGEM,       count: activeGEM.length },
             { label: 'RO',   color: '#d2a8ff', bg: 'linear-gradient(135deg, #12101a 0%, #0e0a1a 100%)', costo: costoRO,   vol: volROEntrada,  count: activeRO.length },

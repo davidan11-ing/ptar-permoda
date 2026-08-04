@@ -1,3 +1,6 @@
+// Paleta de colores del diagrama SVG de la PTAR, indexada por fase y estado
+
+// Colores semánticos del SplashScreen: fases de tratamiento, pipes y fondos
 export const C = {
   cyan:   '#00c5e3',  // Fase Preliminar, pipes agua
   orange: '#d29922',  // Fase Primaria, advertencia

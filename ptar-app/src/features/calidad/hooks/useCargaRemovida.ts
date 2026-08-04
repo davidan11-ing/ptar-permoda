@@ -1,3 +1,4 @@
+// Hook para calcular kg de contaminante removido por día en el GEM (fórmula concentración × caudal)
 /**
  * useCargaRemovida
  * Calcula kg de contaminante removidos por DÍA en el GEM.
@@ -14,6 +15,7 @@
 import { useState, useEffect } from 'react';
 import { getCalidadMediciones, getGemEficiencia } from '../../../services/ptarClient';
 
+// Forma de cada punto diario del gráfico de carga removida
 export interface CargaRemovPoint {
   label:         string;   // "01/04", "02/04"...
   fecha:         string;   // "YYYY-MM-DD"
@@ -29,17 +31,20 @@ const TURNO_KEY: Record<string, string> = {
   tarde:  'T3',
 };
 
+// Hook principal — devuelve serie real, serie completa con vacíos y total acumulado
 export function useCargaRemovida(
   fechaInicio: string,
   fechaFin:    string,
   parametro:   string,
 ) {
+  // Estados de carga, error, serie real, serie completa y total kg
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState<string | null>(null);
   const [data,    setData]    = useState<CargaRemovPoint[]>([]);
   const [allData, setAllData] = useState<CargaRemovPoint[]>([]); // incluye días vacíos
   const [totalKg, setTotalKg] = useState(0);
 
+  // Dispara la carga al cambiar fechas o parámetro
   useEffect(() => {
     if (!fechaInicio || !fechaFin || !parametro) return;
     let cancelled = false;
@@ -48,6 +53,7 @@ export function useCargaRemovida(
 
     async function load() {
       try {
+        // Consultas paralelas: concentraciones del parámetro + eficiencia GEM (caudal)
         const [medRows, gemRows] = await Promise.all([
           getCalidadMediciones({
             parametro,
@@ -111,6 +117,7 @@ export function useCargaRemovida(
         const sortedDates = Array.from(dayMap.keys()).sort().filter(f => conDates.has(f));
         let total = 0;
 
+        // Serie real: solo fechas con medición confirmada
         const realResult: CargaRemovPoint[] = sortedDates.map(fecha => {
           const day = dayMap.get(fecha)!;
           const kg  = Math.round(day.kgSum * 100) / 100;
@@ -146,6 +153,7 @@ export function useCargaRemovida(
   return { data, allData, totalKg, loading, error };
 }
 
+// Genera un arreglo de fechas "YYYY-MM-DD" entre inicio y fin (inclusive)
 function generarFechas(inicio: string, fin: string): string[] {
   const fechas: string[] = [];
   const cur = new Date(inicio + 'T00:00:00');

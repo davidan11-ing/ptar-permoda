@@ -1,3 +1,6 @@
+// Catálogo de reactivos químicos con propiedades físicas y precios por sistema (GEM, RO, PTAP)
+
+// Listado maestro de químicos con capacidad, densidad, nivel inicial y precio por kg
 export const QUIMICOS = [
   // ── Sistema GEM ──────────────────────────────────────────────────────────────
   { id: 'Q-01', sistema: 'GEM'  as const, nombre: 'Ácido',             unidad: 'L',  capacidad: 6000, densidad: 1.250, nivel_inicial: 2780, precio_kg:  825  },
@@ -19,7 +22,10 @@ export const QUIMICOS = [
   { id: 'Q-13', sistema: 'PTAP' as const, nombre: 'Peróxido',           unidad: 'L', capacidad: 1000, densidad: 1.100, nivel_inicial: 0, precio_kg: 0 },
 ] as const;
 
+// Tipo derivado de los IDs del catálogo de químicos
 export type QuimicoId = typeof QUIMICOS[number]['id'];
+
+// Subconjuntos filtrados por sistema de tratamiento
 export const QUIMICOS_GEM  = QUIMICOS.filter(q => q.sistema === 'GEM');
 export const QUIMICOS_RO   = QUIMICOS.filter(q => q.sistema === 'RO');
 export const QUIMICOS_PTAP = QUIMICOS.filter(q => q.sistema === 'PTAP');

@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>App PTAR — Informe Técnico TI &amp; Infraestructura</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0d1117; --bg2: #161b22; --bg3: #1c2128; --border: #30363d;
+    --text: #e6edf3; --muted: #8b949e; --accent: #1f6feb;
+    --green: #238636; --yellow: #d29922; --red: #da3633; --purple: #8957e5;
+    --teal: #4a9a8a;
+  }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.6; }
+  .page { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+
+  /* ── Header ── */
+  .header { border-bottom: 2px solid var(--accent); padding-bottom: 24px; margin-bottom: 36px; }
+  .header-top { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  .logo-area h1 { font-size: 26px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
+  .logo-area .sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
+  .badge-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+  .badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+  .badge-blue  { background: #1f6feb22; color: #58a6ff; border: 1px solid #1f6feb44; }
+  .badge-green { background: #23863622; color: #3fb950; border: 1px solid #23863644; }
+  .badge-yellow{ background: #d2992222; color: #e3b341; border: 1px solid #d2992244; }
+  .badge-red   { background: #da363322; color: #f85149; border: 1px solid #da363344; }
+  .badge-purple{ background: #8957e522; color: #bc8cff; border: 1px solid #8957e544; }
+  .badge-teal  { background: #4a9a8a22; color: #7ee8dc; border: 1px solid #4a9a8a44; }
+
+  /* ── Sections ── */
+  .section { margin-bottom: 40px; }
+  .section-title { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .section-title .icon { font-size: 18px; }
+
+  /* ── Cards ── */
+  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 18px; }
+  .card + .card { margin-top: 12px; }
+  .card-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 10px; }
+  .card-value { font-size: 14px; color: var(--text); }
+
+  /* ── Grid ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  @media (max-width: 700px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+  /* ── Arch diagram ── */
+  .arch-diagram { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 24px; overflow-x: auto; }
+  .arch-row { display: flex; align-items: center; justify-content: center; gap: 0; flex-wrap: nowrap; }
+  .arch-box { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; text-align: center; min-width: 140px; }
+  .arch-box .ab-icon { font-size: 22px; display: block; margin-bottom: 6px; }
+  .arch-box .ab-title { font-size: 12px; font-weight: 700; color: var(--text); }
+  .arch-box .ab-sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .arch-box.accent { border-color: var(--accent); }
+  .arch-box.green  { border-color: var(--green); }
+  .arch-box.yellow { border-color: var(--yellow); }
+  .arch-box.purple { border-color: var(--purple); }
+  .arch-arrow { color: var(--muted); font-size: 20px; padding: 0 8px; flex-shrink: 0; }
+  .arch-label { font-size: 10px; color: var(--muted); text-align: center; margin-top: 4px; }
+  .arch-col { display: flex; flex-direction: column; align-items: center; gap: 0; }
+  .arch-spacer { height: 12px; }
+
+  /* ── Stack table ── */
+  .stack-table { width: 100%; border-collapse: collapse; }
+  .stack-table th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); background: var(--bg3); }
+  .stack-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .stack-table tr:last-child td { border-bottom: none; }
+  .stack-table tr:hover td { background: var(--bg3); }
+
+  /* ── Role cards ── */
+  .role-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+  .role-name { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+  .role-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .role-list { font-size: 12px; color: var(--muted); list-style: none; padding: 0; margin-top: 8px; }
+  .role-list li::before { content: "→ "; color: var(--accent); }
+  .role-card.op  { border-top: 3px solid #3fb950; }
+  .role-card.enc { border-top: 3px solid var(--accent); }
+  .role-card.adm { border-top: 3px solid var(--purple); }
+
+  /* ── Security ── */
+  .sec-item { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 16px; display: flex; gap: 12px; align-items: flex-start; }
+  .sec-icon { font-size: 18px; flex-shrink: 0; margin-top: 2px; }
+  .sec-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .sec-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .sec-item + .sec-item { margin-top: 10px; }
+
+  /* ── Vulnerability ── */
+  .vuln-card { background: var(--bg2); border: 1px solid var(--red); border-left: 4px solid var(--red); border-radius: 8px; padding: 18px; }
+  .vuln-card + .vuln-card { margin-top: 14px; }
+  .vuln-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .vuln-sev { padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+  .sev-high { background: #da363322; color: #f85149; border: 1px solid #da363344; }
+  .vuln-title { font-size: 14px; font-weight: 700; color: #f85149; }
+  .vuln-body p { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 8px; }
+  .vuln-body strong { color: var(--text); }
+  .vuln-fix { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 12px; margin-top: 10px; }
+  .vuln-fix-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #3fb950; margin-bottom: 6px; }
+  .vuln-fix p { font-size: 12px; color: var(--muted); }
+  code { background: var(--bg3); border: 1px solid var(--border); border-radius: 3px; padding: 1px 5px; font-family: 'Consolas', 'Fira Mono', monospace; font-size: 12px; color: #79c0ff; }
+
+  /* ── Data flow ── */
+  .flow-step { display: flex; gap: 14px; align-items: flex-start; }
+  .flow-step + .flow-step { margin-top: 14px; }
+  .flow-num { width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .flow-content strong { font-size: 13px; color: var(--text); display: block; margin-bottom: 3px; }
+  .flow-content span { font-size: 12px; color: var(--muted); }
+
+  /* ── Endpoints ── */
+  .ep-group { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 12px; }
+  .ep-group-header { padding: 10px 14px; background: var(--bg3); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; display: flex; align-items: center; gap: 8px; }
+  .ep-row { display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-top: 1px solid var(--border); font-size: 12px; }
+  .ep-method { font-family: monospace; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 3px; min-width: 42px; text-align: center; }
+  .m-get  { background: #1f6feb22; color: #58a6ff; }
+  .m-post { background: #23863622; color: #3fb950; }
+  .m-put  { background: #d2992222; color: #e3b341; }
+  .m-patch{ background: #8957e522; color: #bc8cff; }
+  .ep-path { font-family: monospace; color: #79c0ff; }
+  .ep-desc { color: var(--muted); margin-left: auto; text-align: right; }
+  .ep-auth { font-size: 10px; padding: 2px 6px; border-radius: 3px; background: #8957e522; color: #bc8cff; border: 1px solid #8957e544; white-space: nowrap; }
+
+  /* ── Deployment ── */
+  .dep-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+  .dep-card .dep-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin-bottom: 10px; }
+  .dep-row { display: flex; gap: 10px; align-items: baseline; margin-bottom: 6px; font-size: 13px; }
+  .dep-label { color: var(--muted); min-width: 120px; flex-shrink: 0; }
+  .dep-value { color: var(--text); }
+
+  /* ── Footer ── */
+  .footer { border-top: 1px solid var(--border); margin-top: 48px; padding-top: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+  .footer span { font-size: 11px; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- ══ HEADER ══════════════════════════════════════════════════════════════ -->
+<div class="header">
+  <div class="header-top">
+    <div class="logo-area">
+      <h1>App PTAR — Informe Técnico</h1>
+      <div class="sub">Planta de Tratamiento de Aguas Residuales · PERMODA LTDA · Junio 2026</div>
+    </div>
+    <div style="text-align:right;">
+      <div style="font-size:11px; color:var(--muted);">Preparado para</div>
+      <div style="font-weight:700; margin-top:2px;">TI e Infraestructura</div>
+      <div style="font-size:11px; color:var(--muted); margin-top:2px;">Versión: master branch</div>
+    </div>
+  </div>
+  <div class="badge-row">
+    <span class="badge badge-blue">.NET 10 / C#</span>
+    <span class="badge badge-teal">React 19 + TypeScript</span>
+    <span class="badge badge-yellow">MySQL 8</span>
+    <span class="badge badge-green">JWT httpOnly Cookie</span>
+    <span class="badge badge-purple">3 Roles</span>
+    <span class="badge badge-red">⚠ 2 Hallazgos de Seguridad</span>
+  </div>
+</div>
+
+<!-- ══ 1. QUÉ ES LA APP ═══════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title"><span class="icon">📋</span> ¿Qué es y qué hace la app?</div>
+  <div class="card">
+    <p style="font-size:14px; line-height:1.75; color:var(--muted);">
+      <strong style="color:var(--text);">App PTAR</strong> es una aplicación web interna de PERMODA para el monitoreo, registro y análisis operativo de la planta de tratamiento de aguas residuales. Reemplaza registros en papel y hojas de cálculo aisladas con una plataforma centralizada que permite:
+    </p>
+    <div class="grid-3" style="margin-top:16px; gap:10px;">
+      <div class="card" style="padding:14px;">
+        <div class="card-title">Operario (turno)</div>
+        <ul style="font-size:12px; color:var(--muted); padding-left:14px; line-height:1.8;">
+          <li>Registro de caudales (medidores F-01)</li>
+          <li>Registro de reactivos químicos (F-02)</li>
+          <li>Muestras de calidad del agua (F-03)</li>
+          <li>Condiciones operativas (MBR, RO, PTAP)</li>
+          <li>Incidencias de turno</li>
+        </ul>
+      </div>
+      <div class="card" style="padding:14px;">
+        <div class="card-title">Encargado / Supervisor</div>
+        <ul style="font-size:12px; color:var(--muted); padding-left:14px; line-height:1.8;">
+          <li>Dashboard KPI en tiempo real</li>
+          <li>Dashboard Calidad del Agua</li>
+          <li>Balance Hídrico por turno/día/semana</li>
+          <li>Costos de reactivos químicos</li>
+          <li>Generación de informes PDF</li>
+        </ul>
+      </div>
+      <div class="card" style="padding:14px;">
+        <div class="card-title">Administrador / Visualizador</div>
+        <ul style="font-size:12px; color:var(--muted); padding-left:14px; line-height:1.8;">
+          <li>Panel configurable (selección de secciones)</li>
+          <li>Dashboard de mantenimientos (SharePoint)</li>
+          <li>Vista consolidada sin edición</li>
+          <li>Acceso a todos los informes</li>
+          <li>Explorador de tablas de la BD</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 2. ARQUITECTURA ════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title"><span class="icon">🏗</span> Arquitectura del sistema</div>
+  <div class="arch-diagram">
+    <div class="arch-row" style="justify-content:space-around; flex-wrap:wrap; gap:8px;">
+      <!-- Browser -->
+      <div class="arch-col">
+        <div class="arch-box accent">
+          <span class="ab-icon">🖥</span>
+          <div class="ab-title">Browser</div>
+          <div class="ab-sub">React 19 + Vite</div>
+          <div class="ab-sub">TypeScript strict</div>
+          <div class="ab-sub">Puerto :5174 (dev)</div>
+        </div>
+        <div class="arch-spacer"></div>
+        <div class="arch-label">SPA — React Router v6</div>
+      </div>
+      <!-- Arrow -->
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 6px;">
+        <div style="font-size:11px;color:var(--muted);text-align:center;">HTTPS<br>Cookie httpOnly</div>
+        <div style="font-size:22px;color:var(--muted);margin:4px 0;">⟷</div>
+        <div style="font-size:10px;color:var(--muted);text-align:center;">credentials:<br>'include'</div>
+      </div>
+      <!-- API -->
+      <div class="arch-col">
+        <div class="arch-box green">
+          <span class="ab-icon">⚙</span>
+          <div class="ab-title">API REST</div>
+          <div class="ab-sub">ASP.NET Core 10</div>
+          <div class="ab-sub">C# + Dapper ORM</div>
+          <div class="ab-sub">Puerto :8001</div>
+        </div>
+        <div class="arch-spacer"></div>
+        <div class="arch-label">Kestrel → Rev. Proxy</div>
+      </div>
+      <!-- Arrow -->
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 6px;">
+        <div style="font-size:11px;color:var(--muted);text-align:center;">TCP</div>
+        <div style="font-size:22px;color:var(--muted);margin:4px 0;">⟷</div>
+        <div style="font-size:10px;color:var(--muted);text-align:center;">Puerto 3306</div>
+      </div>
+      <!-- DB -->
+      <div class="arch-col">
+        <div class="arch-box yellow">
+          <span class="ab-icon">🗄</span>
+          <div class="ab-title">MySQL 8</div>
+          <div class="ab-sub">ptar_permoda</div>
+          <div class="ab-sub">utf8mb4</div>
+          <div class="ab-sub">Puerto :3306</div>
+        </div>
+        <div class="arch-spacer"></div>
+        <div class="arch-label">Local / mismo servidor</div>
+      </div>
+      <!-- Arrow -->
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 6px;">
+        <div style="font-size:11px;color:var(--muted);text-align:center;">OAuth2<br>HTTPS</div>
+        <div style="font-size:22px;color:var(--muted);margin:4px 0;">⟷</div>
+        <div style="font-size:10px;color:var(--muted);text-align:center;">cada 1h</div>
+      </div>
+      <!-- SharePoint -->
+      <div class="arch-col">
+        <div class="arch-box purple">
+          <span class="ab-icon">☁</span>
+          <div class="ab-title">SharePoint</div>
+          <div class="ab-sub">permodaco.sharepoint</div>
+          <div class="ab-sub">/CONFIABILIDAD</div>
+          <div class="ab-sub">Background service</div>
+        </div>
+        <div class="arch-spacer"></div>
+        <div class="arch-label">Mantenimientos sync</div>
+      </div>
+    </div>
+    <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--border); display:flex; gap:24px; flex-wrap:wrap; justify-content:center;">
+      <div style="font-size:11px; color:var(--muted); text-align:center;"><span style="color:#58a6ff;">■</span> Frontend SPA</div>
+      <div style="font-size:11px; color:var(--muted); text-align:center;"><span style="color:#3fb950;">■</span> Backend API REST</div>
+      <div style="font-size:11px; color:var(--muted); text-align:center;"><span style="color:#e3b341;">■</span> Base de datos</div>
+      <div style="font-size:11px; color:var(--muted); text-align:center;"><span style="color:#bc8cff;">■</span> Servicio externo</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 3. STACK TECNOLÓGICO ═══════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title"><span class="icon">🔧</span> Stack tecnológico</div>
+  <div class="card" style="padding:0; overflow:hidden;">
+    <table class="stack-table">
+      <thead>
+        <tr><th>Capa</th><th>Tecnología</th><th>Versión</th><th>Rol en la app</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Frontend</td><td><strong>React</strong> + Vite + TypeScript</td><td>19 / 6 / 5.x</td><td>SPA, UI, React Router v6, lazy loading por ruta</td></tr>
+        <tr><td>Backend</td><td><strong>ASP.NET Core</strong> (C#)</td><td>.NET 10</td><td>API REST, autenticación JWT, generación PDF, servicios en background</td></tr>
+        <tr><td>ORM / Data</td><td><strong>Dapper</strong> + EF Core (Pomelo)</td><td>—</td><td>Dapper para todas las queries; EF Core solo para la fábrica de conexiones</td></tr>
+        <tr><td>Base de datos</td><td><strong>MySQL</strong></td><td>8.x</td><td>ptar_permoda — tablas operativas, vistas analíticas, tablas de usuarios/sesiones</td></tr>
+        <tr><td>Autenticación</td><td><strong>JWT</strong> en Cookie httpOnly</td><td>—</td><td>Token viaja solo en cookie, nunca expuesto a JavaScript</td></tr>
+        <tr><td>Rate limiting</td><td><strong>AspNetCoreRateLimit</strong></td><td>—</td><td>Límites por endpoint (login: 10/min, batch: 30/min, global: 50/s)</td></tr>
+        <tr><td>PDF</td><td><strong>QuestPDF</strong></td><td>Community</td><td>Generación de informes estructurados en servidor</td></tr>
+        <tr><td>Integración</td><td><strong>SharePoint REST API</strong></td><td>—</td><td>Sync de mantenimientos desde Microsoft 365, OAuth2, cache token en disco</td></tr>
+        <tr><td>Servidor</td><td><strong>Kestrel</strong> (IIS/nginx recomendado como proxy)</td><td>—</td><td>Escucha en 0.0.0.0:8001, en producción detrás de reverse proxy</td></tr>
+        <tr><td>Hosting frontend</td><td><strong>Vercel</strong> (o servidor propio)</td><td>—</td><td>URL de producción en allowlist CORS: ptar-app.vercel.app</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══ 4. MODELO DE SEGURIDAD ═════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title"><span class="icon">🔐</span> Modelo de seguridad</div>
+  <div class="sec-item"><span class="sec-icon">🍪</span><div><div class="sec-title">Autenticación por Cookie httpOnly (JWT)</div><div class="sec-desc">Al hacer login, el servidor emite un JWT firmado con HS256 (clave mínimo 32 chars, solo en <code>appsettings.Local.json</code> que está en .gitignore) y lo coloca en una cookie <code>httpOnly</code>. El token <strong>jamás toca JavaScript</strong> — el browser lo adjunta automáticamente en cada request. Expiración: 8 horas. El frontend guarda en <code>localStorage</code> solo datos no sensibles (nombre, rol) para mostrar en UI.</div></div></div>
+  <div class="sec-item"><span class="sec-icon">🔄</span><div><div class="sec-title">Refresh tokens con revocación</div><div class="sec-desc">Los refresh tokens se almacenan en la tabla <code>ptar_refresh_tokens</code> como hashes SHA-256. Cuando el access token expira (8h), el frontend intenta un refresh silencioso una sola vez. Si falla, despacha un evento global <code>ptar:unauthorized</code> y limpia la sesión. Los tokens expirados son depurados por un Background Service (<code>TokenCleanupService</code>) que corre periódicamente.</div></div></div>
+  <div class="sec-item"><span class="sec-icon">🔒</span><div><div class="sec-title">Bloqueo de cuenta</div><div class="sec-desc">Después de intentos fallidos de login, la cuenta se bloquea temporalmente (<code>locked_until</code> en <code>ptar_users</code>). El endpoint de login está rate-limited a 10 req/min. El endpoint de cambio de contraseña está limitado a 5 req/min.</div></div></div>
+  <div class="sec-item"><span class="sec-icon">🌐</span><div><div class="sec-title">CORS estricto por origen</div><div class="sec-desc">Solo se permiten peticiones de <code>http://localhost:5174</code> y <code>https://ptar-app.vercel.app</code>. <code>AllowCredentials</code> habilitado (requerido para la cookie). <code>AllowedHosts</code> en appsettings: solo <code>localhost</code> y <code>127.0.0.1</code>, diseñado para operar detrás de un reverse proxy que maneje el dominio externo.</div></div></div>
+  <div class="sec-item"><span class="sec-icon">🛡</span><div><div class="sec-title">Security Headers</div><div class="sec-desc">El backend inyecta en cada respuesta: <code>X-Frame-Options: DENY</code>, <code>X-Content-Type-Options: nosniff</code>, <code>Referrer-Policy: strict-origin-when-cross-origin</code>, <code>X-XSS-Protection: 1; mode=block</code>, <code>Permissions-Policy: camera=(), microphone=(), geolocation=()</code>, <code>Content-Security-Policy: default-src 'none'; frame-ancestors 'none'</code>. En producción también: HSTS y redirect HTTPS.</div></div></div>
+  <div class="sec-item"><span class="sec-icon">💉</span><div><div class="sec-title">Prevención de SQL Injection</div><div class="sec-desc">Todas las queries usan Dapper con <code>DynamicParameters</code> (queries parametrizadas — nunca concatenación de strings de usuario). Los nombres de columnas y tablas dinámicos en el explorador de analista se validan contra <code>information_schema</code> antes de incluirlos. Los límites de paginación se clampean con <code>Math.Clamp()</code>. INSERT/UPDATE usa el patrón <code>ON DUPLICATE KEY UPDATE</code> para idempotencia.</div></div></div>
+  <div class="sec-item"><span class="sec-icon">📝</span><div><div class="sec-title">Audit Log de operaciones</div><div class="sec-desc">Un middleware intercepta todas las operaciones POST / PUT / DELETE / PATCH y registra post-respuesta: ID de usuario, rol, ruta, código HTTP y dirección IP del cliente. Permite trazabilidad de quién hizo qué y cuándo.</div></div></div>
+  <div class="sec-item"><span class="sec-icon">🚨</span><div><div class="sec-title">Manejo de errores sin exposición de stack</div><div class="sec-desc"><code>GlobalExceptionMiddleware</code> es el primer middleware en el pipeline; captura cualquier excepción no manejada y responde con <code>{"detail": "Error interno del servidor"}</code> (HTTP 500) sin exponer stack traces, nombres de archivo ni detalles de la BD al cliente.</div></div></div>
+</div>
+
+<!-- ══ 5. ROLES Y PERMISOS ═════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title"><span class="icon">👥</span> Roles y permisos</div>
+  <div class="grid-3">
+    <div class="role-card op">
+      <div class="role-name" style="color:#3fb950;">Operario</div>
+      <div class="role-desc">Turno en planta. Solo puede registrar datos de su turno.</div>
+      <ul class="role-list">
+        <li>Formulario caudales (F-01)</li>
+        <li>Formulario reactivos (F-02)</li>
+        <li>Formulario calidad (F-03)</li>
+        <li>Condiciones op. (MBR/RO/PTAP)</li>
+        <li>Registro de incidencias</li>
+      </ul>
+    </div>
+    <div class="role-card enc">
+      <div class="role-name" style="color:#58a6ff;">Encargado</div>
+      <div class="role-desc">Supervisor. Acceso completo a dashboards, edición de registros y configuración del panel Visualizador.</div>
+      <ul class="role-list">
+        <li>Todo lo de Operario</li>
+        <li>KPI Dashboard (edición habilitada)</li>
+        <li>Dashboard Calidad / Balance / Costos</li>
+        <li>Panel de registros (edición)</li>
+        <li>Explorador analítico (AnálisSheet)</li>
+        <li>Configurar panel Visualizador</li>
+        <li>Informes PDF</li>
+      </ul>
+    </div>
+    <div class="role-card adm">
+      <div class="role-name" style="color:#bc8cff;">Administrador</div>
+      <div class="role-desc">Visualizador / gerencia. Solo lectura de dashboards configurados por el Encargado.</div>
+      <ul class="role-list">
+        <li>Dashboard consolidado (read-only)</li>
+        <li>Mantenimientos (SharePoint sync)</li>
+        <li>Todos los informes</li>
+        <li>Explorador de tablas BD</li>
+        <li>Sin acceso a formularios de entrada</li>
+      </ul>
+    </div>
+  </div>
+  <div style="margin-top:12px; padding:12px 16px; background:var(--bg2); border:1px solid var(--border); border-radius:8px; font-size:12px; color:var(--muted);">
+    <strong style="color:var(--text);">Herencia de roles (frontend + backend):</strong> Administrador &gt; Encargado &gt; Operario. Los guards de ruta en React Router y los atributos <code>[Authorize(Roles=...)]</code> en los controllers C# aplican ambos independientemente.
+  </div>
+</div>
+
+<!-- ══ 6. FLUJO DE DATOS ══════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title"><span class="icon">🔄</span> Flujo de datos — ciclo típico</div>
+  <div class="card">
+    <div class="flow-step"><div class="flow-num">1</div><div class="flow-content"><strong>Operario registra turno</strong><span>Llena los formularios en el browser. Al guardar, el frontend hace POST <code>/api/caudales/batch</code>, <code>/api/reactivos/batch</code>, <code>/api/calidad/batch</code> con la cookie httpOnly adjunta automáticamente.</span></div></div>
+    <div class="flow-step"><div class="flow-num">2</div><div class="flow-content"><strong>Backend valida y persiste</strong><span>El controller valida los datos (annotations + lógica), ejecuta un INSERT con <code>ON DUPLICATE KEY UPDATE</code> (idempotente — re-enviar el mismo turno actualiza sin duplicar). Se recalculan campos derivados (ej: costo_quimica_turno, pesos_por_m3) dentro de la misma transacción. El audit log registra la operación.</span></div></div>
+    <div class="flow-step"><div class="flow-num">3</div><div class="flow-content"><strong>Vistas MySQL consolidan los datos</strong><span>Vistas como <code>v_balance_hidrico</code>, <code>v_calidad_estadisticas</code>, <code>v_consumo_quimico_diario</code> agregan y calculan métricas sobre los datos crudos. Esta lógica vive en la BD, no en el backend C#.</span></div></div>
+    <div class="flow-step"><div class="flow-num">4</div><div class="flow-content"><strong>Encargado consulta dashboards</strong><span>Los dashboards hacen GET a endpoints que consultan las vistas. Granularidad (turno / día / semana / mes) y rango de fechas son parámetros que se pasan como query params. El frontend renderiza gráficas (Recharts), KPIs y tablas.</span></div></div>
+    <div class="flow-step"><div class="flow-num">5</div><div class="flow-content"><strong>Generación de informes</strong><span>El Encargado abre el modal de informe y solicita PDF. El backend ejecuta queries analíticas, instancia plantillas QuestPDF y retorna el binario PDF (o HTML para imprimir). El browser descarga o abre el archivo.</span></div></div>
+    <div class="flow-step"><div class="flow-num">6</div><div class="flow-content"><strong>Administrador visualiza panel</strong><span>El Encargado configura qué secciones aparecen en el AdminDashboard (guardado en <code>dashboard_config</code> — tabla singleton con id=1). El Administrador accede a <code>/admin/dashboard</code> y ve exactamente las secciones activadas, con los filtros congelados al momento de configuración.</span></div></div>
+    <div class="flow-step"><div class="flow-num">7</div><div class="flow-content"><strong>Sync mantenimientos SharePoint</strong><span>Un Background Service (.NET IHostedService) se despierta cada 1 hora, autentica con OAuth2 contra Microsoft 365 (permodaco.sharepoint.com/sites/CONFIABILIDAD), obtiene la lista de documentos de mantenimiento y los guarda en la BD. El token OAuth se cachea en disco (gitignored).</span></div></div>
+  </div>
+</div>
+
+<!-- ══ 7. ENDPOINTS PRINCIPALES ══════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title"><span class="icon">🔌</span> Endpoints de la API (resumen)</div>
+
+  <div class="ep-group">
+    <div class="ep-group-header" style="color:#58a6ff;">🔑 Autenticación — /api/auth/</div>
+    <div class="ep-row"><span class="ep-method m-post">POST</span><span class="ep-path">/api/auth/login</span><span class="ep-desc">Login → emite JWT en cookie httpOnly</span></div>
+    <div class="ep-row"><span class="ep-method m-post">POST</span><span class="ep-path">/api/auth/refresh</span><span class="ep-desc">Renovar token silenciosamente (20/min)</span></div>
+    <div class="ep-row"><span class="ep-method m-post">POST</span><span class="ep-path">/api/auth/logout</span><span class="ep-desc">Elimina la cookie y revoca el refresh token</span></div>
+    <div class="ep-row"><span class="ep-method m-get">GET</span><span class="ep-path">/api/auth/me</span><span class="ep-desc">Valida la sesión activa al cargar la app</span></div>
+    <div class="ep-row"><span class="ep-method m-post">POST</span><span class="ep-path">/api/auth/change-password</span><span class="ep-desc">Cambio de contraseña (5/min)</span></div>
+  </div>
+
+  <div class="ep-group">
+    <div class="ep-group-header" style="color:#3fb950;">📊 Datos operativos — /api/caudales/ · /api/reactivos/ · /api/calidad/</div>
+    <div class="ep-row"><span class="ep-method m-post">POST</span><span class="ep-path">/api/caudales/batch</span><span class="ep-desc">Batch upsert lecturas contadores</span><span class="ep-auth">operario+</span></div>
+    <div class="ep-row"><span class="ep-method m-post">POST</span><span class="ep-path">/api/reactivos/batch</span><span class="ep-desc">Batch upsert reactivos GEM/RO/PTAP</span><span class="ep-auth">operario+</span></div>
+    <div class="ep-row"><span class="ep-method m-post">POST</span><span class="ep-path">/api/calidad/batch</span><span class="ep-desc">Batch upsert muestras de calidad</span><span class="ep-auth">operario+</span></div>
+    <div class="ep-row"><span class="ep-method m-get">GET</span><span class="ep-path">/api/caudales/resumen</span><span class="ep-desc">Totales agregados por rango de fechas</span><span class="ep-auth">encargado+</span></div>
+    <div class="ep-row"><span class="ep-method m-get">GET</span><span class="ep-path">/api/calidad/estadisticas</span><span class="ep-desc">Estadísticas calidad por parámetro</span><span class="ep-auth">encargado+</span></div>
+    <div class="ep-row"><span class="ep-method m-put">PUT</span><span class="ep-path">/api/calidad/edicion/{id}</span><span class="ep-desc">Editar registro de calidad</span><span class="ep-auth">encargado+</span></div>
+  </div>
+
+  <div class="ep-group">
+    <div class="ep-group-header" style="color:#bc8cff;">🔬 Analítica avanzada — /api/analisis/</div>
+    <div class="ep-row"><span class="ep-method m-get">GET</span><span class="ep-path">/api/analisis/tablas</span><span class="ep-desc">Lista tablas y vistas de la BD</span><span class="ep-auth">encargado / admin</span></div>
+    <div class="ep-row"><span class="ep-method m-get">GET</span><span class="ep-path">/api/analisis/tabla/{nombre}</span><span class="ep-desc">Datos paginados de cualquier tabla/vista</span><span class="ep-auth">encargado / admin</span></div>
+    <div class="ep-row"><span class="ep-method m-patch">PATCH</span><span class="ep-path">/api/analisis/tabla/{nombre}/{id}</span><span class="ep-desc">Edición genérica de fila (columnas validadas)</span><span class="ep-auth">encargado / admin</span></div>
+    <div class="ep-row"><span class="ep-method m-post">POST</span><span class="ep-path">/api/analisis/datos</span><span class="ep-desc">Query a fuente de datos con filtros</span><span class="ep-auth">encargado / admin</span></div>
+  </div>
+
+  <div class="ep-group">
+    <div class="ep-group-header" style="color:#e3b341;">📄 Reportes — /api/reportes/</div>
+    <div class="ep-row"><span class="ep-method m-get">GET</span><span class="ep-path">/api/reportes/pdf</span><span class="ep-desc">PDF estructurado (QuestPDF)</span><span class="ep-auth">encargado+</span></div>
+    <div class="ep-row"><span class="ep-method m-get">GET</span><span class="ep-path">/api/reportes/calidad-html</span><span class="ep-desc">Informe calidad para imprimir</span><span class="ep-auth">encargado / admin</span></div>
+    <div class="ep-row"><span class="ep-method m-get">GET</span><span class="ep-path">/api/reportes/balance-html</span><span class="ep-desc">Informe balance hídrico</span><span class="ep-auth">encargado / admin</span></div>
+    <div class="ep-row"><span class="ep-method m-get">GET</span><span class="ep-path">/api/reportes/costos-html</span><span class="ep-desc">Informe costos reactivos</span><span class="ep-auth">encargado / admin</span></div>
+  </div>
+</div>
+
+<!-- ══ 8. BASE DE DATOS ═══════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title"><span class="icon">🗄</span> Base de datos MySQL (ptar_permoda)</div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Tablas de seguridad</div>
+      <ul style="font-size:12px; color:var(--muted); line-height:1.9; list-style:none; padding:0;">
+        <li><code>ptar_users</code> — cuentas, bcrypt hash, rol, lockout</li>
+        <li><code>ptar_refresh_tokens</code> — tokens SHA-256, expiración, revocado</li>
+        <li><code>dashboard_config</code> — config JSON singleton (id=1)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-title">Tablas operativas</div>
+      <ul style="font-size:12px; color:var(--muted); line-height:1.9; list-style:none; padding:0;">
+        <li><code>contadores_lectura</code> — lecturas brutas por turno (~36 col.)</li>
+        <li><code>consumo_turno</code> — deltas calculados por turno</li>
+        <li><code>operacion_gem_turno</code> / <code>_ro_turno</code> / <code>_ptap_turno</code></li>
+        <li><code>medicion_calidad</code> — muestras con FK a parámetro+unidad</li>
+        <li><code>condiciones_mbr/ro/ptap_turno</code></li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-title">Vistas analíticas</div>
+      <ul style="font-size:12px; color:var(--muted); line-height:1.9; list-style:none; padding:0;">
+        <li><code>v_balance_hidrico</code></li>
+        <li><code>v_calidad_estadisticas</code> / <code>v_calidad_remociones</code></li>
+        <li><code>v_consumo_quimico_diario</code> / <code>_mensual</code></li>
+        <li><code>v_quimico_estadisticas_dia</code></li>
+        <li><code>v_quimico_real_vs_proyectado</code></li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-title">Patrones de escritura</div>
+      <ul style="font-size:12px; color:var(--muted); line-height:1.9; list-style:none; padding:0;">
+        <li>INSERT + ON DUPLICATE KEY UPDATE (upsert idempotente)</li>
+        <li>Transacciones explícitas en batch endpoints</li>
+        <li>Recálculo en-transacción de campos derivados</li>
+        <li>Detección de rollover en medidores (delta negativo → 0)</li>
+        <li>Migraciones aplicadas al startup (Dapper directo)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 9. DESPLIEGUE ══════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title"><span class="icon">🚀</span> Consideraciones de despliegue</div>
+  <div class="grid-2">
+    <div class="dep-card">
+      <div class="dep-title">Puertos y red</div>
+      <div class="dep-row"><span class="dep-label">Backend (API):</span><span class="dep-value"><code>0.0.0.0:8001</code> — escucha en todas las interfaces</span></div>
+      <div class="dep-row"><span class="dep-label">Frontend (dev):</span><span class="dep-value"><code>localhost:5174</code> (Vite)</span></div>
+      <div class="dep-row"><span class="dep-label">MySQL:</span><span class="dep-value"><code>localhost:3306</code> (local al servidor backend)</span></div>
+      <div class="dep-row"><span class="dep-label">Proxy inverso:</span><span class="dep-value">Nginx / IIS recomendado. El backend está diseñado para recibir el Host real vía proxy.</span></div>
+    </div>
+    <div class="dep-card">
+      <div class="dep-title">Archivos y secretos</div>
+      <div class="dep-row"><span class="dep-label">Secretos:</span><span class="dep-value"><code>appsettings.Local.json</code> (gitignored) — contiene connection string con credenciales reales, Jwt:Secret, SharePoint credentials</span></div>
+      <div class="dep-row"><span class="dep-label">Variables:</span><span class="dep-value">Frontend: <code>VITE_API_URL</code> en <code>.env</code> (dev) o vacío en producción si mismo dominio</span></div>
+      <div class="dep-row"><span class="dep-label">Token SharePoint:</span><span class="dep-value"><code>.sharepoint_token_cache.json</code> — gitignored</span></div>
+    </div>
+    <div class="dep-card">
+      <div class="dep-title">Configuración producción</div>
+      <div class="dep-row"><span class="dep-label">HTTPS:</span><span class="dep-value">Obligatorio en producción — UseHsts + UseHttpsRedirection activados</span></div>
+      <div class="dep-row"><span class="dep-label">Swagger:</span><span class="dep-value">Solo habilitado en Development — no expuesto en producción</span></div>
+      <div class="dep-row"><span class="dep-label">Body size:</span><span class="dep-value">Máximo 1 MB por request</span></div>
+      <div class="dep-row"><span class="dep-label">Logs:</span><span class="dep-value">Audit log en BD por operación POST/PUT/DELETE/PATCH</span></div>
+    </div>
+    <div class="dep-card">
+      <div class="dep-title">Background services (.NET IHostedService)</div>
+      <div class="dep-row"><span class="dep-label">SharePointSyncService:</span><span class="dep-value">Sincroniza documentos de mantenimiento desde M365 cada 1 hora</span></div>
+      <div class="dep-row"><span class="dep-label">TokenCleanupService:</span><span class="dep-value">Purga refresh tokens expirados de ptar_refresh_tokens periódicamente</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 10. HALLAZGOS DE SEGURIDAD ════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title"><span class="icon">⚠</span> Hallazgos de seguridad — Acción requerida</div>
+  <div style="padding:12px 16px; background:#da363311; border:1px solid #da363344; border-radius:8px; margin-bottom:16px; font-size:13px; color:#f85149;">
+    <strong>La revisión de seguridad automatizada identificó 2 vulnerabilidades de severidad ALTA</strong> en el módulo de analítica (<code>AnalisisController.cs</code>). Ambas están limitadas al rol <code>encargado</code> y <code>administrador</code>, pero deben corregirse antes de ampliar el acceso o desplegar en producción expuesta.
+  </div>
+
+  <div class="vuln-card">
+    <div class="vuln-header">
+      <span class="vuln-sev sev-high">HIGH</span>
+      <span class="vuln-title">Control de acceso roto — Escalada de privilegios via PATCH genérico</span>
+    </div>
+    <div class="vuln-body">
+      <p><strong>Archivo:</strong> <code>AnalisisController.cs</code> · endpoint <code>PATCH /api/analisis/tabla/{nombre}/{id}</code></p>
+      <p>El endpoint acepta cualquier nombre de tabla de la URL y actualiza columnas arbitrarias. Solo valida que la tabla exista en <code>information_schema</code> (base tables) y que las columnas existan — pero <strong>no tiene allowlist de tablas permitidas</strong>. Las tablas de seguridad <code>ptar_users</code> y <code>ptar_refresh_tokens</code> son base tables visibles en la misma BD.</p>
+      <p><strong>Escenario de explotación:</strong> Un usuario <code>encargado</code> puede enviar <code>PATCH /api/analisis/tabla/ptar_users/2</code> con body <code>{"rol": "administrador"}</code> para ascenderse a administrador. También puede modificar <code>password_hash</code> para tomar control de cualquier cuenta, o reactivar tokens revocados en <code>ptar_refresh_tokens</code>.</p>
+    </div>
+    <div class="vuln-fix">
+      <div class="vuln-fix-title">Corrección recomendada</div>
+      <p>Añadir en <code>AnalisisController.cs</code> un <code>HashSet&lt;string&gt; TablasBloqueadas</code> con <code>"ptar_users"</code> y <code>"ptar_refresh_tokens"</code> y retornar <code>Forbid()</code> al inicio de <code>UpdateFila</code> si el nombre de tabla está en ese set. El mismo patrón que ya existe para las vistas en <code>VistasMeta</code>.</p>
+    </div>
+  </div>
+
+  <div class="vuln-card">
+    <div class="vuln-header">
+      <span class="vuln-sev sev-high">HIGH</span>
+      <span class="vuln-title">Exposición de datos sensibles — Lectura de tablas de seguridad sin restricción</span>
+    </div>
+    <div class="vuln-body">
+      <p><strong>Archivo:</strong> <code>AnalisisController.cs</code> · endpoints <code>GET /api/analisis/tablas</code> y <code>GET /api/analisis/tabla/{nombre}</code></p>
+      <p>El endpoint <code>/api/analisis/tablas</code> enumera <strong>todas las tablas base</strong> de la BD incluyendo <code>ptar_users</code> y <code>ptar_refresh_tokens</code>. El endpoint <code>/api/analisis/tabla/ptar_users</code> ejecuta <code>SELECT * FROM ptar_users</code> sin filtro de columnas — devuelve <code>password_hash</code>, <code>rol</code>, <code>activo</code>, <code>failed_attempts</code>, <code>locked_until</code> de todos los usuarios.</p>
+      <p><strong>Escenario de explotación:</strong> Un <code>encargado</code> obtiene todos los hashes bcrypt. Aunque bcrypt es resistente, contraseñas débiles o comunes pueden romperse offline. Independientemente, el directorio completo de usuarios, roles y estados de cuenta queda expuesto, facilitando ataques dirigidos a cuentas de administrador.</p>
+    </div>
+    <div class="vuln-fix">
+      <div class="vuln-fix-title">Corrección recomendada</div>
+      <p>Aplicar el mismo <code>TablasBloqueadas</code> en <code>GetTablas</code> (filtrar de la lista retornada) y en <code>GetTabla</code> (retornar 404 si el nombre está bloqueado). Adicionalmente, considerar no exponer la enumeración completa de tablas a usuarios no-administradores.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 11. EFICIENCIA DEL CÓDIGO ════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title"><span class="icon">⚡</span> Eficiencia del código — puntos relevantes para TI</div>
+  <div class="grid-2">
+    <div class="sec-item" style="background:var(--bg2);"><span class="sec-icon">🔁</span><div><div class="sec-title">Upsert idempotente en todos los batch endpoints</div><div class="sec-desc">Los operarios pueden re-enviar el mismo formulario de turno sin crear duplicados — el patrón <code>ON DUPLICATE KEY UPDATE</code> en MySQL garantiza exactamente un registro por (fecha, turno, sistema).</div></div></div>
+    <div class="sec-item" style="background:var(--bg2);"><span class="sec-icon">🧠</span><div><div class="sec-title">Refresh interceptor singleton en frontend</div><div class="sec-desc">Si múltiples llamadas API retornan 401 simultáneamente, solo se emite un request de refresh. Las demás esperan la misma Promise y reintentan en orden — evita race conditions de sesión.</div></div></div>
+    <div class="sec-item" style="background:var(--bg2);"><span class="sec-icon">📐</span><div><div class="sec-title">Lógica analítica en vistas MySQL</div><div class="sec-desc">Los cálculos de balance hídrico, eficiencias de remoción y estadísticas de calidad viven en vistas de MySQL, no en código C#. Esto simplifica el backend y permite optimizar queries en la BD.</div></div></div>
+    <div class="sec-item" style="background:var(--bg2);"><span class="sec-icon">📦</span><div><div class="sec-title">Lazy loading por ruta en React</div><div class="sec-desc">Cada feature se carga bajo demanda (<code>React.lazy + Suspense</code>). Un operario solo descarga el bundle de formularios; un encargado carga dashboards solo cuando los visita. Mejora el tiempo de carga inicial.</div></div></div>
+    <div class="sec-item" style="background:var(--bg2);"><span class="sec-icon">🔒</span><div><div class="sec-title">Límites de resultados SQL en todos los endpoints</div><div class="sec-desc">Todos los GET tienen <code>Math.Clamp(limit, 1, 5000)</code> — ninguna query puede retornar filas ilimitadas. El explorador analítico tiene un límite superior de 50.000. Los batch POST tienen límite de 1 MB en el body.</div></div></div>
+    <div class="sec-item" style="background:var(--bg2);"><span class="sec-icon">🔀</span><div><div class="sec-title">Recálculo automático dentro de transacciones</div><div class="sec-desc">Al insertar reactivos, el backend recalcula <code>costo_quimica_turno</code> y <code>pesos_por_m3</code> dentro de la misma transacción SQL — sin jobs externos ni triggers de BD que puedan quedar inconsistentes.</div></div></div>
+  </div>
+</div>
+
+<!-- ══ FOOTER ════════════════════════════════════════════════════════════ -->
+<div class="footer">
+  <span>App PTAR — PERMODA LTDA · Informe generado el 18 junio 2026</span>
+  <span>Branch: master · Stack: .NET 10 + React 19 + MySQL 8</span>
+  <span>Preparado por: Equipo de Desarrollo PTAR</span>
+</div>
+
+</div>
+</body>
+</html>

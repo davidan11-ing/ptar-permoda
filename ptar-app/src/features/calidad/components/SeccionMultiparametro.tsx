@@ -1,3 +1,4 @@
+// Sección multiparámetro: agrupa unidades en fases, biológico y ósmosis, con gráfica turno a turno y dispersión
 import TurnoAturnoChart from './TurnoAturnoChart';
 import DispersionChart  from './DispersionChart';
 import type { RawRow }        from '../hooks/useCalidadData';
@@ -9,6 +10,7 @@ interface Props {
   unidad_medida:  string;
 }
 
+// Grupos de unidades de tratamiento organizados por etapa del proceso
 const GRUPOS: Record<string, string[]> = {
   fases: [
     'Tanque Pulmon',
@@ -32,18 +34,21 @@ const GRUPOS: Record<string, string[]> = {
   ],
 };
 
+// Etiquetas legibles para el encabezado de cada grupo
 const GRUPO_LABELS: Record<string, string> = {
   fases:     'Fases de Pretratamiento',
   biologico: 'Sistema Biológico (MBR)',
   osmosis:   'Ósmosis Inversa (RO)',
 };
 
+// Tipo de gráfica preferido por grupo: línea para fases/ósmosis, barras para biológico
 const GRUPO_TIPO: Record<string, 'line' | 'bar'> = {
   fases:     'line',
   biologico: 'bar',
   osmosis:   'line',
 };
 
+// Renderiza una sección por grupo, omitiendo los grupos sin datos disponibles
 export default function SeccionMultiparametro({ rawData, dispersionData, unidad_medida }: Props) {
   // Verificar qué unidades tienen datos
   const unidadesConDatos = new Set(rawData.map(r => r.unidad_tratamiento));
@@ -65,6 +70,7 @@ export default function SeccionMultiparametro({ rawData, dispersionData, unidad_
               <h2 className="cal-section-title">Multiparámetro — {GRUPO_LABELS[grupo]}</h2>
               <span className="cal-section-meta">{unidadesActivas.join(' · ')}</span>
             </div>
+            {/* Gráfica turno a turno + dispersión mín/prom/máx en paralelo */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
                 <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>

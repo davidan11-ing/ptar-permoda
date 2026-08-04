@@ -1,3 +1,4 @@
+// Sección de eficiencia operativa GEM: reactivos, costos, caudal y $/m³ diario
 import {
   BarChart, Bar, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -10,13 +11,16 @@ interface Props {
   loading: boolean;
 }
 
+// Estilos del tooltip oscuro compartidos por todas las gráficas
 const TOOLTIP_STYLE = {
   contentStyle: { background: '#161b22', border: '1px solid #30363d', borderRadius: 8, fontSize: 12 },
   labelStyle:   { color: '#e6edf3', marginBottom: 4 },
 };
 
+// Estilo de texto para los ejes X e Y
 const AXIS_TICK = { fill: '#8b949e', fontSize: 10 };
 
+// Formatea fecha YYYY-MM-DD → DD/MM para el eje X
 function formatFecha(f: string) {
   const parts = f.split('-');
   return parts.length >= 3 ? `${parts[2]}/${parts[1]}` : f;
@@ -59,6 +63,7 @@ function byFecha(data: GemEficienciaRow[]) {
     }
   }
 
+  // Construir resultado final promediando claves acumuladas
   return Array.from(map.entries())
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([fecha, { row }]) => {
@@ -78,6 +83,7 @@ function byFecha(data: GemEficienciaRow[]) {
     });
 }
 
+// Panel de 5 gráficas: caudal/costo, PPM, kg, costo por reactivo y $/m³
 export default function GemEficienciaSection({ data, loading }: Props) {
   if (loading) {
     return (
@@ -101,6 +107,7 @@ export default function GemEficienciaSection({ data, loading }: Props) {
     );
   }
 
+  // Datos agrupados por fecha (suma/promedio de todos los turnos del día)
   const agrupado = byFecha(data);
 
   return (

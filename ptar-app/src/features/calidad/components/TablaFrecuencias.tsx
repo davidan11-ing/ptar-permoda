@@ -9,6 +9,7 @@
 
 import type React from 'react';
 
+// Número fijo de rangos para la distribución de frecuencias
 const N_RANGOS = 5;
 
 interface Rango {
@@ -29,6 +30,7 @@ interface DistInfo {
   rangos: Rango[];
 }
 
+// Calcula parámetros estadísticos y 5 rangos de frecuencia a partir de valores numéricos
 export function calcDist(values: number[]): DistInfo | null {
   if (values.length === 0) return null;
   const minimo   = Math.min(...values);
@@ -37,6 +39,7 @@ export function calcDist(values: number[]): DistInfo | null {
   const nDatos   = values.length;
   const tamano   = amplitud === 0 ? 1 : amplitud / N_RANGOS;
 
+  // Genera rangos con conteo de frecuencia absoluta y relativa
   const rangos: Rango[] = Array.from({ length: N_RANGOS }, (_, i) => {
     const rMin = minimo + i * tamano;
     const rMax = rMin + tamano;
@@ -57,6 +60,7 @@ export function calcDist(values: number[]): DistInfo | null {
 }
 
 // ── Estilos compartidos ────────────────────────────────────────────────────────
+// Celda de datos de la tabla
 const cell: React.CSSProperties = {
   padding: '3px 6px',
   fontSize: 11,
@@ -64,6 +68,7 @@ const cell: React.CSSProperties = {
   borderBottom: '1px solid #21262d',
   whiteSpace: 'nowrap',
 };
+// Celda de encabezado de la tabla
 const head: React.CSSProperties = {
   ...cell,
   fontWeight: 700,
@@ -73,6 +78,7 @@ const head: React.CSSProperties = {
   letterSpacing: '0.04em',
   background: '#161b22',
 };
+// Título de sección interno
 const sectionTitle: React.CSSProperties = {
   fontSize: 10,
   fontWeight: 700,
@@ -85,6 +91,7 @@ const sectionTitle: React.CSSProperties = {
 interface Props { values: number[]; unidad_medida: string }
 
 // ── Tabla 1: Parámetros estadísticos ──────────────────────────────────────────
+// Tabla resumen: mín, máx, amplitud, n datos, n rangos y tamaño de rango
 export function TablaParams({ values, unidad_medida }: Props) {
   if (values.length === 0) return <div className="cal-empty">Sin datos</div>;
   const d = calcDist(values);
@@ -116,6 +123,7 @@ export function TablaParams({ values, unidad_medida }: Props) {
 }
 
 // ── Tabla 2: 5 rangos con frecuencias ─────────────────────────────────────────
+// Distribución de frecuencias con fila de total al final
 export function TablaRangos({ values }: Pick<Props, 'values'>) {
   if (values.length === 0) return <div className="cal-empty">Sin datos</div>;
   const d = calcDist(values);
@@ -165,6 +173,7 @@ export function TablaRangos({ values }: Pick<Props, 'values'>) {
 }
 
 // ── Default: ambas apiladas (compat) ──────────────────────────────────────────
+// Exportación por defecto: TablaParams + TablaRangos apiladas verticalmente
 export default function TablaFrecuencias({ values, unidad_medida }: Props) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

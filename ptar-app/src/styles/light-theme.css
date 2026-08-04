@@ -1,0 +1,920 @@
+/*
+ * light-theme.css — Tema claro PTAR App
+ *
+ * Activación: agregar data-theme="light" al elemento <html>
+ * El tema oscuro (todos los archivos CSS existentes) permanece intacto.
+ * Este archivo solo agrega overrides bajo el selector html[data-theme="light"].
+ *
+ * Paleta:
+ *   Fondo        #EAF0F7   Superficie    #FFFFFF   Superficie-2  #F2F6FB
+ *   Borde        #C8D6E5   Borde-2       #DDE6F0
+ *   Texto-1      #0F1923   Texto-2       #2D3F52   Muted         #5A6E82   Dim #8FA3B8
+ *   Brand agua   #0091B0   Azul          #1565C0   Lblue         #1976D2
+ *   Verde        #1A7A35   Ámbar         #7A5200   Rojo          #B71C1C
+ */
+
+/* ══════════════════════════════════════════════════════════
+   1. BASE — body, scrollbar, selección
+══════════════════════════════════════════════════════════ */
+html[data-theme="light"] body {
+  background: #EAF0F7;
+  color: #0F1923;
+}
+
+html[data-theme="light"] ::selection {
+  background: #0091B020;
+  color: #0F1923;
+}
+
+html[data-theme="light"] ::-webkit-scrollbar-track { background: #DDE6F0; }
+html[data-theme="light"] ::-webkit-scrollbar-thumb { background: #8FA3B8; border-radius: 4px; }
+html[data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: #5A6E82; }
+
+/* ══════════════════════════════════════════════════════════
+   2. NAVBAR (src/styles/navbar.css + componente Navbar.tsx)
+══════════════════════════════════════════════════════════ */
+html[data-theme="light"] .navbar,
+html[data-theme="light"] nav {
+  background: #FFFFFF;
+  border-bottom: 1px solid #C8D6E5;
+  box-shadow: 0 1px 4px rgba(15,25,35,.07);
+}
+
+html[data-theme="light"] .nav-brand,
+html[data-theme="light"] .brand-name {
+  color: #0F1923;
+}
+
+html[data-theme="light"] .brand-sub,
+html[data-theme="light"] .nav-subtitle {
+  color: #5A6E82;
+}
+
+html[data-theme="light"] .nav-link,
+html[data-theme="light"] .nav-item {
+  color: #5A6E82;
+}
+
+html[data-theme="light"] .nav-link:hover,
+html[data-theme="light"] .nav-item:hover {
+  color: #0F1923;
+  background: #F2F6FB;
+}
+
+html[data-theme="light"] .nav-link.active,
+html[data-theme="light"] .nav-item.active {
+  color: #0091B0;
+  background: #E0F3F7;
+}
+
+html[data-theme="light"] .role-badge,
+html[data-theme="light"] .nav-badge {
+  background: #E0F3F7;
+  color: #0091B0;
+  border: 1px solid #B0DCE8;
+}
+
+html[data-theme="light"] .nav-separator,
+html[data-theme="light"] .nav-divider {
+  border-color: #C8D6E5;
+}
+
+html[data-theme="light"] .user-menu,
+html[data-theme="light"] .dropdown-menu {
+  background: #FFFFFF;
+  border: 1px solid #C8D6E5;
+  box-shadow: 0 4px 16px rgba(15,25,35,.12);
+}
+
+html[data-theme="light"] .dropdown-item {
+  color: #2D3F52;
+}
+
+html[data-theme="light"] .dropdown-item:hover {
+  background: #F2F6FB;
+  color: #0F1923;
+}
+
+/* ══════════════════════════════════════════════════════════
+   3. LAYOUT — page-loading, layout-wrapper, page-header
+══════════════════════════════════════════════════════════ */
+html[data-theme="light"] .page-loading {
+  background: #EAF0F7;
+}
+
+html[data-theme="light"] .layout-main,
+html[data-theme="light"] .page-wrapper,
+html[data-theme="light"] .content-wrapper {
+  background: #EAF0F7;
+}
+
+html[data-theme="light"] .page-header,
+html[data-theme="light"] .section-header {
+  color: #0F1923;
+  border-bottom-color: #C8D6E5;
+}
+
+/* ══════════════════════════════════════════════════════════
+   4. DASHBOARD (src/styles/dashboard.css)
+══════════════════════════════════════════════════════════ */
+html[data-theme="light"] .dash-card,
+html[data-theme="light"] .card {
+  background: #FFFFFF;
+  border: 1px solid #C8D6E5;
+  box-shadow: 0 1px 4px rgba(15,25,35,.06);
+}
+
+html[data-theme="light"] .dash-header {
+  background: #FFFFFF;
+  border: 1px solid #C8D6E5;
+  box-shadow: 0 1px 4px rgba(15,25,35,.06);
+}
+
+html[data-theme="light"] .dash-title,
+html[data-theme="light"] .card-title {
+  color: #0F1923;
+}
+
+html[data-theme="light"] .dash-subtitle,
+html[data-theme="light"] .dash-date {
+  color: #5A6E82;
+}
+
+html[data-theme="light"] .dash-footer {
+  background: #F2F6FB;
+  border-top: 1px solid #DDE6F0;
+  color: #5A6E82;
+}
+
+html[data-theme="light"] .kpi-card {
+  background: #FFFFFF;
+  border: 1px solid #C8D6E5;
+  box-shadow: 0 1px 3px rgba(15,25,35,.06);
+}
+
+html[data-theme="light"] .kpi-label {
+  color: #5A6E82;
+}
+
+html[data-theme="light"] .kpi-value {
+  color: #0F1923;
+}
+
+html[data-theme="light"] .kpi-sub,
+html[data-theme="light"] .kpi-meta {
+  color: #8FA3B8;
+}
+
+html[data-theme="light"] .kpi-card--cyan .kpi-value  { color: #0091B0; }
+html[data-theme="light"] .kpi-card--green .kpi-value { color: #1A7A35; }
+html[data-theme="light"] .kpi-card--amber .kpi-value { color: #7A5200; }
+html[data-theme="light"] .kpi-card--red   .kpi-value { color: #B71C1C; }
+
+html[data-theme="light"] .plant-badge {
+  background: #E0F3F7;
+  color: #5A6E82;
+  border: 1px solid #B0DCE8;
+}
+
+html[data-theme="light"] .plant-badge strong { color: #0091B0; }
+
+/* ══════════════════════════════════════════════════════════
+   5. TABS / GRANULARIDAD (src/components/shared/)
+══════════════════════════════════════════════════════════ */
+html[data-theme="light"] .gran-tabs,
+html[data-theme="light"] .tab-bar {
+  background: #F2F6FB;
+  border: 1px solid #C8D6E5;
+}
+
+html[data-theme="light"] .gran-tab,
+html[data-theme="light"] .tab-item {
+  color: #5A6E82;
+  background: transparent;
+}
+
+html[data-theme="light"] .gran-tab:hover,
+html[data-theme="light"] .tab-item:hover {
+  background: #DDE6F0;
+  color: #2D3F52;
+}
+
+html[data-theme="light"] .gran-tab.active,
+html[data-theme="light"] .tab-item.active,
+html[data-theme="light"] .gran-tab--active {
+  background: #FFFFFF;
+  color: #0091B0;
+  border-color: #C8D6E5;
+  box-shadow: 0 1px 3px rgba(15,25,35,.08);
+}
+
+/* ══════════════════════════════════════════════════════════
+   6. FORMS / INPUTS
+══════════════════════════════════════════════════════════ */
+html[data-theme="light"] input[type="text"],
+html[data-theme="light"] input[type="date"],
+html[data-theme="light"] input[type="number"],
+html[data-theme="light"] input[type="email"],
+html[data-theme="light"] input[type="password"],
+html[data-theme="light"] select,
+html[data-theme="light"] textarea {
+  background: #F2F6FB;
+  border: 1px solid #C8D6E5;
+  color: #0F1923;
+}
+
+html[data-theme="light"] input:focus,
+html[data-theme="light"] select:focus,
+html[data-theme="light"] textarea:focus {
+  background: #FFFFFF;
+  border-color: #0091B0;
+  outline: none;
+  box-shadow: 0 0 0 2px #0091B020;
+}
+
+html[data-theme="light"] input::placeholder,
+html[data-theme="light"] textarea::placeholder {
+  color: #8FA3B8;
+}
+
+html[data-theme="light"] label {
+  color: #5A6E82;
+}
+
+/* ══════════════════════════════════════════════════════════
+   7. BUTTONS
+══════════════════════════════════════════════════════════ */
+html[data-theme="light"] .btn,
+html[data-theme="light"] button:not(.nav-link):not(.tab-item):not(.gran-tab) {
+  background: #F2F6FB;
+  border: 1px solid #C8D6E5;
+  color: #2D3F52;
+}
+
+html[data-theme="light"] .btn:hover,
+html[data-theme="light"] button:not(.nav-link):not(.tab-item):not(.gran-tab):hover {
+  background: #DDE6F0;
+  border-color: #8FA3B8;
+  color: #0F1923;
+}
+
+html[data-theme="light"] .btn-primary,
+html[data-theme="light"] .btn--primary {
+  background: #0091B0;
+  border-color: #006E88;
+  color: #FFFFFF;
+}
+
+html[data-theme="light"] .btn-primary:hover,
+html[data-theme="light"] .btn--primary:hover {
+  background: #006E88;
+}
+
+html[data-theme="light"] .btn-danger,
+html[data-theme="light"] .btn--danger {
+  background: #FDECEA;
+  border-color: #E88080;
+  color: #B71C1C;
+}
+
+/* ══════════════════════════════════════════════════════════
+   8. TABLAS
+══════════════════════════════════════════════════════════ */
+html[data-theme="light"] table {
+  color: #2D3F52;
+}
+
+html[data-theme="light"] th,
+html[data-theme="light"] thead td {
+  background: #F2F6FB;
+  color: #5A6E82;
+  border-bottom: 1px solid #C8D6E5;
+}
+
+html[data-theme="light"] td {
+  border-top: 1px solid #DDE6F0;
+  color: #2D3F52;
+}
+
+html[data-theme="light"] tr:nth-child(even) td {
+  background: #F7FAFD;
+}
+
+html[data-theme="light"] tr:hover td {
+  background: #EAF0F7;
+}
+
+/* ══════════════════════════════════════════════════════════
+   9. STATUS CHIPS / BADGES
+══════════════════════════════════════════════════════════ */
+html[data-theme="light"] .chip-green,
+html[data-theme="light"] .badge-ok,
+html[data-theme="light"] .status-ok    { background: #E6F7EA; color: #1A7A35; }
+
+html[data-theme="light"] .chip-amber,
+html[data-theme="light"] .badge-warn,
+html[data-theme="light"] .status-warn  { background: #FFF3E0; color: #7A5200; }
+
+html[data-theme="light"] .chip-red,
+html[data-theme="light"] .badge-err,
+html[data-theme="light"] .status-err   { background: #FDECEA; color: #B71C1C; }
+
+html[data-theme="light"] .chip-blue,
+html[data-theme="light"] .badge-info,
+html[data-theme="light"] .status-info  { background: #E3F2FD; color: #1565C0; }
+
+html[data-theme="light"] .chip-cyan,
+html[data-theme="light"] .badge-cyan   { background: #E0F3F7; color: #0091B0; }
+
+/* ══════════════════════════════════════════════════════════
+   10. CALIDAD (src/styles/calidad.css)
+══════════════════════════════════════════════════════════ */
+html[data-theme="light"] .calidad-page,
+html[data-theme="light"] .calidad-wrapper {
+  background: #EAF0F7;
+}
+
+html[data-theme="light"] .calidad-header {
+  background: #FFFFFF;
+  border-bottom: 1px solid #C8D6E5;
+  box-shadow: 0 1px 4px rgba(15,25,35,.06);
+}
+
+html[data-theme="light"] .calidad-title { color: #0F1923; }
+html[data-theme="light"] .calidad-sub   { color: #5A6E82; }
+
+html[data-theme="light"] .param-badge {
+  background: #E0F3F7;
+  border: 1px solid #B0DCE8;
+  color: #0091B0;
+}
+
+html[data-theme="light"] .eficiencia-panel {
+  background: #FFFFFF;
+  border: 1px solid #C8D6E5;
+}
+
+html[data-theme="light"] .eficiencia-val { color: #0F1923; }
+html[data-theme="light"] .eficiencia-sub { color: #5A6E82; }
+
+html[data-theme="light"] .stat-label { color: #5A6E82; }
+html[data-theme="light"] .stat-value { color: #0F1923; }
+
+html[data-theme="light"] .tabla-estadistica th { background: #F2F6FB; color: #5A6E82; }
+html[data-theme="light"] .tabla-estadistica td { color: #2D3F52; border-color: #DDE6F0; }
+
+/* ══════════════════════════════════════════════════════════
+   11. BALANCE HÍDRICO
+══════════════════════════════════════════════════════════ */
+html[data-theme="light"] .balance-page { background: #EAF0F7; }
+
+html[data-theme="light"] .balance-header {
+  background: #FFFFFF;
+  border-bottom: 1px solid #C8D6E5;
+}
+
+html[data-theme="light"] .balance-title { color: #0F1923; }
+
+html[data-theme="light"] .flujo-badge {
+  background: #E0F3F7;
+  color: #0091B0;
+  border: 1px solid #B0DCE8;
+}
+
+html[data-theme="light"] .informe-btn {
+  background: #F2F6FB;
+  border: 1px solid #C8D6E5;
+  color: #2D3F52;
+}
+
+html[data-theme="light"] .informe-btn:hover {
+  background: #DDE6F0;
+}
+
+/* ══════════════════════════════════════════════════════════
+   12. OPERARIO (src/styles/operario.css)
+══════════════════════════════════════════════════════════ */
+html[data-theme="light"] .operario-home,
+html[data-theme="light"] .operario-wrapper { background: #EAF0F7; }
+
+html[data-theme="light"] .operario-header {
+  background: #FFFFFF;
+  border-bottom: 1px solid #C8D6E5;
+  box-shadow: 0 1px 4px rgba(15,25,35,.06);
+}
+
+html[data-theme="light"] .operario-title { color: #0F1923; }
+html[data-theme="light"] .operario-sub   { color: #5A6E82; }
+
+html[data-theme="light"] .formato-card {
+  background: #FFFFFF;
+  border: 1px solid #C8D6E5;
+  box-shadow: 0 1px 3px rgba(15,25,35,.06);
+}
+
+html[data-theme="light"] .formato-card:hover {
+  border-color: #0091B0;
+  box-shadow: 0 2px 8px rgba(0,145,176,.15);
+}
+
+html[data-theme="light"] .formato-icon { color: #0091B0; }
+html[data-theme="light"] .formato-title { color: #0F1923; }
+html[data-theme="light"] .formato-desc  { color: #5A6E82; }
+
+html[data-theme="light"] .semana-nav {
+  background: #F2F6FB;
+  border: 1px solid #C8D6E5;
+}
+
+html[data-theme="light"] .semana-nav button {
+  background: #FFFFFF;
+  border: 1px solid #C8D6E5;
+  color: #5A6E82;
+}
+
+html[data-theme="light"] .semana-nav button:hover {
+  background: #E0F3F7;
+  color: #0091B0;
+}
+
+html[data-theme="light"] .semana-label { color: #0F1923; font-weight: 700; }
+
+/* ══════════════════════════════════════════════════════════
+   13. ANALISTA / ANALISTA SHEET (src/styles/analisis.css)
+══════════════════════════════════════════════════════════ */
+html[data-theme="light"] .analista-page,
+html[data-theme="light"] .analisis-wrapper { background: #EAF0F7; }
+
+html[data-theme="light"] .analisis-header {
+  background: #FFFFFF;
+  border-bottom: 1px solid #C8D6E5;
+}
+
+html[data-theme="light"] .analisis-title { color: #0F1923; }
+
+html[data-theme="light"] .analisis-tab-bar {
+  background: #F2F6FB;
+  border-bottom: 1px solid #C8D6E5;
+}
+
+html[data-theme="light"] .analisis-tab {
+  color: #5A6E82;
+  border-bottom: 2px solid transparent;
+}
+
+html[data-theme="light"] .analisis-tab.active {
+  color: #0091B0;
+  border-bottom-color: #0091B0;
+}
+
+html[data-theme="light"] .sheet-cell {
+  background: #FFFFFF;
+  border: 1px solid #DDE6F0;
+  color: #2D3F52;
+}
+
+html[data-theme="light"] .sheet-cell:focus {
+  border-color: #0091B0;
+  box-shadow: 0 0 0 2px #0091B020;
+}
+
+html[data-theme="light"] .sheet-header-cell {
+  background: #F2F6FB;
+  color: #5A6E82;
+  border-color: #C8D6E5;
+}
+
+/* ══════════════════════════════════════════════════════════
+   14. MANTENIMIENTOS
+══════════════════════════════════════════════════════════ */
+html[data-theme="light"] .mtto-page { background: #EAF0F7; }
+
+html[data-theme="light"] .mtto-header {
+  background: #FFFFFF;
+  border-bottom: 1px solid #C8D6E5;
+}
+
+html[data-theme="light"] .mtto-title { color: #0F1923; }
+
+html[data-theme="light"] .mtto-card {
+  background: #FFFFFF;
+  border: 1px solid #C8D6E5;
+  box-shadow: 0 1px 3px rgba(15,25,35,.06);
+}
+
+html[data-theme="light"] .mtto-equipo  { color: #0F1923; }
+html[data-theme="light"] .mtto-tarea   { color: #2D3F52; }
+html[data-theme="light"] .mtto-meta    { color: #5A6E82; }
+
+html[data-theme="light"] .mtto-estado-pendiente   { background: #FFF3E0; color: #7A5200; }
+html[data-theme="light"] .mtto-estado-completado  { background: #E6F7EA; color: #1A7A35; }
+html[data-theme="light"] .mtto-estado-vencido      { background: #FDECEA; color: #B71C1C; }
+
+/* ══════════════════════════════════════════════════════════
+   15. COSTOS / REACTIVOS
+══════════════════════════════════════════════════════════ */
+html[data-theme="light"] .costos-page { background: #EAF0F7; }
+
+html[data-theme="light"] .costos-header {
+  background: #FFFFFF;
+  border-bottom: 1px solid #C8D6E5;
+}
+
+html[data-theme="light"] .costos-title { color: #0F1923; }
+
+html[data-theme="light"] .quimico-card {
+  background: #FFFFFF;
+  border: 1px solid #C8D6E5;
+}
+
+html[data-theme="light"] .quimico-nombre { color: #0F1923; }
+html[data-theme="light"] .quimico-valor  { color: #1565C0; }
+html[data-theme="light"] .quimico-meta   { color: #5A6E82; }
+
+/* ══════════════════════════════════════════════════════════
+   16. CHARTS / RECHARTS — wrappers y tooltips CSS
+══════════════════════════════════════════════════════════ */
+html[data-theme="light"] .chart-wrapper,
+html[data-theme="light"] .recharts-wrapper { background: transparent; }
+
+html[data-theme="light"] .recharts-cartesian-grid-horizontal line,
+html[data-theme="light"] .recharts-cartesian-grid-vertical   line {
+  stroke: #DDE6F0;
+}
+
+html[data-theme="light"] .recharts-text,
+html[data-theme="light"] .recharts-label {
+  fill: #5A6E82;
+}
+
+html[data-theme="light"] .recharts-tooltip-wrapper .recharts-default-tooltip {
+  background: #FFFFFF !important;
+  border: 1px solid #C8D6E5 !important;
+  box-shadow: 0 4px 12px rgba(15,25,35,.12) !important;
+  color: #2D3F52 !important;
+}
+
+html[data-theme="light"] .recharts-default-tooltip .recharts-tooltip-label {
+  color: #0F1923 !important;
+  font-weight: 600;
+}
+
+html[data-theme="light"] .recharts-default-tooltip .recharts-tooltip-item {
+  color: #2D3F52 !important;
+}
+
+html[data-theme="light"] .recharts-legend-item-text {
+  color: #5A6E82 !important;
+}
+
+/* ══════════════════════════════════════════════════════════
+   17. MODALES
+══════════════════════════════════════════════════════════ */
+html[data-theme="light"] .modal-overlay {
+  background: rgba(15,25,35,.45);
+}
+
+html[data-theme="light"] .modal-box,
+html[data-theme="light"] .modal-content {
+  background: #FFFFFF;
+  border: 1px solid #C8D6E5;
+  box-shadow: 0 8px 32px rgba(15,25,35,.16);
+  color: #0F1923;
+}
+
+html[data-theme="light"] .modal-header {
+  border-bottom: 1px solid #DDE6F0;
+}
+
+html[data-theme="light"] .modal-title { color: #0F1923; }
+html[data-theme="light"] .modal-sub   { color: #5A6E82; }
+
+html[data-theme="light"] .modal-footer {
+  border-top: 1px solid #DDE6F0;
+  background: #F2F6FB;
+}
+
+html[data-theme="light"] .modal-close {
+  color: #8FA3B8;
+  background: transparent;
+  border: none;
+}
+
+html[data-theme="light"] .modal-close:hover {
+  color: #2D3F52;
+  background: #F2F6FB;
+}
+
+/* ══════════════════════════════════════════════════════════
+   18. NOTIFICACIONES / TOAST
+══════════════════════════════════════════════════════════ */
+html[data-theme="light"] .notification,
+html[data-theme="light"] .toast {
+  background: #FFFFFF;
+  border: 1px solid #C8D6E5;
+  box-shadow: 0 4px 16px rgba(15,25,35,.12);
+  color: #0F1923;
+}
+
+html[data-theme="light"] .notification-title { color: #0F1923; }
+html[data-theme="light"] .notification-msg   { color: #2D3F52; }
+
+html[data-theme="light"] .notification--success { border-left: 3px solid #1A7A35; }
+html[data-theme="light"] .notification--warn    { border-left: 3px solid #7A5200; }
+html[data-theme="light"] .notification--error   { border-left: 3px solid #B71C1C; }
+html[data-theme="light"] .notification--info    { border-left: 3px solid #0091B0; }
+
+/* ══════════════════════════════════════════════════════════
+   19. SPINNER (ya usa clase, puede sobreescribirse)
+══════════════════════════════════════════════════════════ */
+html[data-theme="light"] .spinner {
+  border-color: #C8D6E5;
+  border-top-color: #0091B0;
+}
+
+/* ══════════════════════════════════════════════════════════
+   20. UTILIDADES GENERALES
+══════════════════════════════════════════════════════════ */
+html[data-theme="light"] .text-muted   { color: #5A6E82; }
+html[data-theme="light"] .text-dim     { color: #8FA3B8; }
+html[data-theme="light"] .text-brand   { color: #0091B0; }
+html[data-theme="light"] .text-success { color: #1A7A35; }
+html[data-theme="light"] .text-warn    { color: #7A5200; }
+html[data-theme="light"] .text-danger  { color: #B71C1C; }
+
+html[data-theme="light"] .bg-surface  { background: #FFFFFF; }
+html[data-theme="light"] .bg-surface2 { background: #F2F6FB; }
+html[data-theme="light"] .border-std  { border-color: #C8D6E5; }
+
+html[data-theme="light"] hr,
+html[data-theme="light"] .divider {
+  border-color: #DDE6F0;
+}
+
+html[data-theme="light"] code,
+html[data-theme="light"] .code-inline {
+  background: #F2F6FB;
+  border: 1px solid #DDE6F0;
+  color: #1565C0;
+}
+
+/* ══════════════════════════════════════════════════════════
+   21. LOGIN PAGE
+══════════════════════════════════════════════════════════ */
+html[data-theme="light"] .login-page {
+  background: linear-gradient(135deg, #EAF0F7 0%, #D6E8F5 100%);
+}
+
+html[data-theme="light"] .login-card {
+  background: #FFFFFF;
+  border: 1px solid #C8D6E5;
+  box-shadow: 0 8px 32px rgba(15,25,35,.12);
+}
+
+html[data-theme="light"] .login-title { color: #0F1923; }
+html[data-theme="light"] .login-sub   { color: #5A6E82; }
+
+html[data-theme="light"] .login-footer { color: #8FA3B8; }
+
+/* ══════════════════════════════════════════════════════════
+   22-bis. SPLASH — fondo de la pantalla principal (splash.css)
+   El diagrama SVG interno mantiene sus colores de proceso;
+   solo cambia el fondo de página y el contenedor del diagrama.
+══════════════════════════════════════════════════════════ */
+html[data-theme="light"] .splash-page {
+  background: #D6E8F5;
+}
+html[data-theme="light"] .splash-bg-grid {
+  background-image:
+    linear-gradient(rgba(0,80,140,.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,80,140,.04) 1px, transparent 1px);
+}
+html[data-theme="light"] .splash-bg-glow {
+  background: radial-gradient(ellipse, rgba(0,145,176,.10) 0%, transparent 70%);
+}
+html[data-theme="light"] .splash-wrap {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+html[data-theme="light"] .s-title { color: #0F1923; }
+html[data-theme="light"] .s-title span { color: #0091B0; }
+html[data-theme="light"] .s-sub { color: #5A6E82; }
+html[data-theme="light"] .s-ver { color: #8FA3B8; }
+
+/* ══════════════════════════════════════════════════════════
+   22. NAVBAR — clases específicas (navbar.css)
+══════════════════════════════════════════════════════════ */
+html[data-theme="light"] .navbar {
+  background: #FFFFFF;
+  border-bottom: 1px solid #C8D6E5;
+  box-shadow: 0 1px 4px rgba(15,25,35,.07);
+}
+html[data-theme="light"] .navbar-title { color: #0F1923; }
+html[data-theme="light"] .navbar-subtitle { color: #5A6E82; }
+html[data-theme="light"] .nav-link { color: #5A6E82; }
+html[data-theme="light"] .nav-link:hover { background: #F2F6FB; color: #0F1923; }
+html[data-theme="light"] .nav-link.active { background: #E0F3F7; color: #0091B0; }
+html[data-theme="light"] .role-btn { background: #F2F6FB; border-color: #C8D6E5; color: #5A6E82; }
+html[data-theme="light"] .role-btn.active,
+html[data-theme="light"] .role-btn:hover { background: #E0F3F7; border-color: #0091B0; color: #0091B0; }
+html[data-theme="light"] .badge-operario  { background: #E0F3F7; color: #0091B0; border-color: #B0DCE8; }
+html[data-theme="light"] .badge-encargado { background: #E6F7EA; color: #1A7A35; border-color: #A8D8B3; }
+html[data-theme="light"] .badge-admin     { background: #E3F2FD; color: #1565C0; border-color: #90CAF9; }
+html[data-theme="light"] .user-name { color: #5A6E82; }
+html[data-theme="light"] .logout-btn { border-color: #C8D6E5; color: #5A6E82; }
+html[data-theme="light"] .logout-btn:hover { border-color: #B71C1C; color: #B71C1C; }
+
+/* ══════════════════════════════════════════════════════════
+   23. DASHBOARD — clases específicas (dashboard.css)
+══════════════════════════════════════════════════════════ */
+html[data-theme="light"] .dash-header {
+  background: #FFFFFF; border-color: #C8D6E5;
+  box-shadow: 0 1px 4px rgba(15,25,35,.06);
+}
+html[data-theme="light"] .dash-title { color: #0F1923; }
+html[data-theme="light"] .dash-date  { color: #5A6E82; }
+html[data-theme="light"] .dash-plant-badge { background: #E0F3F7; border-color: #B0DCE8; color: #5A6E82; }
+html[data-theme="light"] .dash-plant-badge strong { color: #0091B0; }
+html[data-theme="light"] .edit-toggle-btn { background: #F2F6FB; border-color: #C8D6E5; color: #5A6E82; }
+html[data-theme="light"] .edit-toggle-btn:hover { border-color: #0091B0; color: #0091B0; }
+html[data-theme="light"] .edit-toggle-btn.active { background: #E0F3F7; border-color: #0091B0; color: #0091B0; }
+html[data-theme="light"] .readonly-badge { background: #F2F6FB; border-color: #C8D6E5; color: #5A6E82; }
+html[data-theme="light"] .section-title { color: #5A6E82; }
+html[data-theme="light"] .dash-card { background: #FFFFFF; border-color: #C8D6E5; box-shadow: 0 1px 4px rgba(15,25,35,.06); }
+html[data-theme="light"] .kpi-card { background: #FFFFFF; border-color: #C8D6E5; box-shadow: 0 1px 3px rgba(15,25,35,.06); }
+html[data-theme="light"] .kpi-card:hover { border-color: #8FA3B8; }
+html[data-theme="light"] .kpi-label  { color: #5A6E82; }
+html[data-theme="light"] .kpi-target { color: #8FA3B8; }
+html[data-theme="light"] .kpi-edit-label { color: #5A6E82; }
+html[data-theme="light"] .kpi-edit-input { background: #F2F6FB; border-color: #C8D6E5; color: #0F1923; }
+html[data-theme="light"] .time-avail-label { color: #5A6E82; }
+html[data-theme="light"] .time-avail-value { color: #0F1923; }
+html[data-theme="light"] .time-avail-pct   { color: #5A6E82; }
+html[data-theme="light"] .time-avail-bar-track { background: #DDE6F0; }
+html[data-theme="light"] .total-row { border-top-color: #C8D6E5; }
+html[data-theme="light"] .dash-footer { background: #F2F6FB; border-color: #C8D6E5; color: #5A6E82; }
+html[data-theme="light"] .dash-footer strong { color: #0F1923; }
+html[data-theme="light"] .dash-section-divider { color: #5A6E82; }
+html[data-theme="light"] .dash-section-divider::before,
+html[data-theme="light"] .dash-section-divider::after { background: #DDE6F0; }
+html[data-theme="light"] .step-legend-off { color: #8FA3B8; }
+
+/* ══════════════════════════════════════════════════════════
+   24. CALIDAD — clases específicas (calidad.css)
+══════════════════════════════════════════════════════════ */
+html[data-theme="light"] .cal-title    { color: #0F1923; }
+html[data-theme="light"] .cal-subtitle { color: #5A6E82; }
+html[data-theme="light"] .cal-filters  { background: #FFFFFF; border-color: #C8D6E5; }
+html[data-theme="light"] .cal-filter-label { color: #5A6E82; }
+html[data-theme="light"] .cal-filter-select,
+html[data-theme="light"] .cal-filter-input { background: #F2F6FB; border-color: #C8D6E5; color: #0F1923; }
+html[data-theme="light"] .cal-filter-select:focus,
+html[data-theme="light"] .cal-filter-input:focus { border-color: #0091B0; box-shadow: 0 0 0 3px #0091B015; }
+html[data-theme="light"] .cal-empty { color: #8FA3B8; }
+html[data-theme="light"] .cal-error { background: #FDECEA; border-color: #E8909040; color: #B71C1C; }
+html[data-theme="light"] .cal-section-title { color: #0F1923; }
+html[data-theme="light"] .cal-section-meta  { color: #8FA3B8; }
+html[data-theme="light"] .cal-ef-etapa { color: #0F1923; }
+html[data-theme="light"] .cal-ef-route { color: #8FA3B8; }
+html[data-theme="light"] .cal-ef-bar-wrap { background: #F2F6FB; }
+html[data-theme="light"] .cal-tabla th { background: #F2F6FB; color: #5A6E82; border-bottom-color: #C8D6E5; }
+html[data-theme="light"] .cal-tabla td { border-bottom-color: #DDE6F0; color: #2D3F52; }
+html[data-theme="light"] .cal-tabla tr:hover td { background: #EAF0F7; }
+html[data-theme="light"] .cal-kpi-card { background: #FFFFFF; border-color: #C8D6E5; }
+html[data-theme="light"] .cal-kpi-card:hover { border-color: #8FA3B8; }
+html[data-theme="light"] .cal-kpi-skeleton { background: linear-gradient(90deg, #F2F6FB 25%, #DDE6F0 50%, #F2F6FB 75%); }
+html[data-theme="light"] .cal-kpi-param     { color: #5A6E82; }
+html[data-theme="light"] .cal-kpi-pct-label { color: #8FA3B8; }
+html[data-theme="light"] .cal-kpi-limite    { color: #8FA3B8; }
+html[data-theme="light"] .cal-remocion-row  { background: #FFFFFF; border-color: #C8D6E5; }
+html[data-theme="light"] .cal-remocion-titulo { color: #8FA3B8; }
+html[data-theme="light"] .cal-remocion-chip { background: #F2F6FB; border-color: #C8D6E5; }
+html[data-theme="light"] .cal-remocion-param { color: #5A6E82; }
+html[data-theme="light"] .param-row { background: #F7FAFD; border-color: #C8D6E5; border-left-color: #C8D6E5; }
+html[data-theme="light"] .param-row.has-value { border-left-color: #7A5200; border-color: #7A520030; }
+html[data-theme="light"] .param-row.has-error { border-left-color: #B71C1C; border-color: #B71C1C30; }
+html[data-theme="light"] .param-nombre-text { color: #0F1923; }
+html[data-theme="light"] .param-rango { color: #8FA3B8; }
+html[data-theme="light"] .param-unidad-badge { background: #F2F6FB; border-color: #C8D6E5; color: #5A6E82; }
+html[data-theme="light"] .btn-add-param { background: #F2F6FB; border-color: #C8D6E5; color: #5A6E82; }
+html[data-theme="light"] .btn-add-param:hover { border-color: #7A5200; color: #7A5200; background: #FFF3E0; }
+html[data-theme="light"] .extra-row { background: #F7FAFD; border-color: #C8D6E5; }
+html[data-theme="light"] .btn-remove-param { background: #F2F6FB; border-color: #C8D6E5; color: #5A6E82; }
+html[data-theme="light"] .btn-remove-param:hover { background: #FDECEA; border-color: #E8909040; color: #B71C1C; }
+html[data-theme="light"] .param-hint { color: #8FA3B8; }
+html[data-theme="light"] .param-noapl-toggle { color: #5A6E82; }
+html[data-theme="light"] .param-badge-diario { color: #7A5200; background: #FFF3E0; }
+html[data-theme="light"] .param-badge-extra  { color: #5A6E82; background: #F2F6FB; }
+html[data-theme="light"] .badge-agua-potable        { background: #E0F3F7; color: #0091B0; border-color: #B0DCE820; }
+html[data-theme="light"] .badge-agua-reuso          { background: #E6F7EA; color: #1A7A35; border-color: #A8D8B320; }
+html[data-theme="light"] .badge-agua-rechazo        { background: #FDECEA; color: #B71C1C; border-color: #E8909020; }
+html[data-theme="light"] .badge-agua-ro             { background: #E3F2FD; color: #1565C0; border-color: #90CAF920; }
+html[data-theme="light"] .badge-agua-tratada        { background: #E8F5E9; color: #2E7D32; border-color: #A5D6A720; }
+html[data-theme="light"] .badge-agua-industrial     { background: #FFF8E1; color: #F57F17; border-color: #FFE08220; }
+html[data-theme="light"] .badge-agua-residual       { background: #FFF3E0; color: #E65100; border-color: #FFCC8020; }
+html[data-theme="light"] .badge-agua-pretratamiento { background: #F3E5F5; color: #6A1B9A; border-color: #CE93D820; }
+
+/* ══════════════════════════════════════════════════════════
+   25. FORMS — clases específicas (forms.css)
+══════════════════════════════════════════════════════════ */
+html[data-theme="light"] .formato-page { background: #EAF0F7; }
+html[data-theme="light"] .formato-header { background: #FFFFFF; border-color: #C8D6E5; }
+html[data-theme="light"] .formato-title  { color: #0F1923; }
+html[data-theme="light"] .formato-meta   { color: #5A6E82; }
+html[data-theme="light"] .formato-form   { background: #FFFFFF; border-color: #C8D6E5; }
+html[data-theme="light"] .form-section-title { color: #5A6E82; border-bottom-color: #DDE6F0; }
+html[data-theme="light"] .form-label { color: #5A6E82; }
+html[data-theme="light"] .form-input,
+html[data-theme="light"] .form-textarea { background: #F2F6FB; border-color: #C8D6E5; color: #0F1923; }
+html[data-theme="light"] .form-input:focus,
+html[data-theme="light"] .form-textarea:focus { border-color: #0091B0; box-shadow: 0 0 0 3px #0091B015; }
+html[data-theme="light"] .level-bar-track { background: #DDE6F0; }
+html[data-theme="light"] .checkbox-label { color: #5A6E82; }
+html[data-theme="light"] .prioridad-btn { background: #F2F6FB; border-color: #C8D6E5; color: #5A6E82; }
+html[data-theme="light"] .form-actions { border-top-color: #DDE6F0; }
+html[data-theme="light"] .btn-secondary { border-color: #C8D6E5; color: #5A6E82; }
+html[data-theme="light"] .btn-secondary:hover { border-color: #5A6E82; color: #0F1923; }
+html[data-theme="light"] .form-success h2 { color: #0F1923; }
+html[data-theme="light"] .form-success p  { color: #5A6E82; }
+html[data-theme="light"] .form-readonly { background: #F2F6FB; border-color: #DDE6F0; color: #5A6E82; }
+html[data-theme="light"] .form-alert { background: #F2F6FB; border-color: #C8D6E5; color: #5A6E82; }
+html[data-theme="light"] .form-alert-warn { background: #FFF3E0; border-color: #7A520040; color: #7A5200; }
+html[data-theme="light"] .form-alert-error { background: #FDECEA; border-color: #B71C1C40; color: #B71C1C; }
+html[data-theme="light"] .btn-manual-toggle { color: #8FA3B8; }
+html[data-theme="light"] .btn-manual-toggle:hover { color: #5A6E82; }
+html[data-theme="light"] .btn-manual-toggle.active { color: #7A5200; }
+
+/* ══════════════════════════════════════════════════════════
+   26. OPERARIO — clases específicas (operario.css)
+══════════════════════════════════════════════════════════ */
+html[data-theme="light"] .op-title { color: #0F1923; }
+html[data-theme="light"] .op-title span { color: #0091B0; }
+html[data-theme="light"] .op-subtitle { color: #5A6E82; }
+html[data-theme="light"] .op-date     { color: #5A6E82; }
+html[data-theme="light"] .formato-grid-card {
+  background: #FFFFFF;
+  border-color: #C8D6E5;
+  border-top-color: var(--card-color, #C8D6E5);
+}
+html[data-theme="light"] .formato-grid-card:hover {
+  background: #F7FAFD;
+  box-shadow: 0 8px 24px rgba(15,25,35,.10);
+}
+html[data-theme="light"] .fgc-title    { color: #0F1923; }
+html[data-theme="light"] .fgc-subtitle { color: #5A6E82; }
+html[data-theme="light"] .fgc-fields   { border-top-color: #DDE6F0; border-bottom-color: #DDE6F0; }
+html[data-theme="light"] .fgc-fields li { color: #5A6E82; }
+html[data-theme="light"] .fgc-arrow    { color: #C8D6E5; }
+html[data-theme="light"] .op-stat-card  { background: #FFFFFF; border-color: #C8D6E5; }
+html[data-theme="light"] .op-stat-num   { color: #0F1923; }
+html[data-theme="light"] .op-stat-label { color: #5A6E82; }
+
+/* ══════════════════════════════════════════════════════════
+   27. LOGIN / AUTH — clases específicas (auth.css)
+══════════════════════════════════════════════════════════ */
+html[data-theme="light"] .login-page { background: #EAF0F7; }
+html[data-theme="light"] .login-bg {
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(0,145,176,.08) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, rgba(21,101,192,.06) 0%, transparent 50%),
+    #EAF0F7;
+}
+html[data-theme="light"] .login-container {
+  background: #FFFFFF;
+  border-color: #C8D6E5;
+  box-shadow: 0 24px 64px rgba(15,25,35,.12);
+}
+html[data-theme="light"] .login-header {
+  background: linear-gradient(to bottom, rgba(0,145,176,.06), transparent);
+  border-bottom-color: #DDE6F0;
+}
+html[data-theme="light"] .login-title    { color: #0F1923; }
+html[data-theme="light"] .login-subtitle { color: #5A6E82; }
+html[data-theme="light"] .login-instruction { color: #5A6E82; }
+html[data-theme="light"] .login-footer { border-top-color: #DDE6F0; }
+
+html[data-theme="light"] .role-group { background: #F7FAFD; border-color: #DDE6F0; }
+html[data-theme="light"] .role-card-header { border-bottom-color: #DDE6F0; }
+html[data-theme="light"] .role-header-operario     { background: rgba(0,145,176,.08); }
+html[data-theme="light"] .role-header-encargado    { background: rgba(26,122,53,.07); }
+html[data-theme="light"] .role-header-administrador{ background: rgba(21,101,192,.07); }
+html[data-theme="light"] .role-card-title { color: #0F1923; }
+html[data-theme="light"] .role-card-desc  { color: #5A6E82; }
+
+html[data-theme="light"] .user-item { color: #0F1923; }
+html[data-theme="light"] .user-item:hover { background: #F2F6FB; border-color: #C8D6E5; }
+html[data-theme="light"] .user-item.selected { background: rgba(0,145,176,.08); border-color: rgba(0,145,176,.35); }
+html[data-theme="light"] .user-avatar { background: #E0F3F7; color: #0091B0; }
+html[data-theme="light"] .user-avatar-multi { background: #F3E5F5; color: #6A1B9A; }
+html[data-theme="light"] .multirol-label { color: #5A6E82; }
+html[data-theme="light"] .multirol-roles { color: #6A1B9A; }
+
+/* ══════════════════════════════════════════════════════════
+   28. SVG DIAGRAMA — tuberías opacidad completa en tema claro
+══════════════════════════════════════════════════════════ */
+html[data-theme="light"] .p-raw    { opacity: 1; }
+html[data-theme="light"] .p-bio    { opacity: 1; }
+html[data-theme="light"] .p-clean  { opacity: 1; }
+html[data-theme="light"] .p-reject { opacity: 1; }
+html[data-theme="light"] .p-recirc { opacity: 1; }

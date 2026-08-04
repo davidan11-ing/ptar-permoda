@@ -1,3 +1,4 @@
+// Histograma de frecuencias con 5 rangos fijos para un parámetro de calidad
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, Cell, ResponsiveContainer,
@@ -8,7 +9,7 @@ interface Props {
   unidad_medida: string;
 }
 
-// Colores en el orden de la imagen: rojo → amarillo → verde → morado → azul
+// Paleta de rangos: rojo → amarillo → verde → morado → azul
 const BIN_COLORS = [
   '#c0392b', // RANGO1 — rojo ladrillo
   '#d4a017', // RANGO2 — amarillo dorado
@@ -17,8 +18,10 @@ const BIN_COLORS = [
   '#2980b9', // RANGO5 — azul
 ];
 
-const N_RANGOS = 5; // Fijo según tabla de distribución de frecuencias
+// Número de rangos fijo según tabla de distribución de frecuencias
+const N_RANGOS = 5;
 
+// Calcula los 5 bins de frecuencia a partir del arreglo de valores
 function calcBins(values: number[]) {
   if (values.length === 0) return [];
   const k    = N_RANGOS;
@@ -40,6 +43,7 @@ function calcBins(values: number[]) {
   return bins;
 }
 
+// Gráfica de barras verticales con frecuencia por rango
 export default function HistogramaChart({ values, unidad_medida }: Props) {
   if (values.length === 0) {
     return <div className="cal-empty">Sin datos para calcular histograma</div>;
@@ -47,6 +51,7 @@ export default function HistogramaChart({ values, unidad_medida }: Props) {
 
   const bins = calcBins(values);
 
+  // Estructura del histograma con colores por rango
   return (
     <ResponsiveContainer width="100%" height={260}>
       <BarChart data={bins} margin={{ top: 8, right: 16, left: 0, bottom: 40 }}>

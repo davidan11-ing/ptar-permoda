@@ -26,6 +26,7 @@ const COLOR_BAR  = '#7B3611';   // café oscuro — KG removidos
 const COLOR_LINE = '#ED7D31';   // naranja — indicador kg/m³
 
 // ─── Tooltip dark ─────────────────────────────────────────────────────────
+// Tooltip personalizado con fondo oscuro para el gráfico de carga removida
 function TooltipCustom({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
@@ -46,6 +47,7 @@ function TooltipCustom({ active, payload, label }: any) {
 }
 
 // ─── Reagrupar por granularidad ───────────────────────────────────────────
+// Suma kg y promedia el indicador kg/m³ agrupando por semana o mes
 function reagruparCarga(
   pts: CargaRemovPoint[],
   gran: Granularidad | null,
@@ -95,29 +97,35 @@ function ordenarParametros(lista: string[]): string[] {
   return [...pref, ...resto];
 }
 
+// Gráfico de barras (kg removidos) + línea (indicador kg/m³) con KPI de total acumulado
 export default function CargaRemovoidaSection({ fechaInicio: propFI, fechaFin: propFF, granularidad }: Props) {
+  // Parámetro seleccionado (SST por defecto al cargar el catálogo)
   const [parametro,     setParametro]     = useState('');
+  // Toggle para mostrar días/turnos sin datos
   const [mostrarVacios, setMostrarVacios] = useState(false);
 
   // Catálogo: SST primero, DQO segundo, resto alfabético
   const [parametrosRaw, setParametrosRaw] = useState<string[]>([]);
+  // Carga el catálogo de parámetros de calidad desde el servicio al montar
   useEffect(() => {
     getCalidadParametros().then(rows => {
       setParametrosRaw(rows.map((r: any) => r.nombre));
     }).catch(() => {});
   }, []);
 
+  // Lista de parámetros ordenada con SST y DQO al frente
   const parametros = useMemo(() => ordenarParametros(parametrosRaw), [parametrosRaw]);
   const param = parametro || parametros[0] || '';
 
   const { data, allData, totalKg, loading, error } = useCargaRemovida(propFI, propFF, param);
   const rawChart  = mostrarVacios ? allData : data;
+  // Puntos finales del gráfico aplicando reagrupación por granularidad
   const chartData = useMemo(
     () => reagruparCarga(rawChart, granularidad ?? null, mostrarVacios, propFI, propFF),
     [rawChart, granularidad, mostrarVacios, propFI, propFF],
   );
 
-  // Rango eje derecho
+  // Rango eje derecho dinámico con margen del 40%
   const inds   = chartData.map(d => d.indicadorKgM3).filter(v => v > 0);
   const maxInd = inds.length ? Math.ceil(Math.max(...inds) * 1.4) : 15;
 

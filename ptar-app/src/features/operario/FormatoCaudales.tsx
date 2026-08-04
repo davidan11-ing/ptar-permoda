@@ -1,3 +1,4 @@
+// Formato F-01: registro de lecturas de contadores de agua con validación de decrementos
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../state/AuthContext';
@@ -9,21 +10,23 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
 
-import { 
-  CONTADORES_MAP, CONTADORES_OPCIONALES, 
-  DIARIOS_IDS 
+import {
+  CONTADORES_MAP, CONTADORES_OPCIONALES,
+  DIARIOS_IDS
 } from '../../lib/constants/contadores';
 import { TURNO_LABELS, getTurno } from '../../lib/utils/time';
 import type { ContadorId } from '../../lib/constants/contadores';
 import { ContadorCard } from './components/ContadorCard';
 
 // ─── Validaciones Zod ────────────────────────────────────────────────────────
+// Esquema de un ítem individual de contador (lectura + observación opcional)
 const itemSchema = z.object({
   id_contador: z.string().min(1, 'Obligatorio'),
   lectura_actual: z.string().optional(),
   observaciones: z.string().optional(), // solo para decrementos
 });
 
+// Esquema completo del formulario: diarios, extras y observaciones generales
 const formSchema = z.object({
   daily: z.array(itemSchema),
   extras: z.array(itemSchema),
@@ -33,10 +36,12 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 // ─── Componente Principal ────────────────────────────────────────────────────
+// Formulario de registro de contadores PTAR con cálculo de delta y resumen post-envío
 export default function FormatoCaudales() {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
+  // Estado de lecturas anteriores cargadas desde el backend
   const [lastReadings, setLastReadings] = useState<Record<string, number>>({});
   const [loadingPrev, setLoadingPrev] = useState(true);
   const [saving,    setSaving]    = useState(false);
@@ -54,10 +59,11 @@ export default function FormatoCaudales() {
 
   const now         = new Date();
   const today       = now.toISOString().slice(0, 10);
+  // Turno y fecha efectivos según si el modo manual está activo o no
   const activeTurno = manualMode ? manualTurno : autoTurno;
   const activeFecha = manualMode ? manualFecha : today;
 
-  // Configuración de react-hook-form
+  // Configuración de react-hook-form con valores por defecto para los contadores diarios
   const { control, handleSubmit, watch, register } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -76,6 +82,7 @@ export default function FormatoCaudales() {
   const extrasValues = watch('extras');
 
   // ─── Fetch lecturas anteriores ────────────────────────────────────────────
+  // Precarga la última lectura registrada de cada contador para mostrar el delta
   useEffect(() => {
     (async () => {
       setLoadingPrev(true);
@@ -91,6 +98,7 @@ export default function FormatoCaudales() {
   }, []);
 
   const getPrev = (id: string) => lastReadings[id] ?? 0;
+  // Calcula el delta aplicando el factor de conversión del contador
   const getDelta = (id: string, lectura?: string): number | null => {
     if (!lectura) return null;
     const factor = (CONTADORES_MAP[id as ContadorId] as { factor_delta?: number }).factor_delta ?? 1;
@@ -98,21 +106,24 @@ export default function FormatoCaudales() {
   };
 
   // ─── Lógica de UI derivada ────────────────────────────────────────────────
+  // Contadores opcionales aún no agregados al formulario
   const addedExtraIds = new Set(extrasValues.map(e => e.id_contador).filter(Boolean));
   const availableOpcionales = CONTADORES_OPCIONALES.filter(c => !addedExtraIds.has(c.id as ContadorId));
 
-  const totalActive = 
-    dailyValues.filter(d => !!d.lectura_actual).length + 
+  // Número de lecturas con valor ingresado (habilita el botón de envío)
+  const totalActive =
+    dailyValues.filter(d => !!d.lectura_actual).length +
     extrasValues.filter(e => !!e.id_contador && !!e.lectura_actual).length;
 
   const canSubmit = totalActive > 0;
 
   // ─── Guardado y Envío ─────────────────────────────────────────────────────
+  // Valida decrementos, construye las filas y envía el lote al backend
   const doSave = async (data: FormValues) => {
     if (!canSubmit) return;
 
     let hasCustomError = false;
-    
+
     // Validación cruzada manual (el delta negativo requiere observación)
     const validateRow = (row: z.infer<typeof itemSchema>) => {
       if (!row.id_contador || !row.lectura_actual) return true;
@@ -138,6 +149,7 @@ export default function FormatoCaudales() {
 
     const obsGenerales = (data.observaciones_generales ?? '').trim();
 
+    // Construye un objeto de registro para el backend a partir de un ítem del formulario
     const buildRow = (row: z.infer<typeof itemSchema>): Omit<RegistroContador, 'id' | 'created_at' | 'delta_m3'> | null => {
       if (!row.id_contador || !row.lectura_actual) return null;
       const c = CONTADORES_MAP[row.id_contador as ContadorId];
@@ -186,6 +198,7 @@ export default function FormatoCaudales() {
     : `Enviar ${totalActive} Lectura${totalActive !== 1 ? 's' : ''}`;
 
   // ── Pantalla de resumen post-submit ──────────────────────────────────────
+  // Muestra el consumo por fuente de agua y por área después del envío exitoso
   if (submitted) {
     // Grupos de medidores para el resumen
     const FUENTES: { label: string; keys: string[]; color: string }[] = [
@@ -198,6 +211,7 @@ export default function FormatoCaudales() {
       { label: 'Tintorería',  keys: ['tintoreria_m3'],  color: '#d29922' },
       { label: 'Rotativa',    keys: ['rotativa_m3'],    color: '#f0883e' },
     ];
+    // Suma los m³ de los medidores indicados en la lista de claves
     const sum = (keys: string[]) =>
       resumen.filter(r => keys.includes(r.medidor)).reduce((acc, r) => acc + (r.total_m3 ?? 0), 0);
 
@@ -219,7 +233,7 @@ export default function FormatoCaudales() {
 
         <div style={{ padding: '0 8px', maxWidth: 700, margin: '0 auto' }}>
 
-          {/* Por fuente */}
+          {/* Resumen de consumo por fuente de agua */}
           <div className="form-section-title" style={{ marginBottom: 10, marginTop: 16 }}>
             Consumo por fuente de agua
           </div>
@@ -237,7 +251,7 @@ export default function FormatoCaudales() {
             })}
           </div>
 
-          {/* Por área */}
+          {/* Resumen de consumo por área de proceso */}
           <div className="form-section-title" style={{ marginBottom: 10 }}>
             Consumo por área de proceso
           </div>
@@ -347,6 +361,7 @@ export default function FormatoCaudales() {
           </span>
         </div>
 
+        {/* Lista de tarjetas de contadores fijos del turno */}
         <div className="params-list">
           {dailyValues.map((field, index) => {
             const delta = getDelta(field.id_contador, field.lectura_actual);
@@ -384,6 +399,7 @@ export default function FormatoCaudales() {
           </span>
         </div>
 
+        {/* Sección de contadores extra seleccionables por el operario */}
         <div className="extras-section">
           {extraFields.map((field, index) => {
             const val = extrasValues[index];

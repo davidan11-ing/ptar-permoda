@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth, OPERARIOS_LISTA } from '../../state/AuthContext';
+import { useTheme } from '../../state/ThemeContext';
 import { ROLE_HOME } from '../../lib/routes';
 import type { Role } from '../../models';
 
@@ -50,18 +51,24 @@ const LOGO_SVG = (
   </svg>
 );
 
-const INPUT_STYLE = (error?: boolean): React.CSSProperties => ({
-  width: '100%', padding: '12px 14px', fontSize: 14,
-  background: '#0d1117',
-  border: `1px solid ${error ? '#f85149' : '#30363d'}`,
-  borderRadius: 8, color: '#e6edf3', outline: 'none',
-  boxSizing: 'border-box',
-});
-
 /* ── componente principal ────────────────────────────────────────────── */
 export default function LoginPage() {
   const { loginWithCredentials, selectRole, updateEquipo } = useAuth();
+  const { theme } = useTheme();
   const navigate = useNavigate();
+
+  const inputStyle = (error?: boolean): React.CSSProperties => ({
+    width: '100%', padding: '12px 14px', fontSize: 14,
+    background: theme.surface2,
+    border: `1px solid ${error ? theme.red : theme.border}`,
+    borderRadius: 8, color: theme.text1, outline: 'none',
+    boxSizing: 'border-box',
+  });
+
+  const labelStyle: React.CSSProperties = {
+    fontSize: 11, color: theme.muted, display: 'block',
+    marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.06em',
+  };
 
   // flujo: 'login' → 'roleselect'? → 'equipo'?
   const [step, setStep]             = useState<'login' | 'roleselect' | 'equipo'>('login');
@@ -137,9 +144,7 @@ export default function LoginPage() {
 
             {/* Campo de correo */}
             <div>
-              <label style={{ fontSize: 11, color: '#8b949e', display: 'block', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.06em' }}>
-                Correo electrónico
-              </label>
+              <label style={labelStyle}>Correo electrónico</label>
               <input
                 type="email"
                 placeholder="nombre@permoda.com.co"
@@ -147,11 +152,10 @@ export default function LoginPage() {
                 autoFocus
                 onChange={e => { setEmail(e.target.value); setLoginError(''); }}
                 onKeyDown={e => e.key === 'Enter' && password && handleLoginSubmit()}
-                style={INPUT_STYLE(!!loginError && !password)}
+                style={inputStyle(!!loginError && !password)}
               />
-
               {email.length > 5 && (
-                <div style={{ marginTop: 6, minHeight: 22, fontSize: 11, color: '#6e7681', fontStyle: 'italic' }}>
+                <div style={{ marginTop: 6, minHeight: 22, fontSize: 11, color: theme.dim, fontStyle: 'italic' }}>
                   Ingresa tu contraseña para continuar
                 </div>
               )}
@@ -159,28 +163,26 @@ export default function LoginPage() {
 
             {/* Campo de contraseña */}
             <div>
-              <label style={{ fontSize: 11, color: '#8b949e', display: 'block', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.06em' }}>
-                Contraseña
-              </label>
+              <label style={labelStyle}>Contraseña</label>
               <input
                 type="password"
                 placeholder="••••••••"
                 value={password}
                 onChange={e => { setPassword(e.target.value); setLoginError(''); }}
                 onKeyDown={e => e.key === 'Enter' && handleLoginSubmit()}
-                style={INPUT_STYLE(!!loginError)}
+                style={inputStyle(!!loginError)}
               />
             </div>
 
             {loginError && (
-              <p style={{ color: '#f85149', fontSize: 12, margin: 0 }}>{loginError}</p>
+              <p style={{ color: theme.red, fontSize: 12, margin: 0 }}>{loginError}</p>
             )}
           </div>
 
           <div className="login-footer" style={{ display: 'flex', gap: 10 }}>
             <button
               className="login-btn"
-              style={{ background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-muted)', flex: 0 }}
+              style={{ background: 'transparent', border: `1px solid ${theme.border}`, color: theme.muted, flex: 0 }}
               onClick={() => navigate('/')}
             >
               ← Volver
@@ -222,7 +224,7 @@ export default function LoginPage() {
             <div className="login-logo">{LOGO_SVG}</div>
             <h1 className="login-title">¿Con qué rol entras?</h1>
             <p className="login-subtitle">
-              <span style={{ fontWeight: 600, color: '#00c5e3' }}>{loggedNombre}</span>
+              <span style={{ fontWeight: 600, color: theme.brand }}>{loggedNombre}</span>
               {' '}— elige el modo de trabajo para esta sesión
             </p>
           </div>
@@ -253,7 +255,7 @@ export default function LoginPage() {
           <div className="login-footer">
             <button
               className="login-btn"
-              style={{ background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
+              style={{ background: 'transparent', border: `1px solid ${theme.border}`, color: theme.muted }}
               onClick={() => { setStep('login'); setLoginError(''); }}
             >
               ← Volver
@@ -282,7 +284,7 @@ export default function LoginPage() {
           <div className="login-body">
             {/* Responsable del registro (nombre real) */}
             <div style={{ marginBottom: 16 }}>
-              <p style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.05em' }}>
+              <p style={{ fontSize: 11, color: theme.muted, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.05em' }}>
                 Responsable del registro
               </p>
               <div className="user-item selected" style={{ cursor: 'default' }}>
@@ -296,7 +298,7 @@ export default function LoginPage() {
             </div>
 
             {/* Checklist del equipo */}
-            <p style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.05em' }}>
+            <p style={{ fontSize: 11, color: theme.muted, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.05em' }}>
               Compañeros en turno (opcional)
             </p>
             <div className="user-list">
@@ -326,7 +328,7 @@ export default function LoginPage() {
           <div className="login-footer" style={{ display: 'flex', gap: 10 }}>
             <button
               className="login-btn"
-              style={{ background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-muted)', flex: 0 }}
+              style={{ background: 'transparent', border: `1px solid ${theme.border}`, color: theme.muted, flex: 0 }}
               onClick={() => setStep('login')}
             >
               ← Volver

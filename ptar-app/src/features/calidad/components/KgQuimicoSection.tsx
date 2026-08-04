@@ -31,6 +31,7 @@ const C_CATI = '#5B9BD5';
 const C_LINE = '#ED7D31';
 
 // ─── Tooltip dark ─────────────────────────────────────────────────────────
+// Tooltip personalizado oscuro: formatea kg removidos con separador de miles
 function TooltipCustom({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
@@ -52,6 +53,7 @@ function TooltipCustom({ active, payload, label }: any) {
 }
 
 // ─── Reagrupar por granularidad ───────────────────────────────────────────
+// Promedia los ratios kg/kg y acumula kg removidos agrupando por semana o mes
 function reagruparKgQuimico(
   pts: KgQuimicoPoint[],
   gran: Granularidad | null,
@@ -99,22 +101,25 @@ function reagruparKgQuimico(
 interface Props { fechaInicio: string; fechaFin: string; granularidad?: Granularidad | null }
 
 // ─── Componente ───────────────────────────────────────────────────────────
+// Barras apiladas de ratios kg-químico/kg-removido + línea de kg removidos totales
 export default function KgQuimicoSection({ fechaInicio, fechaFin, granularidad: granProp }: Props) {
   const granularidad = granProp;
+  // Toggle para mostrar días sin datos en el calendario
   const [mostrarVacios, setMostrarVacios] = useState(false);
 
   const { data, allData, loading, error } = useKgQuimico(fechaInicio, fechaFin);
   const rawChart  = mostrarVacios ? allData : data;
+  // Puntos finales del gráfico aplicando reagrupación por granularidad
   const chartData = useMemo(
     () => reagruparKgQuimico(rawChart, granularidad ?? null, mostrarVacios, fechaInicio, fechaFin),
     [rawChart, granularidad, mostrarVacios, fechaInicio, fechaFin],
   );
 
-  // Rango eje derecho (kg removidos)
+  // Rango eje derecho (kg removidos) con margen del 30%
   const kgs    = chartData.map(d => d.kgRemovidos).filter(v => v > 0);
   const maxKg  = kgs.length ? Math.ceil(Math.max(...kgs) * 1.3) : 1400;
 
-  // Rango eje izquierdo (ratios, suma de barras apiladas)
+  // Rango eje izquierdo (suma máxima de barras apiladas) con margen del 30%
   const sums   = chartData.map(d => d.coagulanteRatio + d.decoloranteRatio + d.polAnionicoRatio + d.cationicoRatio);
   const maxRatio = sums.length ? Math.ceil(Math.max(...sums) * 1.3 * 10) / 10 : 2;
 

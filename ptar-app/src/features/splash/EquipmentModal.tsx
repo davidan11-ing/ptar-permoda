@@ -1,3 +1,5 @@
+// Modal de detalle de equipo: gráfica en vivo, parámetros, descripción y desglose de costos
+
 import { memo } from 'react';
 import {
   ResponsiveContainer, AreaChart, Area,
@@ -26,13 +28,16 @@ interface ChartProps {
   accentColor: string;
 }
 
+// Gráfica de área en tiempo real para el parámetro principal del equipo
 function EquipChart({ equipKey, baseValue, paramLabel, unit, accentColor }: ChartProps) {
   const data = useEquipChart(equipKey, baseValue, true);
 
+  // ID único de gradiente por equipo para evitar colisiones entre múltiples modales
   const gradId = `eqGrad-${equipKey}`;
   const fmtTime = (t: number) =>
     new Date(t).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
+  // Área con gradiente vertical y ejes configurados para la unidad del parámetro
   return (
     <ResponsiveContainer width="100%" height={130}>
       <AreaChart data={data} margin={{ top: 6, right: 10, left: -22, bottom: 0 }}>
@@ -77,10 +82,12 @@ function EquipChart({ equipKey, baseValue, paramLabel, unit, accentColor }: Char
 }
 
 /* ── helpers ─────────────────────────────────────────────────────── */
+// Formatea un número como moneda COP con decimales
 function fmt(v: number) {
   return '$' + v.toLocaleString('es-CO', { minimumFractionDigits: 2 });
 }
 
+// Fila de desglose de costo con barra proporcional
 function BdRow({ label, value, total, hex }: { label: string; value: number; total: number; hex: string }) {
   const pct = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
   return (
@@ -96,6 +103,7 @@ function BdRow({ label, value, total, hex }: { label: string; value: number; tot
   );
 }
 
+// Categorías de costo con color para el desglose visual
 const COST_CATS: { key: keyof EqCostDetail; label: string; hex: string }[] = [
   { key: 'quimicos',      label: 'Insumos químicos',    hex: '#ff8a65' },
   { key: 'residuosLodos', label: 'Residuos y lodos',    hex: '#f06292' },
@@ -107,16 +115,19 @@ const COST_CATS: { key: keyof EqCostDetail; label: string; hex: string }[] = [
 ];
 
 /* ── Desglose: costo por unidad + acumulado hasta este equipo ─── */
+// Sección colapsable de costos unitario y acumulado del proceso
 function CostBreakdownSection({ equipKey, label }: { equipKey: string; label: string }) {
   const eqC = EQ_COSTS[equipKey];
   const pos = PROCESS_ORDER.indexOf(equipKey);
   if (!eqC && pos < 0) return null;
 
+  // Filas de costo unitario del equipo actual filtradas a categorías con valor > 0
   const unitRows = COST_CATS
     .map(c => ({ ...c, value: eqC?.[c.key] ?? 0 }))
     .filter(r => r.value > 0);
   const unitTotal = unitRows.reduce((s, r) => s + r.value, 0);
 
+  // Sumatoria acumulada de todas las etapas anteriores en el orden del proceso
   const precedingKeys = pos >= 0 ? PROCESS_ORDER.slice(0, pos + 1) : [equipKey];
   const accumRows = COST_CATS
     .map(c => ({
@@ -126,6 +137,7 @@ function CostBreakdownSection({ equipKey, label }: { equipKey: string; label: st
     .filter(r => r.value > 0);
   const accumTotal = accumRows.reduce((s, r) => s + r.value, 0);
 
+  // Panel colapsable con resumen inline y tablas de desglose
   return (
     <details className="eq-cost-breakdown">
       <summary className="eq-cost-breakdown-summary">
@@ -147,6 +159,7 @@ function CostBreakdownSection({ equipKey, label }: { equipKey: string; label: st
         )}
       </summary>
 
+      {/* Tabla de costos por categoría — unidad */}
       <div className="eq-cost-breakdown-body">
         <div className="eq-cost-bd-section-title">COSTO POR UNIDAD</div>
         {unitRows.length > 0
@@ -159,6 +172,7 @@ function CostBreakdownSection({ equipKey, label }: { equipKey: string; label: st
         </div>
       </div>
 
+      {/* Tabla de costos acumulados hasta este equipo en el proceso */}
       {pos >= 0 && (
         <div className="eq-cost-breakdown-body eq-cost-breakdown-body--shared">
           <div className="eq-cost-bd-section-title">
@@ -190,10 +204,11 @@ interface Props {
 }
 
 /* ── componente principal ────────────────────────────────────────── */
+// Panel de detalle de un equipo: ilustración SVG, parámetros, costos y gráfica
 function EquipmentModalInner({ equipKey, eq, closing, onClose }: Props) {
   const statusColor = SC[eq.status];
 
-  // Parámetro a graficar
+  // Parámetro a graficar — usa chartParam del equipo o el primero de la lista
   const chartIdx   = eq.chartParam ?? 0;
   const chartEntry = eq.params[chartIdx] ?? eq.params[0] ?? ['Variable', '50'];
   const [chartLabel, chartRaw] = chartEntry;
@@ -245,10 +260,26 @@ function EquipmentModalInner({ equipKey, eq, closing, onClose }: Props) {
               </>
             )}
 
+            {/* Costo operativo del checkpoint PDF */}
+            {eq.cost && (
+              <div className="eq-modal-cost-row">
+                <span className="eq-modal-section-label" style={{ margin: 0 }}>COSTO OPERATIVO</span>
+                <div>
+                  <span className="eq-modal-cost-value">
+                    <span className="eq-cost-sign">$</span>
+                    <span>{eq.cost.replace(/^\$/, '')}</span>
+                  </span>
+                  {eq.costRange && (
+                    <span className="eq-modal-cost-range">{eq.costRange}</span>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Costos + desglose — una sola línea colapsable */}
             <CostBreakdownSection equipKey={equipKey} label={eq.label} />
 
-            {/* Sección parámetros */}
+            {/* Tabla de parámetros de proceso */}
             <div className="eq-modal-section-label" style={{ marginTop: eq.description ? 14 : 6 }}>PARÁMETROS</div>
             <table className="eq-params-table">
               <tbody>
@@ -263,7 +294,7 @@ function EquipmentModalInner({ equipKey, eq, closing, onClose }: Props) {
               </tbody>
             </table>
 
-            {/* Sección gráfico */}
+            {/* Sección gráfico en vivo */}
             <div className="eq-modal-section-label eq-modal-section-chart">
               <span>{chartLabel}</span>
               <span className="eq-chart-live-dot" style={{ background: '#3fb950' }} />

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>App PTAR — Guión TI</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0d1117;
+    color: #e6edf3;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 16px;
+    line-height: 1.85;
+  }
+  .page { max-width: 780px; margin: 0 auto; padding: 48px 28px 72px; }
+
+  .header { margin-bottom: 52px; padding-bottom: 24px; border-bottom: 2px solid #1f6feb; }
+  .header h1 { font-size: 21px; font-weight: 700; color: #e6edf3; }
+  .header p  { color: #8b949e; font-size: 13px; margin-top: 8px; }
+
+  .bloque { margin-bottom: 52px; }
+  .bloque-titulo {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #1f6feb;
+    margin-bottom: 18px;
+  }
+
+  .parrafo {
+    color: #e6edf3;
+    margin-bottom: 18px;
+    font-size: 16px;
+    line-height: 1.85;
+  }
+
+  .divisor {
+    border: none;
+    border-top: 1px solid #21262d;
+    margin: 48px 0;
+  }
+
+  .footer {
+    margin-top: 64px;
+    padding-top: 16px;
+    border-top: 1px solid #21262d;
+    font-size: 12px;
+    color: #484f58;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <h1>App PTAR — Guión para presentación a TI e Infraestructura</h1>
+    <p>Léalo tal como está escrito · Junio 2026 · PERMODA LTDA</p>
+  </div>
+
+  <!-- ── 2. ARQUITECTURA ── -->
+  <div class="bloque">
+    <div class="bloque-titulo">Cómo está construida</div>
+
+    <p class="parrafo">La aplicación tiene tres capas. La primera es lo que ve el usuario en el navegador: la interfaz, los formularios, los gráficos. La segunda es el motor que corre en el servidor y procesa toda la lógica: los cálculos, las reglas de negocio, la seguridad. La tercera es la base de datos donde viven los registros.</p>
+
+    <p class="parrafo">La interfaz está hecha en React con TypeScript — son los lenguajes que el navegador interpreta para mostrar la pantalla al usuario. El motor del servidor está escrito en C# sobre .NET 10, que es el entorno de ejecución de Microsoft para aplicaciones empresariales. La base de datos es MySQL, un motor relacional maduro, gratuito y de código abierto con más de 25 años en el mercado.</p>
+
+    <p class="parrafo">En términos prácticos de despliegue: los tres componentes corren en el mismo computador o servidor. El motor de la aplicación escucha en el puerto 8001 de esa máquina — un puerto es simplemente un canal de comunicación numerado dentro del mismo equipo, como una extensión telefónica. La base de datos escucha en el puerto 3306. El navegador del usuario se conecta a esa máquina y el motor le responde. La base de datos nunca queda expuesta directamente hacia afuera — solo el motor puede hablarle, y lo hace internamente dentro del mismo equipo.</p>
+  </div>
+
+  <hr class="divisor">
+
+  <!-- ── 3. ROLES ── -->
+  <div class="bloque">
+    <div class="bloque-titulo">Quién puede hacer qué</div>
+
+    <p class="parrafo">El sistema maneja tres perfiles de usuario con permisos distintos.</p>
+
+    <p class="parrafo">El <strong>Operario</strong> es quien trabaja en el turno. Solo puede ingresar datos de su turno: las lecturas de los medidores de caudal, el consumo de reactivos químicos, las muestras de calidad del agua y las condiciones de operación de los equipos. No puede ver los dashboards de análisis ni editar lo que otros registraron.</p>
+
+    <p class="parrafo">El <strong>Encargado</strong> es el supervisor. Tiene acceso completo: puede registrar igual que el operario, ver todos los paneles de análisis, corregir registros, configurar qué información ve la gerencia y generar los informes en PDF.</p>
+
+    <p class="parrafo">El <strong>Administrador</strong> es el perfil para gerencia o visualizadores. Solo puede ver — no editar ni registrar. Ve exactamente lo que el Encargado decidió mostrarle: un panel consolidado que el supervisor arma y congela con los datos que considera relevantes.</p>
+
+    <p class="parrafo">Estos permisos se aplican tanto en la interfaz como en el servidor. Si alguien intenta acceder a una función que no le corresponde por el lado técnico, el servidor lo rechaza independientemente de lo que muestre la pantalla.</p>
+  </div>
+
+  <hr class="divisor">
+
+  <!-- ── 4. FLUJO DE DATOS ── -->
+  <div class="bloque">
+    <div class="bloque-titulo">Cómo fluyen los datos</div>
+
+    <p class="parrafo">El operario llena su formulario de turno y lo envía. El servidor valida que los datos sean coherentes — rangos correctos, formatos válidos, que correspondan al turno activo — y los guarda en la base de datos. Si el operario envía el mismo turno dos veces por error, el sistema actualiza el registro existente en lugar de crear un duplicado.</p>
+
+    <p class="parrafo">Los dashboards no consultan los registros crudos directamente. La base de datos tiene vistas analíticas pre-armadas — cálculos de balance hídrico, estadísticas de calidad, costos de reactivos — que el servidor consulta para alimentar los gráficos. Esto hace que los dashboards respondan rápido incluso con meses de datos acumulados.</p>
+
+    <p class="parrafo">Cuando el Encargado genera un informe, el servidor arma el documento directamente — sin depender de Excel ni de herramientas externas — y lo entrega como PDF listo para imprimir o enviar.</p>
+  </div>
+
+  <hr class="divisor">
+
+  <!-- ── 5. SEGURIDAD ── -->
+  <div class="bloque">
+    <div class="bloque-titulo">Cómo protegemos el sistema</div>
+
+    <p class="parrafo">Cuando un usuario hace login, el servidor verifica sus credenciales. Las contraseñas nunca se guardan legibles en la base de datos — se guardan transformadas de forma irreversible, de modo que ni el equipo de desarrollo puede recuperarlas. Si alguien accede físicamente a la base de datos, no ve contraseñas.</p>
+
+    <p class="parrafo">Una vez que el login es exitoso, el servidor emite un carnet digital de sesión que dura 8 horas. Ese carnet viaja dentro de una cookie que el navegador maneja internamente — ningún script externo ni extensión del navegador puede leerlo ni robarlo. El navegador lo adjunta solo en cada petición al servidor.</p>
+
+    <p class="parrafo">Si alguien falla el login repetidas veces, la cuenta se bloquea temporalmente. Y el servidor limita cuántos intentos de login puede hacer una misma dirección de red por minuto, para dificultar ataques automáticos.</p>
+
+    <p class="parrafo">Toda la comunicación entre el navegador y el servidor viaja cifrada. Nadie en la red puede interceptar los datos mientras están en tránsito. En producción, el servidor rechaza cualquier conexión que no use el canal cifrado.</p>
+
+    <p class="parrafo">El servidor también le indica al navegador, en cada respuesta, que la aplicación no puede ser incrustada dentro de otra página web — lo que evita que alguien ponga la app dentro de una página falsa para engañar a los usuarios.</p>
+
+    <p class="parrafo">Las credenciales de la base de datos y la clave con la que firmamos los carnets de sesión viven únicamente en el servidor, en un archivo de configuración que nunca sale de allí. No están en ningún lugar accesible para quien no tenga acceso físico o remoto al servidor.</p>
+
+    <p class="parrafo">Por último, cada operación que modifica datos queda registrada automáticamente: quién la hizo, desde qué dirección de red, qué cambió y si fue exitosa. Esto permite trazabilidad completa de cualquier modificación en cualquier momento.</p>
+  </div>
+
+  <hr class="divisor">
+
+  <!-- ── 6. INFRAESTRUCTURA ── -->
+  <div class="bloque">
+    <div class="bloque-titulo">Qué necesita para correr</div>
+
+    <p class="parrafo">El sistema necesita un servidor con tres componentes activos: el motor de la aplicación corriendo en el puerto 8001, la base de datos MySQL corriendo en el puerto 3306, y un servidor web delante que reciba las peticiones del exterior y las pase al motor — ese servidor web puede ser IIS, que ya hace parte de Windows Server, o cualquier alternativa equivalente.</p>
+
+    <p class="parrafo">La base de datos puede vivir en el mismo servidor que el motor de la aplicación. Para el volumen de datos que maneja la planta, no se justifica infraestructura separada. Con 2 GB de RAM disponibles para el proceso del motor es más que suficiente.</p>
+
+    <p class="parrafo">Las tablas de la base de datos se crean y actualizan automáticamente cada vez que el motor arranca. No hay scripts de instalación manuales que ejecutar.</p>
+
+    <p class="parrafo">El frontend — lo que ve el usuario en el navegador — es un conjunto de archivos estáticos que puede servirse desde el mismo servidor web o desde una plataforma de hosting externo. En cualquier caso, el usuario solo necesita un navegador actualizado para usar la aplicación.</p>
+  </div>
+
+  <hr class="divisor">
+
+  <!-- ── 7. CIERRE ── -->
+  <div class="bloque">
+    <div class="bloque-titulo">Cierre</div>
+
+    <p class="parrafo">Para resumir: la aplicación centraliza el registro y análisis operativo de la planta sobre tecnologías empresariales estándar y probadas. El acceso está controlado por roles bien definidos que el servidor aplica independientemente de la interfaz. Los datos en tránsito van cifrados. Las contraseñas no son recuperables. Las operaciones quedan trazadas. Y los requerimientos de infraestructura son modestos — un servidor con los tres componentes corriendo es todo lo que se necesita.</p>
+
+    <p class="parrafo">Con gusto respondo las preguntas que tengan.</p>
+  </div>
+
+  <div class="footer">App PTAR · PERMODA LTDA · Junio 2026</div>
+
+</div>
+</body>
+</html>

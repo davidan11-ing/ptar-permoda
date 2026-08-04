@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { useTheme } from '../../state/ThemeContext';
 import {
   Bar, Line, LabelList,
   ComposedChart, XAxis, YAxis, CartesianGrid,
@@ -42,11 +43,12 @@ const fmtFull   = (v: number) => v.toLocaleString('es-CO', { maximumFractionDigi
 const fmtDec1   = (v: number | null) => v != null ? v.toFixed(1) : '—';
 
 function KpiCard({ label, value, unit, color }: { label: string; value: string; unit: string; color: string }) {
+  const { theme } = useTheme();
   return (
     <div className="dash-card" style={{ padding: '14px 18px', textAlign: 'center', borderTop: `3px solid ${color}` }}>
-      <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 4 }}>{label}</div>
+      <div style={{ fontSize: 11, color: theme.muted, marginBottom: 4 }}>{label}</div>
       <div style={{ fontSize: 22, fontWeight: 700, color }}>{value}</div>
-      <div style={{ fontSize: 10, color: '#484f58', marginTop: 2 }}>{unit}</div>
+      <div style={{ fontSize: 10, color: theme.dim, marginTop: 2 }}>{unit}</div>
     </div>
   );
 }
@@ -68,14 +70,15 @@ function SeccionHeader({ numero, titulo, color, textColor = '#1c2128' }: {
 }
 
 function ChartPending({ titulo, alto = 200 }: { titulo: string; alto?: number }) {
+  const { theme } = useTheme();
   return (
     <div className="dash-card" style={{
       padding: '16px', height: alto + 40,
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-      border: '1px dashed #30363d', opacity: 0.6,
+      border: `1px dashed ${theme.border}`, opacity: 0.6,
     }}>
-      <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 8 }}>{titulo}</div>
-      <div style={{ fontSize: 10, color: '#484f58' }}>En construcción</div>
+      <div style={{ fontSize: 11, color: theme.muted, marginBottom: 8 }}>{titulo}</div>
+      <div style={{ fontSize: 10, color: theme.dim }}>En construcción</div>
     </div>
   );
 }
@@ -92,12 +95,20 @@ function SquareDot(props: any) {
   return <rect x={cx - 3} y={cy - 3} width={6} height={6} fill={fill || '#000'} />;
 }
 
+const DOT_WHITE  = <SquareDot fill="#FFFFFF" />;
+const DOT_TIN    = <SquareDot fill="#FFD966" />;
+const DOT_LAV    = <SquareDot fill="#f0883e" />;
+const DOT_ROT    = <SquareDot fill="#58a6ff" />;
+const DOT_S5_OSM = <SquareDot fill="#375623" />;
+const DOT_GREEN  = <SquareDot fill="#70AD47" />;
+
 function TablaResumen({ titulo, cabeceras, filas, colorHead = '#DAE3F3' }: {
   titulo?: string;
   cabeceras: string[];
   filas: (string | number | null)[][];
   colorHead?: string;
 }) {
+  const { theme } = useTheme();
   return (
     <div className="dash-card" style={{ padding: '8px 12px', overflow: 'auto' }}>
       {titulo && (
@@ -114,7 +125,7 @@ function TablaResumen({ titulo, cabeceras, filas, colorHead = '#DAE3F3' }: {
             {cabeceras.map((h, i) => (
               <th key={i} style={{
                 padding: '3px 8px', textAlign: i === 0 ? 'left' : 'center',
-                color: '#8b949e', fontWeight: 600, borderBottom: '1px solid #30363d',
+                color: theme.muted, fontWeight: 600, borderBottom: `1px solid ${theme.border}`,
                 whiteSpace: 'nowrap',
               }}>
                 {h}
@@ -128,7 +139,7 @@ function TablaResumen({ titulo, cabeceras, filas, colorHead = '#DAE3F3' }: {
               {fila.map((celda, ci) => (
                 <td key={ci} style={{
                   padding: '3px 8px', textAlign: ci === 0 ? 'left' : 'center',
-                  color: '#e6edf3', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums',
+                  color: theme.text1, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums',
                 }}>
                   {celda ?? '—'}
                 </td>
@@ -144,6 +155,7 @@ function TablaResumen({ titulo, cabeceras, filas, colorHead = '#DAE3F3' }: {
 // ── Benchmark estático Tintorería ─────────────────────────────────────────────
 
 function BenchmarkTintoreria() {
+  const { theme } = useTheme();
   const rows: { nivel: string; desc: string; rango: string; color: string }[] = [
     { nivel: 'Muy Ineficiente',        desc: 'Práctica obsoleta',  rango: '> 150 L/Kg', color: '#5f1010' },
     { nivel: 'Promedio Industria',     desc: 'Convencional',       rango: '100 – 150',   color: '#3d3010' },
@@ -153,7 +165,7 @@ function BenchmarkTintoreria() {
   ];
   return (
     <div className="dash-card" style={{ padding: '10px 12px' }}>
-      <div style={{ fontSize: 10, fontWeight: 700, color: '#8b949e', marginBottom: 8, textTransform: 'uppercase' }}>
+      <div style={{ fontSize: 10, fontWeight: 700, color: theme.muted, marginBottom: 8, textTransform: 'uppercase' }}>
         Benchmark Mundial Tintorería
       </div>
       {rows.map((r, i) => (
@@ -162,8 +174,8 @@ function BenchmarkTintoreria() {
           padding: '4px 8px', marginBottom: 3, borderRadius: 4, background: r.color,
         }}>
           <div>
-            <div style={{ fontSize: 10, fontWeight: 700, color: '#e6edf3' }}>{r.nivel}</div>
-            <div style={{ fontSize: 9, color: '#8b949e' }}>{r.desc}</div>
+            <div style={{ fontSize: 10, fontWeight: 700, color: theme.text1 }}>{r.nivel}</div>
+            <div style={{ fontSize: 9, color: theme.muted }}>{r.desc}</div>
           </div>
           <div style={{ fontSize: 11, fontWeight: 700, color: '#70AD47', fontVariantNumeric: 'tabular-nums' }}>
             {r.rango}
@@ -177,12 +189,13 @@ function BenchmarkTintoreria() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function BalanceHidricoDashboard() {
+  const { theme } = useTheme();
   const {
     granularidad, setGranularidad,
     fechaInicio, fechaFin,
     handleFechaInicio, handleFechaFin,
     draftInicio, draftFin, commitFechaInicio, commitFechaFin,
-  } = useGranularidad();
+  } = useGranularidad({ autoInit: true });
 
   const [turnoFiltro,    setTurnoFiltro]    = useState('');
   const [quitarSinDatos, setQuitarSinDatos] = useState(true);
@@ -226,14 +239,14 @@ export default function BalanceHidricoDashboard() {
 
   // S6 — pie distribución tratabilidad (totales período)
   const pieS6 = useMemo(() => {
-    const sum = (k: keyof BalanceHidricoRow) =>
-      data.reduce((acc, r) => acc + (Number(r[k]) || 0), 0);
+    const sum = (k: string) =>
+      agrupado.reduce((acc, r) => acc + (Number((r as Record<string, unknown>)[k]) || 0), 0);
     return [
       { name: 'Tratado GEM',   value: sum('consumo_gem_m3'),                        color: '#9DC3E6' },
       { name: 'Permeado MBRs', value: sum('permeado_mbr1') + sum('permeado_mbr2'),  color: '#FFE699' },
       { name: 'Salida RO',     value: sum('permeado_ro1')  + sum('rechazo_ro1'),     color: '#A9D18E' },
     ].filter(d => d.value > 0);
-  }, [data]);
+  }, [agrupado]);
 
   // S9 — datos GEM eficiencia (pesos_por_m3)
   const [gemRows, setGemRows] = useState<GemEficienciaRow[]>([]);
@@ -337,7 +350,7 @@ export default function BalanceHidricoDashboard() {
         <div style={{ display: 'flex', gap: 8, alignSelf: 'center' }}>
           <button
             onClick={() => setFiltrosAbiertos(v => !v)}
-            style={{ background: filtrosAbiertos ? '#21262d' : '#161b22', border: '1px solid #30363d', padding: '7px 14px', borderRadius: 6, fontSize: 12, fontWeight: 600, color: '#8b949e', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+            style={{ background: filtrosAbiertos ? theme.surface2 : theme.surface, border: `1px solid ${theme.border}`, padding: '7px 14px', borderRadius: 6, fontSize: 12, fontWeight: 600, color: theme.muted, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
           >
             <span style={{ fontSize: 13 }}>⚙</span>
             Filtros
@@ -379,7 +392,7 @@ export default function BalanceHidricoDashboard() {
               onBlur={e  => commitFechaFin(e.target.value)} />
           </div>
           <div className="cal-filter-group" style={{ alignSelf: 'flex-end' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 12, color: '#8b949e' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 12, color: theme.muted }}>
               <input
                 type="checkbox"
                 checked={quitarSinDatos}
@@ -393,7 +406,7 @@ export default function BalanceHidricoDashboard() {
       )}
 
       {error && (
-        <div style={{ padding: 12, background: '#2d1214', border: '1px solid #f85149', borderRadius: 6, color: '#f85149', marginBottom: 16, fontSize: 12 }}>
+        <div style={{ padding: 12, background: '#2d1214', border: `1px solid ${theme.red}`, borderRadius: 6, color: theme.red, marginBottom: 16, fontSize: 12 }}>
           {error}
         </div>
       )}
@@ -424,7 +437,7 @@ export default function BalanceHidricoDashboard() {
 
           {/* Combo barras agrupadas + línea total */}
           <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
-            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
+            <div style={{ fontSize: 11, color: theme.muted, marginBottom: 6, paddingLeft: 8 }}>
               Balance Hídrico Global — Fuentes de suministro (m³/día)
             </div>
             <ResponsiveContainer width="100%" height={230}>
@@ -454,7 +467,7 @@ export default function BalanceHidricoDashboard() {
                 </Bar>
                 <Line dataKey="total_agua_limpia_m3" name="Total Agua Limpia"
                   stroke="#FFFFFF" strokeWidth={2.5}
-                  dot={<SquareDot fill="#FFFFFF" />}
+                  dot={DOT_WHITE}
                   activeDot={{ r: 5, fill: '#FFFFFF' }}
                   connectNulls />
               </ComposedChart>
@@ -548,7 +561,7 @@ export default function BalanceHidricoDashboard() {
 
           {/* Panel Izq — m³ consumo vs indicador L/Kg */}
           <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
-            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
+            <div style={{ fontSize: 11, color: theme.muted, marginBottom: 6, paddingLeft: 8 }}>
               Tintorería: L/Kg vs Volumen Consumo de Agua (m³/día)
             </div>
             <ResponsiveContainer width="100%" height={220}>
@@ -563,15 +576,15 @@ export default function BalanceHidricoDashboard() {
                 <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
                 <Bar  yAxisId="left"  dataKey="tintoreria_m3"     name="Consumo Tintorería (m³)" fill="#5B9BD5" radius={[3,3,0,0]} />
                 <Line yAxisId="right" dataKey="indicador_tin_l_kg" name="Indicador L/Kg"
-                  stroke="#000000" strokeWidth={2}
-                  dot={<SquareDot fill="#000" />} activeDot={{ r: 5, fill: '#000' }} connectNulls />
+                  stroke="#FFD966" strokeWidth={2}
+                  dot={DOT_TIN} activeDot={{ r: 5, fill: '#FFD966' }} connectNulls />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
 
           {/* Panel Der — kg tela vs indicador L/Kg */}
           <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
-            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
+            <div style={{ fontSize: 11, color: theme.muted, marginBottom: 6, paddingLeft: 8 }}>
               Tintorería: L/Kg vs Kg Producidos
             </div>
             <ResponsiveContainer width="100%" height={220}>
@@ -586,8 +599,8 @@ export default function BalanceHidricoDashboard() {
                 <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
                 <Bar  yAxisId="left"  dataKey="kg_tela"            name="Kg Tela" fill="#ED7D31" radius={[3,3,0,0]} />
                 <Line yAxisId="right" dataKey="indicador_tin_l_kg" name="Indicador L/Kg"
-                  stroke="#000000" strokeWidth={2}
-                  dot={<SquareDot fill="#000" />} activeDot={{ r: 5, fill: '#000' }} connectNulls />
+                  stroke="#FFD966" strokeWidth={2}
+                  dot={DOT_TIN} activeDot={{ r: 5, fill: '#FFD966' }} connectNulls />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
@@ -619,7 +632,7 @@ export default function BalanceHidricoDashboard() {
 
           {/* Panel Izq — m³ consumo vs indicador L/Und */}
           <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
-            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
+            <div style={{ fontSize: 11, color: theme.muted, marginBottom: 6, paddingLeft: 8 }}>
               Lavandería: L/Und vs Volumen Consumo de Agua (m³/día)
             </div>
             <ResponsiveContainer width="100%" height={220}>
@@ -634,15 +647,15 @@ export default function BalanceHidricoDashboard() {
                 <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
                 <Bar  yAxisId="left"  dataKey="lavanderia_m3"       name="Consumo Lavandería (m³)" fill="#FFC000" radius={[3,3,0,0]} />
                 <Line yAxisId="right" dataKey="indicador_lav_l_und" name="Indicador L/Und"
-                  stroke="#000000" strokeWidth={2}
-                  dot={<SquareDot fill="#000" />} activeDot={{ r: 5, fill: '#000' }} connectNulls />
+                  stroke="#f0883e" strokeWidth={2}
+                  dot={DOT_LAV} activeDot={{ r: 5, fill: '#f0883e' }} connectNulls />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
 
           {/* Panel Der — Unidades efectivas vs indicador */}
           <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
-            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
+            <div style={{ fontSize: 11, color: theme.muted, marginBottom: 6, paddingLeft: 8 }}>
               Lavandería: L/Und vs Unidades Efectivas
             </div>
             <ResponsiveContainer width="100%" height={220}>
@@ -657,8 +670,8 @@ export default function BalanceHidricoDashboard() {
                 <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
                 <Bar  yAxisId="left"  dataKey="und_efectivas"        name="Unidades Efectivas" fill="#FFC000" radius={[3,3,0,0]} />
                 <Line yAxisId="right" dataKey="indicador_lav_l_und"  name="Indicador L/Und"
-                  stroke="#000000" strokeWidth={2}
-                  dot={<SquareDot fill="#000" />} activeDot={{ r: 5, fill: '#000' }} connectNulls />
+                  stroke="#f0883e" strokeWidth={2}
+                  dot={DOT_LAV} activeDot={{ r: 5, fill: '#f0883e' }} connectNulls />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
@@ -686,7 +699,7 @@ export default function BalanceHidricoDashboard() {
 
           {/* Panel Izq — m³ consumo vs indicador L/m */}
           <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
-            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
+            <div style={{ fontSize: 11, color: theme.muted, marginBottom: 6, paddingLeft: 8 }}>
               Rotativa: L/m vs Volumen Consumo de Agua (m³/día)
             </div>
             <ResponsiveContainer width="100%" height={220}>
@@ -701,15 +714,15 @@ export default function BalanceHidricoDashboard() {
                 <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
                 <Bar  yAxisId="left"  dataKey="rotativa_m3"         name="Consumo Rotativa (m³)" fill="#A5A5A5" radius={[3,3,0,0]} />
                 <Line yAxisId="right" dataKey="indicador_rot_l_m"   name="Indicador L/m"
-                  stroke="#000000" strokeWidth={2}
-                  dot={<SquareDot fill="#000" />} activeDot={{ r: 5, fill: '#000' }} connectNulls />
+                  stroke="#58a6ff" strokeWidth={2}
+                  dot={DOT_ROT} activeDot={{ r: 5, fill: '#58a6ff' }} connectNulls />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
 
           {/* Panel Der — m de tela vs indicador L/m */}
           <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
-            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
+            <div style={{ fontSize: 11, color: theme.muted, marginBottom: 6, paddingLeft: 8 }}>
               Rotativa: L/m vs Metros de Tela
             </div>
             <ResponsiveContainer width="100%" height={220}>
@@ -724,8 +737,8 @@ export default function BalanceHidricoDashboard() {
                 <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
                 <Bar  yAxisId="left"  dataKey="m_tela"              name="m de Tela" fill="#A5A5A5" radius={[3,3,0,0]} />
                 <Line yAxisId="right" dataKey="indicador_rot_l_m"   name="Indicador L/m"
-                  stroke="#000000" strokeWidth={2}
-                  dot={<SquareDot fill="#000" />} activeDot={{ r: 5, fill: '#000' }} connectNulls />
+                  stroke="#58a6ff" strokeWidth={2}
+                  dot={DOT_ROT} activeDot={{ r: 5, fill: '#58a6ff' }} connectNulls />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
@@ -753,7 +766,7 @@ export default function BalanceHidricoDashboard() {
 
           {/* Barras apiladas por proceso + líneas totales */}
           <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
-            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
+            <div style={{ fontSize: 11, color: theme.muted, marginBottom: 6, paddingLeft: 8 }}>
               Balance de Tratabilidad — Consumo por proceso (m³/día)
             </div>
             <ResponsiveContainer width="100%" height={240}>
@@ -783,7 +796,7 @@ export default function BalanceHidricoDashboard() {
                 </Bar>
                 <Line dataKey="total_tratado_osmosis" name="Total Tratado Osmosis"
                   stroke="#375623" strokeWidth={2}
-                  dot={<SquareDot fill="#375623" />} activeDot={{ r: 5, fill: '#375623' }} connectNulls />
+                  dot={DOT_S5_OSM} activeDot={{ r: 5, fill: '#375623' }} connectNulls />
                 <Line dataKey="total_a_tratar" name="Total Vol. a Tratar"
                   stroke="#ED7D31" strokeWidth={2} strokeDasharray="4 2"
                   dot={false} connectNulls />
@@ -793,7 +806,7 @@ export default function BalanceHidricoDashboard() {
 
           {/* Seguimiento vertimiento — rechazo RO + GEM */}
           <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
-            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
+            <div style={{ fontSize: 11, color: theme.muted, marginBottom: 6, paddingLeft: 8 }}>
               Seguimiento y Control de Vertimiento (m³/día)
             </div>
             <ResponsiveContainer width="100%" height={240}>
@@ -811,7 +824,7 @@ export default function BalanceHidricoDashboard() {
                 <Bar  yAxisId="left"  dataKey="consumo_gem_m3"   name="Tratado GEM"    fill="#9DC3E6" stackId="v" radius={[3,3,0,0]} />
                 <Line yAxisId="left"  dataKey="envio_th"          name="Enviado TH"
                   stroke="#70AD47" strokeWidth={2}
-                  dot={<SquareDot fill="#70AD47" />} activeDot={{ r: 5 }} connectNulls />
+                  dot={DOT_GREEN} activeDot={{ r: 5 }} connectNulls />
                 <Line yAxisId="right" dataKey="eficiencia_ro_pct" name="% Eficiencia RO"
                   stroke="#FFC000" strokeWidth={1.5} strokeDasharray="4 2" dot={false} connectNulls />
               </ComposedChart>
@@ -846,7 +859,7 @@ export default function BalanceHidricoDashboard() {
 
           {/* Pie — distribución agua tratada por sistema */}
           <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
-            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
+            <div style={{ fontSize: 11, color: theme.muted, marginBottom: 6, paddingLeft: 8 }}>
               Tratabilidad Total — Distribución de agua tratada
             </div>
             <ResponsiveContainer width="100%" height={240}>
@@ -872,7 +885,7 @@ export default function BalanceHidricoDashboard() {
 
           {/* Barras agrupadas Balance en Planta */}
           <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
-            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
+            <div style={{ fontSize: 11, color: theme.muted, marginBottom: 6, paddingLeft: 8 }}>
               Balance en Planta (m³/día)
             </div>
             <ResponsiveContainer width="100%" height={240}>
@@ -934,7 +947,7 @@ export default function BalanceHidricoDashboard() {
         <SeccionHeader numero={9} titulo="INDICADOR TRATAMIENTO FQ GEM" color="#FFD966" textColor="#1c2128" />
         {/* $m³ GEM — caudal vs indicador costo — ancho completo */}
           <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
-            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
+            <div style={{ fontSize: 11, color: theme.muted, marginBottom: 6, paddingLeft: 8 }}>
               $m³ Tratamiento GEM — Caudal tratado vs indicador costo
             </div>
             <ResponsiveContainer width="100%" height={220}>
@@ -969,7 +982,7 @@ export default function BalanceHidricoDashboard() {
         <div className="dash-row-2col">
           {/* Volumen RO + eficiencia (proxy hasta tener datos de costo) */}
           <div className="dash-card" style={{ padding: '16px 8px 8px' }}>
-            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
+            <div style={{ fontSize: 11, color: theme.muted, marginBottom: 6, paddingLeft: 8 }}>
               Indicador RO — Volumen enviado vs eficiencia (%)
             </div>
             <ResponsiveContainer width="100%" height={220}>
@@ -1009,7 +1022,7 @@ export default function BalanceHidricoDashboard() {
                   {['INDICADOR', 'FÓRMULA', 'UNIDAD'].map((h, i) => (
                     <th key={i} style={{
                       padding: '4px 8px', textAlign: i === 0 ? 'left' : 'center',
-                      color: '#8b949e', fontWeight: 600, borderBottom: '1px solid #30363d', whiteSpace: 'nowrap',
+                      color: theme.muted, fontWeight: 600, borderBottom: `1px solid ${theme.border}`, whiteSpace: 'nowrap',
                     }}>{h}</th>
                   ))}
                 </tr>
@@ -1022,8 +1035,8 @@ export default function BalanceHidricoDashboard() {
                   ['Indicador Costo RO',   'Costo Químicos RO ÷ Permeado RO',         '$/m³'],
                 ] as [string, string, string][]).map(([ind, formula, unit], i) => (
                   <tr key={i} style={{ borderBottom: '1px solid #21262d50' }}>
-                    <td style={{ padding: '6px 8px', color: '#e6edf3', fontWeight: 600 }}>{ind}</td>
-                    <td style={{ padding: '6px 8px', color: '#8b949e', textAlign: 'center',
+                    <td style={{ padding: '6px 8px', color: theme.text1, fontWeight: 600 }}>{ind}</td>
+                    <td style={{ padding: '6px 8px', color: theme.muted, textAlign: 'center',
                       fontFamily: 'monospace', fontSize: 10 }}>{formula}</td>
                     <td style={{ padding: '6px 8px', color: '#70AD47', textAlign: 'center' }}>{unit}</td>
                   </tr>
@@ -1041,74 +1054,18 @@ export default function BalanceHidricoDashboard() {
         <SeccionHeader numero={11} titulo="BALANCE DE LODOS" color="#DAE3F3" />
         <div className="dash-row-2col">
 
-          {/* $/m³ Lodos — estructura lista, datos pendientes de endpoint /api/lodos/ */}
-          <div className="dash-card" style={{ padding: '16px 8px 8px', position: 'relative' }}>
-            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
-              Indicador $/m³ — Volumen tratado vs costo unitario
-            </div>
-            <ResponsiveContainer width="100%" height={200}>
-              <ComposedChart
-                data={[{ fecha: '' }]}
-                margin={{ top: 4, right: 60, left: 0, bottom: 0 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#21262d" />
-                <XAxis dataKey="fecha" tick={AXIS_TICK} />
-                <YAxis yAxisId="left"  tick={AXIS_TICK} width={54} domain={[0, 1000]}
-                  label={{ value: 'm³', angle: -90, position: 'insideLeft', fill: '#484f58', fontSize: 10, dx: -4 }} />
-                <YAxis yAxisId="right" orientation="right" tick={{ fill: '#C00000', fontSize: 10 }} width={56}
-                  domain={[0, 5000]} tickFormatter={(v: number) => `$${fmtM3(v)}`}
-                  label={{ value: '$/m³', angle: 90, position: 'insideRight', fill: '#C0000080', fontSize: 10, dx: 6 }} />
-                <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
-                <ReferenceLine yAxisId="right" y={2500} stroke="#70AD47" strokeDasharray="4 2"
-                  label={{ value: 'Meta', fill: '#70AD47', fontSize: 9, position: 'right' }} />
-                <Bar  yAxisId="left"  dataKey="volumen_m3"  name="Volumen tratado (m³)" fill="#BDD7EE" radius={[3,3,0,0]} />
-                <Line yAxisId="right" dataKey="costo_m3"   name="Costo $/m³"
-                  stroke="#C00000" strokeWidth={2} dot={{ fill: '#C00000', r: 3 }} connectNulls />
-              </ComposedChart>
-            </ResponsiveContainer>
-            <div style={{
-              position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              pointerEvents: 'none',
-            }}>
-              <div style={{ fontSize: 11, color: '#484f58', fontStyle: 'italic' }}>Sin datos — pendiente endpoint</div>
-              <code style={{ fontSize: 9, color: '#30363d', marginTop: 4 }}>/api/lodos/</code>
-            </div>
+          {/* $/m³ Lodos — pendiente endpoint /api/lodos/ */}
+          <div className="dash-card" style={{ padding: '16px 8px 8px', minHeight: 232, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: `1px dashed ${theme.border2}` }}>
+            <div style={{ fontSize: 11, color: theme.muted, marginBottom: 8 }}>Indicador $/m³ — Volumen tratado vs costo unitario</div>
+            <div style={{ fontSize: 11, color: theme.dim, fontStyle: 'italic' }}>Sin datos — pendiente endpoint</div>
+            <code style={{ fontSize: 9, color: theme.border, marginTop: 4 }}>/api/lodos/</code>
           </div>
 
-          {/* $/Kg Lodos — estructura lista, datos pendientes de endpoint /api/lodos/ */}
-          <div className="dash-card" style={{ padding: '16px 8px 8px', position: 'relative' }}>
-            <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 6, paddingLeft: 8 }}>
-              Indicador $/Kg — Kg generados vs costo por kg
-            </div>
-            <ResponsiveContainer width="100%" height={200}>
-              <ComposedChart
-                data={[{ fecha: '' }]}
-                margin={{ top: 4, right: 60, left: 0, bottom: 0 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#21262d" />
-                <XAxis dataKey="fecha" tick={AXIS_TICK} />
-                <YAxis yAxisId="left"  tick={AXIS_TICK} width={54} domain={[0, 5000]}
-                  label={{ value: 'Kg', angle: -90, position: 'insideLeft', fill: '#484f58', fontSize: 10, dx: -4 }} />
-                <YAxis yAxisId="right" orientation="right" tick={{ fill: '#C00000', fontSize: 10 }} width={56}
-                  domain={[0, 2000]} tickFormatter={(v: number) => `$${fmtM3(v)}`}
-                  label={{ value: '$/Kg', angle: 90, position: 'insideRight', fill: '#C0000080', fontSize: 10, dx: 6 }} />
-                <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
-                <ReferenceLine yAxisId="right" y={800} stroke="#70AD47" strokeDasharray="4 2"
-                  label={{ value: 'Meta', fill: '#70AD47', fontSize: 9, position: 'right' }} />
-                <Bar  yAxisId="left"  dataKey="kg_generados" name="Kg generados" fill="#F4B183" radius={[3,3,0,0]} />
-                <Line yAxisId="right" dataKey="costo_kg"     name="Costo $/Kg"
-                  stroke="#C00000" strokeWidth={2} dot={{ fill: '#C00000', r: 3 }} connectNulls />
-              </ComposedChart>
-            </ResponsiveContainer>
-            <div style={{
-              position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              pointerEvents: 'none',
-            }}>
-              <div style={{ fontSize: 11, color: '#484f58', fontStyle: 'italic' }}>Sin datos — pendiente endpoint</div>
-              <code style={{ fontSize: 9, color: '#30363d', marginTop: 4 }}>/api/lodos/</code>
-            </div>
+          {/* $/Kg Lodos — pendiente endpoint /api/lodos/ */}
+          <div className="dash-card" style={{ padding: '16px 8px 8px', minHeight: 232, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: `1px dashed ${theme.border2}` }}>
+            <div style={{ fontSize: 11, color: theme.muted, marginBottom: 8 }}>Indicador $/Kg — Kg generados vs costo por kg</div>
+            <div style={{ fontSize: 11, color: theme.dim, fontStyle: 'italic' }}>Sin datos — pendiente endpoint</div>
+            <code style={{ fontSize: 9, color: theme.border, marginTop: 4 }}>/api/lodos/</code>
           </div>
 
         </div>

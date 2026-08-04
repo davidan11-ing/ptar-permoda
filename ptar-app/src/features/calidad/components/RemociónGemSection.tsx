@@ -11,12 +11,14 @@ import type { Granularidad } from '../../../hooks/useGranularidad';
 import { xLabel, sortKey, generateAllPeriods } from '../../../lib/utils/agruparTemporal';
 import type { RemocionCalidad } from '../../../services/ptarClient';
 
+// Colores fijos: entrada azul, salida violeta, línea de remoción verde
 const COLOR_ENTRADA = '#1f6feb';
 const COLOR_SALIDA  = '#8b5cf6';
 const COLOR_PCT     = '#3fb950';
 
 interface Stats { min:number; max:number; promedio:number; desvEst:number; vcPct:number }
 
+// Calcula estadísticas descriptivas (min, max, promedio, desviación, CV%) de un arreglo
 function calcStats(arr:(number|null)[]):Stats|null {
   const d = arr.filter((v):v is number => v!==null && v!==0);
   if (!d.length) return null;
@@ -26,6 +28,7 @@ function calcStats(arr:(number|null)[]):Stats|null {
            desvEst:std, vcPct:mean!==0?(std/mean)*100:0 };
 }
 
+// Tabla de estadísticas descriptivas con alerta de CV% > 30
 function StatsTable({title,stats,unit}:{title:string;stats:Stats|null;unit:string}) {
   const c:React.CSSProperties = {padding:'3px 6px',fontSize:11,color:'#c9d1d9',
     borderBottom:'1px solid #21262d',fontFamily:'monospace',textAlign:'right'};
@@ -54,6 +57,7 @@ function StatsTable({title,stats,unit}:{title:string;stats:Stats|null;unit:strin
   );
 }
 
+// Formatea fecha YYYY-MM-DD → DD/MM para etiquetas del eje X
 function fmtFecha(raw:string):string {
   try { const [,m,d]=raw.split('-'); return `${d}/${m}`; } catch { return raw; }
 }
@@ -132,8 +136,11 @@ interface Props {
   granularidad?: Granularidad | null;
 }
 
+// Gráfico Entrada/Salida GEM con línea de % remoción y tablas estadísticas inferiores
 export default function RemociónGemSection({fechaInicio,fechaFin,parametro:paramProp,onParametroChange,granularidad}:Props) {
+  // Parámetro seleccionado internamente (sincronizable con el padre)
   const [parametroInterno, setParametroInterno] = useState('');
+  // Toggle para mostrar el calendario completo incluyendo turnos sin registro
   const [mostrarVacios, setMostrarVacios] = useState(false);
   const {data:allData, loading} = useRemociónGem('', fechaInicio, fechaFin);
 
@@ -150,6 +157,7 @@ export default function RemociónGemSection({fechaInicio,fechaFin,parametro:para
   // Seleccionar el primero disponible si no hay selección
   const param = parametro || parametros[0] || '';
 
+  // Datos filtrados al parámetro activo
   const data = useMemo(()=>allData.filter(r=>r.parametro===param),[allData,param]);
 
   // Índice rápido: "YYYY-MM-DD|turno" → registro real
@@ -159,6 +167,7 @@ export default function RemociónGemSection({fechaInicio,fechaFin,parametro:para
     return m;
   },[data]);
 
+  // Puntos del gráfico según granularidad y toggle de vacíos
   const chartData = useMemo(()=>{
     // Día/Semana/Mes → agrupar con soporte de períodos vacíos
     if (granularidad && granularidad !== 'turno') {
@@ -186,6 +195,7 @@ export default function RemociónGemSection({fechaInicio,fechaFin,parametro:para
     return rows;
   },[data, dataIdx, mostrarVacios, fechaInicio, fechaFin, granularidad]);
 
+  // Estadísticas por serie para las tablas inferiores
   const statsE = calcStats(data.map(r=>r.pulmon));
   const statsS = calcStats(data.map(r=>r.gem_salida));
   const statsR = calcStats(data.map(r=>r.pct_remocion_gem));
@@ -270,7 +280,7 @@ export default function RemociónGemSection({fechaInicio,fechaFin,parametro:para
               </ComposedChart>
             </ResponsiveContainer>
           </div>
-          {/* 3 tablas en fila debajo del gráfico */}
+          {/* 3 tablas estadísticas en fila debajo del gráfico */}
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:16}}>
             <div className="dash-card" style={{padding:12}}>
               <StatsTable title="Entrada GEM"           stats={statsE} unit={unit}/>

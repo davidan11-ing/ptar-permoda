@@ -1,6 +1,8 @@
+// Hook para cruzar % de remoción de un parámetro con el costo químico ($/m³) por turno
 import { useState, useEffect } from 'react';
 import { getCalidadMediciones, getGemEficiencia } from '../../../services/ptarClient';
 
+// Forma de cada punto del gráfico dispersión remoción vs costo
 export interface RemocionCostoPunto {
   label: string;    // "06 - T2"
   fecha: string;
@@ -17,11 +19,14 @@ const TURNO_KEY: Record<string, string> = {
   tarde:  'T3',
 };
 
+// Hook principal — carga y correlaciona costo químico vs remoción por turno
 export function useRemocionCosto(fechaInicio: string, fechaFin: string, parametro = 'pH') {
+  // Estados de carga, error y resultado
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState<string | null>(null);
   const [data,    setData]    = useState<RemocionCostoPunto[]>([]);
 
+  // Dispara la carga al cambiar fechas o parámetro
   useEffect(() => {
     if (!fechaInicio || !fechaFin) return;
     let cancelled = false;
@@ -56,7 +61,7 @@ export function useRemocionCosto(fechaInicio: string, fechaFin: string, parametr
           if (row.unidad_tratamiento === 'GEM Salida')            e.gem  = row.valor;
         }
 
-        // 3. Agrupar costo/m³ por (fecha|T1/T2/T3)
+        // 3. Agrupar costo/m³ por (fecha|T1/T2/T3) con tres niveles de fallback
         // pesos_por_m3 puede ser NULL si no fue calculado en DB —
         // fallback: costo_quimica_turno / caudal_m3 calculado aquí
         const costoMap = new Map<string, number>();
@@ -90,6 +95,7 @@ export function useRemocionCosto(fechaInicio: string, fechaFin: string, parametr
         const allKeys = new Set([...phMap.keys(), ...costoMap.keys()]);
         const sorted  = Array.from(allKeys).sort();
 
+        // Construir puntos: calcular % remoción = (homo - gem) / homo
         const result: RemocionCostoPunto[] = sorted.map(key => {
           const [fecha, turnoStr] = key.split('|');
           const day   = fecha.slice(8, 10);

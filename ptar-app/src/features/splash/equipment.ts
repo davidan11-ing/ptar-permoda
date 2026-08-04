@@ -1,3 +1,5 @@
+// Definiciones de equipos, estados, costos y orden de proceso de la PTAR
+
 export type Status = 'operando' | 'advertencia' | 'alarma';
 
 /** 7 categorías de costo por m³ por equipo */
@@ -11,6 +13,7 @@ export interface EqCostDetail {
   depreciacion?:  number;
 }
 
+// Costos operativos por equipo en COP/m³, desglosados por categoría
 export const EQ_COSTS: Record<string, EqCostDetail> = {
   // PTAR Fase 2 — nomina:37.64, depreciacion:80.05, calibMant:21.77
   rotativa:     { calibMant:21.77, nomina:37.64, depreciacion:80.05 },
@@ -57,6 +60,7 @@ export const PROCESS_ORDER: string[] = [
   'cajaVert', 'tkVert', 'filtVert', 'tkRecir', 'produccion',
 ];
 
+// Definición tipada de un equipo del diagrama PTAR
 export interface EqDef {
   id:          string;
   label:       string;
@@ -69,10 +73,12 @@ export interface EqDef {
   costRange?:  string;
 }
 
+// Mapas de color, fondo y etiqueta por estado operativo
 export const SC: Record<Status, string> = { operando: '#3fb950', advertencia: '#d29922', alarma: '#f85149' };
 export const SB: Record<Status, string> = { operando: '#0d2d1a', advertencia: '#2d1f08', alarma: '#2d0a0a' };
 export const SL: Record<Status, string> = { operando: '● EN OPERACIÓN', advertencia: '▲ ADVERTENCIA', alarma: '✖ ALARMA' };
 
+// Catálogo completo de equipos con estado inicial y parámetros de proceso
 export const EQ: Record<string, EqDef> = {
   /* FASE PRELIMINAR */
   rotativa:    { id:'rot',     label:'Descarga Rotativa',           status:'operando',
@@ -106,12 +112,12 @@ export const EQ: Record<string, EqDef> = {
   tk60m3:      { id:'tk60m3',  label:'TK 60 m³',                   status:'operando',
     description:'Tanque de 60 m³ que centraliza todos los afluentes industriales de las descargas preliminares, incluyendo los retrolavados de la PTAP. En su entrada cuenta con rejillas de cribado grueso con apertura aproximada de 2×2 cm que retienen objetos de mayor tamaño antes del ingreso al tanque. Aloja bombas autocebantes que impulsan el caudal hacia el sistema de cribado. Actúa como punto principal de amortiguación de picos de flujo y carga contaminante del proceso de pretratamiento. Requiere lavado mensual para mantener su capacidad operativa.',
     params:[['Nivel','72 %'],['Entrada G+H','≈ 40 m³/h'],['T. retención','1.5 h']],
-    vb:'152 132 135 158', chartParam:0, costRange:'$2.000 – $2.300' },
+    vb:'152 132 135 158', chartParam:0, cost:'$2.158 COP/m³', costRange:'$2.000 – $2.300' },
   /* FASE PRIMARIA */
   cribRot:     { id:'cribRot', label:'Criba Rotativa',              status:'operando',
     description:'Criba rotativa fina con malla de 1 mm que retiene sólidos gruesos y fibras textiles del efluente crudo. El tambor giratorio conduce los sólidos capturados hacia una tolva de descarga mientras el líquido filtrado continúa al siguiente cribado. Es la primera barrera de separación sólido-líquido del sistema de pretratamiento.',
     params:[['Apertura','1 mm'],['Velocidad','4 rpm'],['Captura','35 kg/d']],
-    vb:'262 105 180 170', chartParam:2 },
+    vb:'262 105 180 170', chartParam:2, cost:'$2.158 COP/m³', costRange:'$2.000 – $2.300' },
   vibrat1:     { id:'vib1',    label:'Criba Vibratoria 1 (M1)',     status:'operando',
     description:'Primera criba vibratoria con apertura de 0.10 mm. Separa partículas finas y fibras textiles submilimétricas mediante vibración mecánica. Opera en paralelo con la segunda criba vibratoria para garantizar continuidad operativa si una requiere mantenimiento. La malla es un consumible crítico con duración aproximada de 2 meses, requiriendo reemplazo programado para mantener la eficiencia del cribado.',
     params:[['Apertura','0.25 mm'],['Frecuencia','50 Hz'],['Potencia','2.2 kW']],
@@ -140,7 +146,7 @@ export const EQ: Record<string, EqDef> = {
     description:'Sistema primario GEM basado en tecnología de Flotación de Aire Disuelto (DAF). Genera microburbujas de aire disuelto que arrastran eficientemente sólidos suspendidos totales (SST), DQO y DBO suspendida hacia la superficie para su remoción. Combina este proceso con dosificación múltiple de químicos: ácido, decolorante, coagulante, floculante catiónico y aniónico. El efluente de salida cumple con la normativa legal de vertimiento, lo que permite dirigirlo tanto a la alimentación de los reactores biológicos o a Vertimiento con cumplimiento a la Resolución 0631 de 2015 y 3957 de 2009 según las condiciones operativas. Cuenta con punto de muestreo de calidad de agua.',
     params:[['Tipo','Reactor fisicoquímico'],['Reactivos','5 dosificaciones'],['Salida','U → Swingmill']],
     vb:'842 76 155 235', chartParam:0 },
-  swingmill:   { id:'swing',   label:'ESPESADOR',                   status:'operando',
+  swingmill:   { id:'swing',   label:'SWIMING',                   status:'operando',
     description:'Deshidratador de lodos Swingmill 501D que procesa los lodos generados en el tratamiento fisicoquímico del Sistema GEM y también recepciona los lodos de la PTAP. Reduce el contenido de agua hasta niveles aptos para disposición final, disminuyendo el volumen a gestionar. La fracción líquida clarificada retorna al proceso mientras el lodo deshidratado se destina a disposición como residuo sólido.',
     params:[['Función','Espesado de lodos'],['Salida W','Lodo deshidratado'],['Caudal','5 m³/h']],
     vb:'955 170 145 145', chartParam:2 },
@@ -160,11 +166,11 @@ export const EQ: Record<string, EqDef> = {
   mbbr:        { id:'mbbr',    label:'Reactor MBBR',                status:'operando',
     description:'Reactor de Lecho Móvil de Biopelícula (MBBR) con bioportadores plásticos al 65% de llenado. Se alimenta del Reactor Anóxico y su efluente alimenta los Biorreactores de Membrana (MBR). Los portadores proporcionan una extensa superficie específica para la colonización de microorganismos, mejorando la eficiencia biológica respecto a sistemas de lodos activados convencionales. La biomasa adherida realiza nitrificación y degradación de materia orgánica. La aireación por burbuja fina garantiza condiciones aerobias y alta eficiencia en la reducción de DBO.',
     params:[['Llenado','65 %'],['MLSS','4 800 mg/L'],['OD','2.4 mg/L']],
-    vb:'1438 145 205 182', chartParam:2, costRange:'$6.900 – $7.200' },
+    vb:'1438 145 205 182', chartParam:2, cost:'$9.230 COP/m³', costRange:'$6.900 – $7.200' },
   anoxic:      { id:'anox',    label:'Reactor Anóxico',             status:'operando',
     description:'Primera zona del tren biológico: reactor anóxico equipado con agitador sumergible. Sin aireación, las bacterias heterotróficas convierten los nitratos (NO₃⁻) en nitrógeno gaseoso (N₂), eliminando el nitrógeno del efluente de manera biológica, y contribuyen también a la remoción de DQO. Opera con OD < 0.2 mg/L y tiempo de retención de 4 horas.',
     params:[['OD','< 0.2 mg/L'],['NO₃⁻','8.4 mg/L'],['T. retención','4 h']],
-    vb:'1648 145 195 178', chartParam:1, costRange:'$6.900 – $7.200' },
+    vb:'1648 145 195 178', chartParam:1, cost:'$9.230 COP/m³', costRange:'$6.900 – $7.200' },
   /* FASE VERTIMIENTO */
   tkVert:   { id:'tkVert',   label:'TK Permeado Vertimiento', status:'operando',
     description:'⚠️ Este tanque no existe físicamente — pendiente eliminar del diagrama.',
@@ -182,23 +188,23 @@ export const EQ: Record<string, EqDef> = {
   ro1e1:       { id:'ro1e1',   label:'Ósmosis Inversa RO1 – E1',   status:'operando',
     description:'Primera etapa del sistema de Ósmosis Inversa RO1, con alimentación total de 80 m³/h y recuperación global del 75%. Las membranas semipermeables rechazan sales, colorantes e iones con eficiencia del 98.5%, produciendo agua de alta pureza (TDS 18 mg/L, conductividad < 500 µS/cm) apta para reincorporación en procesos textiles. El rechazo concentrado (≈25%) se dirige al Tanque de Rechazo RO1.',
     params:[['Recuperación','58 %'],['TDS perm.','18 mg/L'],['Sales rej.','98.5 %']],
-    vb:'645 368 205 158', chartParam:0 },
+    vb:'645 368 205 158', chartParam:0, cost:'$2.336 COP/m³' },
   ro1e2:       { id:'ro1e2',   label:'Ósmosis Inversa RO1 – E2',   status:'operando',
     description:'Segunda etapa de RO1 que concentra el rechazo del E1 para maximizar la recuperación global del 75%. Produce permeado de muy alta calidad (TDS 12 mg/L, conductividad < 500 µS/cm) que se envía directamente al Tanque de Recirculación para reúso en producción textil. El rechazo puede dirigirse al Tanque de Rechazo RO1 para tratamiento en RO2, o enviarse a vertimiento previa dilución con otros efluentes para cumplir los parámetros normativos.',
     params:[['Recuperación','62 %'],['TDS perm.','12 mg/L'],['Permeado AI','→ TK Recir.']],
-    vb:'480 368 205 158', chartParam:0 },
+    vb:'480 368 205 158', chartParam:0, cost:'$1.208 COP/m³' },
   ro2:         { id:'ro2',     label:'Ósmosis Inversa RO2',         status:'alarma',
     description:'Sistema de Ósmosis Inversa RO2 diseñado para tratar el rechazo concentrado de RO1, con caudal de 20 m³/h y recuperación del 80%. El permeado presenta conductividad normalmente inferior a 3.000 µS/cm, adecuado para reincorporación en producción.',
     params:[['TMP','0.65 bar'],['Fouling','detectable'],['CIP','programado']],
-    vb:'648 482 205 180', chartParam:0 },
+    vb:'648 482 205 180', chartParam:0, cost:'$6.879 COP/m³' },
   filtrosII:   { id:'filtII',  label:'Filtros Intercambio Iónico', status:'operando',
     description:'Columnas de resinas de intercambio iónico diseñadas para reducir la dureza del agua mediante la eliminación de iones divalentes (Ca²⁺, Mg²⁺, SO₄²⁻) y metales pesados del efluente tratado. Producen agua ablandada lista para alimentar la primera etapa de Ósmosis Inversa, protegiéndola del encostramiento calcáreo.',
     params:[['Entrada','AE desde Sec.'],['Resinas','en servicio'],['Salida AF','→ RO1']],
-    vb:'988 405 218 118', chartParam:0, costRange:'$4.600 – $4.900' },
+    vb:'988 405 218 118', chartParam:0, cost:'$13.995 COP/m³', costRange:'$4.600 – $4.900' },
   tkRecir:     { id:'tkRecir', label:'TK Recirculación',           status:'operando',
     description:'Tanque de almacenamiento y distribución del agua de alta calidad recuperada de la ósmosis inversa, junto con aportes de acueducto, carrotanques, PTAP y agua de retorno de los intercambiadores de calor de Sclavos. Constituye el punto de entrega del agua reciclada hacia los procesos productivos textiles, cerrando el ciclo de reúso hídrico de la planta.',
     params:[['Vol.','30 m³'],['Fuentes','RO1 E2 + AQ/AR/AS'],['Salida','→ Producción']],
-    vb:'115 498 212 158', chartParam:0 },
+    vb:'115 498 212 158', chartParam:0, cost:'$27.916 COP/m³' },
   tkRechazo:   { id:'tkRech',  label:'TK Rechazo RO1',            status:'advertencia',
     description:'Tanque receptor del rechazo concentrado de RO1. Almacena temporalmente el caudal de alta salinidad para su posterior tratamiento en RO2 o derivación a la Caja de Vertimiento. Actualmente el flujo se dirige directamente a vertimiento debido a que RO2 se encuentra deshabilitado.',
     params:[['Entrada AJ','Rechazo RO1 E2'],['AK','→ Filtro → RO2'],['Desborde','→ Caja Vert.']],

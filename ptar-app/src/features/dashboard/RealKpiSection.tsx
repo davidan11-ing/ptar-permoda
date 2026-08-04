@@ -10,7 +10,9 @@ import type { MedicionCalidad } from '../../services/ptarClient';
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function daysAgo(n: number) {
-  return new Date(Date.now() - n * 86400000).toISOString().slice(0, 10);
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d.toLocaleDateString('en-CA');
 }
 
 function avg(arr: (number | null | undefined)[]): number | null {
@@ -133,6 +135,7 @@ export default function RealKpiSection() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
     const today = daysAgo(0);
     const d7    = daysAgo(7);
     const d30   = daysAgo(30);
@@ -190,6 +193,7 @@ export default function RealKpiSection() {
         return (acc ?? 0) + v;
       }, null);
 
+      if (cancelled) return;
       setData({
         gemM3, roM3, recoveryRO, recoveryPTAP,
         pHVert, pHVertFecha,
@@ -200,6 +204,7 @@ export default function RealKpiSection() {
       });
       setLoading(false);
     });
+    return () => { cancelled = true; };
   }, []);
 
   if (loading) {

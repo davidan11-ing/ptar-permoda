@@ -1,3 +1,4 @@
+// Gráfica horizontal de promedio por etapa/unidad de tratamiento para un parámetro
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, Cell, ResponsiveContainer,
@@ -9,11 +10,13 @@ interface Props {
   unidad_medida: string;
 }
 
+// Barras horizontales con promedio por unidad, coloreadas según semáforo de la BD
 export default function EtapaChart({ summary, unidad_medida }: Props) {
   if (summary.length === 0) {
     return <div className="cal-empty">Sin datos para el período seleccionado</div>;
   }
 
+  // Trunca nombres largos de unidad para que quepan en el eje Y
   const data = summary.map(s => ({
     unidad: s.unidad.length > 22 ? s.unidad.slice(0, 22) + '…' : s.unidad,
     unidadFull: s.unidad,
@@ -21,6 +24,7 @@ export default function EtapaChart({ summary, unidad_medida }: Props) {
     color: s.color,
   }));
 
+  // Estructura de la gráfica horizontal con color de semáforo por etapa
   return (
     <ResponsiveContainer width="100%" height={Math.max(220, data.length * 36)}>
       <BarChart

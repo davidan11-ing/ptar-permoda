@@ -1,3 +1,6 @@
+// Constantes de parámetros de calidad de agua, unidades de tratamiento y métodos de análisis
+
+// Parámetros fisicoquímicos medidos diariamente con rangos y decimales
 export const PARAMS_DIARIOS = [
   { id: 'Temperatura',      nombre: 'Temperatura',                    unidad: '°C',         min: 15,   max: 60,   decimales: 1 },
   { id: 'pH',               nombre: 'pH',                             unidad: 'Unidades pH', min: 0,    max: 14,   decimales: 2 },
@@ -9,6 +12,7 @@ export const PARAMS_DIARIOS = [
 ] as const;
 // Turbidez movida a PARAMS_OCASIONALES (no se mide rutinariamente)
 
+// Parámetros avanzados de análisis ocasional o laboratorio externo
 export const PARAMS_OCASIONALES = [
   { id: 'Turbidez',        nombre: 'Turbidez',               unidad: 'NTU',         min: 0,    max: 1000  },
   { id: 'DQO',             nombre: 'DQO',                    unidad: 'mg/L',        min: 0,    max: 5000  },
@@ -26,9 +30,11 @@ export const PARAMS_OCASIONALES = [
   { id: 'CloroResidual',   nombre: 'Cloro residual',         unidad: 'mg/L',        min: 0,    max: 5     },
 ] as const;
 
+// Tipos derivados de los arreglos de parámetros
 export type DiarioId   = typeof PARAMS_DIARIOS[number]['id'];
 export type OcasionalId = typeof PARAMS_OCASIONALES[number]['id'];
 
+// Puntos de muestreo disponibles en PTAR y PTAP
 export const UNIDADES_TRATAMIENTO = [
   // ── PTAR ──────────────────────────────────────────────────────────
   'Tanque Pulmon',
@@ -52,6 +58,7 @@ export const UNIDADES_TRATAMIENTO = [
   'Salida UF',
 ];
 
+// Métodos de medición aceptados en el registro de calidad
 export const METODOS = [
   'Sensor / Equipo en línea',
   'Portátil (multiparámetro)',

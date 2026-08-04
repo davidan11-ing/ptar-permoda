@@ -1,3 +1,4 @@
+// Gráfica de seguimiento diario: barras agrupadas por fecha con promedio de todas las unidades por turno
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer,
@@ -15,11 +16,13 @@ interface Props {
  * BarChart agrupado: eje X = fecha, 3 barras por fecha (noche/mañana/tarde).
  * Muestra el promedio de todas las unidades en ese turno/fecha.
  */
+// Componente de seguimiento diario: agrega todas las unidades en un promedio por turno/día
 export default function SegDiarioChart({ data, unidad_medida }: Props) {
   if (data.length === 0) {
     return <div className="cal-empty">Sin datos para el período seleccionado</div>;
   }
 
+  // Formateador de fecha: convierte YYYY-MM-DD a DD/MM
   const formatFecha = (f: string) => {
     const [, m, d] = f.split('-');
     return `${d}/${m}`;
@@ -34,8 +37,10 @@ export default function SegDiarioChart({ data, unidad_medida }: Props) {
     byTurno.get(r.turno)!.push(r.valor);
   }
 
+  // Función auxiliar para calcular promedio redondeado a 2 decimales
   const avg = (arr: number[]) => +(arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(2);
 
+  // Construir serie final: una fila por fecha con columnas noche/mañana/tarde
   const chartData = Array.from(map.entries())
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([fecha, byTurno]) => {
@@ -46,8 +51,10 @@ export default function SegDiarioChart({ data, unidad_medida }: Props) {
       return row;
     });
 
+  // Verifica si un turno tiene al menos un valor en el período
   const hasTurno = (t: string) => chartData.some(r => r[t] != null);
 
+  // Barras agrupadas por fecha: solo se renderizan los turnos presentes
   return (
     <ResponsiveContainer width="100%" height={260}>
       <BarChart data={chartData} margin={{ top: 8, right: 24, left: 0, bottom: 0 }}>

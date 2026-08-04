@@ -1,3 +1,4 @@
+// Tabla estadística de mínimo, promedio y máximo por unidad de tratamiento
 import type { SummaryRow } from '../hooks/useCalidadData';
 
 interface Props {
@@ -5,6 +6,7 @@ interface Props {
   unidad_medida: string;
 }
 
+// Filas por unidad con punto de color identificador
 export default function TablaEstadistica({ summary, unidad_medida }: Props) {
   if (summary.length === 0) {
     return <div className="cal-empty">Sin datos para el período seleccionado</div>;

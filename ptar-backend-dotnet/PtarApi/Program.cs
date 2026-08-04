@@ -1,5 +1,6 @@
 using System.Text;
 using AspNetCoreRateLimit;
+using PtarApi.Middleware;
 using Dapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -161,6 +162,7 @@ var app = builder.Build();
 
 if (app.Environment.IsProduction()) app.UseHttpsRedirection();
 
+app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseCors();
 app.UseIpRateLimiting();
 

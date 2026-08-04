@@ -1,3 +1,4 @@
+// Gráfica horizontal de percentiles (P0 a P100) de un parámetro de calidad
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, LabelList, ResponsiveContainer,
@@ -8,6 +9,7 @@ interface Props {
   unidad_medida: string;
 }
 
+// Interpolación lineal para calcular el valor en el percentil p
 function percentil(sorted: number[], p: number): number {
   if (p === 0)   return sorted[0];
   if (p === 100) return sorted[sorted.length - 1];
@@ -22,6 +24,7 @@ function percentil(sorted: number[], p: number): number {
 // Spec §5.3: P100 arriba, P10 abajo → array en orden descendente
 const PCTS = [100, 90, 80, 70, 60, 50, 40, 30, 20, 10, 0];
 
+// Barras horizontales de P0 a P100 con valor exacto a la derecha
 export default function PercentilChart({ values, unidad_medida }: Props) {
   if (values.length === 0) {
     return <div className="cal-empty">Sin datos para calcular percentiles</div>;
@@ -35,6 +38,7 @@ export default function PercentilChart({ values, unidad_medida }: Props) {
   const padding = (vMax - vMin) * 0.08 || 0.5;
   const xMin    = +(vMin - padding).toFixed(2);
 
+  // Construye los puntos de la gráfica con etiqueta y valor por percentil
   const chartData = PCTS.map(p => ({
     pct:      p === 0 ? 'MIN' : p === 100 ? 'P100' : `P${p}`,
     pctLabel: p === 0 ? '0%'  : p === 100 ? '100%' : `${p}%`,
@@ -42,6 +46,7 @@ export default function PercentilChart({ values, unidad_medida }: Props) {
     valor:    percentil(sorted, p === 100 ? 99.9 : p),
   }));
 
+  // Estructura de la gráfica horizontal con labels de valor a la derecha
   return (
     <ResponsiveContainer width="100%" height={290}>
       <BarChart

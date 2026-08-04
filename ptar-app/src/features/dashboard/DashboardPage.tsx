@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../../state/ThemeContext';
 import RealKpiSection from './RealKpiSection';
-import { getReportePdfUrl, getReporteDashboardHtmlUrl } from '../../services/ptarClient';
+import { getReporteDashboardHtmlUrl, getUltimaFechaConDatos } from '../../services/ptarClient';
 import { useAuth } from '../../state/AuthContext';
 import { ROUTES } from '../../lib/routes';
 import {
@@ -15,10 +16,7 @@ import CalidadTendenciaWidget from './widgets/CalidadTendenciaWidget';
 
 interface Props { canEdit: boolean }
 
-const TODAY = new Date().toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-// Fecha rango: últimos 30 días
-const FECHA_FIN    = new Date().toISOString().slice(0, 10);
-const FECHA_INICIO = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+// Calculadas dentro del componente para que reflejen la fecha real del día actual
 
 function renderWidget(id: WidgetId, fechaInicio: string, fechaFin: string): React.ReactNode {
   switch (id) {
@@ -32,6 +30,25 @@ function renderWidget(id: WidgetId, fechaInicio: string, fechaFin: string): Reac
 export default function DashboardPage({ canEdit }: Props) {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+  const { theme } = useTheme();
+
+  // Fechas: se inicializan con los últimos 30 días y se ajustan al último mes con datos
+  const [FECHA_FIN,    setFechaFin]    = useState(() => new Date().toLocaleDateString('en-CA'));
+  const [FECHA_INICIO, setFechaInicio] = useState(() => { const d = new Date(); d.setDate(d.getDate() - 30); return d.toLocaleDateString('en-CA'); });
+  useEffect(() => {
+    getUltimaFechaConDatos().then(ultima => {
+      setFechaFin(ultima);
+      const d = new Date(ultima + 'T00:00:00');
+      d.setDate(d.getDate() - 30);
+      setFechaInicio(d.toLocaleDateString('en-CA'));
+    }).catch(() => {});
+  }, []);
+  const TODAY        = useMemo(() => new Date().toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }), []);
+  const [ahora, setAhora] = useState(() => new Date().toLocaleTimeString('es-CO'));
+  useEffect(() => {
+    const id = setInterval(() => setAhora(new Date().toLocaleTimeString('es-CO')), 60_000);
+    return () => clearInterval(id);
+  }, []);
 
   // ── Widget selector ───────────────────────────────────────────────────────────
   const [selectedWidgets, setSelectedWidgets] = useState<WidgetId[]>(() => {
@@ -55,6 +72,68 @@ export default function DashboardPage({ canEdit }: Props) {
   // Widgets activos ordenados según el catálogo
   const activeWidgets = WIDGET_CATALOG.filter(w => selectedWidgets.includes(w.id));
 
+  // ── Estilos con tema ──────────────────────────────────────────────────────────
+  const panelStyle = {
+    container: {
+      background: theme.surface,
+      border: `1px solid ${theme.border}`,
+      borderRadius: 8,
+      padding: '12px 16px',
+      margin: '0 0 12px',
+    } as React.CSSProperties,
+    header: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 10,
+    } as React.CSSProperties,
+    chips: {
+      display: 'flex',
+      flexWrap: 'wrap' as const,
+      gap: 8,
+    } as React.CSSProperties,
+    chip: {
+      padding: '5px 12px',
+      borderRadius: 20,
+      fontSize: 12,
+      fontWeight: 600,
+      cursor: 'pointer',
+      transition: 'all 0.15s',
+    } as React.CSSProperties,
+    closeBtn: {
+      background: 'none',
+      border: 'none',
+      color: theme.muted,
+      fontSize: 12,
+      cursor: 'pointer',
+    } as React.CSSProperties,
+  };
+
+  const cardStyle: React.CSSProperties = {
+    background: theme.surface,
+    border: `1px solid ${theme.border}`,
+    borderRadius: 10,
+    overflow: 'hidden',
+  };
+
+  const cardHeaderStyle: React.CSSProperties = {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '8px 12px',
+    background: theme.bg,
+  };
+
+  const removeBtn: React.CSSProperties = {
+    background: 'none',
+    border: 'none',
+    color: theme.muted,
+    fontSize: 12,
+    cursor: 'pointer',
+    padding: '2px 4px',
+    borderRadius: 4,
+  };
+
   return (
     <div className="dashboard">
       {/* Header bar */}
@@ -72,30 +151,17 @@ export default function DashboardPage({ canEdit }: Props) {
             })}
             target="_blank"
             rel="noopener noreferrer"
-            style={{ textDecoration: 'none', background: '#1f6feb', color: '#fff', padding: '6px 14px', borderRadius: 6, fontSize: 12, fontWeight: 600 }}
+            style={{ textDecoration: 'none', background: theme.blue, color: '#fff', padding: '6px 14px', borderRadius: 6, fontSize: 12, fontWeight: 600 }}
           >
             📊 Informe KPI
           </a>
-          <a
-            href={getReportePdfUrl({
-              fecha_inicio: FECHA_INICIO,
-              fecha_fin: FECHA_FIN,
-              tipo: 'completo',
-            })}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ textDecoration: 'none', background: '#1f6feb', color: '#fff', padding: '6px 14px', borderRadius: 6, fontSize: 12, fontWeight: 600 }}
-          >
-            ↓ PDF últimos 30 días
-          </a>
-
           {/* Botón Widgets */}
           <button
             onClick={() => setPickMode(v => !v)}
             style={{
-              background: pickMode ? '#21262d' : '#21262d',
-              color: pickMode ? '#58a6ff' : '#8b949e',
-              border: `1px solid ${pickMode ? '#58a6ff' : '#30363d'}`,
+              background: theme.surface2,
+              color: pickMode ? theme.lblue : theme.muted,
+              border: `1px solid ${pickMode ? theme.lblue : theme.border}`,
               padding: '6px 14px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer',
             }}
           >
@@ -105,7 +171,7 @@ export default function DashboardPage({ canEdit }: Props) {
           {canEdit && (
             <button
               onClick={() => navigate(ROUTES.ENCARGADO_REGISTROS)}
-              style={{ background: '#21262d', color: '#8b949e', border: '1px solid #30363d',
+              style={{ background: theme.surface2, color: theme.muted, border: `1px solid ${theme.border}`,
                 padding: '6px 14px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
             >
               📋 Registros Operarios
@@ -121,7 +187,7 @@ export default function DashboardPage({ canEdit }: Props) {
       {pickMode && (
         <div style={panelStyle.container}>
           <div style={panelStyle.header}>
-            <span style={{ color: '#e6edf3', fontWeight: 600, fontSize: 13 }}>Selecciona las gráficas a mostrar</span>
+            <span style={{ color: theme.text1, fontWeight: 600, fontSize: 13 }}>Selecciona las gráficas a mostrar</span>
             <button onClick={() => setPickMode(false)} style={panelStyle.closeBtn}>Cerrar ✕</button>
           </div>
           <div style={panelStyle.chips}>
@@ -134,9 +200,9 @@ export default function DashboardPage({ canEdit }: Props) {
                   title={w.description}
                   style={{
                     ...panelStyle.chip,
-                    background: active ? `${w.color}22` : '#21262d',
-                    border: `1px solid ${active ? w.color : '#30363d'}`,
-                    color: active ? w.color : '#8b949e',
+                    background: active ? `${w.color}22` : theme.surface2,
+                    border: `1px solid ${active ? w.color : theme.border}`,
+                    color: active ? w.color : theme.muted,
                   }}
                 >
                   {w.label}
@@ -183,77 +249,16 @@ export default function DashboardPage({ canEdit }: Props) {
         <span>Usuario: <strong>{currentUser?.nombre}</strong></span>
         <span>Rol: <strong>{currentUser?.activeRole}</strong></span>
         {canEdit ? <span className="can-edit-badge">● Edición habilitada</span> : <span className="no-edit-badge">● Solo visualización</span>}
-        <span className="dash-update">Última actualización: {new Date().toLocaleTimeString('es-CO')}</span>
+        <span className="dash-update">Última actualización: {ahora}</span>
       </div>
     </div>
   );
 }
 
-// ── Estilos inline ─────────────────────────────────────────────────────────────
-
-const panelStyle = {
-  container: {
-    background: '#161b22',
-    border: '1px solid #30363d',
-    borderRadius: 8,
-    padding: '12px 16px',
-    margin: '0 0 12px',
-  } as React.CSSProperties,
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  } as React.CSSProperties,
-  chips: {
-    display: 'flex',
-    flexWrap: 'wrap' as const,
-    gap: 8,
-  } as React.CSSProperties,
-  chip: {
-    padding: '5px 12px',
-    borderRadius: 20,
-    fontSize: 12,
-    fontWeight: 600,
-    cursor: 'pointer',
-    transition: 'all 0.15s',
-  } as React.CSSProperties,
-  closeBtn: {
-    background: 'none',
-    border: 'none',
-    color: '#8b949e',
-    fontSize: 12,
-    cursor: 'pointer',
-  } as React.CSSProperties,
-};
+// ── Estilos sin color (permanecen fuera del componente) ────────────────────────
 
 const gridStyle: React.CSSProperties = {
   display: 'grid',
   gridTemplateColumns: 'repeat(2, 1fr)',
   gap: 16,
-};
-
-const cardStyle: React.CSSProperties = {
-  background: '#161b22',
-  border: '1px solid #30363d',
-  borderRadius: 10,
-  overflow: 'hidden',
-};
-
-const cardHeaderStyle: React.CSSProperties = {
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  padding: '8px 12px',
-  background: '#0d1117',
-};
-
-const removeBtn: React.CSSProperties = {
-  background: 'none',
-  border: 'none',
-  color: '#8b949e',
-  fontSize: 12,
-  cursor: 'pointer',
-  padding: '2px 4px',
-  borderRadius: 4,
 };

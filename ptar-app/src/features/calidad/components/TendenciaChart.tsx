@@ -1,3 +1,4 @@
+// Gráfica de líneas: tendencia temporal del parámetro de calidad por unidad de tratamiento
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer,
@@ -11,11 +12,13 @@ interface Props {
   unidad_medida: string;
 }
 
+// Componente de tendencia temporal: una línea por unidad de tratamiento
 export default function TendenciaChart({ data, unidades, unidad_medida }: Props) {
   if (data.length === 0) {
     return <div className="cal-empty">Sin datos para el período seleccionado</div>;
   }
 
+  // Formateador de fecha: convierte YYYY-MM-DD a DD/MM
   const formatFecha = (f: string) => {
     if (!f) return '';
     const [, m, d] = f.split('-');
@@ -28,11 +31,13 @@ export default function TendenciaChart({ data, unidades, unidad_medida }: Props)
   );
   const dMin = allVals.length > 0 ? Math.min(...allVals) : 0;
   const dMax = allVals.length > 0 ? Math.max(...allVals) : 1;
+  // Rango fijo cuando min === max para evitar gráfica plana sin referencia visual
   const yDomain: [number | string, number | string] =
     dMin === dMax
       ? [+(dMin * 0.9).toFixed(2), +(dMax * 1.1).toFixed(2)]
       : ['auto', 'auto'];
 
+  // Contenedor principal con una línea por cada unidad de tratamiento
   return (
     <ResponsiveContainer width="100%" height={280}>
       <LineChart data={data} margin={{ top: 8, right: 24, left: 0, bottom: 0 }}>
@@ -60,6 +65,7 @@ export default function TendenciaChart({ data, unidades, unidad_medida }: Props)
           wrapperStyle={{ color: '#8b949e', fontSize: 11, paddingTop: 8 }}
           formatter={(v: string) => v.length > 28 ? v.slice(0, 28) + '…' : v}
         />
+        {/* Serie de línea por cada unidad de tratamiento seleccionada */}
         {unidades.map(u => (
           <Line
             key={u}

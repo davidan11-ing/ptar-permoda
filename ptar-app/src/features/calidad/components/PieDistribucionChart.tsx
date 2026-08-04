@@ -1,3 +1,4 @@
+// Gráfica de torta con distribución porcentual de frecuencias en 5 rangos
 import {
   PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
@@ -16,8 +17,10 @@ const BIN_COLORS = [
   '#2980b9', // RANGO5 — azul
 ];
 
-const N_RANGOS = 5; // Fijo: exactamente 5 rangos según tabla
+// Fijo: exactamente 5 rangos según tabla
+const N_RANGOS = 5;
 
+// Calcula bins con conteo y porcentaje para cada rango
 function calcBins(values: number[]) {
   if (values.length === 0) return [];
   const n    = values.length;
@@ -44,6 +47,7 @@ function calcBins(values: number[]) {
   }));
 }
 
+// Label de porcentaje centrado en cada slice (solo si pct >= 5%)
 const renderLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, pct }: {
   cx: number; cy: number; midAngle: number;
   innerRadius: number; outerRadius: number; pct: number;
@@ -60,6 +64,7 @@ const renderLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, pct }: {
   );
 };
 
+// Torta de distribución de frecuencias con leyenda de rangos
 export default function PieDistribucionChart({ values, unidad_medida }: Props) {
   if (values.length === 0) {
     return <div className="cal-empty">Sin datos para calcular distribución</div>;
@@ -67,6 +72,7 @@ export default function PieDistribucionChart({ values, unidad_medida }: Props) {
 
   const bins = calcBins(values);
 
+  // Estructura del pie chart con tooltip y leyenda de rangos
   return (
     <ResponsiveContainer width="100%" height={260}>
       <PieChart>

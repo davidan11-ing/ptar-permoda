@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { useTheme } from '../../state/ThemeContext';
 import {
   Bar, Line, ComposedChart,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -137,22 +138,37 @@ const fmtM3   = (v: number) => v >= 1000 ? `$${(v / 1000).toFixed(0)}k` : `$${v}
 const fmtNum  = (v: number | null | undefined, dec = 1) =>
   v != null ? v.toFixed(dec) : '—';
 
+// Ejes compartidos como constantes de módulo — evitan recreación en cada render (flicker Recharts)
+const Y_LEFT  = <YAxis yAxisId="left"  tick={AXIS_TICK_SM} width={46} />;
+const Y_RIGHT = (
+  <YAxis yAxisId="right" orientation="right" tick={AXIS_TICK_SM} width={52}
+    tickFormatter={fmtM3}
+    label={{ value: '$/m³', angle: 90, position: 'insideRight', fill: '#484f58', fontSize: 9, dx: 6 }}
+  />
+);
+const LINE_M3 = (
+  <Line yAxisId="right" type="monotone" dataKey="indicador_m3" name="$/m³ total"
+    stroke="#70AD47" strokeWidth={2.25} dot={false} connectNulls />
+);
+
 /* ── sub-componentes ─────────────────────────────────────────────────── */
 function KpiCard({ label, value, unit, color }: { label: string; value: string; unit: string; color: string }) {
+  const { theme } = useTheme();
   return (
     <div className="dash-card" style={{ padding: '14px 18px', textAlign: 'center', borderTop: `3px solid ${color}` }}>
-      <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 4 }}>{label}</div>
+      <div style={{ fontSize: 11, color: theme.muted, marginBottom: 4 }}>{label}</div>
       <div style={{ fontSize: 22, fontWeight: 700, color }}>{value}</div>
-      <div style={{ fontSize: 10, color: '#484f58', marginTop: 2 }}>{unit}</div>
+      <div style={{ fontSize: 10, color: theme.dim, marginTop: 2 }}>{unit}</div>
     </div>
   );
 }
 
 function ChartCard({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
+  const { theme } = useTheme();
   return (
     <div className="dash-card" style={{ padding: '14px 8px 8px' }}>
       <div style={{ paddingLeft: 10, marginBottom: 2 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: '#c9d1d9', letterSpacing: '.02em' }}>{title}</div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: theme.text2, letterSpacing: '.02em' }}>{title}</div>
         {subtitle && <div style={{ fontSize: 10, color: '#6e7681', marginTop: 1 }}>{subtitle}</div>}
       </div>
       {children}
@@ -162,9 +178,10 @@ function ChartCard({ title, subtitle, children }: { title: string; subtitle?: st
 
 /* ── componente principal ────────────────────────────────────────────── */
 export default function CostosDashboard() {
+  const { theme } = useTheme();
   const anioActual = new Date().getFullYear(); void anioActual;
 
-  const { granularidad, setGranularidad, fechaInicio, fechaFin, draftInicio, draftFin, handleFechaInicio, handleFechaFin, commitFechaInicio, commitFechaFin } = useGranularidad();
+  const { granularidad, setGranularidad, fechaInicio, fechaFin, draftInicio, draftFin, handleFechaInicio, handleFechaFin, commitFechaInicio, commitFechaFin } = useGranularidad({ autoInit: true });
   const [sistema,        setSistema]        = useState('GEM');
   const [mesProyec,      setMesProyec]      = useState(String(new Date().getMonth() + 1));
   const [reactivosFiltro, setReactivosFiltro] = useState<string[]>([]);
@@ -174,7 +191,7 @@ export default function CostosDashboard() {
   const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
 
   const { consumoDiario, proyeccion, estadisticas, gemEficiencia, loading, error } =
-    useCostosData(fechaInicio, fechaFin, sistema);
+    useCostosData(fechaInicio, fechaFin, sistema, mesProyec ? Number(mesProyec) : undefined);
 
   /* fetch remoción DQO/SST/Color */
   useEffect(() => {
@@ -367,30 +384,18 @@ export default function CostosDashboard() {
     );
   }
 
-  /* ejes compartidos */
-  const yLeft  = <YAxis yAxisId="left"  tick={AXIS_TICK_SM} width={46} />;
-  const yRight = (
-    <YAxis yAxisId="right" orientation="right" tick={AXIS_TICK_SM} width={52}
-      tickFormatter={fmtM3}
-      label={{ value: '$/m³', angle: 90, position: 'insideRight', fill: '#484f58', fontSize: 9, dx: 6 }}
-    />
-  );
   const topRadius = (idx: number): [number, number, number, number] =>
     idx === productosFiltrados.length - 1 ? [3, 3, 0, 0] : [0, 0, 0, 0];
-  const lineM3 = (
-    <Line yAxisId="right" type="monotone" dataKey="indicador_m3" name="$/m³ total"
-      stroke="#70AD47" strokeWidth={2.25} dot={false} connectNulls />
-  );
 
   /* estilos de tabla */
   const thStyle: React.CSSProperties = {
     padding: '7px 10px', textAlign: 'left', fontSize: 10, fontWeight: 700,
-    color: '#8b949e', letterSpacing: '.06em', textTransform: 'uppercase',
-    background: '#161b22', borderBottom: '1px solid #30363d', whiteSpace: 'nowrap',
+    color: theme.muted, letterSpacing: '.06em', textTransform: 'uppercase',
+    background: theme.surface, borderBottom: `1px solid ${theme.border}`, whiteSpace: 'nowrap',
   };
   const tdStyle: React.CSSProperties = {
-    padding: '6px 10px', fontSize: 11, color: '#c9d1d9',
-    borderBottom: '1px solid #21262d', whiteSpace: 'nowrap',
+    padding: '6px 10px', fontSize: 11, color: theme.text2,
+    borderBottom: `1px solid ${theme.border2}`, whiteSpace: 'nowrap',
   };
   const tdNum: React.CSSProperties = { ...tdStyle, textAlign: 'right', fontFamily: 'monospace' };
 
@@ -407,7 +412,7 @@ export default function CostosDashboard() {
         <div style={{ display: 'flex', gap: 8, alignSelf: 'center' }}>
           <button
             onClick={() => setFiltrosAbiertos(v => !v)}
-            style={{ background: filtrosAbiertos ? '#21262d' : '#161b22', border: '1px solid #30363d', padding: '7px 14px', borderRadius: 6, fontSize: 12, fontWeight: 600, color: '#8b949e', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+            style={{ background: filtrosAbiertos ? theme.surface2 : theme.surface, border: `1px solid ${theme.border}`, padding: '7px 14px', borderRadius: 6, fontSize: 12, fontWeight: 600, color: theme.muted, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
           >
             <span style={{ fontSize: 13 }}>⚙</span>
             Filtros
@@ -474,9 +479,9 @@ export default function CostosDashboard() {
                 )}
                 style={{
                   padding: '4px 12px', borderRadius: 14, cursor: 'pointer', fontSize: 11,
-                  border: `1px solid ${activo ? colorKG(p) : '#30363d'}`,
+                  border: `1px solid ${activo ? colorKG(p) : theme.border}`,
                   background: activo ? colorKG(p) + '22' : 'transparent',
-                  color: activo ? colorKG(p) : '#484f58',
+                  color: activo ? colorKG(p) : theme.dim,
                   transition: 'all .15s',
                 }}
               >
@@ -486,7 +491,7 @@ export default function CostosDashboard() {
           })}
           {reactivosFiltro.length > 0 && (
             <button onClick={() => setReactivosFiltro([])}
-              style={{ fontSize: 10, color: '#8b949e', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 6px' }}>
+              style={{ fontSize: 10, color: theme.muted, background: 'none', border: 'none', cursor: 'pointer', padding: '4px 6px' }}>
               ✕ mostrar todos
             </button>
           )}
@@ -494,7 +499,7 @@ export default function CostosDashboard() {
       )}
 
       {error && (
-        <div style={{ padding: 12, background: '#2d1214', border: '1px solid #f85149', borderRadius: 6, color: '#f85149', marginBottom: 16, fontSize: 12 }}>
+        <div style={{ padding: 12, background: '#2d1214', border: `1px solid ${theme.red}`, borderRadius: 6, color: theme.red, marginBottom: 16, fontSize: 12 }}>
           {error}
         </div>
       )}
@@ -626,12 +631,12 @@ export default function CostosDashboard() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
 
           {/* Chart 1: PPM Vs $/m³ */}
-          <ChartCard title="COONSUMO PPM Vs $M3" subtitle="Dosificación diaria por reactivo (PPM) · línea: $/m³">
+          <ChartCard title="CONSUMO PPM Vs $M3" subtitle="Dosificación diaria por reactivo (PPM) · línea: $/m³">
             <ResponsiveContainer width="100%" height={260}>
               <ComposedChart data={datosFecha} margin={{ top: 6, right: 52, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#21262d" />
                 <XAxis dataKey="fecha" tick={AXIS_TICK_SM} interval="preserveStartEnd" />
-                {yLeft}{yRight}
+                {Y_LEFT}{Y_RIGHT}
                 <Tooltip {...TOOLTIP_STYLE}
                   formatter={(val: number, name: string) => name === '$/m³ total'
                     ? [`$${Number(val).toLocaleString('es-CO')}/m³`, name]
@@ -641,7 +646,7 @@ export default function CostosDashboard() {
                   <Bar key={p} yAxisId="left" dataKey={`ppm_${p}`} name={`ppm_${p}`}
                     stackId="ppm" fill={colorPPM(p)} radius={topRadius(i)} />
                 ))}
-                {lineM3}
+                {LINE_M3}
               </ComposedChart>
             </ResponsiveContainer>
           </ChartCard>
@@ -652,7 +657,7 @@ export default function CostosDashboard() {
               <ComposedChart data={datosFecha} margin={{ top: 6, right: 52, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#21262d" />
                 <XAxis dataKey="fecha" tick={AXIS_TICK_SM} interval="preserveStartEnd" />
-                {yLeft}{yRight}
+                {Y_LEFT}{Y_RIGHT}
                 <Tooltip {...TOOLTIP_STYLE}
                   formatter={(val: number, name: string) => name === '$/m³ total'
                     ? [`$${Number(val).toLocaleString('es-CO')}/m³`, name]
@@ -662,7 +667,7 @@ export default function CostosDashboard() {
                   <Bar key={p} yAxisId="left" dataKey={`kg_${p}`} name={`kg_${p}`}
                     stackId="kg" fill={colorKG(p)} radius={topRadius(i)} />
                 ))}
-                {lineM3}
+                {LINE_M3}
               </ComposedChart>
             </ResponsiveContainer>
           </ChartCard>
@@ -675,7 +680,7 @@ export default function CostosDashboard() {
                 <XAxis dataKey="fecha" tick={AXIS_TICK_SM} interval="preserveStartEnd" />
                 <YAxis yAxisId="left" tick={AXIS_TICK_SM} width={52}
                   label={{ value: 'L', angle: -90, position: 'insideLeft', fill: '#484f58', fontSize: 9, dx: -4 }} />
-                {yRight}
+                {Y_RIGHT}
                 <Tooltip {...TOOLTIP_STYLE}
                   formatter={(val: number, name: string) => name === '$/m³ total'
                     ? [`$${Number(val).toLocaleString('es-CO')}/m³`, name]
@@ -685,7 +690,7 @@ export default function CostosDashboard() {
                   <Bar key={p} yAxisId="left" dataKey={`L_${p}`} name={`L_${p}`}
                     stackId="L" fill={colorKG(p)} radius={topRadius(i)} />
                 ))}
-                {lineM3}
+                {LINE_M3}
               </ComposedChart>
             </ResponsiveContainer>
           </ChartCard>
@@ -785,7 +790,7 @@ export default function CostosDashboard() {
                 <div key={row.nombre} className="dash-card" style={{ padding: 0, overflow: 'hidden' }}>
                   <div style={{ background: color + '22', borderBottom: `2px solid ${color}`, padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 6 }}>
                     <span style={{ color, fontSize: 14 }}>●</span>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: '#c9d1d9' }}>{row.nombre}</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: theme.text2 }}>{row.nombre}</span>
                   </div>
                   <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
@@ -807,7 +812,7 @@ export default function CostosDashboard() {
                           <td style={{ ...tdNum, fontSize: 10, padding: '5px 8px' }}>{r.ppm != null ? r.ppm.toFixed(1) : '—'}</td>
                           <td style={{ ...tdNum, fontSize: 10, padding: '5px 8px' }}>{r.l != null ? r.l.toFixed(0) : '—'}</td>
                           <td style={{ ...tdNum, fontSize: 10, padding: '5px 8px', color }}>{r.kg != null ? r.kg.toFixed(1) : '—'}</td>
-                          <td style={{ ...tdNum, fontSize: 10, padding: '5px 8px', color: '#f85149' }}>{r.costo != null ? fmtCOP(r.costo) : '—'}</td>
+                          <td style={{ ...tdNum, fontSize: 10, padding: '5px 8px', color: theme.red }}>{r.costo != null ? fmtCOP(r.costo) : '—'}</td>
                         </tr>
                       ))}
                       <tr style={{ background: 'rgba(255,255,255,.04)' }}>
@@ -840,7 +845,7 @@ export default function CostosDashboard() {
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr>
-                    {['Parámetro', 'Inicial (mg/L)', 'Salida (mg/L)', 'Removida (mg/L)', 'KG Rem./m³', 'M³ Tratados', 'Total KG Rem.', '$ Tratamiento', '$/KG Removido'].map(h => (
+                    {['Parámetro', 'Inicial (mg/L)', 'Salida (mg/L)', 'Removida (mg/L)', 'KG Rem./m³', 'M³ Tratados', 'Total KG Rem.', '$/KG Removido'].map(h => (
                       <th key={h} style={{ ...thStyle, textAlign: h === 'Parámetro' ? 'left' : 'right' }}>{h}</th>
                     ))}
                   </tr>
@@ -855,7 +860,6 @@ export default function CostosDashboard() {
                       <td style={tdNum}>{row.kg_m3 != null ? row.kg_m3.toFixed(4) : '—'}</td>
                       <td style={tdNum}>{row.m3_total != null ? row.m3_total.toFixed(0) : '—'}</td>
                       <td style={{ ...tdNum, color: '#4472C4' }}>{row.total_kg != null ? row.total_kg.toFixed(0) : '—'}</td>
-                      <td style={{ ...tdNum, color: '#f85149' }}>{row.costo_kg != null ? fmtCOP(kpis.total_costo) : '—'}</td>
                       <td style={{ ...tdNum, color: '#ED7D31', fontWeight: 700 }}>{row.costo_kg != null ? fmtCOP(row.costo_kg) : '—'}</td>
                     </tr>
                   ))}
@@ -917,7 +921,7 @@ export default function CostosDashboard() {
             </table>
           </div>
         </div>
-        <div style={{ fontSize: 10, color: '#484f58', marginTop: 6, paddingLeft: 2 }}>
+        <div style={{ fontSize: 10, color: theme.dim, marginTop: 6, paddingLeft: 2 }}>
           IE = Índice de Estabilidad (σ/μ) · P90 = Percentil 90 · Fuente: /api/calidad/remociones
         </div>
       </section>

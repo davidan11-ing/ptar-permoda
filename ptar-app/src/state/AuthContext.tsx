@@ -1,6 +1,8 @@
+// Contexto global de autenticación: sesión, roles y equipo en turno
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
 import type { AppUser, Role } from '../models';
 
+// Clave de almacenamiento de sesión en localStorage
 const SESSION_KEY = 'ptar_session';
 const API = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
 
@@ -28,6 +30,7 @@ function rolesForBackendRole(role: Role): Role[] {
   return ['operario'];
 }
 
+// Contrato de valores expuestos por el contexto de auth
 interface AuthContextValue {
   currentUser:          AppUser | null;
   loginWithCredentials: (email: string, password: string) => Promise<AppUser | null>;
@@ -38,6 +41,7 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+// Recupera la sesión persistida en localStorage al iniciar
 function loadSession(): AppUser | null {
   try {
     const raw = localStorage.getItem(SESSION_KEY);
@@ -48,7 +52,9 @@ function loadSession(): AppUser | null {
   }
 }
 
+// Proveedor raíz de autenticación que envuelve toda la app
 export function AuthProvider({ children }: { children: ReactNode }) {
+  // Usuario autenticado activo en esta sesión
   const [currentUser, setCurrentUser] = useState<AppUser | null>(loadSession);
 
   // Limpia sesión local sin llamar al backend (usado en 401 y expiración)
@@ -73,6 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('ptar:unauthorized', clearSession);
   }, [clearSession]);
 
+  // Autenticación con email y contraseña contra el backend
   const loginWithCredentials = useCallback(
     async (email: string, password: string): Promise<AppUser | null> => {
       try {
@@ -104,6 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  // Cambia el rol activo del usuario sin re-autenticar
   const selectRole = useCallback((role: Role) => {
     setCurrentUser(prev => {
       if (!prev || !prev.roles.includes(role)) return prev;
@@ -113,6 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  // Actualiza la lista de compañeros del turno actual
   const updateEquipo = useCallback((equipo: string[]) => {
     setCurrentUser(prev => {
       if (!prev) return prev;
@@ -122,6 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  // Cierra sesión: invalida cookie en backend y limpia estado local
   const logout = useCallback(() => {
     fetch(`${API}/api/auth/logout`, { method: 'POST', credentials: 'include' }).catch(() => {});
     clearSession();
@@ -134,6 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// Hook de acceso al contexto de autenticación
 export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be used within AuthProvider');

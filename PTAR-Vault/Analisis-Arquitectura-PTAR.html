@@ -835,10 +835,11 @@ code{background:#f1f5f9;padding:1px 5px;border-radius:3px;font-family:monospace;
   <div style="font-size:15px;font-weight:800;margin-bottom:6px">&#x1F6E1;&#xFE0F; Seguridad PTAR &mdash; Backend ASP.NET Core 10 (activo)</div>
   <div style="font-size:11px;color:#94a3b8;margin-bottom:14px">Auditado junio 2026 &middot; Backend migrado de FastAPI Python → ASP.NET Core 10</div>
   <div style="display:flex;gap:10px;flex-wrap:wrap">
-    <div style="background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.4);border-radius:8px;padding:8px 14px;text-align:center"><div style="font-size:20px;font-weight:800;color:#4ade80">9</div><div style="font-size:10px;color:#86efac">Controles OK</div></div>
-    <div style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);border-radius:8px;padding:8px 14px;text-align:center"><div style="font-size:20px;font-weight:800;color:#f87171">1</div><div style="font-size:10px;color:#fca5a5">Crítico</div></div>
+    <div style="background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.4);border-radius:8px;padding:8px 14px;text-align:center"><div style="font-size:20px;font-weight:800;color:#4ade80">10</div><div style="font-size:10px;color:#86efac">Controles OK</div></div>
+    <div style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);border-radius:8px;padding:8px 14px;text-align:center"><div style="font-size:20px;font-weight:800;color:#f87171">3</div><div style="font-size:10px;color:#fca5a5">Crítico</div></div>
     <div style="background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.4);border-radius:8px;padding:8px 14px;text-align:center"><div style="font-size:20px;font-weight:800;color:#fbbf24">3</div><div style="font-size:10px;color:#fcd34d">Advertencias</div></div>
     <div style="background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.4);border-radius:8px;padding:8px 14px;text-align:center"><div style="font-size:20px;font-weight:800;color:#818cf8">2</div><div style="font-size:10px;color:#a5b4fc">Informativos</div></div>
+    <div style="background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.4);border-radius:8px;padding:8px 14px;text-align:center"><div style="font-size:20px;font-weight:800;color:#34d399">1</div><div style="font-size:10px;color:#6ee7b7">Corrección Junio 26</div></div>
   </div>
 </div>
 
@@ -1458,6 +1459,31 @@ code{background:#f1f5f9;padding:1px 5px;border-radius:3px;font-family:monospace;
   </div>
 </div>
 
+<!-- HALLAZGOS REVISIÓN JUNIO 2026 -->
+<div class="section" style="border-left:4px solid #ef4444;padding-left:16px;margin-bottom:24px">
+  <div class="section-title" style="color:#ef4444">&#x1F6A8; Hallazgos Revisión de Seguridad — Junio 2026</div>
+
+  <div style="background:#1e0a0a;border:1px solid #7f1d1d;border-radius:8px;padding:14px 18px;margin-bottom:12px">
+    <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:8px">
+      <span style="background:#dc2626;color:white;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;white-space:nowrap">HIGH · CVE-like</span>
+      <span style="font-weight:700;font-size:13px;color:#fca5a5">Escalación de privilegios vía AnalisisController</span>
+    </div>
+    <div style="font-size:11px;color:#fcd34d;font-family:monospace;margin-bottom:6px">AnalisisController.cs — PATCH /api/analisis/tabla/{nombre}/{id}</div>
+    <div style="font-size:12px;color:#e5e7eb;line-height:1.6">Un usuario con rol <code style="background:#2d1515;padding:1px 4px;border-radius:3px">encargado</code> puede invocar el endpoint de actualización genérica sobre la tabla <code style="background:#2d1515;padding:1px 4px;border-radius:3px">ptar_users</code> y modificar el campo <code style="background:#2d1515;padding:1px 4px;border-radius:3px">rol</code> de cualquier cuenta, dándose permisos de <code style="background:#2d1515;padding:1px 4px;border-radius:3px">administrador</code>, o sobreescribir el <code style="background:#2d1515;padding:1px 4px;border-radius:3px">password_hash</code> de otro usuario para tomar control de su cuenta.</div>
+    <div style="font-size:11px;color:#86efac;margin-top:8px"><strong>Fix:</strong> Agregar <code style="background:#0f2d1a;padding:1px 4px;border-radius:3px">HashSet&lt;string&gt; TablasBloqueadas = {"ptar_users","ptar_refresh_tokens"}</code> y rechazar con 403 en <code>GetTablas</code>, <code>GetTabla</code> y <code>UpdateFila</code>.</div>
+  </div>
+
+  <div style="background:#1e0a0a;border:1px solid #7f1d1d;border-radius:8px;padding:14px 18px">
+    <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:8px">
+      <span style="background:#dc2626;color:white;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;white-space:nowrap">HIGH · Exposición datos</span>
+      <span style="font-weight:700;font-size:13px;color:#fca5a5">Exposición de hashes de contraseñas vía explorador de tablas</span>
+    </div>
+    <div style="font-size:11px;color:#fcd34d;font-family:monospace;margin-bottom:6px">AnalisisController.cs — GET /api/analisis/tabla/ptar_users</div>
+    <div style="font-size:12px;color:#e5e7eb;line-height:1.6">El mismo endpoint de lectura no filtra columnas ni bloquea tablas sensibles. Un encargado puede ejecutar <code style="background:#2d1515;padding:1px 4px;border-radius:3px">SELECT * FROM ptar_users</code> y obtener todos los <code style="background:#2d1515;padding:1px 4px;border-radius:3px">password_hash</code>, emails y roles del sistema. Aunque los hashes con BCrypt no son reversibles directamente, no deben exponerse.</div>
+    <div style="font-size:11px;color:#86efac;margin-top:8px"><strong>Fix:</strong> Mismo bloqueo de tabla que el hallazgo anterior. El fix es único y cubre ambos vectores.</div>
+  </div>
+</div>
+
 <!-- TABLA RESUMEN CONTROLES -->
 <div class="section">
   <div class="section-title">&#x1F4CA; Resumen de Controles de Seguridad</div>
@@ -1481,7 +1507,10 @@ code{background:#f1f5f9;padding:1px 5px;border-radius:3px;font-family:monospace;
     <tr style="border-bottom:1px solid #f1f5f9"><td style="padding:7px 12px;font-weight:600">Content-Security-Policy</td><td style="padding:7px 12px;font-family:monospace;font-size:10px">No configurado</td><td style="padding:7px 12px;text-align:center"><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700">PENDIENTE</span></td><td style="padding:7px 12px;font-family:monospace;font-size:10px">Program.cs</td></tr>
     <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9"><td style="padding:7px 12px;font-weight:600">HSTS</td><td style="padding:7px 12px;font-family:monospace;font-size:10px">No configurado</td><td style="padding:7px 12px;text-align:center"><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700">PENDIENTE</span></td><td style="padding:7px 12px;font-family:monospace;font-size:10px">Program.cs</td></tr>
     <tr style="border-bottom:1px solid #f1f5f9"><td style="padding:7px 12px;font-weight:600">Secure=true en dev</td><td style="padding:7px 12px;font-family:monospace;font-size:10px">Solo activo en producción</td><td style="padding:7px 12px;text-align:center"><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700">REVISAR</span></td><td style="padding:7px 12px;font-family:monospace;font-size:10px">AuthController.cs:33</td></tr>
-    <tr style="background:#f8fafc"><td style="padding:7px 12px;font-weight:600">Credenciales en .env legacy</td><td style="padding:7px 12px;font-family:monospace;font-size:10px">ptar-backend/.env en disco</td><td style="padding:7px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700">RIESGO</span></td><td style="padding:7px 12px;font-family:monospace;font-size:10px">ptar-backend/.env</td></tr>
+    <tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9"><td style="padding:7px 12px;font-weight:600">Credenciales en .env legacy</td><td style="padding:7px 12px;font-family:monospace;font-size:10px">ptar-backend/.env en disco</td><td style="padding:7px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700">RIESGO</span></td><td style="padding:7px 12px;font-family:monospace;font-size:10px">ptar-backend/.env</td></tr>
+    <tr style="border-bottom:1px solid #f1f5f9;background:#fff0f0"><td style="padding:7px 12px;font-weight:600">AnalisisController — blocklist tablas</td><td style="padding:7px 12px;font-family:monospace;font-size:10px">Sin lista de tablas prohibidas</td><td style="padding:7px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700">CRÍTICO</span></td><td style="padding:7px 12px;font-family:monospace;font-size:10px">AnalisisController.cs:143</td></tr>
+    <tr style="border-bottom:1px solid #f1f5f9;background:#fff0f0"><td style="padding:7px 12px;font-weight:600">AnalisisController — exposición ptar_users</td><td style="padding:7px 12px;font-family:monospace;font-size:10px">SELECT * sin filtro de columnas</td><td style="padding:7px 12px;text-align:center"><span style="background:#fee2e2;color:#dc2626;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700">CRÍTICO</span></td><td style="padding:7px 12px;font-family:monospace;font-size:10px">AnalisisController.cs:221</td></tr>
+    <tr style="background:#f0fdf4"><td style="padding:7px 12px;font-weight:600">credentials: 'include' en tablas</td><td style="padding:7px 12px;font-family:monospace;font-size:10px">Corregido en Tablas Calidad/Caudales/Reactivos</td><td style="padding:7px 12px;text-align:center"><span style="background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700">OK ✓ Jun 26</span></td><td style="padding:7px 12px;font-family:monospace;font-size:10px">TablaCalidad/Caudales/Reactivos.tsx</td></tr>
   </table>
 </div>
 
@@ -1927,17 +1956,55 @@ code{background:#f1f5f9;padding:1px 5px;border-radius:3px;font-family:monospace;
 
   <!-- ROOT -->
   <div style="font-size:11px;font-weight:700;color:#0ea5e9;margin:14px 0 6px;text-transform:uppercase;letter-spacing:.05em">📁 Raíz del proyecto — ptar-backend-dotnet/PtarApi/</div>
+  <div style="font-size:11px;color:#64748b;margin-bottom:8px">Estos son los 6 archivos sueltos que viven en la raíz del backend — ninguno se toca a mano en el día a día, pero cada uno cumple un rol específico al arrancar o compilar el proyecto.</div>
   <table class="data">
-    <thead><tr><th>Archivo</th><th>Rol</th></tr></thead>
+    <thead><tr><th>Archivo</th><th>Qué es</th><th>Para qué sirve</th></tr></thead>
     <tbody>
-      <tr><td><code>Program.cs</code></td><td>Punto de entrada: DI, middleware pipeline, JWT, CORS, rate limiting, EF Core, Dapper, seguridad headers</td></tr>
-      <tr><td><code>appsettings.json</code></td><td>Config de BD MySQL, JWT (key, issuer, audience, expiry), CORS origins, SharePoint</td></tr>
-      <tr><td><code>appsettings.Development.json</code></td><td>Overrides locales: connection string dev, logging verbose</td></tr>
-      <tr><td><code>PtarApi.csproj</code></td><td>Definición del proyecto: NuGet packages, target framework net10.0</td></tr>
-      <tr><td><code>SETUP.txt</code></td><td>Instrucciones de instalación y configuración inicial del backend</td></tr>
-      <tr><td><code>start-backend.ps1</code></td><td>Script PowerShell para levantar el servidor en Windows</td></tr>
+      <tr>
+        <td><code>Program.cs</code></td>
+        <td>Punto de entrada del servidor</td>
+        <td>Es el archivo que arranca todo. Registra servicios (base de datos, JWT, CORS, rate limiting), define el orden en que se procesa cada petición y lanza el servidor en el puerto 8001. Sin este archivo el backend no corre.</td>
+      </tr>
+      <tr>
+        <td><code>appsettings.json</code></td>
+        <td>Configuración base (versionada)</td>
+        <td>Contiene los parámetros generales: URL del servidor MySQL, nombre de la base de datos, configuración del JWT (emisor, audiencia, tiempo de expiración), orígenes CORS permitidos y límites de rate limiting. Este archivo SÍ va a Git.</td>
+      </tr>
+      <tr>
+        <td><code>appsettings.Development.json</code></td>
+        <td>Configuración para desarrollo local</td>
+        <td>Sobreescribe partes de <code>appsettings.json</code> cuando el servidor corre en modo desarrollo. Activa logs detallados en consola y ajusta parámetros para trabajo local. Va a Git (sin secretos).</td>
+      </tr>
+      <tr style="background:#fff7ed">
+        <td><code>appsettings.Local.json</code> <span style="background:#fef3c7;color:#92400e;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700">GITIGNORED</span></td>
+        <td>Credenciales y secretos locales</td>
+        <td>Este archivo existe solo en tu máquina y <strong>nunca se sube a Git</strong>. Aquí viven la contraseña real de MySQL (<code>PtarApp2026#Sec</code>), la clave secreta para firmar los JWT y cualquier otro dato sensible. Si alguien clona el proyecto, debe crearlo manualmente.</td>
+      </tr>
+      <tr>
+        <td><code>PtarApi.csproj</code></td>
+        <td>Manifiesto del proyecto .NET</td>
+        <td>Es el equivalente del <code>package.json</code> de Node. Define que el proyecto usa .NET 10, lista todos los paquetes NuGet instalados (Dapper, EF Core, QuestPDF, BCrypt, MSAL…) y sus versiones. Cuando corres <code>dotnet restore</code>, .NET lee este archivo y descarga lo que falta.</td>
+      </tr>
+      <tr>
+        <td><code>.gitignore</code></td>
+        <td>Lista de exclusiones de Git</td>
+        <td>Le dice a Git qué archivos ignorar: <code>appsettings.Local.json</code> (secretos), las carpetas <code>bin/</code> y <code>obj/</code> (compilaciones), y cualquier archivo temporal. Protege que secretos o binarios se suban accidentalmente al repositorio.</td>
+      </tr>
     </tbody>
   </table>
+
+  <!-- CARPETAS GENERADAS -->
+  <div style="font-size:11px;font-weight:700;color:#64748b;margin:18px 0 6px;text-transform:uppercase;letter-spacing:.05em">📁 Carpetas generadas automáticamente (no tocar)</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px">
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:12px">
+      <div style="font-family:monospace;font-weight:700;font-size:12px;color:#475569;margin-bottom:4px">bin/</div>
+      <div style="font-size:11px;color:#64748b">Binarios compilados — aquí queda el ejecutable <code>.dll</code> del backend después de cada compilación. Es lo que realmente corre el servidor. Se regenera sola al compilar. Nunca se edita ni se sube a Git.</div>
+    </div>
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:12px">
+      <div style="font-family:monospace;font-weight:700;font-size:12px;color:#475569;margin-bottom:4px">obj/</div>
+      <div style="font-size:11px;color:#64748b">Archivos intermedios de compilación — caché interna que usa .NET para compilar más rápido en la segunda vez. No tiene utilidad directa. Se puede borrar sin problema (se vuelve a crear al compilar). Nunca va a Git.</div>
+    </div>
+  </div>
 
   <!-- DATA -->
   <div style="font-size:11px;font-weight:700;color:#0ea5e9;margin:14px 0 6px;text-transform:uppercase;letter-spacing:.05em">📁 Data/ — Capa de acceso a datos</div>

@@ -1,3 +1,4 @@
+// Hook para calcular ratios kg_químico / kg_SST_removido por día (barras apiladas + línea kg removidos)
 /**
  * useKgQuimico
  * Calcula ratios: kg_quimico / kg_contaminante_removido por DÍA
@@ -20,6 +21,7 @@
 import { useState, useEffect } from 'react';
 import { getCalidadMediciones, getGemEficiencia } from '../../../services/ptarClient';
 
+// Forma de cada punto diario: ratios de los 4 químicos + kg removidos para la línea
 export interface KgQuimicoPoint {
   label:            string;   // "01/04"
   fecha:            string;
@@ -31,6 +33,7 @@ export interface KgQuimicoPoint {
   sinDatos:         boolean;
 }
 
+// Genera arreglo de fechas "YYYY-MM-DD" entre inicio y fin (inclusive)
 function generarFechas(inicio: string, fin: string): string[] {
   const fechas: string[] = [];
   const cur = new Date(inicio + 'T00:00:00');
@@ -49,12 +52,15 @@ const TURNO_KEY: Record<string, string> = {
 // Parámetro de contaminante removido (Sólidos Suspendidos Totales — igual que Excel)
 const PARAM_REMOVIDO = 'SST';
 
+// Hook principal — devuelve serie real y serie completa con días vacíos
 export function useKgQuimico(fechaInicio: string, fechaFin: string) {
+  // Estados de carga, error, serie real y serie completa
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState<string | null>(null);
   const [data,    setData]    = useState<KgQuimicoPoint[]>([]);
   const [allData, setAllData] = useState<KgQuimicoPoint[]>([]);
 
+  // Dispara la carga al cambiar el rango de fechas
   useEffect(() => {
     if (!fechaInicio || !fechaFin) return;
     let cancelled = false;
@@ -63,6 +69,7 @@ export function useKgQuimico(fechaInicio: string, fechaFin: string) {
 
     async function load() {
       try {
+        // Consultas paralelas: concentraciones SST + datos de operación GEM
         const [medRows, gemRows] = await Promise.all([
           getCalidadMediciones({
             parametro:    PARAM_REMOVIDO,
@@ -107,7 +114,7 @@ export function useKgQuimico(fechaInicio: string, fechaFin: string) {
           });
         }
 
-        // Agrupar por fecha
+        // Agrupar kg removidos y kg de cada químico por fecha
         type DayAcc = {
           kgRem:       number;
           coagulante:  number;
@@ -144,6 +151,8 @@ export function useKgQuimico(fechaInicio: string, fechaFin: string) {
         // (excluye días donde GEM dosificó pero no se midió SST)
         const conDates = new Set(Array.from(conMap.keys()).map(k => k.split('|')[0]));
         const sorted = Array.from(dayMap.keys()).sort().filter(f => conDates.has(f));
+
+        // Función auxiliar — convierte acumulado diario en punto con ratios
         const toPoint = (fecha: string, day: { kgRem:number; coagulante:number; decolorante:number; polAnionico:number; cationico:number }, sinDatos: boolean): KgQuimicoPoint => {
           const rem = day.kgRem;
           const [, m, d] = fecha.split('-');
@@ -159,6 +168,7 @@ export function useKgQuimico(fechaInicio: string, fechaFin: string) {
           };
         };
 
+        // Acumulador vacío para días sin datos en allData
         const EMPTY = { kgRem:0, coagulante:0, decolorante:0, polAnionico:0, cationico:0 };
         const result = sorted.map(f => toPoint(f, dayMap.get(f)!, false));
 

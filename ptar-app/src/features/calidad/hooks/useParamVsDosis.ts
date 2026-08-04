@@ -1,3 +1,4 @@
+// Hook para cruzar concentración de parámetro (entrada/salida GEM) con dosis de químicos por turno
 /**
  * useParamVsDosis
  * Carga datos para "PARÁMETRO VS DOSIS DE QUÍMICO":
@@ -10,6 +11,7 @@
 import { useState, useEffect } from 'react';
 import { getCalidadMediciones, getGemEficiencia } from '../../../services/ptarClient';
 
+// Forma de cada punto del gráfico (un turno de un día)
 export interface ParamVsDosisPoint {
   label:             string;        // "DD - TX"
   fecha:             string;
@@ -30,16 +32,18 @@ const TURNO_KEY: Record<string, string> = {
   tarde:  'T3',
 };
 
-/** Devuelve todos los PPM de los 5 químicos GEM por turno */
+// Hook principal — devuelve todos los PPM de los 5 químicos GEM por turno
 export function useParamVsDosis(
   fechaInicio: string,
   fechaFin:    string,
   parametro:   string,
 ) {
+  // Estados de carga, error y resultado
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState<string | null>(null);
   const [data,    setData]    = useState<ParamVsDosisPoint[]>([]);
 
+  // Dispara la carga paralela al cambiar el rango o parámetro
   useEffect(() => {
     if (!fechaInicio || !fechaFin || !parametro) return;
     let cancelled = false;
@@ -48,6 +52,7 @@ export function useParamVsDosis(
 
     async function load() {
       try {
+        // Consultas paralelas: mediciones del parámetro + eficiencia GEM
         const [medRows, gemRows] = await Promise.all([
           getCalidadMediciones({
             parametro,
@@ -92,10 +97,11 @@ export function useParamVsDosis(
           });
         }
 
-        // Union ordenada
+        // Union ordenada de todas las claves (fecha|turno) disponibles
         const allKeys = new Set([...medMap.keys(), ...ppmMap.keys()]);
         const sorted  = Array.from(allKeys).sort();
 
+        // Construir puntos finales combinando mediciones y PPM
         const result: ParamVsDosisPoint[] = sorted.map(key => {
           const [fecha, turnoStr] = key.split('|');
           const day  = fecha.slice(8, 10);

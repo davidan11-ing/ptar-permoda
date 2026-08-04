@@ -5,6 +5,7 @@
  */
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../../state/ThemeContext';
 import { ROUTES } from '../../lib/routes';
 import TablaCalidad    from './components/TablaCalidad';
 import TablaReactivos  from './components/TablaReactivos';
@@ -21,6 +22,7 @@ function defaultFechas() {
 
 export default function RegistrosPanel() {
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const { inicio, fin } = defaultFechas();
 
   const [tab,          setTab]          = useState<Tab>('calidad');
@@ -43,7 +45,7 @@ export default function RegistrosPanel() {
         <button
           onClick={() => navigate(ROUTES.ENCARGADO_DASHBOARD)}
           style={{
-            background: 'none', border: '1px solid #30363d', color: '#8b949e',
+            background: 'none', border: `1px solid ${theme.border}`, color: theme.muted,
             borderRadius: 6, padding: '6px 12px', cursor: 'pointer', fontSize: 13,
             display: 'flex', alignItems: 'center', gap: 6,
           }}
@@ -51,10 +53,10 @@ export default function RegistrosPanel() {
           ← Volver
         </button>
         <div>
-          <h1 style={{ fontSize: 20, fontWeight: 700, color: '#e6edf3', margin: 0 }}>
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: theme.text1, margin: 0 }}>
             📋 Registros de Operarios
           </h1>
-          <p style={{ fontSize: 12, color: '#8b949e', margin: '2px 0 0' }}>
+          <p style={{ fontSize: 12, color: theme.muted, margin: '2px 0 0' }}>
             Revisa y edita los formularios ingresados por los operarios
           </p>
         </div>
@@ -64,7 +66,7 @@ export default function RegistrosPanel() {
       <div style={{
         display: 'flex', alignItems: 'center', gap: 12,
         marginBottom: 18, flexWrap: 'wrap',
-        background: '#161b22', border: '1px solid #30363d',
+        background: theme.surface, border: `1px solid ${theme.border}`,
         borderRadius: 8, padding: '12px 16px',
       }}>
         <label className="cal-filter-label">Fecha inicio</label>
@@ -87,7 +89,7 @@ export default function RegistrosPanel() {
         <button
           onClick={() => setBuscar(b => !b)}
           style={{
-            background: '#1f6feb', color: '#fff', border: 'none',
+            background: theme.blue, color: '#fff', border: 'none',
             borderRadius: 6, padding: '7px 18px', cursor: 'pointer',
             fontSize: 13, fontWeight: 600,
           }}
@@ -97,18 +99,18 @@ export default function RegistrosPanel() {
       </div>
 
       {/* ── Tabs ── */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 16, borderBottom: '1px solid #21262d' }}>
+      <div style={{ display: 'flex', gap: 4, marginBottom: 16, borderBottom: `1px solid ${theme.border2}` }}>
         {tabs.map(t => (
           <button key={t.key} onClick={() => setTab(t.key)} style={{
-            background: tab === t.key ? '#1f6feb22' : 'transparent',
+            background: tab === t.key ? theme.chipBlueBg : 'transparent',
             border: 'none',
-            borderBottom: tab === t.key ? '2px solid #1f6feb' : '2px solid transparent',
-            color: tab === t.key ? '#58a6ff' : '#8b949e',
+            borderBottom: tab === t.key ? `2px solid ${theme.blue}` : '2px solid transparent',
+            color: tab === t.key ? theme.lblue : theme.muted,
             padding: '8px 16px', cursor: 'pointer', fontSize: 13, fontWeight: 600,
             display: 'flex', alignItems: 'center', gap: 8,
           }}>
             <span style={{
-              background: tab === t.key ? '#1f6feb' : '#30363d',
+              background: tab === t.key ? theme.blue : theme.border,
               color: '#fff', fontSize: 10, fontWeight: 700,
               padding: '1px 6px', borderRadius: 4,
             }}>{t.badge}</span>

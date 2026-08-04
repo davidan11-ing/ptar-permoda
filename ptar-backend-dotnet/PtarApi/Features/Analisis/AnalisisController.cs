@@ -111,6 +111,20 @@ public class AnalisisController(IDbConnectionFactory db) : ControllerBase
         return Ok(new { columnas, filas });
     }
 
+    // Metadatos de cada vista: editVia = tabla base a la que redirigir PATCH (null = solo lectura)
+    private static readonly Dictionary<string, VistaMeta> VistasMeta = new()
+    {
+        ["lecturas_con_turno"]           = new("contadores_lectura",        ["contadores_lectura"]),
+        ["v_balance_hidrico"]            = new(null,                         ["balance_hidrico_manual", "consumo_turno", "operacion_gem_turno"]),
+        ["v_calidad_estadisticas"]       = new(null,                         ["medicion_calidad"]),
+        ["v_calidad_remociones"]         = new(null,                         ["medicion_calidad"]),
+        ["v_consumo_quimico_diario"]     = new(null,                         ["operacion_gem_turno", "operacion_ro_turno"]),
+        ["v_consumo_quimico_mensual"]    = new(null,                         ["operacion_gem_turno", "operacion_ro_turno"]),
+        ["v_quimico_estadisticas_dia"]   = new(null,                         ["operacion_gem_turno", "operacion_ro_turno"]),
+        ["v_quimico_real_vs_proyectado"] = new(null,                         ["proyeccion_quimica_mensual", "proyeccion_caudal_mensual"]),
+        ["v_tabla_datos_1"]              = new(null,                         ["medicion_calidad"]),
+    };
+
     // ── GET /api/analisis/tablas ──────────────────────────────────────────────
     [HttpGet("tablas")]
     public async Task<IActionResult> GetTablas()
@@ -123,7 +137,7 @@ public class AnalisisController(IDbConnectionFactory db) : ControllerBase
             "ORDER BY TABLE_TYPE, TABLE_NAME");
         var tablas = rows.Where(r => r.TableType == "BASE TABLE").Select(r => r.TableName).ToList();
         var vistas = rows.Where(r => r.TableType == "VIEW").Select(r => r.TableName).ToList();
-        return Ok(new { tablas, vistas });
+        return Ok(new { tablas, vistas, vistasMeta = VistasMeta });
     }
 
     // ── GET /api/analisis/tabla/{nombre} ──────────────────────────────────────
@@ -144,8 +158,11 @@ public class AnalisisController(IDbConnectionFactory db) : ControllerBase
             "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = @nombre",
             new { nombre });
         if (tablaInfo is null) return NotFound(new { detail = "Tabla no encontrada" });
-        var tablaReal = tablaInfo.TableName;
-        var isView    = tablaInfo.TableType == "VIEW";
+        var tablaReal  = tablaInfo.TableName;
+        var isView     = tablaInfo.TableType == "VIEW";
+        var vistaMeta  = isView && VistasMeta.TryGetValue(tablaReal, out var vm) ? vm : null;
+        var editVia    = vistaMeta?.EditVia;   // tabla base para el PATCH (null = solo lectura)
+        var fuentes    = vistaMeta?.Fuentes ?? [];
 
         // Columnas con tipo y PK
         var columnas = (await conn.QueryAsync<ColInfoDb>(
@@ -190,11 +207,13 @@ public class AnalisisController(IDbConnectionFactory db) : ControllerBase
             {
                 columnName = c.ColumnName,
                 dataType   = c.DataType,
-                isPk       = !isView && c.ColumnKey == "PRI",
+                isPk       = c.ColumnKey == "PRI" || (editVia != null && c.ColumnName == "id"),
             }),
             filas,
             total,
             isView,
+            editVia,   // null → solo lectura; string → tabla base a la que redirigir el PATCH
+            fuentes,   // tablas base que alimentan esta vista
         });
     }
 
@@ -207,22 +226,27 @@ public class AnalisisController(IDbConnectionFactory db) : ControllerBase
     {
         await using var conn = db.Create();
 
+        // Si 'nombre' es una vista con editVia, redirigir a la tabla base
+        var nombreEfectivo = nombre;
+        if (VistasMeta.TryGetValue(nombre, out var vmPatch) && vmPatch.EditVia != null)
+            nombreEfectivo = vmPatch.EditVia;
+
         var tablaReal = await conn.QueryFirstOrDefaultAsync<string>(
             "SELECT TABLE_NAME FROM information_schema.TABLES " +
             "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = @nombre AND TABLE_TYPE = 'BASE TABLE'",
-            new { nombre });
-        if (tablaReal is null) return NotFound(new { detail = "Tabla no encontrada" });
+            new { nombre = nombreEfectivo });
+        if (tablaReal is null) return NotFound(new { detail = "Tabla no encontrada o no editable" });
 
         var pkCol = await conn.QueryFirstOrDefaultAsync<string>(
             "SELECT COLUMN_NAME FROM information_schema.COLUMNS " +
             "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = @nombre AND COLUMN_KEY = 'PRI'",
-            new { nombre });
+            new { nombre = nombreEfectivo });
         if (pkCol is null) return BadRequest(new { detail = "La tabla no tiene clave primaria" });
 
         var colsValidas = (await conn.QueryAsync<string>(
             "SELECT COLUMN_NAME FROM information_schema.COLUMNS " +
             "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = @nombre",
-            new { nombre })).ToHashSet();
+            new { nombre = nombreEfectivo })).ToHashSet();
 
         var validos = cambios
             .Where(c => colsValidas.Contains(c.Key) && c.Key != pkCol)
@@ -249,6 +273,7 @@ public class AnalisisController(IDbConnectionFactory db) : ControllerBase
 record FuenteInfo(string Label, string Sql, string FiltroFecha);
 record ColInfoDb(string ColumnName, string DataType, string ColumnKey);
 record TablaTypeDb(string TableName, string TableType);
+record VistaMeta(string? EditVia, string[] Fuentes);
 
 public record DatosRequest(
     string  Fuente,

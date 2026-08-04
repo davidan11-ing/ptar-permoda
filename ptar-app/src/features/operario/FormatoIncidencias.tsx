@@ -1,3 +1,4 @@
+// Formato F-04: registro de incidencias de calidad por unidad de tratamiento con parámetros diarios y adicionales
 import { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../state/AuthContext';
@@ -37,10 +38,12 @@ interface FormState {
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
+// Crea un ParamInput vacío con valores por defecto
 const makeParamInput = (): ParamInput => ({
   valor: '', no_aplica: false, observaciones: '',
 });
 
+// Estado inicial de parámetros diarios con todos los campos vacíos
 const INITIAL_DAILY = Object.fromEntries(
   PARAMS_DIARIOS.map(p => [p.id, makeParamInput()])
 ) as Record<DiarioId, ParamInput>;
@@ -48,10 +51,12 @@ const INITIAL_DAILY = Object.fromEntries(
 let uidCounter = 0;
 const newUid = () => `extra-${++uidCounter}`;
 
+// Determina el step del input numérico según la cantidad de decimales del parámetro
 const stepForDecimals = (d: number) => d === 0 ? '1' : d === 1 ? '0.1' : '0.01';
 
 // ─── Validaciones especiales ─────────────────────────────────────────────────
 
+// Retorna advertencia o error para validaciones cruzadas entre parámetros (pH, TDS vs Conductividad)
 function getParamWarning(
   paramId: string,
   valor: string,
@@ -92,10 +97,12 @@ function getParamWarning(
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
+// Componente principal del formato F-04: incidencias de calidad por unidad de tratamiento
 export default function FormatoIncidencias() {
   const { currentUser } = useAuth();
   const navigate        = useNavigate();
 
+  // Estado del formulario: unidad, observaciones generales, parámetros diarios y extras
   const [form, setForm]           = useState<FormState>({
     unidad_tratamiento: '',
     observaciones_generales: '',
@@ -108,7 +115,7 @@ export default function FormatoIncidencias() {
   const [submitErrors, setSubmitErrors] = useState<Record<string, boolean>>({});
   const savedCountRef = useRef(0);
 
-  // Valores turno anterior
+  // Valores del turno anterior por parámetro para mostrar referencia al operario
   const [prevValues, setPrevValues] = useState<Record<string, UltimoValorCalidad>>({});
   const [loadingPrev, setLoadingPrev] = useState(false);
 
@@ -136,10 +143,12 @@ export default function FormatoIncidencias() {
 
   // ─── Derived values ────────────────────────────────────────────────────────
 
+  // IDs de parámetros diarios que tienen valor ingresado o están marcados como N/A
   const activeDailyIds = PARAMS_DIARIOS
     .filter(p => form.daily[p.id].valor !== '' || form.daily[p.id].no_aplica)
     .map(p => p.id);
 
+  // Filas extras con parámetro seleccionado y valor o N/A ingresado
   const activeExtras = form.extras.filter(
     e => e.id_param !== '' && (e.valor !== '' || e.no_aplica)
   );
@@ -153,11 +162,13 @@ export default function FormatoIncidencias() {
   const totalActive = activeDailyIds.length + activeExtras.length;
   const canSubmit   = form.unidad_tratamiento !== '' && totalActive > 0 && specialErrors.length === 0;
 
+  // Parámetros ocasionales aún no agregados a las filas extras
   const addedExtraIds = new Set(form.extras.map(e => e.id_param).filter(Boolean));
   const availableOcasionales = PARAMS_OCASIONALES.filter(p => !addedExtraIds.has(p.id));
 
   // ─── Setters ───────────────────────────────────────────────────────────────
 
+  // Actualiza un campo de un parámetro diario y limpia su error de validación
   const setDaily = (id: DiarioId, field: keyof ParamInput, value: string | boolean) => {
     setSubmitErrors(prev => { const n = { ...prev }; delete n[id]; return n; });
     setForm(prev => ({
@@ -166,6 +177,7 @@ export default function FormatoIncidencias() {
     }));
   };
 
+  // Actualiza un campo de una fila extra por uid
   const setExtra = (uid: string, field: keyof Omit<ExtraRow, 'uid'>, value: string | boolean) => {
     setSubmitErrors(prev => { const n = { ...prev }; delete n[uid]; return n; });
     setForm(prev => ({
@@ -174,6 +186,7 @@ export default function FormatoIncidencias() {
     }));
   };
 
+  // Agrega una fila extra vacía si hay parámetros ocasionales disponibles
   const addExtra = () => {
     if (availableOcasionales.length === 0) return;
     setForm(prev => ({
@@ -185,12 +198,14 @@ export default function FormatoIncidencias() {
     }));
   };
 
+  // Elimina una fila extra por uid
   const removeExtra = (uid: string) => {
     setForm(prev => ({ ...prev, extras: prev.extras.filter(e => e.uid !== uid) }));
   };
 
   // ─── Validation ────────────────────────────────────────────────────────────
 
+  // Valida que los campos N/A tengan observación; retorna false si hay errores
   const validate = (): boolean => {
     const errors: Record<string, boolean> = {};
     PARAMS_DIARIOS.forEach(p => {
@@ -206,6 +221,7 @@ export default function FormatoIncidencias() {
 
   // ─── Save ──────────────────────────────────────────────────────────────────
 
+  // Construye y envía el batch de registros de calidad a la API
   const doSave = async () => {
     if (!canSubmit) return;
     if (!validate()) return;
@@ -278,6 +294,7 @@ export default function FormatoIncidencias() {
 
   // ─── Render ────────────────────────────────────────────────────────────────
 
+  // Etiqueta dinámica del botón de envío según el estado del formulario
   const submitLabel = (() => {
     if (saving) return 'Guardando...';
     if (totalActive === 0) return 'Completa al menos una medición';
@@ -359,6 +376,7 @@ export default function FormatoIncidencias() {
           </span>
         </div>
 
+        {/* Lista de tarjetas de parámetros diarios con validación y valor anterior */}
         <div className="params-list">
           {PARAMS_DIARIOS.map(p => {
             const inp      = form.daily[p.id];
@@ -472,6 +490,7 @@ export default function FormatoIncidencias() {
           </span>
         </div>
 
+        {/* Filas dinámicas de parámetros ocasionales agregados por el operario */}
         <div className="extras-section">
           {form.extras.map(extra => {
             const selectedParam = PARAMS_OCASIONALES.find(p => p.id === extra.id_param);

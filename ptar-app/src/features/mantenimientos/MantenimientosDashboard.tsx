@@ -1,5 +1,7 @@
+// Página de mantenimientos preventivos: contenedor principal del módulo GFT-PTAR
 import MttoPanel from './MttoPanel';
 
+// Vista de mantenimientos que envuelve el panel con encabezado de sección
 export default function MantenimientosDashboard() {
   return (
     <div className="cal-page">

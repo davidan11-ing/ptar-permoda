@@ -1,6 +1,8 @@
+// Barra de navegación principal con links por rol, selector de rol y acciones de usuario
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../state/AuthContext';
+import { useTheme } from '../../state/ThemeContext';
 import { ROLE_HOME, ROUTES } from '../../lib/routes';
 import { useLocation } from 'react-router-dom';
 import type { Role } from '../../models';
@@ -20,25 +22,30 @@ export const ROLE_LABELS_FULL: Record<Role, string> = {
   administrador: 'Visualizador Ejecutivo',
 };
 
+// Clase CSS del badge según rol
 const ROLE_BADGE: Record<Role, string> = {
   operario: 'badge-operario',
   encargado: 'badge-encargado',
   administrador: 'badge-admin',
 };
 
+// Navbar principal de la aplicación
 export default function Navbar() {
   const { currentUser, selectRole, logout } = useAuth();
+  const { isDark, toggle } = useTheme();
   const navigate  = useNavigate();
   const location  = useLocation();
   const [showPwModal, setShowPwModal] = useState(false);
 
   if (!currentUser) return null;
 
+  // Cambia el rol activo y redirige al home del rol seleccionado
   const handleRoleSwitch = (role: Role) => {
     selectRole(role);
     navigate(ROLE_HOME[role]);
   };
 
+  // Cierra sesión y redirige al login
   const handleLogout = () => {
     logout();
     navigate(ROUTES.LOGIN);
@@ -46,6 +53,7 @@ export default function Navbar() {
 
   return (
     <header className="navbar">
+      {/* Logo y título de la app */}
       <Link to="/" className="navbar-brand" style={{ textDecoration: 'none' }}>
         <div className="navbar-logo">
           <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
@@ -58,6 +66,7 @@ export default function Navbar() {
         <span className="navbar-title">PTAR <span className="navbar-subtitle">Sistema de Gestión</span></span>
       </Link>
 
+      {/* Links de navegación filtrados por rol activo */}
       <nav className="navbar-nav">
         {currentUser.activeRole === 'operario' && (
           <>
@@ -69,11 +78,11 @@ export default function Navbar() {
             <Link to={ROUTES.FORMATO_CONDICIONES_OP}  className={`nav-link${location.pathname === ROUTES.FORMATO_CONDICIONES_OP ? ' active' : ''}`}>Condiciones</Link>
           </>
         )}
-        {(currentUser.activeRole === 'encargado' || currentUser.activeRole === 'administrador') && (
+        {currentUser.activeRole === 'encargado' && (
           <>
             <Link
-              to={ROLE_HOME[currentUser.activeRole]}
-              className={`nav-link${location.pathname === ROLE_HOME[currentUser.activeRole] ? ' active' : ''}`}
+              to={ROLE_HOME['encargado']}
+              className={`nav-link${location.pathname === ROLE_HOME['encargado'] ? ' active' : ''}`}
             >
               Dashboard
             </Link>
@@ -109,10 +118,28 @@ export default function Navbar() {
             </Link>
           </>
         )}
+        {currentUser.activeRole === 'administrador' && (
+          <>
+            <Link
+              to={ROLE_HOME['administrador']}
+              className={`nav-link${location.pathname === ROLE_HOME['administrador'] ? ' active' : ''}`}
+            >
+              Dashboard
+            </Link>
+            <Link
+              to={ROUTES.MANTENIMIENTOS}
+              className={`nav-link${location.pathname.startsWith(ROUTES.MANTENIMIENTOS) ? ' active' : ''}`}
+            >
+              🔧 Mantenimientos
+            </Link>
+          </>
+        )}
       </nav>
 
+      {/* Sección derecha: selector de rol, badge, nombre de usuario y acciones */}
       <div className="navbar-user">
         {currentUser.roles.length > 1 && (
+          // Botones para cambiar entre los roles disponibles del usuario
           <div className="role-switcher">
             {currentUser.roles.map(r => (
               <button
@@ -132,6 +159,14 @@ export default function Navbar() {
           {ROLE_LABELS[currentUser.activeRole]}
         </span>
         <span className="user-name">{currentUser.nombre}</span>
+        <button
+          className="logout-btn"
+          style={{ background: 'none', border: '1px solid #30363d', color: '#8b949e', marginRight: 4, fontSize: 14 }}
+          onClick={toggle}
+          title={isDark ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
+        >
+          {isDark ? '☀' : '☾'}
+        </button>
         <button
           className="logout-btn"
           style={{ background: 'none', border: '1px solid #30363d', color: '#8b949e', marginRight: 4 }}

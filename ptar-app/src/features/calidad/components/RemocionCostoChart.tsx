@@ -18,7 +18,7 @@ import { xLabel, sortKey, generateAllPeriods } from '../../../lib/utils/agruparT
 const COLOR_BAR  = '#ED7D31';   // naranja — costo $/m³
 const COLOR_LINE = '#70AD47';   // verde   — % remoción
 
-// ─── Label rotado -90° para las barras (costo $/m³) ───────────────────────
+// Label rotado -90° sobre cada barra de costo $/m³
 function LabelBarra(props: any) {
   const { x, y, width, value } = props;
   if (!value || value === 0) return null;
@@ -32,7 +32,7 @@ function LabelBarra(props: any) {
   );
 }
 
-// ─── Label rotado -90° para la línea (% remoción) ─────────────────────────
+// Label rotado -90° sobre cada punto de la línea de remoción
 function LabelLinea(props: any) {
   const { x, y, value } = props;
   if (value === undefined || value === null || value === 0) return null;
@@ -44,7 +44,7 @@ function LabelLinea(props: any) {
   );
 }
 
-// ─── Tooltip personalizado dark ───────────────────────────────────────────
+// Tooltip oscuro personalizado con costo y remoción por turno
 function TooltipCustom({ active, payload, label, param }: any) {
   if (!active || !payload?.length) return null;
   return (
@@ -71,6 +71,7 @@ interface Props {
   granularidad?: Granularidad | null;
 }
 
+// Genera array de fechas ISO diarias entre inicio y fin (inclusive)
 function generarFechas(inicio: string, fin: string): string[] {
   const fechas: string[] = [];
   const cur = new Date(inicio + 'T00:00:00');
@@ -79,10 +80,12 @@ function generarFechas(inicio: string, fin: string): string[] {
   return fechas;
 }
 
-// ─── Componente principal ──────────────────────────────────────────────────
+// Gráfica combinada barras (costo $/m³) + línea (% remoción GEM) con selector propio
 export default function RemocionCostoChart({ fechaInicio, fechaFin, parametro: paramProp, granularidad }: Props) {
+  // Lista de parámetros disponibles y selección local independiente del padre
   const [parametros,      setParametros]      = useState<string[]>([]);
   const [parametroLocal,  setParametroLocal]  = useState('');
+  // Toggle para mostrar turnos sin datos como ceros
   const [mostrarVacios,   setMostrarVacios]   = useState(false);
 
   // Cargar lista de parámetros disponibles desde la BD
@@ -98,7 +101,7 @@ export default function RemocionCostoChart({ fechaInicio, fechaFin, parametro: p
     }).catch(() => {});
   }, []);
 
-  // Si el padre cambia su parámetro y coincide con uno disponible, sincronizar
+  // Sincronizar parámetro local cuando el padre cambia su selección
   useEffect(() => {
     if (paramProp && parametros.includes(paramProp)) {
       setParametroLocal(paramProp);
@@ -115,6 +118,7 @@ export default function RemocionCostoChart({ fechaInicio, fechaFin, parametro: p
     return m;
   }, [rawData]);
 
+  // Agrupa y promedia según granularidad; rellena vacíos si el toggle está activo
   const data = useMemo(() => {
     const gran = granularidad;
     // Para día/semana/mes → agrupar y promediar
@@ -166,6 +170,7 @@ export default function RemocionCostoChart({ fechaInicio, fechaFin, parametro: p
     return rows;
   }, [rawData, dataIdx, mostrarVacios, fechaInicio, fechaFin, granularidad]);
 
+  // Estados de carga, error o sin datos
   const renderBody = () => {
     if (loading) return (
       <div style={{ height:280, display:'flex', alignItems:'center',
@@ -186,6 +191,7 @@ export default function RemocionCostoChart({ fechaInicio, fechaFin, parametro: p
       </div>
     );
 
+    // Dominio Y izquierdo (remoción) y derecho (costo) calculados dinámicamente
     const rems    = data.map(d => d.remocion).filter(v => v !== 0);
     const minRem  = rems.length ? Math.min(...rems) : -0.1;
     const maxRem  = rems.length ? Math.max(...rems) :  0.15;
@@ -195,6 +201,7 @@ export default function RemocionCostoChart({ fechaInicio, fechaFin, parametro: p
     const maxCosto = costos.length ? Math.max(...costos) : 5000;
     const yRMax   = Math.ceil(maxCosto / 500) * 500 + 500;
 
+    // Gráfica combinada con barra de costo (eje der.) y línea de remoción (eje izq.)
     return (
       <ResponsiveContainer width="100%" height={320}>
         <ComposedChart data={data} margin={{ top:40, right:0, left:5, bottom:20 }}>
@@ -226,6 +233,7 @@ export default function RemocionCostoChart({ fechaInicio, fechaFin, parametro: p
     );
   };
 
+  // Contenedor con selector de parámetro, toggle de vacíos y gráfica
   return (
     <div>
       {/* ── Selector de parámetro propio ── */}

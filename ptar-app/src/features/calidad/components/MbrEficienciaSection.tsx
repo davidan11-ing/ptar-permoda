@@ -1,3 +1,4 @@
+// Sección de eficiencia MBR: DQO y SST internos vs permeados de MBR 1 y MBR 2
 import {
   BarChart, Bar, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -10,13 +11,16 @@ interface Props {
   loading: boolean;
 }
 
+// Estilos del tooltip oscuro compartidos por todas las sub-gráficas
 const TOOLTIP_STYLE = {
   contentStyle: { background: '#161b22', border: '1px solid #30363d', borderRadius: 8, fontSize: 12 },
   labelStyle:   { color: '#e6edf3', marginBottom: 4 },
 };
 
+// Estilo de texto para los ejes X e Y
 const AXIS_TICK = { fill: '#8b949e', fontSize: 11 };
 
+// Formatea fecha YYYY-MM-DD → DD/MM para el eje X
 function formatFecha(f: string) {
   const parts = f.split('-');
   return parts.length >= 3 ? `${parts[2]}/${parts[1]}` : f;
@@ -59,6 +63,7 @@ interface SubChartProps {
   unidad_medida?: string;
 }
 
+// Sub-gráfica reutilizable: barras o líneas según el prop `tipo`
 function SubChart({ title, chartData, series, tipo, unidad_medida = '' }: SubChartProps) {
   const empty = chartData.length === 0 || !chartData.some(r => series.some(s => r[s.key] != null));
   return (
@@ -104,6 +109,7 @@ function SubChart({ title, chartData, series, tipo, unidad_medida = '' }: SubCha
   );
 }
 
+// Sección principal con grid de 5 gráficas + tabla resumen de promedios MBR
 export default function MbrEficienciaSection({ data, loading }: Props) {
   if (loading) {
     return (
@@ -132,6 +138,7 @@ export default function MbrEficienciaSection({ data, loading }: Props) {
         <span className="cal-section-meta">Interno vs Permeado · MBR 1 y MBR 2</span>
       </div>
 
+      {/* Grid de gráficas y tabla resumen */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <div className="dash-card" style={{ padding: 16 }}>
           <SubChart
@@ -207,6 +214,7 @@ export default function MbrEficienciaSection({ data, loading }: Props) {
           {data.length === 0 ? (
             <div className="cal-empty">Sin datos MBR para el período</div>
           ) : (
+            // Tabla de promedios DQO y SST por unidad de tratamiento
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
               <thead>
                 <tr>

@@ -1,3 +1,6 @@
+// Catálogo completo de medidores de caudal con ubicación, tipo de agua y configuración
+
+// Definición de todos los contadores de agua instalados en planta
 export const CONTADORES = [
   // ─── Diarios principales ─────────────────────────────────────────────────
   { id: 'C-01', nombre: 'Contador Entrada Agua Potable Principal 6"',
@@ -112,6 +115,7 @@ export const CONTADORES = [
     ubicacion: 'Zona de Lodos',          tipo_agua: 'Entra T.Recirc'                     },
 ] as const;
 
+// Tipo derivado de los IDs del catálogo de contadores
 export type ContadorId = typeof CONTADORES[number]['id'];
 
 // Orden fijo de los 20 contadores principales (aparecen siempre en este orden)
@@ -120,10 +124,12 @@ export const DIARIOS_IDS: ContadorId[] = [
   'C-16', 'C-17', 'C-36', 'C-19', 'C-20', 'C-21', 'C-22', 'C-23', 'C-26', 'C-27', 'C-28',
 ];
 
+// Mapa de acceso rápido y agrupaciones de contadores por categoría
 export const CONTADORES_MAP = Object.fromEntries(CONTADORES.map(c => [c.id, c])) as Record<ContadorId, typeof CONTADORES[number]>;
 export const CONTADORES_DIARIOS    = DIARIOS_IDS.map(id => CONTADORES_MAP[id]);
 export const CONTADORES_OPCIONALES = CONTADORES.filter(c => !DIARIOS_IDS.includes(c.id as ContadorId));
 
+// Mapa de clase CSS según el tipo de agua del contador
 export const TIPO_AGUA_CLASS: Record<string, string> = {
   'Entra T.Recirc':  'badge-agua-potable',
   'Sale T.Recirc':   'badge-agua-industrial',

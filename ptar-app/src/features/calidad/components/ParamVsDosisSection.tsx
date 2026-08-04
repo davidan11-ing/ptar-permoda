@@ -26,6 +26,7 @@ const QUIMICOS = [
 
 type QuimicoKey = typeof QUIMICOS[number]['key'];
 
+// Genera arreglo de fechas YYYY-MM-DD entre inicio y fin (inclusive)
 function generarFechas(inicio: string, fin: string): string[] {
   const fechas: string[] = [];
   const cur = new Date(inicio + 'T00:00:00');
@@ -39,6 +40,7 @@ const COLOR_ENTRADA = '#7030A0';
 const COLOR_SALIDA  = '#00B0F0';
 
 // ─── Tooltip dark ─────────────────────────────────────────────────────────
+// Tooltip personalizado con fondo oscuro para el gráfico combinado
 function TooltipCustom({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
@@ -58,9 +60,13 @@ function TooltipCustom({ active, payload, label }: any) {
 interface Props { fechaInicio: string; fechaFin: string; granularidad?: Granularidad | null }
 
 // ─── Componente ───────────────────────────────────────────────────────────
+// Gráfico combinado barras (parámetro) + líneas (PPM químicos) con multi-selección de reactivos
 export default function ParamVsDosisSection({ fechaInicio, fechaFin, granularidad }: Props) {
+  // Parámetro de calidad seleccionado
   const [parametro,       setParametro]       = useState('');
+  // Químicos activos para mostrar como línea PPM
   const [quimicosActivos, setQuimicosActivos] = useState<QuimicoKey[]>(['ppm_pol_cationico']);
+  // Toggle para incluir turnos sin datos en el calendario
   const [mostrarVacios,   setMostrarVacios]   = useState(false);
 
   // Lista de parámetros disponibles
@@ -73,8 +79,10 @@ export default function ParamVsDosisSection({ fechaInicio, fechaFin, granularida
 
   const { data: rawData, loading, error } = useParamVsDosis(fechaInicio, fechaFin, param);
 
+  // Objeto vacío de PPM para turnos sin registro
   const NULL_PPM = { ppm_acido:null, ppm_coagulante:null, ppm_decolorante:null, ppm_pol_anionico:null, ppm_pol_cationico:null };
 
+  // Índice rápido fecha|turno → fila real para relleno de vacíos
   const realIdx = useMemo(() => {
     const m = new Map<string, typeof rawData[0]>();
     rawData.forEach(r => m.set(`${r.fecha}|${r.turno}`, r));
@@ -83,6 +91,7 @@ export default function ParamVsDosisSection({ fechaInicio, fechaFin, granularida
 
   const PPM_KEYS = ['ppm_acido','ppm_coagulante','ppm_decolorante','ppm_pol_anionico','ppm_pol_cationico'] as const;
 
+  // Puntos del gráfico: agrupados por granularidad o turno a turno con/sin vacíos
   const chartData = useMemo(() => {
     const gran = granularidad;
 
@@ -148,6 +157,7 @@ export default function ParamVsDosisSection({ fechaInicio, fechaFin, granularida
           r.ppm_acido != null || r.ppm_coagulante != null ||
           r.ppm_decolorante != null || r.ppm_pol_anionico != null || r.ppm_pol_cationico != null);
     }
+    // Calendario completo con slots vacíos por fecha × turno
     const rows: ReturnType<typeof toRow>[] = [];
     generarFechas(fechaInicio, fechaFin).forEach(f => {
       ['T1','T2','T3'].forEach(t => {
@@ -224,6 +234,7 @@ export default function ParamVsDosisSection({ fechaInicio, fechaFin, granularida
             letterSpacing:'0.05em' }}>
             Químicos GEM (selección múltiple)
           </span>
+          {/* Botones pill: activo = fondo sólido, inactivo = borde transparente */}
           <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
             {QUIMICOS.map(q => {
               const activo = quimicosActivos.includes(q.key);

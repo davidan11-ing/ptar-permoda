@@ -1,8 +1,10 @@
+// Estructura base de la aplicación: navbar, notificaciones, toasts y área de contenido
 import { Outlet } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Navbar from '../components/layout/Navbar';
 import { NotificationManager } from '../components/notifications/NotificationManager';
 
+// Contenedor principal con navbar, sistema de alertas y slot de página activa
 export default function Layout() {
   return (
     <div className="app-shell">
@@ -17,6 +19,7 @@ export default function Layout() {
         reverseOrder={false}
         gutter={8}
         containerStyle={{ top: 68 }}
+        // Estilos y duración de los toasts según el tema oscuro de la app
         toastOptions={{
           duration: 6000,
           style: {
@@ -32,6 +35,7 @@ export default function Layout() {
         }}
       />
 
+      {/* Área de contenido donde se renderiza la ruta activa */}
       <main className="main-content">
         <Outlet />
       </main>

@@ -1,3 +1,4 @@
+// Formato F-05: condiciones de operación de MBR, RO y PTAP con cálculos de eficiencia en línea
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../state/AuthContext';
@@ -19,6 +20,7 @@ import type { CaudalesROTurno, CaudalesPTAPTurno } from '../../services/ptarClie
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
+// Schema Zod para una unidad MBR (campos opcionales, purga y recirculación con duración)
 const mbrUnitSchema = z.object({
   caudal_permeado:   z.string().optional(),
   tmp:               z.string().optional(),
@@ -30,6 +32,7 @@ const mbrUnitSchema = z.object({
   observaciones:     z.string().optional(),
 });
 
+// Schema completo del formulario: MBR1, MBR2, RO y PTAP
 const formSchema = z.object({
   mbr1: mbrUnitSchema,
   mbr2: mbrUnitSchema,
@@ -61,17 +64,20 @@ type FormValues = z.infer<typeof formSchema>;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+// Parsea un string a float; retorna null si está vacío o no es número
 function pf(s: string | undefined): number | null {
   if (!s || s.trim() === '') return null;
   const v = parseFloat(s);
   return isNaN(v) ? null : v;
 }
 
+// Formatea un número con decimales y sufijo; retorna '—' si es null
 function fmtVal(v: number | null, decimals = 2, suffix = ''): string {
   if (v === null) return '—';
   return `${v.toFixed(decimals)}${suffix}`;
 }
 
+// Convierte fecha ISO a formato dd/mm/yyyy
 function fmtDate(iso: string | null | undefined): string {
   if (!iso) return '—';
   const [y, m, d] = iso.slice(0, 10).split('-');
@@ -80,6 +86,7 @@ function fmtDate(iso: string | null | undefined): string {
 
 // ─── Componentes pequeños ─────────────────────────────────────────────────────
 
+// Sección colapsable con título y color de acento configurable
 function AccordionSection({
   title, color, children, defaultOpen = false,
 }: {
@@ -104,6 +111,7 @@ function AccordionSection({
   );
 }
 
+// Campo de solo lectura con etiqueta y texto de ayuda opcional
 function ReadonlyField({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
     <div className="form-group">
@@ -114,6 +122,7 @@ function ReadonlyField({ label, value, hint }: { label: string; value: string; h
   );
 }
 
+// Campo calculado de solo lectura con color opcional para resaltar el valor
 function CalcField({ label, value, color }: { label: string; value: string; color?: string }) {
   return (
     <div className="form-group">
@@ -127,6 +136,7 @@ function CalcField({ label, value, color }: { label: string; value: string; colo
 
 // ─── Sub-sección MBR ─────────────────────────────────────────────────────────
 
+// Sub-formulario de una unidad MBR: caudal, TMP, nivel, purga y recirculación
 function MbrUnidad({
   prefix, label, color, control, watch,
 }: {
@@ -138,6 +148,7 @@ function MbrUnidad({
 }) {
   const purga = watch(`${prefix}.purga`);
   const recir  = watch(`${prefix}.recirculacion`);
+  // Opciones de nivel de lodo con descripción visual para el operario
   const nivelOpts = [
     { value: 'bajo',  label: 'Bajo',  desc: 'Por debajo o al borde de la canastilla' },
     { value: 'medio', label: 'Medio', desc: 'A la mitad de las canastillas' },
@@ -286,17 +297,20 @@ function MbrUnidad({
 
 // ─── Componente Principal ─────────────────────────────────────────────────────
 
+// Componente principal del formato F-05: condiciones operacionales de MBR, RO y PTAP
 export default function FormatoCondicionesOp() {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
   const [saving, setSaving] = useState(false);
+  // Caudales pre-cargados desde F-02 para RO y PTAP
   const [caudalesRO,   setCaudalesRO]   = useState<CaudalesROTurno>({ caudal_entrada_mh: null, caudal_salida_mh: null });
   const [caudalesPTAP, setCaudalesPTAP] = useState<CaudalesPTAPTurno>({ caudal_entrada_mh: null, caudal_salida_mh: null, manga_cambiada: null, manga_cantidad: null, cebs_realizados: null, cebs_cantidad: null });
   const [ultimaCIP, setUltimaCIP] = useState<string | null>(null);
 
   // Turno / fecha manual
   const [autoTurno, setAutoTurno] = useState<'mañana' | 'tarde' | 'noche'>(getTurno);
+  // Actualiza el turno automático cada minuto para mantenerlo sincronizado
   useEffect(() => {
     const id = setInterval(() => setAutoTurno(getTurno()), 60_000);
     return () => clearInterval(id);
@@ -333,6 +347,7 @@ export default function FormatoCondicionesOp() {
       setValue('q_permeado_total_ro', String(caudalesRO.caudal_salida_mh));
   }, [caudalesRO, setValue]);
 
+  // Pre-poblar caudal de entrada PTAP cuando llegan datos de F-02
   useEffect(() => {
     if (caudalesPTAP.caudal_entrada_mh !== null)
       setValue('caudal_ptap_entrada', String(caudalesPTAP.caudal_entrada_mh));
@@ -351,6 +366,7 @@ export default function FormatoCondicionesOp() {
   const qPE2  = pf(watchAll.q_permeado_e2);
   const _qRRot = pf(watchAll.q_rechazo_rotametro); void _qRRot;
 
+  // Indicadores derivados: ΔP, eficiencias y factor de concentración por etapa
   const dpE1      = (pE1 !== null && pS1 !== null) ? pE1 - pS1 : null;
   const dpE2      = (pE2 !== null && pS2 !== null) ? pE2 - pS2 : null;
   const efE1      = (qEntrada && qEntrada > 0 && qPE1 !== null) ? (qPE1 / qEntrada) * 100 : null;
@@ -363,6 +379,7 @@ export default function FormatoCondicionesOp() {
                     ? ((qPE1 + qPE2) / qEntrada) * 100 : null;
 
   // ── Guardado ──────────────────────────────────────────────────────────────────
+  // Guarda MBR, RO y PTAP por separado si tienen datos; reporta errores por sección
   const doSave = async (data: FormValues) => {
     setSaving(true);
     const errors: string[] = [];

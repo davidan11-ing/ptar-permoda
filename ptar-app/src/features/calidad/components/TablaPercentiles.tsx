@@ -4,6 +4,7 @@
  * Thead sticky + tbody scrollable para igualar altura a TablaRangos (≈160px)
  */
 
+// Definición de los 11 percentiles a calcular (MIN, P10…P90, P100)
 const PCT_DEF = [
   { p: 0,     label: 'MIN'  },
   { p: 0.10,  label: 'P10'  },
@@ -18,6 +19,7 @@ const PCT_DEF = [
   { p: 0.999, label: 'P100' },
 ];
 
+// Interpolación lineal inclusiva equivalente a PERCENTILE.INC de Excel
 function percentileInc(sorted: number[], p: number): number {
   const n = sorted.length;
   if (p === 0)   return sorted[0];
@@ -29,6 +31,7 @@ function percentileInc(sorted: number[], p: number): number {
   return +(sorted[lower] + (pos - lower) * (sorted[upper] - sorted[lower])).toFixed(4);
 }
 
+// Celda de datos con fuente monoespaciada
 const cell: React.CSSProperties = {
   padding: '3px 8px',
   fontSize: 11,
@@ -36,6 +39,7 @@ const cell: React.CSSProperties = {
   borderBottom: '1px solid #21262d',
   fontFamily: 'monospace',
 };
+// Celda de encabezado sticky para scroll interno
 const head: React.CSSProperties = {
   ...cell,
   fontWeight: 700,
@@ -52,9 +56,11 @@ const head: React.CSSProperties = {
 
 interface Props { values: number[]; unidad_medida: string }
 
+// Tabla de 11 percentiles con scroll vertical y encabezado fijo
 export default function TablaPercentiles({ values, unidad_medida }: Props) {
   if (values.length === 0) return <div className="cal-empty">Sin datos</div>;
 
+  // Ordena los valores y mapea cada percentil a su valor interpolado
   const sorted = [...values].sort((a, b) => a - b);
   const filas = PCT_DEF.map((d, i) => ({
     index:    i,

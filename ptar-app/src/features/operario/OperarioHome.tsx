@@ -1,12 +1,15 @@
+// Pantalla de inicio del operario: accesos a formatos de turno y panel de mantenimiento GFT
 import { Link } from 'react-router-dom';
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../state/AuthContext';
+import { useTheme } from '../../state/ThemeContext';
 import { ROUTES } from '../../lib/routes';
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
 } from 'recharts';
 
 /* ── helpers ──────────────────────────────────────────────────────── */
+// Calcula el número de semana ISO a partir de una fecha
 function isoWeek(d = new Date()): number {
   const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
   date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
@@ -14,15 +17,18 @@ function isoWeek(d = new Date()): number {
   return Math.ceil((((date.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
 }
 
+// URL base de la API según entorno
 const API = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
 
 /* ── tipos ────────────────────────────────────────────────────────── */
+// KPIs de mantenimiento preventivo para la semana seleccionada
 interface MttoKpis {
   total: number; completados: number; pendientes: number;
   en_proceso: number; por_aprobacion: number; criticos: number;
   ultima_actualizacion: string;
   por_criticidad: { criticidad: string; n: number; completados: number; por_aprobacion: number; pendientes: number }[];
 }
+// Fila individual de una orden de mantenimiento
 interface MttoItem {
   id: number; semana: number; area: string; gft: string;
   objeto: string; af: string; tipo_mantenimiento: string;
@@ -31,34 +37,37 @@ interface MttoItem {
 }
 
 /* ── colores ──────────────────────────────────────────────────────── */
+// Paleta de colores por estado de mantenimiento
 const C_COMPLETADO   = '#3fb950';
 const C_PENDIENTE    = '#f85149';
 const C_PROCESO      = '#d29922';
 const C_APROBACION   = '#58a6ff';   // azul — "Por Aprobación"
 const C_CRITICO      = '#f85149';
-const TOOLTIP_STYLE = {
-  contentStyle: { background: '#161b22', border: '1px solid #30363d', borderRadius: 8, fontSize: 11 },
-  labelStyle:   { color: '#e6edf3' },
-};
+// TOOLTIP_STYLE se computa dentro de MttoPanel para acceder al tema
 
 /* ── KPI Card ──────────────────────────────────────────────────────── */
+// Tarjeta de indicador numérico con color de acento y etiqueta
 function KCard({ label, value, color, sub }: { label: string; value: number | string; color: string; sub?: string }) {
+  const { theme } = useTheme();
   return (
     <div style={{
-      background: '#161b22', border: `1px solid ${color}44`,
+      background: theme.surface, border: `1px solid ${color}44`,
       borderTop: `3px solid ${color}`, borderRadius: 8,
       padding: '12px 16px', textAlign: 'center', flex: 1, minWidth: 0,
     }}>
-      <div style={{ fontSize: 10, color: '#8b949e', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '.06em' }}>{label}</div>
+      <div style={{ fontSize: 10, color: theme.muted, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '.06em' }}>{label}</div>
       <div style={{ fontSize: 26, fontWeight: 700, color, lineHeight: 1 }}>{value}</div>
-      {sub && <div style={{ fontSize: 9, color: '#484f58', marginTop: 3 }}>{sub}</div>}
+      {sub && <div style={{ fontSize: 9, color: theme.dim, marginTop: 3 }}>{sub}</div>}
     </div>
   );
 }
 
 /* ── Panel de Mantenimiento ─────────────────────────────────────────── */
+// Panel que muestra KPIs, donut de cumplimiento y tabla paginada de órdenes GFT
 function MttoPanel() {
+  const { theme } = useTheme();
   const semanaActual = isoWeek();
+  // Semana actualmente visualizada (navegable con flechas)
   const [semana, setSemana]     = useState(semanaActual);
   const [kpis, setKpis]     = useState<MttoKpis | null>(null);
   const [items, setItems]   = useState<MttoItem[]>([]);
@@ -69,6 +78,20 @@ function MttoPanel() {
   // Siempre filtra por PTAR BOG (gft = 'PTAR BOG') — panel exclusivo PTAR
   const AC = '&area_code=PTAR_PT';
 
+  const TOOLTIP_STYLE = {
+    contentStyle: { background: theme.surface, border: `1px solid ${theme.border}`, borderRadius: 8, fontSize: 11 },
+    labelStyle:   { color: theme.text1 },
+  };
+
+  // Al montar: busca la semana más reciente con datos y la selecciona
+  useEffect(() => {
+    fetch(`${API}/api/mantenimientos/?limit=1${AC}`, { credentials: 'include' })
+      .then(r => r.json())
+      .then((it: MttoItem[]) => { if (it.length > 0 && it[0].semana) setSemana(it[0].semana); })
+      .catch(() => {});
+  }, []);
+
+  // Carga KPIs y lista de órdenes al cambiar la semana seleccionada
   useEffect(() => {
     setLoading(true);
     const opts = { credentials: 'include' as const };
@@ -81,6 +104,7 @@ function MttoPanel() {
   }, [semana]);
 
   /* datos para gráficas */
+  // Series del donut de cumplimiento, filtradas para omitir valores en cero
   const donutData = kpis ? [
     { name: 'Completado',     value: kpis.completados,    color: C_COMPLETADO  },
     { name: 'Por Aprobación', value: kpis.por_aprobacion, color: C_APROBACION  },
@@ -88,10 +112,12 @@ function MttoPanel() {
     { name: 'En proceso',     value: kpis.en_proceso,     color: C_PROCESO     },
   ].filter(d => d.value > 0) : [];
 
+  // Porcentaje de cumplimiento de la semana
   const pct = kpis && kpis.total > 0
     ? Math.round((kpis.completados / kpis.total) * 100) : 0;
 
   /* tabla ordenada — sin límite, paginada en el render */
+  // Ordena por criticidad (ALTA → MEDIA → BAJA) y luego por día programado
   const tablaOrdenada = useMemo(() =>
     [...items].sort((a, b) => {
       const crit = { ALTA: 0, MEDIA: 1, BAJA: 2 };
@@ -108,7 +134,7 @@ function MttoPanel() {
 
   if (loading) {
     return (
-      <div style={{ padding: 24, textAlign: 'center', color: '#484f58', fontSize: 13 }}>
+      <div style={{ padding: 24, textAlign: 'center', color: theme.dim, fontSize: 13 }}>
         <div className="spinner" style={{ margin: '0 auto 10px' }} />
         Cargando datos de mantenimiento…
       </div>
@@ -117,11 +143,18 @@ function MttoPanel() {
 
   if (!kpis || kpis.total === 0) {
     return (
-      <div style={{ padding: '16px 0', color: '#484f58', fontSize: 13, textAlign: 'center' }}>
-        Sin datos de mantenimiento para la semana {semana}.{' '}
-        {kpis?.ultima_actualizacion
-          ? `Última sync: ${kpis.ultima_actualizacion}`
-          : 'Configura SP_EMAIL y SP_PASSWORD en el backend para sincronizar desde SharePoint.'}
+      <div style={{ padding: '16px 0', textAlign: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 12 }}>
+          <span style={{ fontSize: 11, color: '#6e7681' }}>Semana:</span>
+          <button onClick={() => setSemana(s => Math.max(1, s - 1))} style={{ background: theme.surface2, border: `1px solid ${theme.border}`, color: theme.muted, borderRadius: 4, padding: '2px 8px', cursor: 'pointer' }}>‹</button>
+          <span style={{ fontSize: 13, fontWeight: 600, color: theme.text2, minWidth: 24 }}>{semana}</span>
+          <button onClick={() => setSemana(s => Math.min(53, s + 1))} style={{ background: theme.surface2, border: `1px solid ${theme.border}`, color: theme.muted, borderRadius: 4, padding: '2px 8px', cursor: 'pointer' }}>›</button>
+          <button onClick={() => setSemana(semanaActual)} style={{ background: theme.surface2, border: `1px solid ${theme.border}`, color: theme.muted, borderRadius: 4, padding: '2px 8px', cursor: 'pointer', fontSize: 10 }}>HOY</button>
+        </div>
+        <div style={{ color: theme.dim, fontSize: 13 }}>
+          Sin plan de mantenimiento para la semana {semana}.
+          <div style={{ fontSize: 11, color: theme.border, marginTop: 4 }}>Usa ‹ › para navegar a otra semana.</div>
+        </div>
       </div>
     );
   }
@@ -144,12 +177,12 @@ function MttoPanel() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span style={{ fontSize: 11, color: '#6e7681' }}>Semana:</span>
           <button onClick={() => setSemana(s => Math.max(1, s - 1))}
-            style={{ background: '#21262d', border: '1px solid #30363d', color: '#8b949e', borderRadius: 4, padding: '2px 8px', cursor: 'pointer' }}>‹</button>
-          <span style={{ fontSize: 13, fontWeight: 600, color: '#c9d1d9', minWidth: 24, textAlign: 'center' }}>{semana}</span>
+            style={{ background: theme.surface2, border: `1px solid ${theme.border}`, color: theme.muted, borderRadius: 4, padding: '2px 8px', cursor: 'pointer' }}>‹</button>
+          <span style={{ fontSize: 13, fontWeight: 600, color: theme.text2, minWidth: 24, textAlign: 'center' }}>{semana}</span>
           <button onClick={() => setSemana(s => Math.min(53, s + 1))}
-            style={{ background: '#21262d', border: '1px solid #30363d', color: '#8b949e', borderRadius: 4, padding: '2px 8px', cursor: 'pointer' }}>›</button>
+            style={{ background: theme.surface2, border: `1px solid ${theme.border}`, color: theme.muted, borderRadius: 4, padding: '2px 8px', cursor: 'pointer' }}>›</button>
           <button onClick={() => setSemana(semanaActual)}
-            style={{ background: '#21262d', border: '1px solid #30363d', color: '#8b949e', borderRadius: 4, padding: '2px 8px', cursor: 'pointer', fontSize: 10 }}>HOY</button>
+            style={{ background: theme.surface2, border: `1px solid ${theme.border}`, color: theme.muted, borderRadius: 4, padding: '2px 8px', cursor: 'pointer', fontSize: 10 }}>HOY</button>
         </div>
       </div>
 
@@ -169,6 +202,7 @@ function MttoPanel() {
           </span>
         )}
       </div>
+      {/* Tarjetas de KPI: total, completados, por aprobación, pendientes y críticos */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
         <KCard label="Total semana"    value={kpis.total}            color="#8b949e" />
         <KCard label="Completados"     value={kpis.completados}      color={C_COMPLETADO} sub={`${pct}% cumpl.`} />
@@ -181,8 +215,8 @@ function MttoPanel() {
       <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 12, marginBottom: 16, alignItems: 'start' }}>
 
         {/* Donut — cumplimiento */}
-        <div style={{ background: '#161b22', border: '1px solid #21262d', borderRadius: 8, padding: '14px 8px' }}>
-          <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 4, paddingLeft: 8 }}>% CUMPLIMIENTO</div>
+        <div style={{ background: theme.surface, border: `1px solid ${theme.border2}`, borderRadius: 8, padding: '14px 8px' }}>
+          <div style={{ fontSize: 11, color: theme.muted, marginBottom: 4, paddingLeft: 8 }}>% CUMPLIMIENTO</div>
           <div style={{ position: 'relative', height: 140 }}>
             {donutData.length > 0 && (
               <ResponsiveContainer width="100%" height={140}>
@@ -214,11 +248,11 @@ function MttoPanel() {
           </div>
         </div>
 
-        {/* Tabla paginada */}
-        <div style={{ background: '#161b22', border: '1px solid #21262d', borderRadius: 8, overflow: 'hidden' }}>
+        {/* Tabla paginada de órdenes de mantenimiento */}
+        <div style={{ background: theme.surface, border: `1px solid ${theme.border2}`, borderRadius: 8, overflow: 'hidden' }}>
           {/* Header + slicer */}
-          <div style={{ padding: '8px 12px', borderBottom: '1px solid #21262d', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#8b949e', letterSpacing: '.06em', textTransform: 'uppercase' }}>
+          <div style={{ padding: '8px 12px', borderBottom: `1px solid ${theme.border2}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: theme.muted, letterSpacing: '.06em', textTransform: 'uppercase' }}>
               Detalle semana {semana}
               <span style={{ marginLeft: 8, fontSize: 10, color: '#484f58', fontWeight: 400 }}>
                 ({tablaOrdenada.length} registros)
@@ -228,7 +262,7 @@ function MttoPanel() {
               <button
                 onClick={() => setPagina(p => Math.max(0, p - 1))}
                 disabled={paginaActual === 0}
-                style={{ background: '#21262d', border: '1px solid #30363d', color: paginaActual === 0 ? '#484f58' : '#8b949e', borderRadius: 4, padding: '2px 8px', cursor: paginaActual === 0 ? 'default' : 'pointer', fontSize: 13, lineHeight: 1 }}>
+                style={{ background: theme.surface2, border: `1px solid ${theme.border}`, color: paginaActual === 0 ? theme.dim : theme.muted, borderRadius: 4, padding: '2px 8px', cursor: paginaActual === 0 ? 'default' : 'pointer', fontSize: 13, lineHeight: 1 }}>
                 &#8249;
               </button>
               <span style={{ fontSize: 10, color: '#6e7681', minWidth: 56, textAlign: 'center' }}>
@@ -237,7 +271,7 @@ function MttoPanel() {
               <button
                 onClick={() => setPagina(p => Math.min(totalPaginas - 1, p + 1))}
                 disabled={paginaActual >= totalPaginas - 1}
-                style={{ background: '#21262d', border: '1px solid #30363d', color: paginaActual >= totalPaginas - 1 ? '#484f58' : '#8b949e', borderRadius: 4, padding: '2px 8px', cursor: paginaActual >= totalPaginas - 1 ? 'default' : 'pointer', fontSize: 13, lineHeight: 1 }}>
+                style={{ background: theme.surface2, border: `1px solid ${theme.border}`, color: paginaActual >= totalPaginas - 1 ? theme.dim : theme.muted, borderRadius: 4, padding: '2px 8px', cursor: paginaActual >= totalPaginas - 1 ? 'default' : 'pointer', fontSize: 13, lineHeight: 1 }}>
                 &#8250;
               </button>
             </div>
@@ -245,7 +279,7 @@ function MttoPanel() {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
               <thead>
-                <tr style={{ background: '#0d1117' }}>
+                <tr style={{ background: theme.bg }}>
                   {['Objeto','Tipo','Criticidad','Estado','Responsable'].map(h => (
                     <th key={h} style={{ padding: '6px 10px', textAlign: 'left', fontSize: 9, fontWeight: 700, color: '#6e7681', letterSpacing: '.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
@@ -253,16 +287,18 @@ function MttoPanel() {
               </thead>
               <tbody>
                 {tablaVisible.map((item, i) => {
+                  // Color de la pastilla de estado según texto del campo
                   const estadoColor = item.estado?.toUpperCase().includes('COMPLET') ? C_COMPLETADO
                     : item.estado?.toUpperCase().includes('APROBAC') ? C_APROBACION
                     : item.estado?.toUpperCase().includes('PROCESO') ? C_PROCESO
                     : C_PENDIENTE;
+                  // Color del texto de criticidad: rojo/amarillo/gris
                   const critColor = item.criticidad?.toUpperCase() === 'ALTA' ? C_CRITICO
-                    : item.criticidad?.toUpperCase() === 'MEDIA' ? C_PROCESO : '#8b949e';
+                    : item.criticidad?.toUpperCase() === 'MEDIA' ? C_PROCESO : theme.muted;
                   return (
-                    <tr key={item.id} style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,.02)', borderBottom: '1px solid #21262d' }}>
-                      <td style={{ padding: '6px 10px', color: '#c9d1d9', maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={item.objeto}>{item.objeto || '—'}</td>
-                      <td style={{ padding: '6px 10px', color: '#8b949e', whiteSpace: 'nowrap' }}>{item.tipo_mantenimiento || '—'}</td>
+                    <tr key={item.id} style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,.02)', borderBottom: `1px solid ${theme.border2}` }}>
+                      <td style={{ padding: '6px 10px', color: theme.text2, maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={item.objeto}>{item.objeto || '—'}</td>
+                      <td style={{ padding: '6px 10px', color: theme.muted, whiteSpace: 'nowrap' }}>{item.tipo_mantenimiento || '—'}</td>
                       <td style={{ padding: '6px 10px', whiteSpace: 'nowrap' }}>
                         <span style={{ color: critColor, fontWeight: 600, fontSize: 10 }}>{item.criticidad || '—'}</span>
                       </td>
@@ -272,12 +308,12 @@ function MttoPanel() {
                           {item.estado || '—'}
                         </span>
                       </td>
-                      <td style={{ padding: '6px 10px', color: '#8b949e', whiteSpace: 'nowrap' }}>{item.asignado_a || item.responsable || '—'}</td>
+                      <td style={{ padding: '6px 10px', color: theme.muted, whiteSpace: 'nowrap' }}>{item.asignado_a || item.responsable || '—'}</td>
                     </tr>
                   );
                 })}
                 {tablaVisible.length === 0 && (
-                  <tr><td colSpan={5} style={{ padding: 16, textAlign: 'center', color: '#484f58' }}>Sin registros</td></tr>
+                  <tr><td colSpan={5} style={{ padding: 16, textAlign: 'center', color: theme.dim }}>Sin registros</td></tr>
                 )}
               </tbody>
             </table>
@@ -289,6 +325,7 @@ function MttoPanel() {
 }
 
 /* ── Formatos ─────────────────────────────────────────────────────── */
+// Definición de los formatos de turno disponibles: ruta, título, ícono y campos clave
 const FORMATOS = [
   {
     to: ROUTES.FORMATO_CAUDALES,
@@ -353,8 +390,10 @@ const FORMATOS = [
 ];
 
 /* ── Componente principal ─────────────────────────────────────────── */
+// Vista principal del operario: bienvenida, grid de formatos y panel de mantenimiento
 export default function OperarioHome() {
   const { currentUser } = useAuth();
+  const { theme } = useTheme();
 
   return (
     <div className="operario-home">
@@ -369,13 +408,13 @@ export default function OperarioHome() {
       </div>
 
       {/* Separador */}
-      <div style={{ borderTop: '1px solid #21262d', marginBottom: 22, paddingTop: 6 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: '#8b949e', letterSpacing: '.06em', textTransform: 'uppercase' }}>
+      <div style={{ borderTop: `1px solid ${theme.border2}`, marginBottom: 22, paddingTop: 6 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: theme.muted, letterSpacing: '.06em', textTransform: 'uppercase' }}>
           FORMULARIOS DE TURNO
         </div>
       </div>
 
-      {/* Grid de formatos */}
+      {/* Grid de formatos de turno disponibles */}
       <div className="formato-grid">
         {FORMATOS.map(f => (
           <Link key={f.to} to={f.to} className="formato-grid-card"
@@ -398,7 +437,7 @@ export default function OperarioHome() {
       </div>
 
       {/* Panel de Mantenimiento Preventivo */}
-      <div style={{ borderTop: '1px solid #21262d', marginTop: 28, paddingTop: 22 }}>
+      <div style={{ borderTop: `1px solid ${theme.border2}`, marginTop: 28, paddingTop: 22 }}>
         <MttoPanel />
       </div>
     </div>

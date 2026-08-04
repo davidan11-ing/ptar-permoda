@@ -1,28 +1,39 @@
+// Página standalone del informe de costos químicos: se abre por URL directa para impresión/PDF
 import { useState, useEffect, useMemo } from 'react';
 import { getConsumoQuimicoDiario, getGemEficiencia } from '../../services/ptarClient';
 import type { ConsumoQuimicoDiaRow, GemEficienciaRow } from '../../services/ptarClient';
 
+// Formatea número con localización colombiana
 const fmt = (v: number | null, dec = 0) =>
   v == null ? '—' : Number(v).toLocaleString('es-CO', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+// Formatea valor en COP con símbolo $
 const fmtCOP = (v: number | null) =>
   v == null ? '—' : `$${Number(v).toLocaleString('es-CO', { maximumFractionDigits: 0 })}`;
 
+// Nombres cortos de meses para etiqueta del período
 const MESES = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 
 type SeccionKey = 'portada' | 'resumen' | 'gem' | 'ro';
 export type { SeccionKey as CostosSeccionKey };
 
+// Informe de costos imprimible controlado por parámetros de URL (?fi=&ff=&secciones=)
 export default function InformeCostosPage() {
+  // Parámetros leídos desde la URL
   const p         = new URLSearchParams(window.location.search);
   const fi        = p.get('fi') ?? '';
   const ff        = p.get('ff') ?? '';
   const secsParam = p.get('secciones') ?? 'portada,resumen,gem,ro';
+  // Secciones activas derivadas del parámetro URL
   const activas   = useMemo(() => new Set(secsParam.split(',') as SeccionKey[]), [secsParam]);
 
+  // Datos de consumo diario cargados
   const [consumo,  setConsumo]  = useState<ConsumoQuimicoDiaRow[]>([]);
+  // Filas de eficiencia GEM cargadas
   const [gemRows,  setGemRows]  = useState<GemEficienciaRow[]>([]);
+  // Estado de carga de datos
   const [loading,  setLoading]  = useState(true);
 
+  // Fetch paralelo de consumo y eficiencia GEM al montar la página
   useEffect(() => {
     if (!fi || !ff) return;
     setLoading(true);
@@ -35,7 +46,7 @@ export default function InformeCostosPage() {
       .finally(() => setLoading(false));
   }, [fi, ff]);
 
-  /* ── KPIs globales ── */
+  // KPIs globales del informe
   const kpis = useMemo(() => {
     const costoTotal = consumo.reduce((s, r) => s + (r.costo_dia ?? 0), 0);
     const kgTotal    = consumo.reduce((s, r) => s + (r.kg_dia    ?? 0), 0);
@@ -44,7 +55,7 @@ export default function InformeCostosPage() {
     return { costoTotal, kgTotal, caudal, pesos_m3 };
   }, [consumo, gemRows]);
 
-  /* ── Resumen por sistema ── */
+  // Agrupación de costo y kg por sistema
   const porSistema = useMemo(() => {
     const map = new Map<string, { costo: number; kg: number }>();
     for (const r of consumo) {
@@ -56,7 +67,7 @@ export default function InformeCostosPage() {
     return Array.from(map.entries()).map(([sistema, v]) => ({ sistema, ...v }));
   }, [consumo]);
 
-  /* ── Por reactivo agrupado ── */
+  // Agrupación por reactivo con kg, PPM y costo, ordenado por costo desc
   const porReactivo = useMemo(() => {
     const map = new Map<string, { sistema: string; kg: number; ppm: number[]; costo: number }>();
     for (const r of consumo) {
@@ -73,9 +84,11 @@ export default function InformeCostosPage() {
       .sort((a, b) => b.costo - a.costo);
   }, [consumo]);
 
+  // Reactivos filtrados por sistema
   const gemReactivos = porReactivo.filter(r => r.sistema === 'GEM');
   const roReactivos  = porReactivo.filter(r => r.sistema === 'RO');
 
+  // Etiqueta legible del período (mes o rango de meses)
   const periodoLabel = useMemo(() => {
     if (!fi || !ff) return '';
     const d1 = new Date(fi + 'T00:00:00'), d2 = new Date(ff + 'T00:00:00');
@@ -85,6 +98,7 @@ export default function InformeCostosPage() {
       : `${MESES[d1.getMonth() + 1]} ${d1.getFullYear()} – ${MESES[d2.getMonth() + 1]} ${d2.getFullYear()}`;
   }, [fi, ff]);
 
+  // Tabla reutilizable de reactivos del informe
   const TablaReactivos = ({ rows }: { rows: typeof porReactivo }) => (
     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10 }}>
       <thead>
@@ -112,12 +126,14 @@ export default function InformeCostosPage() {
 
   return (
     <>
+      {/* Estilos globales y de impresión de la página standalone */}
       <style>{`
         @media print { .informe-topbar { display: none !important; } body { margin: 0; } }
         * { box-sizing: border-box; }
         body { margin: 0; background: #f5f5f5; font-family: Arial, sans-serif; }
       `}</style>
 
+      {/* Barra superior fija con título del período y botón de impresión */}
       <div className="informe-topbar" style={{ background: '#8a4000', color: '#fff', padding: '8px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12, fontWeight: 600, position: 'sticky', top: 0, zIndex: 10 }}>
         <span>COSTOS QUÍMICOS — PERMODA LTDA &nbsp;·&nbsp; {periodoLabel}</span>
         <button onClick={() => window.print()} style={{ background: '#fff', color: '#8a4000', border: 'none', borderRadius: 4, padding: '5px 14px', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
@@ -130,6 +146,7 @@ export default function InformeCostosPage() {
       ) : (
         <div style={{ maxWidth: 860, margin: '32px auto', background: '#fff', boxShadow: '0 2px 12px rgba(0,0,0,0.12)', fontFamily: 'Arial, sans-serif', fontSize: 11, color: '#111' }}>
 
+          {/* PORTADA */}
           {activas.has('portada') && (
             <div style={{ padding: '40px 48px 28px', borderBottom: '3px solid #8a4000' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
@@ -140,6 +157,7 @@ export default function InformeCostosPage() {
                 </div>
                 <div style={{ background: '#8a4000', color: '#fff', padding: '8px 16px', borderRadius: 6, fontSize: 12, fontWeight: 700 }}>PTAR</div>
               </div>
+              {/* Tarjetas KPI de portada */}
               <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
                 {[
                   { label: 'Costo total', value: fmtCOP(kpis.costoTotal) + ' COP' },
@@ -156,6 +174,7 @@ export default function InformeCostosPage() {
             </div>
           )}
 
+          {/* RESUMEN POR SISTEMA */}
           {activas.has('resumen') && (
             <div style={{ padding: '28px 48px', borderBottom: '1px solid #e8e8e8' }}>
               <SectionTitle color="#8a4000">Resumen por Sistema</SectionTitle>
@@ -183,6 +202,7 @@ export default function InformeCostosPage() {
             </div>
           )}
 
+          {/* COSTOS GEM */}
           {activas.has('gem') && (
             <div style={{ padding: '28px 48px', borderBottom: '1px solid #e8e8e8' }}>
               <SectionTitle color="#1a478a">Consumo Sistema GEM</SectionTitle>
@@ -192,6 +212,7 @@ export default function InformeCostosPage() {
             </div>
           )}
 
+          {/* COSTOS RO */}
           {activas.has('ro') && (
             <div style={{ padding: '28px 48px' }}>
               <SectionTitle color="#1a6b3c">Consumo Sistema Osmosis Inversa (RO)</SectionTitle>
@@ -211,7 +232,9 @@ export default function InformeCostosPage() {
   );
 }
 
+// Estilo de celda de tabla del informe
 const td: React.CSSProperties = { padding: '4px 8px', borderBottom: '1px solid #eee' };
+// Encabezado de sección con barra de color y título
 function SectionTitle({ children, color }: { children: React.ReactNode; color: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>

@@ -1,12 +1,16 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import './analisis.css';
 
 const API = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
 const PAGE_SIZE = 100;
 
-const _y = new Date().getFullYear();
-const DEFAULT_FI = `${_y}-01-01`;
-const DEFAULT_FF = `${_y}-04-01`;
+function daysAgo(n: number) {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d.toLocaleDateString('en-CA');
+}
+const DEFAULT_FI = daysAgo(60);
+const DEFAULT_FF = new Date().toLocaleDateString('en-CA');
 
 interface ColInfo  { columnName: string; dataType: string; isPk: boolean; }
 interface TablaData { columnas: ColInfo[]; filas: Record<string, unknown>[]; total: number; isView: boolean; }
@@ -25,6 +29,7 @@ export default function AnalisSheet() {
   const [fi,          setFi]          = useState(DEFAULT_FI);
   const [ff,          setFf]          = useState(DEFAULT_FF);
   const [loading,     setLoading]     = useState(false);
+  const [refreshing,  setRefreshing]  = useState(false);
   const [status,      setStatus]      = useState('');
   const [tablasError, setTablasError] = useState('');
   const [editFila,    setEditFila]    = useState<Record<string, unknown> | null>(null);
@@ -51,8 +56,7 @@ export default function AnalisSheet() {
   /* ── Cargar datos de la tabla seleccionada ─────────────── */
   const cargar = useCallback(async (pag: number, tbl: string) => {
     if (!tbl) return;
-    setLoading(true);
-    setData(null);
+    if (data) setRefreshing(true); else setLoading(true);
     try {
       const q = new URLSearchParams({ pagina: String(pag), limite: String(PAGE_SIZE) });
       if (fi) q.set('fi', fi);
@@ -69,8 +73,9 @@ export default function AnalisSheet() {
       setStatus(`Error: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  }, [fi, ff]);
+  }, [fi, ff, data]);
 
   /* Al cambiar tabla carga automáticamente */
   useEffect(() => { if (tabla) cargar(1, tabla); }, [tabla]); // eslint-disable-line
@@ -83,7 +88,15 @@ export default function AnalisSheet() {
     setEditVals(vals);
   };
 
-  const pkCol = data?.columnas.find(c => c.isPk);
+  // Escape cierra el drawer
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setEditFila(null); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, []);
+
+  const pkCol     = useMemo(() => data?.columnas.find(c => c.isPk), [data]);
+  const totalPags = useMemo(() => data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1, [data]);
 
   /* ── Guardar cambios ──────────────────────────────────── */
   const saveEdit = async () => {
@@ -111,7 +124,6 @@ export default function AnalisSheet() {
     }
   };
 
-  const totalPags = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1;
 
   return (
     <div className="analis-shell">
@@ -153,8 +165,10 @@ export default function AnalisSheet() {
           <label className="analis-label">Fecha fin</label>
           <input type="date" className="analis-input" value={ff} onChange={e => setFf(e.target.value)} />
         </div>
-        <button className="analis-btn analis-btn-primary" onClick={() => cargar(1, tabla)} disabled={loading || !tabla}>
-          {loading ? 'Cargando…' : '⬇ Cargar'}
+        <button className="analis-btn analis-btn-primary" onClick={() => cargar(1, tabla)} disabled={loading || refreshing || !tabla}>
+          {(loading || refreshing)
+            ? <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span className="analis-spinner" />Cargando…</span>
+            : '⬇ Cargar'}
         </button>
         {status      && <span className="analis-status">{status}</span>}
         {tablasError && <span className="analis-status" style={{ color: '#f85149' }}>⚠ {tablasError}</span>}
@@ -165,14 +179,16 @@ export default function AnalisSheet() {
         {loading && <div className="analis-loading">Cargando datos…</div>}
 
         {!loading && !data && (
-          <div className="analis-empty">Selecciona una tabla para ver sus datos</div>
+          <div className="analis-empty">Selecciona una tabla y pulsa ⬇ Cargar</div>
         )}
 
         {!loading && data && data.filas.length === 0 && (
           <div className="analis-empty">Sin registros para el período seleccionado</div>
         )}
 
-        {!loading && data && data.filas.length > 0 && (
+        {refreshing && <div className="analis-refresh-overlay"><span className="analis-spinner-lg" />Actualizando…</div>}
+
+        {data && data.filas.length > 0 && (
           <table className="analis-grid">
             <thead>
               <tr>
@@ -186,21 +202,30 @@ export default function AnalisSheet() {
               </tr>
             </thead>
             <tbody>
-              {data.filas.map((fila, i) => (
-                <tr key={i} onClick={() => !data.isView && openEdit(fila)} title={data.isView ? '' : 'Clic para editar'} style={{ cursor: data.isView ? 'default' : 'pointer' }}>
-                  {data.columnas.map(col => {
-                    const v = fila[col.columnName];
-                    const str = v == null ? null : String(v);
-                    return (
-                      <td key={col.columnName} className={col.isPk ? 'td-pk' : ''}>
-                        {str == null
-                          ? <span className="null-val">NULL</span>
-                          : str.length > 55 ? str.slice(0, 55) + '…' : str}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
+              {data.filas.map((fila, i) => {
+                const pkVal = pkCol ? String(fila[pkCol.columnName] ?? i) : String(i);
+                return (
+                  <tr
+                    key={pkVal}
+                    className={i % 2 === 0 ? '' : 'analis-row-alt'}
+                    onClick={() => !data.isView && openEdit(fila)}
+                    title={data.isView ? '' : 'Clic para editar'}
+                    style={{ cursor: data.isView ? 'default' : 'pointer' }}
+                  >
+                    {data.columnas.map(col => {
+                      const v = fila[col.columnName];
+                      const str = v == null ? null : String(v);
+                      return (
+                        <td key={col.columnName} className={col.isPk ? 'td-pk' : ''}>
+                          {str == null
+                            ? <span className="null-val">NULL</span>
+                            : str.length > 55 ? str.slice(0, 55) + '…' : str}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}

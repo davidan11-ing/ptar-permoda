@@ -138,12 +138,12 @@ export function useCalidadData({
   turno,
   unidadTurno,
 }: Params): Result {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [rawRows, setRawRows] = useState<RawRow[]>([]);
 
   useEffect(() => {
-    if (!parametro || !fechaInicio || !fechaFin) return;
+    if (!parametro || !fechaInicio || !fechaFin) { setLoading(false); return; }
 
     let cancelled = false;
     setLoading(true);

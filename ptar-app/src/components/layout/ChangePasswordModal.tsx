@@ -1,3 +1,4 @@
+// Modal para cambio de contraseña del usuario autenticado
 import { useState } from 'react';
 import { changePassword } from '../../services/ptarClient';
 
@@ -5,7 +6,9 @@ interface Props {
   onClose: () => void;
 }
 
+// Modal de cambio de contraseña con validación de complejidad
 export default function ChangePasswordModal({ onClose }: Props) {
+  // Campos del formulario y estado de UI
   const [current, setCurrent] = useState('');
   const [next,    setNext]    = useState('');
   const [confirm, setConfirm] = useState('');
@@ -13,6 +16,7 @@ export default function ChangePasswordModal({ onClose }: Props) {
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Valida reglas de complejidad y envía el cambio de contraseña
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -34,6 +38,7 @@ export default function ChangePasswordModal({ onClose }: Props) {
   };
 
   return (
+    // Overlay oscuro que cierra el modal al hacer click fuera
     <div
       style={{
         position: 'fixed', inset: 0, zIndex: 1000,
@@ -42,6 +47,7 @@ export default function ChangePasswordModal({ onClose }: Props) {
       }}
       onClick={onClose}
     >
+      {/* Tarjeta del modal */}
       <div
         style={{
           background: '#161b22', border: '1px solid #30363d', borderRadius: 8,
@@ -62,6 +68,7 @@ export default function ChangePasswordModal({ onClose }: Props) {
           >✕</button>
         </div>
 
+        {/* Confirmación de éxito o formulario de cambio */}
         {success ? (
           <div style={{ textAlign: 'center' }}>
             <p style={{ color: '#3fb950', marginBottom: 16, fontSize: 14 }}>
@@ -70,6 +77,7 @@ export default function ChangePasswordModal({ onClose }: Props) {
             <button className="logout-btn" onClick={onClose}>Cerrar</button>
           </div>
         ) : (
+          // Formulario con los tres campos de contraseña generados dinámicamente
           <form onSubmit={handleSubmit}>
             {(['Contraseña actual', 'Nueva contraseña', 'Confirmar nueva contraseña'] as const).map((label, i) => {
               const values  = [current, next, confirm];
@@ -100,6 +108,7 @@ export default function ChangePasswordModal({ onClose }: Props) {
               <p style={{ color: '#f78166', fontSize: 12, margin: '0 0 12px' }}>{error}</p>
             )}
 
+            {/* Botones de acción del formulario */}
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 4 }}>
               <button
                 type="button"

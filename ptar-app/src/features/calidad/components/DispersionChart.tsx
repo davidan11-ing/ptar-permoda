@@ -1,3 +1,4 @@
+// Gráfica de dispersión: mínimo, máximo y promedio del parámetro a lo largo del tiempo
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer,
@@ -14,6 +15,7 @@ interface Props {
  * Muestra mínimo, máximo y promedio a lo largo del tiempo para una unidad dada.
  * Si unidadFiltrada='ALL' muestra el promedio agregado de todas las unidades.
  */
+// Componente de dispersión: 3 líneas (min/max/prom) para una unidad o el total
 export default function DispersionChart({ data, unidadFiltrada, unidad_medida }: Props) {
   if (data.length === 0) {
     return <div className="cal-empty">Sin datos de dispersión para el período</div>;
@@ -35,8 +37,10 @@ export default function DispersionChart({ data, unidadFiltrada, unidad_medida }:
     entry.promedios.push(r.promedio);
   }
 
+  // Función auxiliar para calcular promedio de un arreglo
   const avg = (arr: number[]) => arr.reduce((a, b) => a + b, 0) / arr.length;
 
+  // Construir serie final ordenada cronológicamente con valores agregados
   const chartData = Array.from(byFecha.entries())
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([fecha, { minimos, maximos, promedios }]) => ({
@@ -51,11 +55,13 @@ export default function DispersionChart({ data, unidadFiltrada, unidad_medida }:
     return <div className="cal-empty">Sin datos para la unidad seleccionada</div>;
   }
 
+  // Formateador de fecha: convierte MM-DD a DD/MM
   const formatFecha = (f: string) => {
     const parts = f.split('-');
     return parts.length === 2 ? `${parts[1]}/${parts[0]}` : f;
   };
 
+  // Gráfica de 3 líneas: mínimo (rojo), máximo (verde) y promedio (amarillo)
   return (
     <ResponsiveContainer width="100%" height={260}>
       <LineChart data={chartData} margin={{ top: 8, right: 24, left: 0, bottom: 0 }}>

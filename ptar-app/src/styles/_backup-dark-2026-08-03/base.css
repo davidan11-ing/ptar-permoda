@@ -1,0 +1,103 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body, #root { height: 100%; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #0d1117;
+  color: #e6edf3;
+  font-size: 14px;
+  line-height: 1.5;
+}
+a { color: inherit; text-decoration: none; }
+button { cursor: pointer; font-family: inherit; }
+input, select, textarea { font-family: inherit; }
+
+.app-shell { display: flex; flex-direction: column; min-height: 100vh; }
+.main-content {
+  flex: 1;
+  padding: clamp(16px, 2vw, 32px);
+  overflow-y: auto;
+  max-width: min(1800px, 96vw);
+  margin: 0 auto;
+  width: 100%;
+}
+
+.page-loading { display: flex; align-items: center; justify-content: center; height: 100vh; }
+.spinner {
+  width: 36px; height: 36px;
+  border: 3px solid #1e2d3d;
+  border-top-color: #00c5e3;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #0d1117; }
+::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #444d57; }
+
+/* ── Selector de granularidad temporal ───────────────────────────────────── */
+.gran-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-bottom: 12px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid #21262d;
+  flex-wrap: wrap;
+}
+
+.gran-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  background: transparent;
+  color: #8b949e;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  line-height: 1.4;
+}
+
+.gran-tab:hover:not(.gran-tab--active) {
+  border-color: #8b949e;
+  color: #c9d1d9;
+  background: #161b22;
+}
+
+.gran-tab--active {
+  border-color: #1f6feb;
+  color: #ffffff;
+  background: #1f6feb22;
+  font-weight: 600;
+}
+
+.gran-tab-rango {
+  font-size: 11px;
+  font-weight: 400;
+  color: #58a6ff;
+  opacity: 0.85;
+}
+
+.gran-custom-badge {
+  margin-left: 4px;
+  padding: 3px 10px;
+  background: #21262d;
+  border: 1px solid #30363d;
+  border-radius: 12px;
+  font-size: 11px;
+  color: #8b949e;
+  font-style: italic;
+  align-self: center;
+}
+
+@media (max-width: 600px) {
+  .gran-tab { padding: 6px 12px; font-size: 12px; }
+  .gran-tab-rango { display: none; }
+}

@@ -6,10 +6,16 @@
 import type { Granularidad } from '../../hooks/useGranularidad';
 
 // ── Constantes ────────────────────────────────────────────────────────────────
+
+// Abreviaciones de meses para labels del eje X
 const MESES = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+// Abreviaciones de turnos para labels del eje X
 export const TURNO_LABEL: Record<number, string> = { 1: 'Noc', 2: 'Mañ', 3: 'Tar' };
 
 // ── ISO week number (ISO 8601) ─────────────────────────────────────────────────
+
+// Calcula el número de semana ISO 8601 a partir de una fecha string
 function isoWeek(dateStr: string): number {
   // Recortar a YYYY-MM-DD por si el backend entrega datetime con hora
   const d = new Date(dateStr.slice(0, 10) + 'T12:00:00Z');
@@ -71,6 +77,7 @@ export function sortKey(
 
 // ── Función genérica de agregación ────────────────────────────────────────────
 
+// Opciones de configuración para la función genérica de agrupación
 interface AgruparOptions<T> {
   gran: Granularidad | null;
   getFecha: (r: T) => string;
@@ -79,6 +86,7 @@ interface AgruparOptions<T> {
   avgFields: (keyof T)[];
 }
 
+// Fila resultante de la agregación, con label de eje X y clave de orden
 export interface AgrupadoRow {
   fecha: string;         // label del eje X
   _sortKey: string;      // para ordenar cronológicamente
@@ -131,12 +139,14 @@ export function generateAllPeriods(
   return result;
 }
 
+// Agrupa un arreglo de filas según la granularidad, sumando o promediando campos
 export function agruparPorGranularidad<T>(
   rows: T[],
   opts: AgruparOptions<T>,
 ): AgrupadoRow[] {
   const { gran, getFecha, getTurno, sumFields, avgFields } = opts;
 
+  // Acumulador interno por período
   type Bucket = {
     label: string;
     sortK: string;
@@ -172,6 +182,7 @@ export function agruparPorGranularidad<T>(
     }
   }
 
+  // Calcula promedio de un arreglo numérico con 4 decimales
   const avg = (arr: number[]) =>
     arr.length ? +(arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(4) : null;
 

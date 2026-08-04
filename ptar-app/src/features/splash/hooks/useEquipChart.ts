@@ -1,3 +1,5 @@
+// Hook que genera/actualiza datos de la gráfica de parámetro en tiempo real por equipo
+
 import { useState, useEffect, useRef } from 'react';
 
 export interface ChartPoint { t: number; valor: number; }
@@ -21,13 +23,16 @@ export function useEquipChart(
   intervalMs = 2000,
   maxPoints = 40,
 ) {
+  // Serie histórica de puntos para el gráfico
   const [data, setData] = useState<ChartPoint[]>([]);
+  // Ref para siempre usar el baseValue más reciente sin re-disparar el efecto
   const baseRef = useRef(baseValue);
   baseRef.current = baseValue;  // siempre actualizado sin re-trigger del efecto
 
   useEffect(() => {
     if (!active || !equipKey) return;
 
+    // Valor base seguro: evita NaN, cero o infinito
     const safeBase = Number.isFinite(baseRef.current) && baseRef.current !== 0
       ? Math.abs(baseRef.current)
       : 50;
@@ -43,6 +48,7 @@ export function useEquipChart(
 
     // TODO PLC: fetch(`${API}/api/equipos/${equipKey}/lecturas?limit=20`)
 
+    // Intervalo que agrega un punto nuevo y descarta el más antiguo
     const id = setInterval(() => {
       // TODO PLC: reemplazar mock con fetch del endpoint
       const base = Number.isFinite(baseRef.current) && baseRef.current !== 0
@@ -52,6 +58,7 @@ export function useEquipChart(
         t: Date.now(),
         valor: +(base + (Math.random() - 0.5) * base * 0.06).toFixed(3),
       };
+      // Mantiene ventana deslizante de maxPoints puntos
       setData(prev => [...prev.slice(-(maxPoints - 1)), newPoint]);
     }, intervalMs);
 

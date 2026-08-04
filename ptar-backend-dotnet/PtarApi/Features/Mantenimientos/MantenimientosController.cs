@@ -18,7 +18,7 @@ public class MantenimientosController(
     // Mapeo area_code → cláusula SQL (igual que Python)
     private static readonly Dictionary<string, string> AreaCodeSql = new()
     {
-        { "PTAR_PT", "UPPER(gft) = 'PTAR BOG'" },
+        { "PTAR_PT", "UPPER(gft) IN ('PTAR BOG', 'PTAR')" },
     };
 
     // ── GET / — listado con filtros ──────────────────────────────────────────

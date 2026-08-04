@@ -1,3 +1,5 @@
+// Modal de zoom de fase del diagrama PTAR con navegación lateral y soporte touch
+
 import { memo, useRef, type ReactNode } from 'react';
 
 interface Phase {
@@ -18,13 +20,16 @@ interface Props {
   tooltipOverlay?: ReactNode;
 }
 
+// Modal de ampliación de fase del proceso PTAR
 function PhaseModalInner({
   phase, phaseIdx, totalPhases, closing,
   onClose, onNavigate, svgBody, tooltipOverlay,
 }: Props) {
+  // Referencia para calcular distancia de swipe táctil
   const touchX = useRef(0);
 
   const onTouchStart = (e: React.TouchEvent) => { touchX.current = e.touches[0].clientX; };
+  // Dispara navegación si el swipe supera 60px de desplazamiento horizontal
   const onTouchEnd   = (e: React.TouchEvent) => {
     const dx = e.changedTouches[0].clientX - touchX.current;
     if (Math.abs(dx) > 60) onNavigate(dx > 0 ? -1 : 1);
@@ -66,6 +71,7 @@ function PhaseModalInner({
               {phase.label}
             </span>
           </div>
+          {/* Indicador de posición y botón cerrar */}
           <div className="phase-modal-meta">
             <span className="phase-modal-index">
               {String(phaseIdx + 1).padStart(2, '0')} / {String(totalPhases).padStart(2, '0')}
@@ -138,7 +144,7 @@ function PhaseModalInner({
 
         </div>
 
-        {/* ── Dots indicadores ── */}
+        {/* ── Dots indicadores de fase activa ── */}
         <div className="phase-modal-dots">
           {Array.from({ length: totalPhases }, (_, i) => (
             <span

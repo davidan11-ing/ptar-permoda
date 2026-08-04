@@ -1,3 +1,4 @@
+// Gauge SVG circular para visualizar un KPI con valor actual, meta y estado
 interface Props {
   label: string;
   value: number;
@@ -7,7 +8,9 @@ interface Props {
   size?: number;
 }
 
+// Componente de medidor circular tipo gauge para un indicador KPI
 export default function KpiGauge({ label, value, target, unit, color, size = 140 }: Props) {
+  // Geometría base del arco: radio, centro y ángulos de inicio/fin
   const r = (size / 2) - 14;
   const cx = size / 2;
   const cy = size / 2;
@@ -15,8 +18,10 @@ export default function KpiGauge({ label, value, target, unit, color, size = 140
   const endAngle = 40;
   const totalDeg = endAngle - startAngle;
 
+  // Conversión de grados a radianes para cálculos SVG
   const toRad = (deg: number) => (deg * Math.PI) / 180;
 
+  // Genera el path SVG del arco para un porcentaje dado
   const arcPath = (pct: number, strokeR = r) => {
     const deg = startAngle + totalDeg * Math.min(pct, 1);
     const x1 = cx + strokeR * Math.cos(toRad(startAngle));
@@ -27,10 +32,13 @@ export default function KpiGauge({ label, value, target, unit, color, size = 140
     return `M ${x1} ${y1} A ${strokeR} ${strokeR} 0 ${large} 1 ${x2} ${y2}`;
   };
 
+  // Porcentajes normalizados de valor actual y meta
   const pct = value / 100;
   const targetPct = target / 100;
+  // Indicador de si el valor supera la meta
   const isGood = value >= target;
 
+  // Coordenadas del marcador de meta sobre el arco
   const targetDeg = startAngle + totalDeg * targetPct;
   const tx = cx + r * Math.cos(toRad(targetDeg));
   const ty = cy + r * Math.sin(toRad(targetDeg));
@@ -40,20 +48,21 @@ export default function KpiGauge({ label, value, target, unit, color, size = 140
   return (
     <div className="kpi-gauge">
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-        {/* Track */}
+        {/* Track — arco de fondo completo */}
         <path d={arcPath(1)} fill="none" stroke="#1e2d3d" strokeWidth="10" strokeLinecap="round"/>
-        {/* Value arc */}
+        {/* Arco de valor actual con color del KPI */}
         <path d={arcPath(pct)} fill="none" stroke={color} strokeWidth="10" strokeLinecap="round"/>
-        {/* Target marker */}
+        {/* Marcador de línea de meta */}
         <line x1={ti_x} y1={ti_y} x2={tx} y2={ty} stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round"/>
-        {/* Center text */}
+        {/* Valor numérico central */}
         <text x={cx} y={cy - 6} textAnchor="middle" fill={color} fontSize={size * 0.22} fontWeight="700" fontFamily="monospace">
           {value}
         </text>
+        {/* Unidad de medida debajo del valor */}
         <text x={cx} y={cy + 14} textAnchor="middle" fill="#8b949e" fontSize={size * 0.1}>
           {unit}
         </text>
-        {/* Status dot */}
+        {/* Punto de estado: verde si cumple meta, rojo si no */}
         <circle cx={cx} cy={cy + 28} r="5" fill={isGood ? '#3fb950' : '#f85149'}/>
       </svg>
       <div className="kpi-label">{label}</div>

@@ -1,3 +1,4 @@
+// Gráfica turno a turno: cada punto representa un turno individual, una serie por unidad de tratamiento
 import {
   LineChart, Line, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -16,6 +17,7 @@ interface Props {
  * Muestra todos los registros turno a turno (índice secuencial en eje X),
  * una serie por unidad de tratamiento.
  */
+// Componente turno a turno: resolución máxima de datos, modo línea o barra configurable
 export default function TurnoAturnoChart({
   data,
   unidades,
@@ -47,13 +49,16 @@ export default function TurnoAturnoChart({
       row[r.unidad_tratamiento] = +((Number(row[r.unidad_tratamiento]) + r.valor) / 2).toFixed(2);
     }
   }
+  // Serie final: un objeto por cada combinación fecha+turno
   const chartData = Array.from(chartMap.values());
 
+  // Props compartidas entre LineChart y BarChart
   const commonProps = {
     data: chartData,
     margin: { top: 8, right: 24, left: 0, bottom: 0 },
   };
 
+  // Eje X con etiqueta "MM-DD turno" y densidad adaptativa de ticks
   const xAxis = (
     <XAxis
       dataKey="label"
@@ -61,6 +66,7 @@ export default function TurnoAturnoChart({
       interval={Math.max(0, Math.floor(chartData.length / 12) - 1)}
     />
   );
+  // Eje Y con formato abreviado para miles y etiqueta de unidad de medida
   const yAxis = (
     <YAxis
       tick={{ fill: '#8b949e', fontSize: 11 }}
@@ -79,6 +85,7 @@ export default function TurnoAturnoChart({
       formatter={(val: number, name: string) => [`${val} ${unidad_medida}`, name]}
     />
   );
+  // Leyenda con truncado de nombres largos de unidad
   const legend = (
     <Legend
       wrapperStyle={{ color: '#8b949e', fontSize: 11, paddingTop: 8 }}
@@ -86,6 +93,7 @@ export default function TurnoAturnoChart({
     />
   );
 
+  // Modo barra: una barra por unidad en cada turno
   if (tipo === 'bar') {
     return (
       <ResponsiveContainer width="100%" height={260}>
@@ -99,6 +107,7 @@ export default function TurnoAturnoChart({
     );
   }
 
+  // Modo línea (defecto): una línea continua por unidad
   return (
     <ResponsiveContainer width="100%" height={260}>
       <LineChart {...commonProps}>

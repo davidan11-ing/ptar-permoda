@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using System.Text.Json;
 using Dapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,6 +12,51 @@ namespace PtarApi.Features.Dashboard;
 [Authorize]
 public class DashboardController(IDbConnectionFactory db) : ControllerBase
 {
+    // ── GET /config ──────────────────────────────────────────────────────────
+    [HttpGet("config")]
+    public async Task<IActionResult> GetConfig()
+    {
+        await using var conn = db.Create();
+        var json = await conn.QueryFirstOrDefaultAsync<string>(
+            "SELECT config_json FROM dashboard_config WHERE id = 1");
+        return Content(json ?? "{}", "application/json");
+    }
+
+    // ── PUT /config ──────────────────────────────────────────────────────────
+    [HttpPut("config")]
+    [Authorize(Roles = "encargado")]
+    public async Task<IActionResult> SaveConfig([FromBody] JsonDocument body)
+    {
+        var user    = User.FindFirstValue(ClaimTypes.Name) ?? "encargado";
+        var jsonStr = body.RootElement.GetRawText();
+
+        await using var conn = db.Create();
+        await conn.ExecuteAsync("""
+            INSERT INTO dashboard_config (id, config_json, updated_by)
+            VALUES (1, @json, @user)
+            ON DUPLICATE KEY UPDATE config_json = @json, updated_by = @user, updated_at = NOW()
+            """, new { json = jsonStr, user });
+
+        return Ok(new { saved = true });
+    }
+
+
+    // ── GET /ultima-fecha ────────────────────────────────────────────────────
+    // Devuelve la fecha más reciente con datos en las tablas principales
+    [HttpGet("ultima-fecha")]
+    public async Task<IActionResult> GetUltimaFecha()
+    {
+        await using var conn = db.Create();
+        var fecha = await conn.QueryFirstOrDefaultAsync<string>("""
+            SELECT DATE_FORMAT(GREATEST(
+                COALESCE((SELECT MAX(fecha) FROM v_balance_hidrico),         '2020-01-01'),
+                COALESCE((SELECT MAX(fecha) FROM v_consumo_quimico_diario),  '2020-01-01'),
+                COALESCE((SELECT MAX(fecha) FROM medicion_calidad),          '2020-01-01')
+            ), '%Y-%m-%d') AS ultima_fecha
+            """);
+        return Ok(new { fecha = fecha ?? DateTime.Today.ToString("yyyy-MM-dd") });
+    }
+
     // ── GET /kpis ────────────────────────────────────────────────────────────
     [HttpGet("kpis")]
     public async Task<IActionResult> GetKpis(

@@ -1,3 +1,4 @@
+// Tarjeta de lectura de un contador: muestra lectura anterior, actual y delta calculado
 import { CONTADORES_MAP, TIPO_AGUA_CLASS } from '../../../lib/constants/contadores';
 import type { ContadorId } from '../../../lib/constants/contadores';
 
@@ -16,6 +17,7 @@ interface ContadorCardProps {
   onRemove?: () => void;
 }
 
+// Componente de tarjeta para registrar la lectura de un contador con comparación al turno anterior
 export function ContadorCard({
   id, lectura, obs, isExtra = false,
   prev, delta, hasErr, loadingPrev,
@@ -23,6 +25,7 @@ export function ContadorCard({
 }: ContadorCardProps) {
   const c       = CONTADORES_MAP[id];
   const unidad  = (c as { unidad?: string }).unidad ?? 'm³';  // R2: C-12 usa m³/h
+  // Marca decremento cuando la lectura actual es menor a la anterior
   const isDecr  = delta !== null && delta < 0;
   const active  = lectura !== '';
   const cardClass = `param-row${active ? (isDecr ? ' has-error' : ' has-value') : ''}`;
@@ -47,6 +50,7 @@ export function ContadorCard({
         <div className="param-descripcion">{(c as { descripcion?: string }).descripcion}</div>
       )}
 
+      {/* Campos de lectura anterior, actual y delta calculado */}
       <div className="param-row-inputs">
         <div className="form-group" style={{ margin: 0 }}>
           <label className="form-label" style={{ fontSize: 11, marginBottom: 4 }}>
@@ -75,6 +79,7 @@ export function ContadorCard({
         </div>
       </div>
 
+      {/* Alerta y campo de observación obligatorio cuando hay decremento */}
       {isDecr && (
         <>
           <div className="form-alert form-alert-warn" style={{ padding: '8px 12px', fontSize: 12 }}>

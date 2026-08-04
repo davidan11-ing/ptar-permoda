@@ -1,3 +1,4 @@
+// Panel de cumplimiento normativo Res. 0631/2015 con KPI cards y eficiencias de remoción
 import type { KpiRow, RemocionResumen } from '../hooks/useCalidadKpis';
 
 interface Props {
@@ -7,18 +8,21 @@ interface Props {
 }
 
 /* ── Helpers de color ──────────────────────────────────────────────────────── */
+// Colores de acento según estado de cumplimiento del parámetro
 function kpiAccent(row: KpiRow) {
   if (row.enLimite === null) return { color: '#8b949e', bg: '#21262d', bar: '#30363d' };
   return row.enLimite
     ? { color: '#3fb950', bg: '#0d2d1a', bar: '#238636' }
     : { color: '#f85149', bg: '#2d1515', bar: '#da3633' };
 }
+// Color del porcentaje de cumplimiento: verde ≥95%, amarillo ≥80%, rojo <80%
 function pctColor(pct: number | null) {
   if (pct === null) return '#484f58';
   if (pct >= 95) return '#3fb950';
   if (pct >= 80) return '#d29922';
   return '#f85149';
 }
+// Color de la barra de remoción global según efectividad
 function remColor(pct: number) {
   if (pct >= 75) return '#3fb950';
   if (pct >= 40) return '#d29922';
@@ -27,6 +31,7 @@ function remColor(pct: number) {
 }
 
 /* ── Skeleton card ─────────────────────────────────────────────────────────── */
+// Tarjeta placeholder animada mientras cargan los KPIs
 function SkeletonCard() {
   return (
     <div style={{
@@ -63,6 +68,7 @@ export default function KpiCompliancePanel({ kpis, remociones, loading }: Props)
           : kpis.map(row => {
               const { color, bg, bar } = kpiAccent(row);
               const pct = row.pctCumplimiento;
+              // Tarjeta individual de KPI con valor promedio y barra de cumplimiento
               return (
                 <div key={row.param} style={{
                   background: bg,
@@ -136,6 +142,7 @@ export default function KpiCompliancePanel({ kpis, remociones, loading }: Props)
           <div style={{ fontSize: 10, fontWeight: 700, color: '#484f58', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>
             Eficiencia de remoción global del período
           </div>
+          {/* Lista de barras de remoción por parámetro */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
             {remociones.map(r => {
               const barPct = Math.min(Math.abs(r.pct_global_avg), 100);

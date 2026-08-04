@@ -1,6 +1,8 @@
+// Panel de mantenimientos: KPIs, donut de cumplimiento y tabla paginada por semana ISO
 import { useState, useEffect, useMemo } from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 
+// Calcula el número de semana ISO de una fecha dada
 function isoWeek(d = new Date()): number {
   const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
   date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
@@ -8,6 +10,7 @@ function isoWeek(d = new Date()): number {
   return Math.ceil((((date.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
 }
 
+// URL base del API
 const API = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
 
 interface MttoKpis {
@@ -23,16 +26,19 @@ interface MttoItem {
   responsable: string; asignado_a: string;
 }
 
+// Paleta de colores por estado y criticidad
 const C_COMPLETADO = '#3fb950';
 const C_PENDIENTE  = '#f85149';
 const C_PROCESO    = '#d29922';
 const C_APROBACION = '#58a6ff';
 const C_CRITICO    = '#f85149';
+// Estilo compartido para tooltips de Recharts
 const TOOLTIP_STYLE = {
   contentStyle: { background: '#161b22', border: '1px solid #30363d', borderRadius: 8, fontSize: 11 },
   labelStyle:   { color: '#e6edf3' },
 };
 
+// Tarjeta de KPI individual con borde de color y valor destacado
 function KCard({ label, value, color, sub }: { label: string; value: number | string; color: string; sub?: string }) {
   return (
     <div style={{
@@ -47,16 +53,32 @@ function KCard({ label, value, color, sub }: { label: string; value: number | st
   );
 }
 
+// Panel principal de mantenimientos con navegación por semana, KPIs, donut y tabla
 export default function MttoPanel() {
+  // Semana ISO actual como referencia
   const semanaActual = isoWeek();
   const [semana, setSemana]   = useState(semanaActual);
+
+  // Al montar: busca la semana más reciente con datos y la selecciona
+  useEffect(() => {
+    fetch(`${API}/api/mantenimientos/?limit=1${AC}`, { credentials: 'include' })
+      .then(r => r.json())
+      .then((items: MttoItem[]) => {
+        if (items.length > 0 && items[0].semana) setSemana(items[0].semana);
+      })
+      .catch(() => {});
+  }, []);
+  // KPIs y listado de ítems de la semana seleccionada
   const [kpis, setKpis]       = useState<MttoKpis | null>(null);
   const [items, setItems]     = useState<MttoItem[]>([]);
   const [loading, setLoading] = useState(true);
+  // Control de paginación de la tabla
   const [pagina, setPagina]   = useState(0);
   const POR_PAGINA = 8;
+  // Filtro fijo de área para este panel
   const AC = '&area_code=PTAR_PT';
 
+  // Carga paralela de KPIs e ítems al cambiar la semana
   useEffect(() => {
     setLoading(true);
     const opts = { credentials: 'include' as const };
@@ -68,6 +90,7 @@ export default function MttoPanel() {
     }).catch(() => {}).finally(() => setLoading(false));
   }, [semana]);
 
+  // Datos del donut agrupados por estado (excluye valores cero)
   const donutData = kpis ? [
     { name: 'Completado',     value: kpis.completados,    color: C_COMPLETADO  },
     { name: 'Por Aprobación', value: kpis.por_aprobacion, color: C_APROBACION  },
@@ -75,8 +98,10 @@ export default function MttoPanel() {
     { name: 'En proceso',     value: kpis.en_proceso,     color: C_PROCESO     },
   ].filter(d => d.value > 0) : [];
 
+  // Porcentaje de cumplimiento de la semana
   const pct = kpis && kpis.total > 0 ? Math.round((kpis.completados / kpis.total) * 100) : 0;
 
+  // Tabla ordenada por criticidad (ALTA > MEDIA > BAJA) y luego por día programado
   const tablaOrdenada = useMemo(() =>
     [...items].sort((a, b) => {
       const crit = { ALTA: 0, MEDIA: 1, BAJA: 2 };
@@ -87,40 +112,26 @@ export default function MttoPanel() {
     }),
   [items]);
 
+  // Slice de registros visibles según la página activa
   const totalPaginas  = Math.max(1, Math.ceil(tablaOrdenada.length / POR_PAGINA));
   const paginaActual  = Math.min(pagina, totalPaginas - 1);
   const tablaVisible  = tablaOrdenada.slice(paginaActual * POR_PAGINA, (paginaActual + 1) * POR_PAGINA);
 
-  if (loading) return (
-    <div style={{ padding: 24, textAlign: 'center', color: '#484f58', fontSize: 13 }}>
-      <div className="spinner" style={{ margin: '0 auto 10px' }} />
-      Cargando datos de mantenimiento…
-    </div>
-  );
-
-  if (!kpis || kpis.total === 0) return (
-    <div style={{ padding: '16px 0', color: '#484f58', fontSize: 13, textAlign: 'center' }}>
-      Sin datos de mantenimiento para la semana {semana}.{' '}
-      {kpis?.ultima_actualizacion
-        ? `Última sync: ${kpis.ultima_actualizacion}`
-        : 'Configura SP_EMAIL y SP_PASSWORD en el backend para sincronizar desde SharePoint.'}
-    </div>
-  );
-
   return (
     <div style={{ marginBottom: 28 }}>
-      {/* Header */}
+      {/* Encabezado con título, fecha de sync y navegador de semana — siempre visible */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, flexWrap: 'wrap', gap: 8 }}>
         <div>
           <div style={{ fontSize: 13, fontWeight: 700, color: '#c9d1d9', letterSpacing: '.02em' }}>
             MANTENIMIENTO PREVENTIVO GFT
           </div>
-          {kpis.ultima_actualizacion && (
+          {kpis?.ultima_actualizacion && (
             <div style={{ fontSize: 10, color: '#484f58' }}>
               Última sync SharePoint: {kpis.ultima_actualizacion}
             </div>
           )}
         </div>
+        {/* Controles de navegación de semana ISO */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span style={{ fontSize: 11, color: '#6e7681' }}>Semana:</span>
           <button onClick={() => setSemana(s => Math.max(1, s - 1))}
@@ -133,7 +144,7 @@ export default function MttoPanel() {
         </div>
       </div>
 
-      {/* Badge semana */}
+      {/* Badge indicador de semana activa */}
       <div style={{ marginBottom: 8 }}>
         <span style={{
           fontSize: 10, fontWeight: 700, color: '#58a6ff', letterSpacing: '.1em', textTransform: 'uppercase',
@@ -146,7 +157,29 @@ export default function MttoPanel() {
         )}
       </div>
 
-      {/* KPIs */}
+      {/* Estado de carga o sin datos — muestra mensaje pero mantiene la navegación */}
+      {loading && (
+        <div style={{ padding: 24, textAlign: 'center', color: '#484f58', fontSize: 13 }}>
+          <div className="spinner" style={{ margin: '0 auto 10px' }} />
+          Cargando datos de mantenimiento…
+        </div>
+      )}
+      {!loading && (!kpis || kpis.total === 0) && (
+        <div style={{ padding: '32px 0', color: '#484f58', fontSize: 13, textAlign: 'center' }}>
+          Sin datos de mantenimiento para la semana {semana}.{' '}
+          {kpis?.ultima_actualizacion
+            ? `Última sync: ${kpis.ultima_actualizacion}`
+            : 'Sin plan de mantenimiento registrado en SharePoint para esta semana.'}
+          <div style={{ marginTop: 10, fontSize: 12, color: '#30363d' }}>
+            Usa ‹ para navegar a una semana anterior con datos.
+          </div>
+        </div>
+      )}
+
+      {/* Contenido principal — solo se muestra cuando hay datos */}
+      {!loading && kpis && kpis.total > 0 && <>
+
+      {/* Fila de tarjetas KPI */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
         <KCard label="Total semana"   value={kpis.total}          color="#8b949e" />
         <KCard label="Completados"    value={kpis.completados}    color={C_COMPLETADO} sub={`${pct}% cumpl.`} />
@@ -155,9 +188,9 @@ export default function MttoPanel() {
         <KCard label="Críticos"       value={kpis.criticos}       color={C_CRITICO} />
       </div>
 
-      {/* Donut + Tabla */}
+      {/* Layout de dos columnas: donut a la izquierda, tabla paginada a la derecha */}
       <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 12, marginBottom: 16, alignItems: 'start' }}>
-        {/* Donut */}
+        {/* Donut de cumplimiento con leyenda de estados */}
         <div style={{ background: '#161b22', border: '1px solid #21262d', borderRadius: 8, padding: '14px 8px' }}>
           <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 4, paddingLeft: 8 }}>% CUMPLIMIENTO</div>
           <div style={{ position: 'relative', height: 140 }}>
@@ -171,6 +204,7 @@ export default function MttoPanel() {
                 </PieChart>
               </ResponsiveContainer>
             )}
+            {/* Porcentaje central superpuesto sobre el donut */}
             <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', textAlign: 'center', pointerEvents: 'none' }}>
               <div style={{ fontSize: 22, fontWeight: 700, color: C_COMPLETADO }}>{pct}%</div>
               <div style={{ fontSize: 9, color: '#6e7681' }}>completado</div>
@@ -186,13 +220,14 @@ export default function MttoPanel() {
           </div>
         </div>
 
-        {/* Tabla paginada */}
+        {/* Tabla paginada de ítems con color por criticidad y estado */}
         <div style={{ background: '#161b22', border: '1px solid #21262d', borderRadius: 8, overflow: 'hidden' }}>
           <div style={{ padding: '8px 12px', borderBottom: '1px solid #21262d', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: '#8b949e', letterSpacing: '.06em', textTransform: 'uppercase' }}>
               Detalle semana {semana}
               <span style={{ marginLeft: 8, fontSize: 10, color: '#484f58', fontWeight: 400 }}>({tablaOrdenada.length} registros)</span>
             </div>
+            {/* Controles de paginación de la tabla */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
               <button onClick={() => setPagina(p => Math.max(0, p - 1))} disabled={paginaActual === 0}
                 style={{ background: '#21262d', border: '1px solid #30363d', color: paginaActual === 0 ? '#484f58' : '#8b949e', borderRadius: 4, padding: '2px 8px', cursor: paginaActual === 0 ? 'default' : 'pointer', fontSize: 13, lineHeight: 1 }}>&#8249;</button>
@@ -212,9 +247,11 @@ export default function MttoPanel() {
               </thead>
               <tbody>
                 {tablaVisible.map((item, i) => {
+                  // Color del estado según texto normalizado
                   const estadoColor = item.estado?.toUpperCase().includes('COMPLET') ? C_COMPLETADO
                     : item.estado?.toUpperCase().includes('APROBAC') ? C_APROBACION
                     : item.estado?.toUpperCase().includes('PROCESO') ? C_PROCESO : C_PENDIENTE;
+                  // Color de criticidad: rojo=ALTA, amarillo=MEDIA, gris=BAJA
                   const critColor = item.criticidad?.toUpperCase() === 'ALTA' ? C_CRITICO
                     : item.criticidad?.toUpperCase() === 'MEDIA' ? C_PROCESO : '#8b949e';
                   return (
@@ -241,6 +278,8 @@ export default function MttoPanel() {
           </div>
         </div>
       </div>
+
+      </>}
     </div>
   );
 }
