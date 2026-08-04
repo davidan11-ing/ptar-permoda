@@ -74,14 +74,16 @@ type PhaseKey = typeof PHASES[number]['key'];
 // Constantes de posición Y para las tuberías principales de la fase terciaria
 const mYA = 480;
 const mYB = 615;
-const tG = 'url(#tankG)', wG = 'url(#waterG)', sG = 'url(#sludgeG)';
+const wG = 'url(#waterG)', sG = 'url(#sludgeG)';
 
 // Tanque SVG con llenado de agua y marcador de nivel diferencial
 const Tk = ({ w, h, fill = wG, border = '#2a5a70', wp = 0.63 }:
   { w: number; h: number; fill?: string; border?: string; wp?: number }) => {
+  const { isDark } = useTheme();
+  const bodyG = isDark ? 'url(#tankG)' : 'url(#tankGL)';
   const wh = Math.round(h * wp);
   return <>
-    <rect x={-w / 2} y={-h} width={w} height={h} rx="3" fill={tG} stroke={border} strokeWidth="1.5" className="eq-b" />
+    <rect x={-w / 2} y={-h} width={w} height={h} rx="3" fill={bodyG} stroke={border} strokeWidth="1.5" className="eq-b" />
     <rect x={-w / 2 + 2} y={-wh} width={w - 4} height={wh - 2} fill={fill} opacity=".55" />
     <path d={`M${-w / 2 + 2},${-wh} Q0,${-wh - 3} ${w / 2 - 2},${-wh} L${w / 2 - 2},${-wh + 4} Q0,${-wh + 1} ${-w / 2 + 2},${-wh + 4}Z`}
       fill="#00c5e3" opacity=".35" />

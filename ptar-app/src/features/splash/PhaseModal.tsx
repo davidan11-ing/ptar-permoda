@@ -1,6 +1,7 @@
 // Modal de zoom de fase del diagrama PTAR con navegación lateral y soporte touch
 
 import { memo, useRef, type ReactNode } from 'react';
+import { useTheme } from '../../state/ThemeContext';
 
 interface Phase {
   key: string;
@@ -25,6 +26,7 @@ function PhaseModalInner({
   phase, phaseIdx, totalPhases, closing,
   onClose, onNavigate, svgBody, tooltipOverlay,
 }: Props) {
+  const { isDark } = useTheme();
   // Referencia para calcular distancia de swipe táctil
   const touchX = useRef(0);
 
@@ -48,7 +50,9 @@ function PhaseModalInner({
         style={{
           borderColor: `${phase.color}40`,
           boxShadow: `0 0 0 1px ${phase.color}1a, 0 0 80px ${phase.color}12, 0 36px 120px rgba(0,0,0,.95)`,
-          background: `radial-gradient(ellipse 80% 40% at 50% -5%, ${phase.color}0f 0%, #060b14 55%)`,
+          background: isDark
+            ? `radial-gradient(ellipse 80% 40% at 50% -5%, ${phase.color}0f 0%, #060b14 55%)`
+            : `radial-gradient(ellipse 80% 40% at 50% -5%, ${phase.color}18 0%, #EAF0F7 55%)`,
         }}
       >
         {/* ── Barra de acento superior ── */}

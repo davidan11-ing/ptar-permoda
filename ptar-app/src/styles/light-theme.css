@@ -918,3 +918,35 @@ html[data-theme="light"] .p-bio    { opacity: 1; }
 html[data-theme="light"] .p-clean  { opacity: 1; }
 html[data-theme="light"] .p-reject { opacity: 1; }
 html[data-theme="light"] .p-recirc { opacity: 1; }
+
+/* ══════════════════════════════════════════════════════════
+   29. MODALES DE ZOOM — Equipment Modal y Phase Modal
+══════════════════════════════════════════════════════════ */
+html[data-theme="light"] .eq-modal-backdrop  { background: rgba(180,200,220,.75); }
+html[data-theme="light"] .eq-modal-panel     { background: #F0F6FF; }
+html[data-theme="light"] .eq-modal-header    { background: #E0EAF7; border-bottom-color: #C8D6E5; }
+html[data-theme="light"] .eq-modal-name      { color: #0F1923; }
+html[data-theme="light"] .eq-modal-key-chip  { background: rgba(0,100,180,.10); color: #1f5a9a; border-color: rgba(0,100,180,.25); }
+html[data-theme="light"] .eq-modal-close     { color: #4A6070; }
+html[data-theme="light"] .eq-modal-close:hover { color: #1C3A4E; background: rgba(0,0,0,.06); }
+html[data-theme="light"] .eq-modal-section-label { color: #5A6E82; }
+html[data-theme="light"] .eq-modal-description   { color: #2D4A5E; }
+html[data-theme="light"] .eq-modal-badge          { border-color: currentColor; }
+html[data-theme="light"] .eq-modal-cost-value     { color: #0F1923; }
+html[data-theme="light"] .eq-modal-cost-range     { color: #5A6E82; }
+html[data-theme="light"] .eq-cost-breakdown       { border-color: rgba(0,0,0,.10); background: #F7FAFF; }
+html[data-theme="light"] .eq-cost-breakdown-summary { background: #E8F2FD; color: #2D4A5E; }
+html[data-theme="light"] .eq-cost-breakdown-body  { background: #F7FAFF; }
+html[data-theme="light"] .eq-cost-bd-label  { color: #4A6070; }
+html[data-theme="light"] .eq-cost-bd-pct    { color: #1f5a9a; }
+html[data-theme="light"] .eq-cost-bd-val    { color: #1C3A4E; }
+html[data-theme="light"] .eq-cost-bd-subtotal { border-top-color: rgba(0,0,0,.12); color: #2D4A5E; }
+html[data-theme="light"] .eq-cost-bd-total   { color: #1C3A4E; font-weight: 700; }
+html[data-theme="light"] .eq-modal-svg-col   { background: #EAF0F7; }
+
+html[data-theme="light"] .phase-modal-backdrop { background: rgba(180,200,220,.70); }
+html[data-theme="light"] .phase-modal-panel    { background: #EAF0F7; }
+html[data-theme="light"] .phase-modal-header   { background: rgba(234,240,247,.95); border-bottom-color: rgba(0,0,0,.08); }
+html[data-theme="light"] .phase-modal-index    { color: #5A6E82; }
+html[data-theme="light"] .phase-modal-close    { color: #4A6070; }
+html[data-theme="light"] .phase-modal-close:hover { color: #1C3A4E; background: rgba(0,0,0,.06); }

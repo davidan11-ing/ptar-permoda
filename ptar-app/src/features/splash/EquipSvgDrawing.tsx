@@ -6,9 +6,12 @@
  * ViewBox: 0 0 200 200 · Centro visual en (100, 100)
  */
 
-import type { JSX } from 'react';
+import { createContext, useContext, type JSX } from 'react';
 import type { Status } from './equipment';
 import { SC } from './equipment';
+import { useTheme } from '../../state/ThemeContext';
+
+const EqTankGCtx = createContext('url(#eqTankG)');
 
 interface Props { equipKey: string; status: Status; }
 
@@ -19,6 +22,10 @@ export function EqSvgDefs() {
       <linearGradient id="eqTankG" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%"   stopColor="#1a3d54"/>
         <stop offset="100%" stopColor="#0b2233"/>
+      </linearGradient>
+      <linearGradient id="eqTankGL" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"   stopColor="#d4e6f8"/>
+        <stop offset="100%" stopColor="#bcd4ee"/>
       </linearGradient>
       <linearGradient id="eqWaterG" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%"   stopColor="#00c5e3" stopOpacity=".8"/>
@@ -36,8 +43,7 @@ export function EqSvgDefs() {
   );
 }
 
-// Alias cortos de los gradientes definidos en EqSvgDefs
-const tG = 'url(#eqTankG)';
+// Alias cortos de los gradientes estáticos definidos en EqSvgDefs
 const wG = 'url(#eqWaterG)';
 const sG = 'url(#eqSludgeG)';
 
@@ -46,6 +52,7 @@ const sG = 'url(#eqSludgeG)';
 /** Tanque genérico centrado en (cx,cy), h = altura, w = ancho */
 function Tank({ cx=100, cy=130, w=64, h=90, pct=0.65, fill=wG, border='#2a5a70' }:
   { cx?:number; cy?:number; w?:number; h?:number; pct?:number; fill?:string; border?:string }) {
+  const tG = useContext(EqTankGCtx);
   const wh = Math.round(h * pct);
   const l = cx - w/2, r = cx + w/2;
   return <>
@@ -156,6 +163,7 @@ function DrawInputStream({ s }:{ s:Status }) {
 // Criba rotativa de tambor giratorio con malla de separación
 function DrawCribaRotativa({ s }:{ s:Status }) {
   const c = SC[s];
+  const tG = useContext(EqTankGCtx);
   return <>
     {/* Housing trough */}
     <path d="M44,148 L44,124 Q44,118 50,118 L150,118 Q156,118 156,124 L156,148Z"
@@ -186,6 +194,7 @@ function DrawCribaRotativa({ s }:{ s:Status }) {
 // Criba vibratoria circular con malla animada y descarga de gruesos
 function DrawCribaVibratoria({ s }:{ s:Status }) {
   const c = SC[s];
+  const tG = useContext(EqTankGCtx);
   return <>
     {/* Motor housing top */}
     <circle cx="100" cy="42" r="7" fill="#1a3040" stroke="#2a5a70" strokeWidth="1"/>
@@ -218,6 +227,7 @@ function DrawCribaVibratoria({ s }:{ s:Status }) {
 // Torre de enfriamiento con gotas, láminas de relleno y escape de vapor
 function DrawTorre({ s }:{ s:Status }) {
   const c = SC[s];
+  const tG = useContext(EqTankGCtx);
   return <>
     {/* Tower body */}
     <rect x="62" y="42" width="76" height="110" rx="4" fill={tG} stroke="#8b5cf660" strokeWidth="1.5"/>
@@ -249,6 +259,7 @@ function DrawTorre({ s }:{ s:Status }) {
 // Pozo cárcamo con entradas O y R y bomba de salida
 function DrawCarcamo({ s }:{ s:Status }) {
   const c = SC[s];
+  const tG = useContext(EqTankGCtx);
   return <>
     {/* Pit shape — wider at top */}
     <path d="M42,65 L50,155 L150,155 L158,65Z" fill={tG} stroke="#2a5a70" strokeWidth="1.5"/>
@@ -300,6 +311,7 @@ function DrawHomogenizer({ s }:{ s:Status }) {
 // Reactor GEM/DAF con 5 dosificaciones químicas y engranaje mezclador
 function DrawGEM({ s }:{ s:Status }) {
   const c = SC[s];
+  const tG = useContext(EqTankGCtx);
   // Puntos de dosificación química
   const dosing = [
     {x:60,  col:'#f85149',  l:'Ácido'},
@@ -369,6 +381,7 @@ function DrawSwingmill({ s }:{ s:Status }) {
 // Biorreactor de membrana (MBR) con módulos de ultrafiltración sumergidos
 function DrawMBR({ s }:{ s:Status }) {
   const c = SC[s];
+  const tG = useContext(EqTankGCtx);
   // Color de membrana — naranja si advertencia (colmatación)
   const memColor = s === 'advertencia' ? '#d29922' : '#2a5575';
   return <>
@@ -405,6 +418,7 @@ function DrawMBR({ s }:{ s:Status }) {
 // Reactor MBBR con bioportadores plásticos y difusores de burbuja fina
 function DrawMBBR({ s }:{ s:Status }) {
   const c = SC[s];
+  const tG = useContext(EqTankGCtx);
   return <>
     {/* Tank */}
     <rect x="28" y="38" width="144" height="122" rx="4" fill={tG} stroke={`${c}60`} strokeWidth="1.5"/>
@@ -683,23 +697,27 @@ const TYPE_MAP: Record<string, (p:{s:Status}) => JSX.Element> = {
 
 // Componente principal: selecciona el dibujo por equipKey y lo renderiza en SVG 200×200
 export function EquipSvgDrawing({ equipKey, status }: Props) {
+  const { isDark } = useTheme();
+  const eqTankG = isDark ? 'url(#eqTankG)' : 'url(#eqTankGL)';
+  const bgFill  = isDark ? '#060e16' : '#EAF0F7';
   const DrawFn = TYPE_MAP[equipKey];
   const c = SC[status];
   const content = DrawFn ? <DrawFn s={status}/> : (
     /* Generic fallback */
     <>
-      <rect x="50" y="60" width="100" height="80" rx="6" fill={tG} stroke={`${c}60`} strokeWidth="1.5"/>
+      <rect x="50" y="60" width="100" height="80" rx="6" fill={eqTankG} stroke={`${c}60`} strokeWidth="1.5"/>
       <text x="100" y="108" textAnchor="middle" fill={c} fontSize="9" fontFamily="monospace">EQUIPO</text>
     </>
   );
 
   return (
+    <EqTankGCtx.Provider value={eqTankG}>
     <svg viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet"
          style={{ width:'100%', height:'100%', display:'block' }}
          role="img" aria-label={equipKey}>
       <EqSvgDefs/>
       {/* Background grid */}
-      <rect width="200" height="200" fill="#060e16"/>
+      <rect width="200" height="200" fill={bgFill}/>
       <path d="M0,0" stroke="none"/>
       {[0,40,80,120,160,200].map(v=>(
         <g key={v}>
@@ -711,5 +729,6 @@ export function EquipSvgDrawing({ equipKey, status }: Props) {
       <rect x="40" y="40" width="120" height="120" rx="60" fill="url(#eqGlowG)"/>
       {content}
     </svg>
+    </EqTankGCtx.Provider>
   );
 }
