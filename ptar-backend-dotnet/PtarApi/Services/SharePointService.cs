@@ -46,22 +46,35 @@ public class SharePointService(string siteUrl, string tokenCacheFile, ILogger<Sh
             .Build();
         cacheHelper.RegisterCache(app.UserTokenCache);
 
-        var accounts = await app.GetAccountsAsync();
+        var accounts = (await app.GetAccountsAsync()).ToList();
         if (!accounts.Any())
             throw new InvalidOperationException(
                 "No hay sesión SharePoint guardada. " +
                 "Corre auth_sharepoint.py en ptar-backend/ para autenticarte una vez.");
 
-        try
+        // Intentar cada cuenta en caché; eliminar las que tengan grant revocado
+        Exception? lastEx = null;
+        foreach (var account in accounts)
         {
-            var result = await app.AcquireTokenSilent(Scopes, accounts.First()).ExecuteAsync();
-            return result.AccessToken;
+            try
+            {
+                var result = await app.AcquireTokenSilent(Scopes, account).ExecuteAsync();
+                logger.LogInformation("SharePoint: token OK para {User}, expira {Exp}",
+                    account.Username, result.ExpiresOn);
+                return result.AccessToken;
+            }
+            catch (MsalUiRequiredException ex) when (ex.ErrorCode is "invalid_grant" or "interaction_required")
+            {
+                logger.LogWarning("SharePoint: grant inválido para {User} ({Code}) — eliminando de caché",
+                    account.Username, ex.ErrorCode);
+                await app.RemoveAsync(account);
+                lastEx = ex;
+            }
         }
-        catch (MsalUiRequiredException)
-        {
-            throw new InvalidOperationException(
-                "El token SharePoint expiró. Corre nuevamente auth_sharepoint.py.");
-        }
+
+        throw new InvalidOperationException(
+            "El token SharePoint expiró o fue revocado (cambio de contraseña). " +
+            "Borra .sharepoint_token_cache.json y corre nuevamente auth_sharepoint.py.");
     }
 
     private async Task<MsalCacheHelper> CreateCacheHelperAsync()
