@@ -92,7 +92,7 @@ public class TurnoController(IDbConnectionFactory db) : ControllerBase
             """,
             new { })).ToList();
 
-        var criticas = otsItems.Count(o => string.Equals(o.Criticidad, "ALTA", StringComparison.OrdinalIgnoreCase));
+        var criticas = otsItems.Count(o => string.Equals(o.criticidad, "ALTA", StringComparison.OrdinalIgnoreCase));
 
         const string SpBaseUrl =
             "https://permodaco.sharepoint.com/sites/CONFIABILIDAD/_layouts/15/listform.aspx" +
@@ -126,11 +126,11 @@ public class TurnoController(IDbConnectionFactory db) : ControllerBase
 
 public class OtResumenItem
 {
-    public int     Id           { get; set; }
-    public int     SharepointId { get; set; }
-    public string? Objeto       { get; set; }
-    public string? Descripcion  { get; set; }
-    public string? Criticidad   { get; set; }
-    public string? Estado       { get; set; }
-    public string? Responsable  { get; set; }
+    public int     id           { get; set; }
+    public int     sharepoint_id { get; set; }
+    public string? objeto       { get; set; }
+    public string? descripcion  { get; set; }
+    public string? criticidad   { get; set; }
+    public string? estado       { get; set; }
+    public string? responsable  { get; set; }
 }
