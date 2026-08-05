@@ -322,15 +322,9 @@ export default function SplashScreen() {
           <PhaseLabel x={269}  w={800} label="FASE PRIMARIA"    color="#d29922"/>
           <PhaseLabel x={1073} w={717} label="FASE SECUNDARIA"  color="#3fb950"/>
 
-          {/* ── Fila inferior izquierda: TERCIARIA · REÚSO (x=10, y=355, w=1176) ── */}
-          <rect x="10"  y="355" width="1176" height="313" rx="6" fill="#1f6feb" fillOpacity=".018" stroke="#1f6feb" strokeOpacity=".08" strokeWidth="1"/>
-          <text x="530" y="375" textAnchor="middle" fill="#1f6feb" fontSize="12" fontWeight="700" letterSpacing="3" fontFamily="monospace">FASE TERCIARIA · RECIRCULACIÓN</text>
-
-          {/* ── Fila inferior derecha: VERTIMIENTO (x=1190, y=355, w=600) ── */}
-          <rect x="1190" y="355" width="600" height="313" rx="6"
-            fill="#f85149" fillOpacity=".015" stroke="#f85149" strokeOpacity=".08" strokeWidth="1"/>
-          <text x="1490" y="375" textAnchor="middle"
-            fill="#f85149" fontSize="12" fontWeight="700" letterSpacing="3" fontFamily="monospace">FASE OZONO</text>
+          {/* ── Fila inferior: TERCIARIA · RECIRCULACIÓN (full width) ── */}
+          <rect x="10" y="355" width="1780" height="313" rx="6" fill="#1f6feb" fillOpacity=".018" stroke="#1f6feb" strokeOpacity=".08" strokeWidth="1"/>
+          <text x="900" y="375" textAnchor="middle" fill="#1f6feb" fontSize="12" fontWeight="700" letterSpacing="3" fontFamily="monospace">FASE TERCIARIA · RECIRCULACIÓN</text>
           {/* ── Phase click zones (detrás de los equipos) ── */}
           <g className="phase-click-zones">
             {PHASES.map(ph => {
@@ -349,65 +343,6 @@ export default function SplashScreen() {
             })}
           </g>
 
-          {/* ── VERTIMIENTO: 3 trenes en x=1190-1790 ── */}
-          {/* Tren labels */}
-          {[1310, 1490, 1670].map((sx, i) => (
-            <text key={sx} x={sx} y="392" textAnchor="middle" fill="#f8514960" fontSize="5.5" fontWeight="700" letterSpacing="1" fontFamily="monospace">TREN {i+1}</text>
-          ))}
-
-          {/* Colector horizontal AC2 → 3 trenes (y=430) */}
-          <line x1="1190" y1="430" x2="1755" y2="430" stroke="#f85149" strokeWidth="1.5" opacity=".5" className="p-reject"/>
-          <circle cx="1195" cy="430" r="2.5" fill="#f85149" opacity=".75"/>
-          {[1310, 1490, 1670].map(sx => (
-            <circle key={sx} cx={sx} cy="430" r="2" fill="#f85149" opacity=".6"/>
-          ))}
-
-          {/* ══ 3 trenes: TK PERMEADO + FILTRO CARBÓN + salida EFLUENTE ══ */}
-          {[1310, 1490, 1670].map((sx, i) => (
-            <g key={sx}>
-              {/* Bajada desde colector → TK PERM top (y=440) */}
-              <line x1={sx} y1="430" x2={sx} y2="440"
-                stroke="#f85149" strokeWidth="1.5" opacity=".6" className="p-reject"/>
-
-              {/* TK PERMEADO (bottom y=520, h=80) */}
-              <g className={`eq-h eq-g d${17+i}`} transform={`translate(${sx},520)`} onDoubleClick={()=>openEquipRef.current('tkVert')} onMouseEnter={()=>setTt({eq:eqLive.tkVert,x:sx,y:440})} onMouseLeave={hideTt}>
-                <SD eq={eqLive.tkVert} cx={35} cy={-80}/>
-                <rect x="-35" y="-80" width="70" height="80" rx="3"
-                  fill={tG} stroke={cStrkRed50} strokeWidth="1.4" className="eq-b"/>
-                <rect x="-33" y="-56" width="66" height="54" fill={wG} opacity=".45"/>
-                <path d="M-33,-56 Q0,-60 33,-56 L33,-53 Q0,-57 -33,-53Z" fill="#00c5e3" opacity=".3"/>
-                <Dh w={70} h={80} pct={0.68}/>
-                <text x="0" y="-28" textAnchor="middle" fill="#3fb95060" fontSize="9" fontWeight="700" fontFamily="monospace">{i+1}</text>
-                <text y="13" textAnchor="middle" fill="#f85149" fontSize="6.5" fontWeight="700" fontFamily="monospace">TK PERM.</text>
-                {eqLive.tkVert.cost && <text y="22" textAnchor="middle" fill={cCostLabel} fontSize="7.5" fontFamily="monospace" className="eq-cost-float">{eqLive.tkVert.cost}</text>}
-              </g>
-
-              {/* Conector TK → Filtro */}
-              <line x1={sx} y1="520" x2={sx} y2="543"
-                stroke="#3fb950" strokeWidth="1.5" opacity=".7" className="p-bio"/>
-
-              {/* FILTRO CARBÓN ACTIVADO (bottom y=630, h=87) */}
-              <g className={`eq-h eq-g d${17+i}`} transform={`translate(${sx},630)`} onDoubleClick={()=>openEquipRef.current('filtVert')} onMouseEnter={()=>setTt({eq:eqLive.filtVert,x:sx,y:630})} onMouseLeave={hideTt}>
-                <SD eq={eqLive.filtVert} cx={28} cy={-87}/>
-                <rect x="-28" y="-87" width="56" height="87" rx="3"
-                  fill={tG} stroke={cStrkGreen50} strokeWidth="1.4" className="eq-b"/>
-                {[-18,-6,6,18].map(bx => (
-                  <rect key={bx} x={bx-4} y="-83" width="8" height="76"
-                    rx="3" fill="#1a1e14" stroke="#2a2e18" strokeWidth=".5"/>
-                ))}
-                <circle cx="0" cy="-44" r="18" fill="#a0e0ff" opacity=".05" className="uv-l"/>
-                <text x="0" y="13" textAnchor="middle" fill="#3fb950" fontSize="6.5" fontWeight="700" fontFamily="monospace">FILT.C+O₃</text>
-                {eqLive.filtVert.cost && <text x="0" y="22" textAnchor="middle" fill={cCostLabel} fontSize="7.5" fontFamily="monospace" className="eq-cost-float">{eqLive.filtVert.cost}</text>}
-              </g>
-
-              {/* Salida EFLUENTE */}
-              <line x1={sx} y1="630" x2={sx} y2="648"
-                stroke="#3fb950" strokeWidth="2" opacity=".75" className="p-clean"/>
-              <polygon points={`${sx-4},645 ${sx},653 ${sx+4},645`} fill="#3fb950" opacity=".8"/>
-              <text x={sx} y="662" textAnchor="middle"
-                fill="#3fb95060" fontSize="5.5" fontFamily="monospace">EFLUENTE</text>
-            </g>
-          ))}
 
           {/* ══════════════ FASE PRELIMINAR (unchanged) ══════════════ */}
 
@@ -809,11 +744,6 @@ export default function SplashScreen() {
           <line x1="1195" y1="215" x2="1153" y2="215" stroke="#3fb950" strokeWidth="2" opacity=".9" className="p-bio"/>
           <polygon points="1156,211 1148,215 1156,219" fill="#3fb950" opacity=".9"/>
 
-          {/* AC2: merge(1195,215) → VERTIMIENTO colector (y=430) */}
-          <line x1="1195" y1="215" x2="1195" y2="430" stroke="#f85149" strokeWidth="1.8" opacity=".65" className="p-reject"/>
-          <polygon points="1191,425 1195,433 1199,425" fill="#f85149" opacity=".65"/>
-          <text x="1206" y="300" fill="#f8514950" fontSize="5.5" fontStyle="italic" fontFamily="monospace">AC2</text>
-          <text x="1206" y="310" fill="#f8514950" fontSize="5.5" fontFamily="monospace">→ VERT.</text>
 
           {/* ── TK PERMEADO (cx=1123, bottom=257) — izquierda SECUNDARIA ── */}
           <g className="eq-h eq-g d19" transform="translate(1123,257)" onDoubleClick={()=>openEquipRef.current('tkPermeado')} onMouseEnter={()=>setTt({eq:eqLive.tkPermeado,x:1123,y:257})} onMouseLeave={hideTt}>
@@ -1050,10 +980,6 @@ export default function SplashScreen() {
           {/* TK RECH RO2(850)→CAJA VERT(1060): 876→1032 — FILTRO B ocupa x=898-942 en capa superior */}
           <line x1="876" y1={mYB} x2="1032" y2={mYB} stroke="#f85149" strokeWidth="2" opacity=".55" className="p-reject"/>
 
-          {/* ── AT: CAJA VERT(1060) → VERTIMIENTO ── */}
-          <line x1="1088" y1={mYB} x2="1190" y2={mYB} stroke="#f85149" strokeWidth="1.8" opacity=".5" strokeDasharray="5 4" className="p-reject"/>
-          <polygon points={`1186,${mYB-4} 1194,${mYB} 1186,${mYB+4}`} fill="#f85149" opacity=".6"/>
-          <text x="1139" y={mYB-5} textAnchor="middle" fill="#f8514950" fontSize="10" fontStyle="italic" fontFamily="monospace">AT → VERT.</text>
 
           {/* ── Overflow bypass: TK RECH RO1 → CAJA VERT ── */}
           <path d={`M530,${mYB} C530,${mYB+44} 1060,${mYB+44} 1060,${mYB}`}
