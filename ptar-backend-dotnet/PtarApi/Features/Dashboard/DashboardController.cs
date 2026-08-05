@@ -24,7 +24,7 @@ public class DashboardController(IDbConnectionFactory db) : ControllerBase
 
     // ── PUT /config ──────────────────────────────────────────────────────────
     [HttpPut("config")]
-    [Authorize(Roles = "encargado")]
+    [Authorize(Roles = "encargado,analista,administrador")]
     public async Task<IActionResult> SaveConfig([FromBody] JsonDocument body)
     {
         var user    = User.FindFirstValue(ClaimTypes.Name) ?? "encargado";
