@@ -124,4 +124,4 @@ public class TurnoController(IDbConnectionFactory db) : ControllerBase
     }
 }
 
-public record OtResumenItem(int Id, int? SharepointId, string? Objeto, string? Descripcion, string? Criticidad, string? Estado, string? Responsable);
+public record OtResumenItem(int Id, int SharepointId, string? Objeto, string? Descripcion, string? Criticidad, string? Estado, string? Responsable);
