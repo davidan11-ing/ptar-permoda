@@ -762,57 +762,57 @@ export default function SplashScreen() {
           <polygon points="681,288 685,280 689,288" fill="#d29922" opacity=".5"/>
           <text x="921" y="340" textAnchor="middle" fill="#d2992250" fontSize="5.5" fontStyle="italic" fontFamily="monospace">AD → CÁRCAMO</text>
 
-          {/* AE: TK Permeado izq (1093,257) → baja a FILT.IÓNICO HORIZ (top=426) */}
-          <line x1="1093" y1="257" x2="1093" y2="426" stroke="#3fb950" strokeWidth="2" opacity=".85" className="p-bio"/>
-          <polygon points="1089,422 1093,430 1097,422" fill="#3fb950" opacity=".9"/>
-          <text x="1107" y="330" fill="#3fb95080" fontSize="5.5" fontStyle="italic" fontFamily="monospace">AE→TERC.</text>
+          {/* AE: TK Permeado (1093,257) → dobla horizontal en y=352 → baja a FILT.IÓNICO (x=1393) */}
+          <line x1="1093" y1="257" x2="1093" y2="352" stroke="#3fb950" strokeWidth="2" opacity=".85" className="p-bio"/>
+          <line x1="1093" y1="352" x2="1393" y2="352" stroke="#3fb950" strokeWidth="2" opacity=".85" className="p-bio"/>
+          <line x1="1393" y1="352" x2="1393" y2="390" stroke="#3fb950" strokeWidth="2" opacity=".85" className="p-bio"/>
+          <polygon points="1389,386 1393,394 1397,386" fill="#3fb950" opacity=".9"/>
+          <text x="1243" y="348" textAnchor="middle" fill="#3fb95080" fontSize="5.5" fontStyle="italic" fontFamily="monospace">AE→TERC.</text>
 
-          {/* ══════════════ FASE TERCIARIA — 2 filas (mYA=480 superior · mYB=615 rechazos) ══════════════ */}
+          {/* ══════════════ FASE TERCIARIA — 2 filas (mYA=480 superior · mYB=615 rechazos) — centrado +300 ══════════════ */}
 
-          {/* ── Tubería principal superior y=mYA — FLOW right→left (x1>x2 para flowR correcto) ── */}
-          <line x1="1060" y1={mYA} x2="530"  y2={mYA} stroke={cShadowPipe} strokeWidth="7" strokeLinecap="round"/>
-          <line x1="1060" y1={mYA} x2="530"  y2={mYA} stroke="#3fb950" strokeWidth="3.5" opacity=".85" className="p-clean"/>
-          <circle cx="1060" cy={mYA} r="3" fill="#3fb950" opacity=".8"/>
+          {/* ── Tubería principal superior y=mYA — FLOW right→left ── */}
+          <line x1="1360" y1={mYA} x2="830"  y2={mYA} stroke={cShadowPipe} strokeWidth="7" strokeLinecap="round"/>
+          <line x1="1360" y1={mYA} x2="830"  y2={mYA} stroke="#3fb950" strokeWidth="3.5" opacity=".85" className="p-clean"/>
+          <circle cx="1360" cy={mYA} r="3" fill="#3fb950" opacity=".8"/>
           {/* Pipe labels upper */}
-          <text x="1016" y={mYA-5} textAnchor="middle" fill="#c084fc55" fontSize="5.5" fontStyle="italic" fontFamily="monospace">AF</text>
-          <text x="836"  y={mYA-5} textAnchor="middle" fill="#1f6feb55" fontSize="5.5" fontStyle="italic" fontFamily="monospace">→ RO1</text>
-          <text x="673"  y={mYA-5} textAnchor="middle" fill="#1f6feb55" fontSize="5.5" fontStyle="italic" fontFamily="monospace">AH</text>
+          <text x="1316" y={mYA-5} textAnchor="middle" fill="#c084fc55" fontSize="5.5" fontStyle="italic" fontFamily="monospace">AF</text>
+          <text x="1136" y={mYA-5} textAnchor="middle" fill="#1f6feb55" fontSize="5.5" fontStyle="italic" fontFamily="monospace">→ RO1</text>
+          <text x="973"  y={mYA-5} textAnchor="middle" fill="#1f6feb55" fontSize="5.5" fontStyle="italic" fontFamily="monospace">AH</text>
 
           {/* ── AG: RO1 E1 permeado ↓ collector ── */}
-          <line x1="740" y1={mYA} x2="740" y2="510" stroke="#3fb950" strokeWidth="1.5" opacity=".65" className="p-clean"/>
-          <circle cx="740" cy="510" r="2.5" fill="#3fb950" opacity=".7"/>
-          <text x="751" y="499" fill="#3fb95065" fontSize="5.5" fontStyle="italic" fontFamily="monospace">AG</text>
+          <line x1="1040" y1={mYA} x2="1040" y2="510" stroke="#3fb950" strokeWidth="1.5" opacity=".65" className="p-clean"/>
+          <circle cx="1040" cy="510" r="2.5" fill="#3fb950" opacity=".7"/>
+          <text x="1051" y="499" fill="#3fb95065" fontSize="5.5" fontStyle="italic" fontFamily="monospace">AG</text>
 
           {/* ── AL: RO1 E2 permeado ↓ collector ── */}
-          <line x1="575" y1={mYA} x2="575" y2="510" stroke="#3fb950" strokeWidth="1.5" opacity=".65" className="p-clean"/>
-          <circle cx="575" cy="510" r="2.5" fill="#3fb950" opacity=".7"/>
-          <text x="586" y="499" fill="#3fb95065" fontSize="5.5" fontStyle="italic" fontFamily="monospace">AL</text>
+          <line x1="875" y1={mYA} x2="875" y2="510" stroke="#3fb950" strokeWidth="1.5" opacity=".65" className="p-clean"/>
+          <circle cx="875" cy="510" r="2.5" fill="#3fb950" opacity=".7"/>
+          <text x="886" y="499" fill="#3fb95065" fontSize="5.5" fontStyle="italic" fontFamily="monospace">AL</text>
 
           {/* ── AJ: RO1 E2 reject ↓ TK RECH RO1 ── */}
-          <line x1="530" y1={mYA} x2="530" y2="547" stroke="#f85149" strokeWidth="1.5" opacity=".6" className="p-reject"/>
-          <polygon points="526,543 530,552 534,543" fill="#f85149" opacity=".65"/>
-          <text x="514" y="518" fill="#f8514965" fontSize="5.5" fontStyle="italic" fontFamily="monospace">AJ</text>
+          <line x1="830" y1={mYA} x2="830" y2="547" stroke="#f85149" strokeWidth="1.5" opacity=".6" className="p-reject"/>
+          <polygon points="826,543 830,552 834,543" fill="#f85149" opacity=".65"/>
+          <text x="814" y="518" fill="#f8514965" fontSize="5.5" fontStyle="italic" fontFamily="monospace">AJ</text>
 
-          {/* ── Permeado collector y=510 — FLOW right→left (x1>x2) ── */}
-          <line x1="745" y1="510" x2="200"  y2="510" stroke={cShadowPipe} strokeWidth="5" strokeLinecap="round"/>
-          <line x1="745" y1="510" x2="200"  y2="510" stroke="#3fb950" strokeWidth="2.5" opacity=".75" className="p-clean"/>
-          <polygon points="203,507 195,510 203,513" fill="#3fb950" opacity=".85"/>
+          {/* ── Permeado collector y=510 — FLOW right→left ── */}
+          <line x1="1045" y1="510" x2="500"  y2="510" stroke={cShadowPipe} strokeWidth="5" strokeLinecap="round"/>
+          <line x1="1045" y1="510" x2="500"  y2="510" stroke="#3fb950" strokeWidth="2.5" opacity=".75" className="p-clean"/>
+          <polygon points="503,507 495,510 503,513" fill="#3fb950" opacity=".85"/>
 
-          {/* ── AM: RO2 permeado ↑ collector (RO2 nuevo x=745) ── */}
-          <line x1="745" y1="565" x2="745" y2="510" stroke="#3fb950" strokeWidth="1.5" opacity=".65" className="p-clean"/>
-          <circle cx="745" cy="510" r="2.5" fill="#3fb950" opacity=".75"/>
-          <text x="757" y="537" fill="#3fb95065" fontSize="5.5" fontStyle="italic" fontFamily="monospace">AM</text>
+          {/* ── AM: RO2 permeado ↑ collector (RO2 x=1045) ── */}
+          <line x1="1045" y1="565" x2="1045" y2="510" stroke="#3fb950" strokeWidth="1.5" opacity=".65" className="p-clean"/>
+          <circle cx="1045" cy="510" r="2.5" fill="#3fb950" opacity=".75"/>
+          <text x="1057" y="537" fill="#3fb95065" fontSize="5.5" fontStyle="italic" fontFamily="monospace">AM</text>
 
-          {/* ── Collector ↓ TK RECIR (entry x=200) ── */}
-          <line x1="200" y1="510" x2="200" y2="521" stroke="#3fb950" strokeWidth="2.5" opacity=".75" className="p-clean"/>
-          <polygon points="196,518 200,526 204,518" fill="#3fb950" opacity=".85"/>
+          {/* ── Collector ↓ TK RECIR (entry x=500) ── */}
+          <line x1="500" y1="510" x2="500" y2="521" stroke="#3fb950" strokeWidth="2.5" opacity=".75" className="p-clean"/>
+          <polygon points="496,518 500,526 504,518" fill="#3fb950" opacity=".85"/>
 
-          {/* ── FILTRO INTERCAMBIO IÓNICO HORIZONTAL 90° (x=1093, bottom=mYA) — recibe AE ── */}
-          {/* w=100 h=90 → top=390 (17px bajo título y=373, x=1093 no solapa con texto en x=598) */}
-          <g className="eq-h eq-g d17" transform={`translate(1093,${mYA})`} onDoubleClick={()=>openEquipRef.current('filtrosII')} onMouseEnter={()=>setTt({eq:eqLive.filtrosII,x:1093,y:mYA,flipY:true})} onMouseLeave={hideTt}>
+          {/* ── FILTRO INTERCAMBIO IÓNICO (x=1393, bottom=mYA) — recibe AE ── */}
+          <g className="eq-h eq-g d17" transform={`translate(1393,${mYA})`} onDoubleClick={()=>openEquipRef.current('filtrosII')} onMouseEnter={()=>setTt({eq:eqLive.filtrosII,x:1393,y:mYA,flipY:true})} onMouseLeave={hideTt}>
             <SD eq={eqLive.filtrosII} cx={50} cy={-88}/>
             <rect x="-50" y="-90" width="100" height="90" rx="3" fill={cIonicBody} stroke={cStrkIonic60} strokeWidth="1.5" className="eq-b"/>
-            {/* 3 columnas de lecho de resina — dentro de ±42 para no desbordar el outer rect ±50 */}
             {[[-42,'#1a2a50','#3b82f6'],[-12,'#1a1a2a','#6b7280'],[18,'#1a2a50','#3b82f6']].map(([bx,bg,sc],i)=>(
               <g key={i}>
                 <rect x={Number(bx)} y="-84" width="24" height="80" rx="3" fill={bg as string} stroke={sc as string} strokeWidth="1"/>
@@ -824,21 +824,20 @@ export default function SplashScreen() {
             <text y="12" textAnchor="middle" fill={cIonicLabel} fontSize="9" fontWeight="700" fontFamily="monospace">FILT. IÓNICO</text>
             {eqLive.filtrosII.cost && <text y="22" textAnchor="middle" fill={cCostLabel} fontSize="9" fontFamily="monospace" className="eq-cost-float">{eqLive.filtrosII.cost}</text>}
           </g>
-          {/* Auxiliares a la derecha del filtro horizontal (x>1143) */}
-          <rect x="1148" y="432" width="44" height="13" rx="2" fill={cIonicBody} stroke="#c084fc40" strokeWidth="1"/>
-          <text x="1170" y="441" textAnchor="middle" fill="#c084fc70" fontSize="5" fontFamily="monospace">PREP.RESINAS</text>
-          <rect x="1148" y="449" width="44" height="13" rx="2" fill={cIonicBody} stroke="#c084fc40" strokeWidth="1"/>
-          <text x="1170" y="458" textAnchor="middle" fill="#c084fc70" fontSize="5" fontFamily="monospace">TK SALMUERA</text>
-          <line x1="1143" y1="438" x2="1148" y2="438" stroke="#c084fc" strokeWidth="1" opacity=".4"/>
-          <line x1="1143" y1="455" x2="1148" y2="455" stroke="#c084fc" strokeWidth="1" opacity=".4"/>
+          {/* Auxiliares a la derecha del filtro iónico (x>1443) */}
+          <rect x="1448" y="432" width="44" height="13" rx="2" fill={cIonicBody} stroke="#c084fc40" strokeWidth="1"/>
+          <text x="1470" y="441" textAnchor="middle" fill="#c084fc70" fontSize="5" fontFamily="monospace">PREP.RESINAS</text>
+          <rect x="1448" y="449" width="44" height="13" rx="2" fill={cIonicBody} stroke="#c084fc40" strokeWidth="1"/>
+          <text x="1470" y="458" textAnchor="middle" fill="#c084fc70" fontSize="5" fontFamily="monospace">TK SALMUERA</text>
+          <line x1="1443" y1="438" x2="1448" y2="438" stroke="#c084fc" strokeWidth="1" opacity=".4"/>
+          <line x1="1443" y1="455" x2="1448" y2="455" stroke="#c084fc" strokeWidth="1" opacity=".4"/>
 
-          {/* ── 2× FILTRO 5µm EN PARALELO — estilo vibratoria ── */}
-          {/* FILTRO A: arriba del pipe principal (junction x=920, bottom=453, top=375) */}
-          <line x1="920" y1={mYA} x2="920" y2="453" stroke="#3fb950" strokeWidth="1.5" opacity=".7" className="p-clean"/>
-          <circle cx="920" cy={mYA} r="3" fill="#3fb950" opacity=".8"/>
-          <text x="937" y={mYA-2} fill="#1f6feb50" fontSize="4.8" fontFamily="monospace">∥ PARALELO</text>
-          {/* FILTRO A — arriba del pipe (bottom=453, top=375) */}
-          <g className="eq-h eq-g d18" transform="translate(920,453)" onDoubleClick={()=>openEquipRef.current('filtro5')} onMouseEnter={()=>setTt({eq:eqLive.filtro5,x:920,y:453,flipY:true})} onMouseLeave={hideTt}>
+          {/* ── 2× FILTRO 5µm EN PARALELO (junction x=1220) ── */}
+          <line x1="1220" y1={mYA} x2="1220" y2="453" stroke="#3fb950" strokeWidth="1.5" opacity=".7" className="p-clean"/>
+          <circle cx="1220" cy={mYA} r="3" fill="#3fb950" opacity=".8"/>
+          <text x="1237" y={mYA-2} fill="#1f6feb50" fontSize="4.8" fontFamily="monospace">∥ PARALELO</text>
+          {/* FILTRO A — arriba del pipe (bottom=453) */}
+          <g className="eq-h eq-g d18" transform="translate(1220,453)" onDoubleClick={()=>openEquipRef.current('filtro5')} onMouseEnter={()=>setTt({eq:eqLive.filtro5,x:1220,y:453,flipY:true})} onMouseLeave={hideTt}>
             <SD eq={eqLive.filtro5} cx={22} cy={-76}/>
             <rect x="-22" y="-78" width="44" height="78" rx="3" fill={tG} stroke={cStrkBlue60} strokeWidth="1.5" className="eq-b"/>
             <rect x="-20" y="-74" width="40" height="22" fill={wG} opacity=".3"/>
@@ -846,10 +845,9 @@ export default function SplashScreen() {
             <text y="12" textAnchor="middle" fill="#1f6feb" fontSize="8" fontWeight="700" fontFamily="monospace">5µm-A</text>
             {eqLive.filtro5.cost && <text y="22" textAnchor="middle" fill={cCostLabel} fontSize="8" fontFamily="monospace" className="eq-cost-float">{eqLive.filtro5.cost}</text>}
           </g>
-          {/* FILTRO B — debajo del pipe (vibratoria real), top=485 bottom=563 */}
-          {/* CAJA VERT movida a x=1060 → deja x=942-1032 libre para FILTRO B sin solapamiento */}
-          <line x1="920" y1={mYA} x2="920" y2="485" stroke="#3fb950" strokeWidth="1.5" opacity=".7" className="p-clean"/>
-          <g className="eq-h eq-g d18" transform="translate(920,563)" onDoubleClick={()=>openEquipRef.current('filtro5')} onMouseEnter={()=>setTt({eq:eqLive.filtro5,x:920,y:563,flipY:true})} onMouseLeave={hideTt}>
+          {/* FILTRO B — debajo del pipe (bottom=563) */}
+          <line x1="1220" y1={mYA} x2="1220" y2="485" stroke="#3fb950" strokeWidth="1.5" opacity=".7" className="p-clean"/>
+          <g className="eq-h eq-g d18" transform="translate(1220,563)" onDoubleClick={()=>openEquipRef.current('filtro5')} onMouseEnter={()=>setTt({eq:eqLive.filtro5,x:1220,y:563,flipY:true})} onMouseLeave={hideTt}>
             <SD eq={eqLive.filtro5} cx={22} cy={-76}/>
             <rect x="-22" y="-78" width="44" height="78" rx="3" fill={tG} stroke={cStrkBlue60} strokeWidth="1.5" className="eq-b"/>
             <rect x="-20" y="-74" width="40" height="22" fill={wG} opacity=".3"/>
@@ -858,20 +856,18 @@ export default function SplashScreen() {
             {eqLive.filtro5.cost && <text y="22" textAnchor="middle" fill={cCostLabel} fontSize="8" fontFamily="monospace" className="eq-cost-float">{eqLive.filtro5.cost}</text>}
           </g>
 
-          {/* ── RO1 ETAPA 1 — tubos de presión (x=740, w=90, h=88, bottom=mYA) ── */}
-          {/* top=392 — 19px bajo título y=373 ✓ (era x=755 h=110, top=370 cubría título) */}
-          <g className="eq-h eq-g d19" transform={`translate(740,${mYA})`} onDoubleClick={()=>openEquipRef.current('ro1e1')} onMouseEnter={()=>setTt({eq:eqLive.ro1e1,x:740,y:mYA,flipY:true})} onMouseLeave={hideTt}>
+          {/* ── RO1 ETAPA 1 (x=1040, bottom=mYA) ── */}
+          <g className="eq-h eq-g d19" transform={`translate(1040,${mYA})`} onDoubleClick={()=>openEquipRef.current('ro1e1')} onMouseEnter={()=>setTt({eq:eqLive.ro1e1,x:1040,y:mYA,flipY:true})} onMouseLeave={hideTt}>
             <ROStage eq={eqLive.ro1e1} svgLabel="RO1 E1" animDelayMultiplier={0.18}/>
           </g>
 
-          {/* ── RO1 ETAPA 2 — tubos de presión (x=575, w=90, h=88, bottom=mYA) ── */}
-          {/* top=392 — 19px bajo título y=373 ✓ (era x=590 h=110, top=370 cubría título) */}
-          <g className="eq-h eq-g d19" transform={`translate(575,${mYA})`} onDoubleClick={()=>openEquipRef.current('ro1e2')} onMouseEnter={()=>setTt({eq:eqLive.ro1e2,x:575,y:mYA,flipY:true})} onMouseLeave={hideTt}>
+          {/* ── RO1 ETAPA 2 (x=875, bottom=mYA) ── */}
+          <g className="eq-h eq-g d19" transform={`translate(875,${mYA})`} onDoubleClick={()=>openEquipRef.current('ro1e2')} onMouseEnter={()=>setTt({eq:eqLive.ro1e2,x:875,y:mYA,flipY:true})} onMouseLeave={hideTt}>
             <ROStage eq={eqLive.ro1e2} svgLabel="RO1 E2" animDelayMultiplier={0.22} compact/>
           </g>
 
-          {/* ── TK RECHAZO RO1 (x=530, bottom=mYB) — recibe AJ en center ── */}
-          <g className="eq-h eq-g d22" transform={`translate(530,${mYB})`} onDoubleClick={()=>openEquipRef.current('tkRechazo')} onMouseEnter={()=>setTt({eq:eqLive.tkRechazo,x:530,y:mYB})} onMouseLeave={hideTt}>
+          {/* ── TK RECHAZO RO1 (x=830, bottom=mYB) ── */}
+          <g className="eq-h eq-g d22" transform={`translate(830,${mYB})`} onDoubleClick={()=>openEquipRef.current('tkRechazo')} onMouseEnter={()=>setTt({eq:eqLive.tkRechazo,x:830,y:mYB})} onMouseLeave={hideTt}>
             <SD eq={eqLive.tkRechazo} cx={28} cy={-66}/>
             <rect x="-28" y="-68" width="56" height="68" rx="3" fill={tG} stroke={cStrkRed60} strokeWidth="1.5" className="eq-b"/>
             <rect x="-26" y="-52" width="52" height="50" fill={sG} opacity=".55"/>
@@ -880,15 +876,15 @@ export default function SplashScreen() {
             {eqLive.tkRechazo.cost && <text y="22" textAnchor="middle" fill={cCostLabel} fontSize="8" fontFamily="monospace" className="eq-cost-float">{eqLive.tkRechazo.cost}</text>}
           </g>
 
-          {/* ── FILTRO AK (x=630, bottom=mYB) ── */}
-          <g className="eq-h eq-g" transform={`translate(630,${mYB})`}>
+          {/* ── FILTRO AK (x=930, bottom=mYB) ── */}
+          <g className="eq-h eq-g" transform={`translate(930,${mYB})`}>
             <rect x="-18" y="-44" width="36" height="44" rx="3" fill={cFiltAK} stroke={cStrkBlue50} strokeWidth="1.2" className="eq-b"/>
             {[-8,0,8].map(bx=>(<rect key={bx} x={bx-3} y="-38" width="6" height="36" rx="3" fill="#1a3050" stroke="#2a5070" strokeWidth="1"/>))}
             <text y="12" textAnchor="middle" fill="#1f6feb90" fontSize="5" fontFamily="monospace">FILTRO</text>
           </g>
 
-          {/* ── RO2 — tubos de presión (x=745, w=90, h=88, bottom=mYB) ── */}
-          <g className="eq-h eq-g d20" transform={`translate(745,${mYB})`} onDoubleClick={()=>openEquipRef.current('ro2')} onMouseEnter={()=>setTt({eq:eqLive.ro2,x:745,y:mYB})} onMouseLeave={hideTt}>
+          {/* ── RO2 (x=1045, bottom=mYB) ── */}
+          <g className="eq-h eq-g d20" transform={`translate(1045,${mYB})`} onDoubleClick={()=>openEquipRef.current('ro2')} onMouseEnter={()=>setTt({eq:eqLive.ro2,x:1045,y:mYB})} onMouseLeave={hideTt}>
             <SD eq={eqLive.ro2} cx={46} cy={-86}/>
             <rect x="-45" y="-88" width="90" height="88" rx="4" fill={cRo2Body} stroke={cStrkRed60} strokeWidth="2" className="eq-b"/>
             {[-72,-51,-30,-9].map((ty,i)=>(
@@ -903,8 +899,8 @@ export default function SplashScreen() {
             {eqLive.ro2.cost && <text y="22" textAnchor="middle" fill={cCostLabel} fontSize="9" fontFamily="monospace" className="eq-cost-float">{eqLive.ro2.cost}</text>}
           </g>
 
-          {/* ── TK RECHAZO RO2 (x=850, bottom=mYB) — claro de FILTRO B en x=898-942 ── */}
-          <g className="eq-h eq-g d22" transform={`translate(850,${mYB})`} onDoubleClick={()=>openEquipRef.current('tkRechazoRO2')} onMouseEnter={()=>setTt({eq:eqLive.tkRechazoRO2,x:850,y:mYB})} onMouseLeave={hideTt}>
+          {/* ── TK RECHAZO RO2 (x=1150, bottom=mYB) ── */}
+          <g className="eq-h eq-g d22" transform={`translate(1150,${mYB})`} onDoubleClick={()=>openEquipRef.current('tkRechazoRO2')} onMouseEnter={()=>setTt({eq:eqLive.tkRechazoRO2,x:1150,y:mYB})} onMouseLeave={hideTt}>
             <SD eq={eqLive.tkRechazoRO2} cx={26} cy={-66}/>
             <rect x="-26" y="-68" width="52" height="68" rx="3" fill={tG} stroke={cStrkRed60} strokeWidth="1.5" className="eq-b"/>
             <rect x="-24" y="-52" width="48" height="50" fill={sG} opacity=".55"/>
@@ -913,8 +909,8 @@ export default function SplashScreen() {
             {eqLive.tkRechazoRO2.cost && <text y="22" textAnchor="middle" fill={cCostLabel} fontSize="8" fontFamily="monospace" className="eq-cost-float">{eqLive.tkRechazoRO2.cost}</text>}
           </g>
 
-          {/* ── CAJA VERTIMIENTO (x=1060, bottom=mYB) — desplazada derecha, claro para FILTRO B ── */}
-          <g className="eq-h eq-g d22" transform={`translate(1060,${mYB})`} onDoubleClick={()=>openEquipRef.current('cajaVert')} onMouseEnter={()=>setTt({eq:eqLive.cajaVert,x:1060,y:mYB})} onMouseLeave={hideTt}>
+          {/* ── CAJA VERTIMIENTO (x=1360, bottom=mYB) ── */}
+          <g className="eq-h eq-g d22" transform={`translate(1360,${mYB})`} onDoubleClick={()=>openEquipRef.current('cajaVert')} onMouseEnter={()=>setTt({eq:eqLive.cajaVert,x:1360,y:mYB})} onMouseLeave={hideTt}>
             <SD eq={eqLive.cajaVert} cx={28} cy={-66}/>
             <rect x="-28" y="-68" width="56" height="68" rx="4" fill={cCajaVert} stroke={cStrkRed80} strokeWidth="1.5" className="eq-b"/>
             <rect x="-26" y="-52" width="52" height="50" fill="#2e1010" opacity=".7"/>
@@ -923,8 +919,8 @@ export default function SplashScreen() {
             <text x="0" y="-20" textAnchor="middle" fill="#f8514960" fontSize="5" fontFamily="monospace">→ AT</text>
           </g>
 
-          {/* ── TK RECIRCULACIÓN — x=200 (movido a la izquierda) ── */}
-          <g className="eq-h eq-g d21" transform={`translate(200,${mYB})`} onDoubleClick={()=>openEquipRef.current('tkRecir')} onMouseEnter={()=>setTt({eq:eqLive.tkRecir,x:200,y:mYB})} onMouseLeave={hideTt}>
+          {/* ── TK RECIRCULACIÓN (x=500, bottom=mYB) ── */}
+          <g className="eq-h eq-g d21" transform={`translate(500,${mYB})`} onDoubleClick={()=>openEquipRef.current('tkRecir')} onMouseEnter={()=>setTt({eq:eqLive.tkRecir,x:500,y:mYB})} onMouseLeave={hideTt}>
             <SD eq={eqLive.tkRecir} cx={40} cy={-93}/>
             <rect x="-40" y="-95" width="80" height="95" rx="3" fill={tG} stroke={cStrkGreen60} strokeWidth="1.5" className="eq-b"/>
             <rect x="-38" y="-72" width="76" height="70" fill={wG} opacity=".48"/>
@@ -934,26 +930,26 @@ export default function SplashScreen() {
             {eqLive.tkRecir.cost && <text y="22" textAnchor="middle" fill={cCostLabel} fontSize="9" fontFamily="monospace" className="eq-cost-float">{eqLive.tkRecir.cost}</text>}
           </g>
 
-          {/* ── AQ: Acueducto → TK Recirculación (entrada por derecha) ── */}
-          <line x1="350" y1={mYB-75} x2="242" y2={mYB-75} stroke="#3fb950" strokeWidth="1.8" opacity=".85" className="p-clean"/>
-          <polygon points={`246,${mYB-79} 238,${mYB-75} 246,${mYB-71}`} fill="#3fb950" opacity=".85"/>
-          <text x="355" y={mYB-71} fill="#3fb95090" fontSize="9.5" fontFamily="monospace">ACUEDUCTO</text>
-          <text x="408" y={mYB-71} fill={cCyanText} fontSize="8" fontWeight="700" fontFamily="monospace">AQ</text>
+          {/* ── AQ: Acueducto → TK Recirculación ── */}
+          <line x1="650" y1={mYB-75} x2="542" y2={mYB-75} stroke="#3fb950" strokeWidth="1.8" opacity=".85" className="p-clean"/>
+          <polygon points={`546,${mYB-79} 538,${mYB-75} 546,${mYB-71}`} fill="#3fb950" opacity=".85"/>
+          <text x="655" y={mYB-71} fill="#3fb95090" fontSize="9.5" fontFamily="monospace">ACUEDUCTO</text>
+          <text x="708" y={mYB-71} fill={cCyanText} fontSize="8" fontWeight="700" fontFamily="monospace">AQ</text>
 
-          {/* ── AR: Carrotanques → TK Recirculación (entrada por derecha) ── */}
-          <line x1="350" y1={mYB-55} x2="242" y2={mYB-55} stroke="#3fb950" strokeWidth="1.8" opacity=".85" className="p-clean"/>
-          <polygon points={`246,${mYB-59} 238,${mYB-55} 246,${mYB-51}`} fill="#3fb950" opacity=".85"/>
-          <text x="355" y={mYB-51} fill="#3fb95090" fontSize="9.5" fontFamily="monospace">CARROTANQUES</text>
-          <text x="425" y={mYB-51} fill={cCyanText} fontSize="8" fontWeight="700" fontFamily="monospace">AR</text>
+          {/* ── AR: Carrotanques → TK Recirculación ── */}
+          <line x1="650" y1={mYB-55} x2="542" y2={mYB-55} stroke="#3fb950" strokeWidth="1.8" opacity=".85" className="p-clean"/>
+          <polygon points={`546,${mYB-59} 538,${mYB-55} 546,${mYB-51}`} fill="#3fb950" opacity=".85"/>
+          <text x="655" y={mYB-51} fill="#3fb95090" fontSize="9.5" fontFamily="monospace">CARROTANQUES</text>
+          <text x="725" y={mYB-51} fill={cCyanText} fontSize="8" fontWeight="700" fontFamily="monospace">AR</text>
 
-          {/* ── AS: PTAP → TK Recirculación (entrada por derecha) ── */}
-          <line x1="350" y1={mYB-35} x2="242" y2={mYB-35} stroke="#3fb950" strokeWidth="1.8" opacity=".85" className="p-clean"/>
-          <polygon points={`246,${mYB-39} 238,${mYB-35} 246,${mYB-31}`} fill="#3fb950" opacity=".85"/>
-          <text x="355" y={mYB-31} fill="#3fb95090" fontSize="9.5" fontFamily="monospace">PTAP</text>
-          <text x="380" y={mYB-31} fill={cCyanText} fontSize="8" fontWeight="700" fontFamily="monospace">AS</text>
+          {/* ── AS: PTAP → TK Recirculación ── */}
+          <line x1="650" y1={mYB-35} x2="542" y2={mYB-35} stroke="#3fb950" strokeWidth="1.8" opacity=".85" className="p-clean"/>
+          <polygon points={`546,${mYB-39} 538,${mYB-35} 546,${mYB-31}`} fill="#3fb950" opacity=".85"/>
+          <text x="655" y={mYB-31} fill="#3fb95090" fontSize="9.5" fontFamily="monospace">PTAP</text>
+          <text x="680" y={mYB-31} fill={cCyanText} fontSize="8" fontWeight="700" fontFamily="monospace">AS</text>
 
-          {/* ── PRODUCCIÓN / REÚSO — superior izquierda zona TERCIARIA (x=65, top=362) ── */}
-          <g className="eq-h eq-g d22" transform="translate(65,450)" onDoubleClick={()=>openEquipRef.current('produccion')} onMouseEnter={()=>setTt({eq:eqLive.produccion,x:65,y:450,flipY:true})} onMouseLeave={hideTt}>
+          {/* ── PRODUCCIÓN / REÚSO (x=365, top=362) ── */}
+          <g className="eq-h eq-g d22" transform="translate(365,450)" onDoubleClick={()=>openEquipRef.current('produccion')} onMouseEnter={()=>setTt({eq:eqLive.produccion,x:365,y:450,flipY:true})} onMouseLeave={hideTt}>
             <rect x="-50" y="-88" width="100" height="88" rx="5" fill={cProdBody} stroke={cStrkGreen60} strokeWidth="2" className="eq-b"/>
             <text x="0" y="-60" textAnchor="middle" fill="#3fb950" fontSize="10" fontWeight="800" fontFamily="monospace">PRODUCCIÓN</text>
             <path d="M-18,-44 L-28,-30 L-18,-26 L-18,-4 L18,-4 L18,-26 L28,-30 L18,-44 L10,-39 Q0,-35 -10,-39Z"
@@ -962,28 +958,27 @@ export default function SplashScreen() {
             {eqLive.produccion.cost && <text x="0" y="19" textAnchor="middle" fill={cCostLabel} fontSize="7.5" fontFamily="monospace" className="eq-cost-float">{eqLive.produccion.cost}</text>}
           </g>
 
-          {/* ── RECIR→PROD: sale izq TK RECIR (160,560) → sube a PROD bottom (65,450) ── */}
-          <line x1="160" y1="560" x2="65" y2="560" stroke="#3fb950" strokeWidth="2" opacity=".8" className="p-clean"/>
-          <line x1="65" y1="560" x2="65" y2="450" stroke="#3fb950" strokeWidth="2" opacity=".8" className="p-clean"/>
-          <circle cx="65" cy="560" r="2.5" fill="#3fb950" opacity=".8"/>
-          <polygon points="61,454 65,446 69,454" fill="#3fb950" opacity=".9"/>
+          {/* ── RECIR→PROD: sale izq TK RECIR (460,560) → sube a PROD bottom (365,450) ── */}
+          <line x1="460" y1="560" x2="365" y2="560" stroke="#3fb950" strokeWidth="2" opacity=".8" className="p-clean"/>
+          <line x1="365" y1="560" x2="365" y2="450" stroke="#3fb950" strokeWidth="2" opacity=".8" className="p-clean"/>
+          <circle cx="365" cy="560" r="2.5" fill="#3fb950" opacity=".8"/>
+          <polygon points="361,454 365,446 369,454" fill="#3fb950" opacity=".9"/>
 
           {/* ── Reject row pipes (y=mYB, FLOW left→right) ── */}
-          {/* TK RECH RO1(530)→FILTRO AK(630) */}
-          <line x1="558" y1={mYB} x2="612" y2={mYB} stroke="#f85149" strokeWidth="2" opacity=".55" className="p-reject"/>
-          <text x="585" y={mYB-5} textAnchor="middle" fill="#f8514965" fontSize="5.5" fontStyle="italic" fontFamily="monospace">AK</text>
-          {/* FILTRO AK(630)→RO2(745) */}
-          <line x1="648" y1={mYB} x2="700" y2={mYB} stroke="#f85149" strokeWidth="2" opacity=".55" className="p-reject"/>
-          {/* RO2(745)→TK RECH RO2(850) */}
-          <line x1="790" y1={mYB} x2="824" y2={mYB} stroke="#f85149" strokeWidth="2" opacity=".55" className="p-reject"/>
-          {/* TK RECH RO2(850)→CAJA VERT(1060): 876→1032 — FILTRO B ocupa x=898-942 en capa superior */}
-          <line x1="876" y1={mYB} x2="1032" y2={mYB} stroke="#f85149" strokeWidth="2" opacity=".55" className="p-reject"/>
-
+          {/* TK RECH RO1(830)→FILTRO AK(930) */}
+          <line x1="858" y1={mYB} x2="912" y2={mYB} stroke="#f85149" strokeWidth="2" opacity=".55" className="p-reject"/>
+          <text x="885" y={mYB-5} textAnchor="middle" fill="#f8514965" fontSize="5.5" fontStyle="italic" fontFamily="monospace">AK</text>
+          {/* FILTRO AK(930)→RO2(1045) */}
+          <line x1="948" y1={mYB} x2="1000" y2={mYB} stroke="#f85149" strokeWidth="2" opacity=".55" className="p-reject"/>
+          {/* RO2(1045)→TK RECH RO2(1150) */}
+          <line x1="1090" y1={mYB} x2="1124" y2={mYB} stroke="#f85149" strokeWidth="2" opacity=".55" className="p-reject"/>
+          {/* TK RECH RO2(1150)→CAJA VERT(1360) */}
+          <line x1="1176" y1={mYB} x2="1332" y2={mYB} stroke="#f85149" strokeWidth="2" opacity=".55" className="p-reject"/>
 
           {/* ── Overflow bypass: TK RECH RO1 → CAJA VERT ── */}
-          <path d={`M530,${mYB} C530,${mYB+44} 1060,${mYB+44} 1060,${mYB}`}
+          <path d={`M830,${mYB} C830,${mYB+44} 1360,${mYB+44} 1360,${mYB}`}
             fill="none" stroke="#92400e" strokeWidth="1.5" opacity=".5" strokeDasharray="5 3"/>
-          <text x="795" y={mYB+49} textAnchor="middle" fill="#92400e70" fontSize="5" fontStyle="italic" fontFamily="monospace">overflow → CAJA VERT.</text>
+          <text x="1095" y={mYB+49} textAnchor="middle" fill="#92400e70" fontSize="5" fontStyle="italic" fontFamily="monospace">overflow → CAJA VERT.</text>
 
           {/* ── Leyenda ── */}
           <g transform="translate(12,693)">
