@@ -871,7 +871,9 @@ export async function saveDashboardConfig(
 
 export interface OtResumenItem {
   id: number;
+  sharepoint_id: number | null;
   objeto: string | null;
+  descripcion: string | null;
   criticidad: string | null;
   estado: string | null;
   responsable: string | null;
@@ -892,10 +894,11 @@ export interface TurnoResumen {
   formularios: FormularioResumen[];
   costo_turno: number;
   ots: {
-    semana: number;
+    fecha: string;
     total_pendientes: number;
     total_completadas: number;
     criticas_pendientes: number;
+    sp_base_url: string;
     items_pendientes: OtResumenItem[];
   };
 }

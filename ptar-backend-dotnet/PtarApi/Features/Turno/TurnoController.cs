@@ -63,34 +63,40 @@ public class TurnoController(IDbConnectionFactory db) : ControllerBase
             """,
             new { fecha, turnoInt });
 
-        // OTs de la semana actual filtradas por área PTAR
+        // OTs del día actual filtradas por área PTAR BOG
         var otsRow = await conn.QueryFirstOrDefaultAsync(
             """
             SELECT
-              SUM(CASE WHEN UPPER(estado) NOT LIKE '%COMPLET%' THEN 1 ELSE 0 END) AS pendientes,
-              SUM(CASE WHEN UPPER(estado)     LIKE '%COMPLET%' THEN 1 ELSE 0 END) AS completadas
+              CAST(SUM(CASE WHEN UPPER(estado) NOT LIKE '%COMPLET%' THEN 1 ELSE 0 END) AS SIGNED) AS pendientes,
+              CAST(SUM(CASE WHEN UPPER(estado)     LIKE '%COMPLET%' THEN 1 ELSE 0 END) AS SIGNED) AS completadas
             FROM mantenimientos_preventivos
-            WHERE semana = @semana AND UPPER(gft) IN ('PTAR BOG', 'PTAR')
+            WHERE DATE(dia_programado) = CURDATE() AND UPPER(gft) = 'PTAR BOG'
             """,
-            new { semana });
+            new { });
 
-        long otsPend = otsRow is IDictionary<string, object> dp && dp["pendientes"]  is long lp ? lp : 0;
-        long otsComp = otsRow is IDictionary<string, object> dc2 && dc2["completadas"] is long lc ? lc : 0;
+        long otsPend = otsRow is IDictionary<string, object> dp && dp["pendientes"] is not null
+            ? Convert.ToInt64(dp["pendientes"]) : 0;
+        long otsComp = otsRow is IDictionary<string, object> dc2 && dc2["completadas"] is not null
+            ? Convert.ToInt64(dc2["completadas"]) : 0;
 
         var otsItems = (await conn.QueryAsync<OtResumenItem>(
             """
-            SELECT id, objeto, criticidad, estado,
+            SELECT id, sharepoint_id, objeto, descripcion, criticidad, estado,
                    COALESCE(asignado_a, responsable) AS responsable
             FROM mantenimientos_preventivos
-            WHERE semana = @semana
-              AND UPPER(gft) IN ('PTAR BOG', 'PTAR')
+            WHERE DATE(dia_programado) = CURDATE()
+              AND UPPER(gft) = 'PTAR BOG'
               AND UPPER(estado) NOT LIKE '%COMPLET%'
             ORDER BY CASE criticidad WHEN 'ALTA' THEN 1 WHEN 'MEDIA' THEN 2 ELSE 3 END
-            LIMIT 10
+            LIMIT 15
             """,
-            new { semana })).ToList();
+            new { })).ToList();
 
         var criticas = otsItems.Count(o => string.Equals(o.Criticidad, "ALTA", StringComparison.OrdinalIgnoreCase));
+
+        const string SpBaseUrl =
+            "https://permodaco.sharepoint.com/sites/CONFIABILIDAD/_layouts/15/listform.aspx" +
+            "?PageType=4&ListId={9f6714c3-6a81-4773-90f3-0600085416af}&ID=";
 
         return Ok(new
         {
@@ -107,14 +113,15 @@ public class TurnoController(IDbConnectionFactory db) : ControllerBase
             costo_turno = f02cost,
             ots = new
             {
-                semana,
+                fecha,
                 total_pendientes    = otsPend,
                 total_completadas   = otsComp,
                 criticas_pendientes = criticas,
+                sp_base_url         = SpBaseUrl,
                 items_pendientes    = otsItems,
             },
         });
     }
 }
 
-public record OtResumenItem(int Id, string? Objeto, string? Criticidad, string? Estado, string? Responsable);
+public record OtResumenItem(int Id, int? SharepointId, string? Objeto, string? Descripcion, string? Criticidad, string? Estado, string? Responsable);

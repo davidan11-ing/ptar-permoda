@@ -41,27 +41,53 @@ function FormCard({ f }: { f: FormularioResumen }) {
   );
 }
 
-function OtRow({ ot }: { ot: OtResumenItem }) {
+function OtRow({ ot, spBaseUrl }: { ot: OtResumenItem; spBaseUrl: string }) {
   const { theme } = useTheme();
   const color = CRITICIDAD_COLOR[(ot.criticidad ?? '').toUpperCase()] ?? theme.muted;
-  return (
+  const spUrl = ot.sharepoint_id ? spBaseUrl + ot.sharepoint_id : null;
+  const label = ot.descripcion?.trim() || ot.objeto || 'Sin descripción';
+
+  const inner = (
     <div style={{
       display: 'flex', alignItems: 'center', gap: 10,
       padding: '7px 10px', borderRadius: 5,
       background: theme.surface, border: `1px solid ${theme.border}`,
       marginBottom: 4,
-    }}>
+      cursor: spUrl ? 'pointer' : 'default',
+      transition: 'border-color .15s',
+    }}
+      onMouseEnter={e => spUrl && ((e.currentTarget as HTMLDivElement).style.borderColor = '#1f6feb88')}
+      onMouseLeave={e => spUrl && ((e.currentTarget as HTMLDivElement).style.borderColor = theme.border)}
+    >
       <span style={{
         fontSize: 9, fontWeight: 700, color, background: color + '18',
         border: `1px solid ${color}44`, borderRadius: 3,
         padding: '2px 6px', whiteSpace: 'nowrap', flexShrink: 0,
       }}>{ot.criticidad ?? '—'}</span>
-      <span style={{ fontSize: 11, color: theme.text1, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-        {ot.objeto ?? 'Sin objeto'}
-      </span>
-      <span style={{ fontSize: 10, color: theme.muted, whiteSpace: 'nowrap' }}>{ot.responsable ?? ''}</span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 11, color: theme.text1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {label}
+        </div>
+        {ot.objeto && (
+          <div style={{ fontSize: 9, color: theme.dim, marginTop: 1 }}>{ot.objeto}</div>
+        )}
+      </div>
+      {spUrl && (
+        <span style={{ fontSize: 9, color: '#58a6ff', whiteSpace: 'nowrap', flexShrink: 0 }}>
+          Ver ↗
+        </span>
+      )}
     </div>
   );
+
+  if (spUrl) {
+    return (
+      <a href={spUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'none', display: 'block' }}>
+        {inner}
+      </a>
+    );
+  }
+  return inner;
 }
 
 export default function ResumenTurnoModal({ onClose }: Props) {
@@ -185,7 +211,7 @@ export default function ResumenTurnoModal({ onClose }: Props) {
 
               {/* OTs */}
               <div style={{ fontSize: 10, fontWeight: 700, color: theme.muted, letterSpacing: '.07em', textTransform: 'uppercase', marginBottom: 10 }}>
-                Órdenes de Trabajo — Sem. {data.ots.semana}
+                Órdenes de Trabajo — Hoy · PTAR BOG
               </div>
 
               {/* KPIs OTs */}
@@ -209,7 +235,9 @@ export default function ResumenTurnoModal({ onClose }: Props) {
               {/* Lista OTs pendientes */}
               {data.ots.items_pendientes.length > 0 ? (
                 <div>
-                  {data.ots.items_pendientes.map(ot => <OtRow key={ot.id} ot={ot} />)}
+                  {data.ots.items_pendientes.map(ot => (
+                    <OtRow key={ot.id} ot={ot} spBaseUrl={data.ots.sp_base_url} />
+                  ))}
                   {data.ots.total_pendientes > data.ots.items_pendientes.length && (
                     <div style={{ fontSize: 10, color: theme.dim, textAlign: 'center', marginTop: 6 }}>
                       + {data.ots.total_pendientes - data.ots.items_pendientes.length} más sin mostrar
@@ -218,7 +246,7 @@ export default function ResumenTurnoModal({ onClose }: Props) {
                 </div>
               ) : (
                 <div style={{ fontSize: 11, color: '#3fb950', textAlign: 'center', padding: '10px 0' }}>
-                  Sin órdenes de trabajo pendientes esta semana
+                  Sin órdenes de trabajo pendientes para hoy
                 </div>
               )}
             </>
