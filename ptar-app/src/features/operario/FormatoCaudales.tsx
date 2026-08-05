@@ -279,7 +279,7 @@ export default function FormatoCaudales() {
             type="button"
             className="btn-primary"
             style={{ width: '100%', padding: '12px', fontSize: 14, fontWeight: 700 }}
-            onClick={() => navigate(ROUTES.OPERARIO_HOME)}
+            onClick={() => navigate(ROUTES.OPERARIO_HOME, { state: { submitted: 'F-01' } })}
           >
             ← Volver al inicio
           </button>

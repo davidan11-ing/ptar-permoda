@@ -430,7 +430,7 @@ const FormatoCalidad = memo(function FormatoCalidad() {
     setSaving(false);
     savedCountRef.current = rows.length;
     setSubmitted(true);
-    setTimeout(() => navigate(ROUTES.OPERARIO_HOME), 2000);
+    setTimeout(() => navigate(ROUTES.OPERARIO_HOME, { state: { submitted: 'F-03' } }), 2000);
   }, [totalFilled, gridVals, form, turno, currentUser, navigate]);
 
   // ─── Success screen ────────────────────────────────────────────────────────

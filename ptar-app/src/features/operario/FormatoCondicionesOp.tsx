@@ -467,7 +467,7 @@ export default function FormatoCondicionesOp() {
       toast.error(`Error al guardar: ${errors.join(', ')}`);
     } else {
       toast.success('Condiciones de operación guardadas correctamente.');
-      setTimeout(() => navigate(ROUTES.OPERARIO_HOME), 2000);
+      setTimeout(() => navigate(ROUTES.OPERARIO_HOME, { state: { submitted: 'F-05' } }), 2000);
     }
   };
 

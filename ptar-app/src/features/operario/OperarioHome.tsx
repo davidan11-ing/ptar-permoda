@@ -1,7 +1,8 @@
 // Pantalla de inicio del operario: accesos a formatos de turno, mantenimiento y revisión técnica RO
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useState, useEffect, useMemo } from 'react';
 import PlanosPanel from '../encargado/components/PlanosPanel';
+import ResumenTurnoModal from './ResumenTurnoModal';
 import { useAuth } from '../../state/AuthContext';
 import { useTheme } from '../../state/ThemeContext';
 import { ROUTES } from '../../lib/routes';
@@ -395,17 +396,78 @@ const FORMATOS = [
 export default function OperarioHome() {
   const { currentUser } = useAuth();
   const { theme } = useTheme();
+  const location = useLocation();
+
+  // Banner post-envío de formulario
+  const [submittedForm, setSubmittedForm] = useState<string | null>(null);
+  // Modal de cierre de turno
+  const [showResumen, setShowResumen] = useState(false);
+
+  // Al volver de un formulario con state.submitted, mostrar banner 6s
+  useEffect(() => {
+    const loc = location as { state?: { submitted?: string } };
+    if (loc.state?.submitted) {
+      setSubmittedForm(loc.state.submitted);
+      window.history.replaceState({}, '');
+      const t = setTimeout(() => setSubmittedForm(null), 6000);
+      return () => clearTimeout(t);
+    }
+  }, [location]);
 
   return (
     <div className="operario-home">
-      <div className="op-welcome">
-        <h1 className="op-title">Hola, <span>{currentUser?.nombre}</span></h1>
-        <p className="op-subtitle">Registro · Planta en Tiempo Real</p>
-        <div className="op-date">
-          {new Date().toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-          {' — '}
-          {new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
+      {/* Banner post-envío */}
+      {submittedForm && (
+        <div style={{
+          position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 8000, background: theme.surface2,
+          border: `1px solid ${theme.amber ?? '#d29922'}`,
+          borderLeft: `4px solid ${theme.amber ?? '#d29922'}`,
+          borderRadius: 8, padding: '10px 18px',
+          display: 'flex', alignItems: 'center', gap: 12,
+          boxShadow: theme.shadowMd, maxWidth: 460,
+          animation: 'fadeInUp .25s ease',
+        }}>
+          <span style={{ fontSize: 16 }}>⚠️</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: theme.text1 }}>
+              {submittedForm} guardado correctamente
+            </div>
+            <div style={{ fontSize: 11, color: theme.muted }}>
+              No olvide cerrar registro, para que sus datos queden guardados
+            </div>
+          </div>
+          <button onClick={() => setSubmittedForm(null)}
+            style={{ background: 'none', border: 'none', color: theme.dim, fontSize: 16, cursor: 'pointer', padding: 0, lineHeight: 1 }}>
+            ✕
+          </button>
         </div>
+      )}
+
+      {/* Modal de resumen de turno */}
+      {showResumen && <ResumenTurnoModal onClose={() => setShowResumen(false)} />}
+
+      <div className="op-welcome" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+        <div>
+          <h1 className="op-title">Hola, <span>{currentUser?.nombre}</span></h1>
+          <p className="op-subtitle">Registro · Planta en Tiempo Real</p>
+          <div className="op-date">
+            {new Date().toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            {' — '}
+            {new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
+          </div>
+        </div>
+        <button
+          onClick={() => setShowResumen(true)}
+          style={{
+            background: '#f8514918', border: `1px solid #f8514966`,
+            borderRadius: 7, color: '#f85149',
+            padding: '8px 16px', fontSize: 12, fontWeight: 700,
+            cursor: 'pointer', whiteSpace: 'nowrap', alignSelf: 'flex-start',
+            marginTop: 4,
+          }}>
+          🔚 Cerrar Turno
+        </button>
       </div>
 
       {/* Separador */}

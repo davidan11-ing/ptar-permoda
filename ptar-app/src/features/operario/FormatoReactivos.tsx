@@ -633,7 +633,7 @@ export default function FormatoReactivos() {
     }
     setSaving(false);
     toast.success(`${rows.length} registro${rows.length !== 1 ? 's' : ''} guardado${rows.length !== 1 ? 's' : ''} correctamente.`);
-    setTimeout(() => navigate(ROUTES.OPERARIO_HOME), 2000);
+    setTimeout(() => navigate(ROUTES.OPERARIO_HOME, { state: { submitted: 'F-02' } }), 2000);
   };
 
   // Etiqueta dinámica del botón de envío según el estado actual del formulario

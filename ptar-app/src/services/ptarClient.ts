@@ -866,3 +866,41 @@ export async function saveDashboardConfig(
 ): Promise<void> {
   await request('/api/dashboard/config', { method: 'PUT', body: JSON.stringify(config) });
 }
+
+// ─── Resumen de turno (operario) ──────────────────────────────────────────────
+
+export interface OtResumenItem {
+  id: number;
+  objeto: string | null;
+  criticidad: string | null;
+  estado: string | null;
+  responsable: string | null;
+}
+
+export interface FormularioResumen {
+  codigo: string;
+  nombre: string;
+  completado: boolean;
+  registros: number;
+  costo?: number;
+}
+
+export interface TurnoResumen {
+  fecha: string;
+  turno_int: number;
+  turno_nombre: string;
+  formularios: FormularioResumen[];
+  costo_turno: number;
+  ots: {
+    semana: number;
+    total_pendientes: number;
+    total_completadas: number;
+    criticas_pendientes: number;
+    items_pendientes: OtResumenItem[];
+  };
+}
+
+// Resumen del turno actual del operario: formularios completados, costo y OTs pendientes
+export async function getTurnoResumen(): Promise<TurnoResumen> {
+  return request<TurnoResumen>('/api/turno/resumen');
+}
