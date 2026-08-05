@@ -363,11 +363,11 @@ public class CalidadController(IDbConnectionFactory db) : ControllerBase
 // ── Modelos request ──────────────────────────────────────────────────────────
 public record RegistroCalidadIn(
     DateOnly? fecha,
-    [property: Required, MaxLength(20)]   string turno,
-    [property: Required, MaxLength(100)]  string usuario,
+    [Required, MaxLength(20)]   string turno,
+    [Required, MaxLength(100)]  string usuario,
     string? equipo,
-    [property: Required, MaxLength(100)]  string unidad_tratamiento,
-    [property: Required, MaxLength(100)]  string parametro,
+    [Required, MaxLength(100)]  string unidad_tratamiento,
+    [Required, MaxLength(100)]  string parametro,
     double? valor,
     bool no_aplica,
     string? observaciones);

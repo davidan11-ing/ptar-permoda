@@ -447,8 +447,8 @@ export default function OperarioHome() {
       {/* Modal de resumen de turno */}
       {showResumen && <ResumenTurnoModal onClose={() => setShowResumen(false)} />}
 
-      <div className="op-welcome" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-        <div>
+      <div style={{ position: 'relative' }}>
+        <div className="op-welcome">
           <h1 className="op-title">Hola, <span>{currentUser?.nombre}</span></h1>
           <p className="op-subtitle">Registro · Planta en Tiempo Real</p>
           <div className="op-date">
@@ -460,13 +460,13 @@ export default function OperarioHome() {
         <button
           onClick={() => setShowResumen(true)}
           style={{
-            background: '#f8514918', border: `1px solid #f8514966`,
-            borderRadius: 7, color: '#f85149',
+            position: 'absolute', top: 0, right: 0,
+            background: '#1f6feb22', border: `1px solid #1f6feb88`,
+            borderRadius: 7, color: '#58a6ff',
             padding: '8px 16px', fontSize: 12, fontWeight: 700,
-            cursor: 'pointer', whiteSpace: 'nowrap', alignSelf: 'flex-start',
-            marginTop: 4,
+            cursor: 'pointer', whiteSpace: 'nowrap',
           }}>
-          🔚 Cerrar Turno
+          Cerrar Turno
         </button>
       </div>
 

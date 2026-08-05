@@ -354,15 +354,15 @@ public class CaudalesController(IDbConnectionFactory db) : ControllerBase
 // ── Modelos request ──────────────────────────────────────────────────────────
 public record LecturaContadorIn(
     DateOnly? fecha,
-    [property: Required, MaxLength(20)]   string turno,
-    [property: Required, MaxLength(100)]  string usuario,
+    [Required, MaxLength(20)]   string turno,
+    [Required, MaxLength(100)]  string usuario,
     string? equipo,
-    [property: Required, MaxLength(15)]   string id_contador,
-    [property: Required, MaxLength(100)]  string nombre_contador,
-    [property: Required, MaxLength(100)]  string ubicacion,
-    [property: Required, MaxLength(50)]   string tipo_agua,
-    [property: Range(0, 9_999_999)]       double lectura_anterior_m3,
-    [property: Range(0, 9_999_999)]       double lectura_actual_m3,
+    [Required, MaxLength(15)]   string id_contador,
+    [Required, MaxLength(100)]  string nombre_contador,
+    [Required, MaxLength(100)]  string ubicacion,
+    [Required, MaxLength(50)]   string tipo_agua,
+    [Range(0, 9_999_999)]       double lectura_anterior_m3,
+    [Range(0, 9_999_999)]       double lectura_actual_m3,
     string? observaciones);
 
 public record EdicionCaudalesIn(
