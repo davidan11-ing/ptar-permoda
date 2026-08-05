@@ -127,7 +127,7 @@ public class TurnoController(IDbConnectionFactory db) : ControllerBase
 public class OtResumenItem
 {
     public int     Id           { get; set; }
-    public string? SharepointId { get; set; }
+    public int     SharepointId { get; set; }
     public string? Objeto       { get; set; }
     public string? Descripcion  { get; set; }
     public string? Criticidad   { get; set; }
