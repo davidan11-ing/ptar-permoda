@@ -36,34 +36,32 @@ public class TurnoController(IDbConnectionFactory db) : ControllerBase
         var turnoNombre = GetTurnoNombre(turnoInt);
         var fecha       = DateTime.UtcNow.ToString("yyyy-MM-dd");
         var semana      = GetSemanaActual();
-        var turnoStr    = turnoNombre.ToLower();   // "mañana" | "tarde" | "noche"
-
         await using var conn = db.Create();
 
         // Formularios — consultas independientes
         var f01n = await conn.QueryFirstOrDefaultAsync<long>(
-            "SELECT COUNT(*) FROM contadores_lectura WHERE fecha = @fecha AND turno_int = @turnoInt",
+            "SELECT COUNT(*) FROM contadores_lectura WHERE fecha = @fecha AND turno = @turnoInt",
             new { fecha, turnoInt });
 
         var f02row = await conn.QueryFirstOrDefaultAsync(
-            "SELECT COUNT(*) AS n, COALESCE(SUM(costo_quimica_turno),0) AS costo FROM operacion_gem_turno WHERE fecha = @fecha AND turno_int = @turnoInt",
+            "SELECT COUNT(*) AS n, COALESCE(SUM(costo_quimica_turno),0) AS costo FROM operacion_gem_turno WHERE fecha = @fecha AND turno = @turnoInt",
             new { fecha, turnoInt });
         long   f02n    = f02row is IDictionary<string, object> d2 && d2["n"]    is long   ln ? ln : 0;
         double f02cost = f02row is IDictionary<string, object> d3 && d3["costo"] is decimal dc ? (double)dc : 0;
 
         var f03n = await conn.QueryFirstOrDefaultAsync<long>(
-            "SELECT COUNT(*) FROM medicion_calidad WHERE fecha = @fecha AND turno_int = @turnoInt",
+            "SELECT COUNT(*) FROM medicion_calidad WHERE fecha = @fecha AND turno = @turnoInt",
             new { fecha, turnoInt });
 
         var f05n = await conn.QueryFirstOrDefaultAsync<long>(
             """
             SELECT (
-              (SELECT COUNT(*) FROM condiciones_mbr_turno  WHERE fecha = @fecha AND turno = @turnoStr) +
-              (SELECT COUNT(*) FROM condiciones_ro_turno   WHERE fecha = @fecha AND turno = @turnoStr) +
-              (SELECT COUNT(*) FROM condiciones_ptap_turno WHERE fecha = @fecha AND turno = @turnoStr)
+              (SELECT COUNT(*) FROM condiciones_mbr_turno  WHERE fecha = @fecha AND turno = @turnoInt) +
+              (SELECT COUNT(*) FROM condiciones_ro_turno   WHERE fecha = @fecha AND turno = @turnoInt) +
+              (SELECT COUNT(*) FROM condiciones_ptap_turno WHERE fecha = @fecha AND turno = @turnoInt)
             )
             """,
-            new { fecha, turnoStr });
+            new { fecha, turnoInt });
 
         // OTs de la semana actual filtradas por área PTAR
         var otsRow = await conn.QueryFirstOrDefaultAsync(
