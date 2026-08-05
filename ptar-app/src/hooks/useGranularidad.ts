@@ -21,6 +21,10 @@ function restar(dias: number) {
   d.setDate(d.getDate() - dias);
   return d.toLocaleDateString('en-CA');
 }
+// Fechas por defecto: enero 1 → abril 1 del año en curso
+const _y = new Date().getFullYear();
+const DEFAULT_FI = `${_y}-01-01`;
+const DEFAULT_FF = `${_y}-04-01`;
 
 // ── Hook ──────────────────────────────────────────────────────────────────────
 // fechaInicio / fechaFin → valores COMPROMETIDOS (disparan fetch)
@@ -33,9 +37,9 @@ function restar(dias: number) {
 // Hook de selección de granularidad con manejo de draft y commit de fechas
 // autoInit: true → al montar consulta la última fecha con datos y ajusta el rango
 export function useGranularidad(opts?: { initFi?: string; initFf?: string; autoInit?: boolean }) {
-  // Valores iniciales del rango de fechas
-  const INIT_FI = opts?.initFi ?? restar(30);
-  const INIT_FF = opts?.initFf ?? hoy();
+  // Valores iniciales del rango de fechas: enero 1 → abril 1 del año en curso
+  const INIT_FI = opts?.initFi ?? DEFAULT_FI;
+  const INIT_FF = opts?.initFf ?? DEFAULT_FF;
 
   // Granularidad activa seleccionada por el usuario
   const [granularidad, setGran]      = useState<Granularidad>('dia');
