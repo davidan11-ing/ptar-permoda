@@ -61,13 +61,12 @@ function PL({ x, y, label, color='#2a6a7a' }: { x:number; y:number; label:string
 
 
 
-// Definición de las 5 fases del proceso con color y viewBox para el zoom
+// Definición de las 4 fases del proceso con color y viewBox para el zoom
 const PHASES = [
-  { key: 'preliminar',  label: 'Fase Preliminar',      color: '#00c5e3', vb: '0 26 275 335'    },
-  { key: 'primaria',    label: 'Fase Primaria',          color: '#d29922', vb: '259 26 820 335'  },
-  { key: 'secundaria',  label: 'Fase Secundaria',        color: '#3fb950', vb: '1063 26 737 335' },
-  { key: 'terciaria',   label: 'Fase Terciaria · Recirculación', color: '#1f6feb', vb: '0 345 1196 333'  },
-  { key: 'vertimiento', label: 'Fase Vertimiento',       color: '#f85149', vb: '1180 345 620 333'},
+  { key: 'preliminar', label: 'Fase Preliminar',                  color: '#00c5e3', vb: '0 26 275 335'    },
+  { key: 'primaria',   label: 'Fase Primaria',                    color: '#d29922', vb: '259 26 820 335'  },
+  { key: 'secundaria', label: 'Fase Secundaria',                  color: '#3fb950', vb: '1063 26 737 335' },
+  { key: 'terciaria',  label: 'Fase Terciaria · Recirculación',  color: '#1f6feb', vb: '0 345 1800 333'  },
 ] as const;
 type PhaseKey = typeof PHASES[number]['key'];
 
