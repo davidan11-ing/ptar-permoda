@@ -475,8 +475,7 @@ export default function BalanceHidricoDashboard() {
 
   const agrupadoS6semana = useMemo(() => agrupadoS6.slice(-7), [agrupadoS6]);
 
-  // Pie S6 — 4 slices: Permeado RO / Rechazo RO / Vert MBRs / Vert GEM
-  // (usando mismo balance que agrupadoVert: envio_th como base)
+  // Pie S6 — solo los 3 flujos de DESCARGA (permeado RO se recircula, no se vierte)
   const pieS6 = useMemo(() => {
     const sum = (k: string) => agrupado.reduce((acc, r) => acc + (Number((r as Record<string, unknown>)[k]) || 0), 0);
     const mbrTotal  = sum('permeado_mbr1') + sum('permeado_mbr2');
@@ -486,7 +485,6 @@ export default function BalanceHidricoDashboard() {
     const vertGem   = Math.max(0, sum('envio_th') - entRo - vertMbr);
     const rechazoRo = Math.max(0, entRo - permRo);
     return [
-      { name: 'Permeado RO',      value: permRo,   color: C.permeadoRO },
       { name: 'Rechazo RO',       value: rechazoRo, color: C.rechazoRO },
       { name: 'Vertimiento MBRs', value: vertMbr,   color: C.vertMBR },
       { name: 'Vertimiento GEM',  value: vertGem,   color: C.vertGem },
@@ -948,7 +946,7 @@ export default function BalanceHidricoDashboard() {
 
           {/* Pie tratabilidad — 4 slices */}
           <PieCard
-            titulo="Tratabilidad Total — Distribución de agua tratada"
+            titulo="Vertimiento Total — Distribución de agua vertida"
             total={totalS6}
             slices={pieS6}
           />
