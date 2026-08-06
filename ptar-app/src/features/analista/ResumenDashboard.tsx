@@ -111,7 +111,7 @@ interface Props {
 }
 
 export default function ResumenDashboard({ sections, fechaInicioFixed, fechaFinFixed }: Props = {}) {
-  const hook = useGranularidad({ autoInit: !fechaInicioFixed });
+  const hook = useGranularidad({});
   const fechaInicio = fechaInicioFixed ?? hook.fechaInicio;
   const fechaFin    = fechaFinFixed    ?? hook.fechaFin;
   const { draftInicio, draftFin, handleFechaInicio, handleFechaFin, commitFechaInicio, commitFechaFin } = hook;

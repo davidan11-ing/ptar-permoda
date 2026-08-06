@@ -28,7 +28,7 @@ export default function CalidadDashboardPage({ vizConfig }: Props = {}) {
   const { theme } = useTheme();
 
   // ── Granularidad + fechas — siempre llamado (reglas de hooks) ─────────────
-  const baseHook = useGranularidad({ autoInit: !isViz });
+  const baseHook = useGranularidad({});
   const granularidad  = isViz ? (vizConfig!.filters.granularidad as ReturnType<typeof useGranularidad>['granularidad']) : baseHook.granularidad;
   const fechaInicio   = isViz ? vizConfig!.filters.fechaInicio : baseHook.fechaInicio;
   const fechaFin      = isViz ? vizConfig!.filters.fechaFin    : baseHook.fechaFin;

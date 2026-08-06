@@ -59,7 +59,7 @@ function StatsTable({title,stats,unit}:{title:string;stats:Stats|null;unit:strin
 
 // Formatea fecha YYYY-MM-DD → DD/MM para etiquetas del eje X
 function fmtFecha(raw:string):string {
-  try { const [,m,d]=raw.split('-'); return `${d}/${m}`; } catch { return raw; }
+  try { const [,m,d]=raw.slice(0,10).split('-'); return `${d}/${m}`; } catch { return raw; }
 }
 
 /** Agrupa remociones por granularidad (para semana/mes/dia → promedio de turnos) */

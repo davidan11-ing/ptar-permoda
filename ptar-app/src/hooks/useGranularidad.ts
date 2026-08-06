@@ -5,10 +5,10 @@ import { getUltimaFechaConDatos } from '../services/ptarClient';
 // ── Tipos ─────────────────────────────────────────────────────────────────────
 export type Granularidad = 'turno' | 'dia' | 'semana' | 'mes';
 
-// Fechas por defecto: enero 1 → abril 1 del año en curso
+// Fechas por defecto: mayo 1 → mayo 31 del año en curso (mes más completo en BD)
 const _y = new Date().getFullYear();
-const DEFAULT_FI = `${_y}-01-01`;
-const DEFAULT_FF = `${_y}-04-01`;
+const DEFAULT_FI = `${_y}-05-01`;
+const DEFAULT_FF = `${_y}-05-31`;
 
 // ── Hook ──────────────────────────────────────────────────────────────────────
 // fechaInicio / fechaFin → valores COMPROMETIDOS (disparan fetch)
@@ -55,9 +55,20 @@ export function useGranularidad(opts?: { initFi?: string; initFf?: string; autoI
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /** Click en botón preset: solo cambia granularidad, NO resetea fechas */
+  /** Click en botón preset: cambia granularidad y ajusta rango de fechas.
+   *  - mes  → año completo (enero 1 → diciembre 31)
+   *  - resto → rango por defecto (marzo 1 → abril 30) */
   function setGranularidad(g: Granularidad) {
     setGran(g);
+    if (g === 'mes') {
+      const fi = `${_y}-01-01`;
+      const ff = `${_y}-12-31`;
+      setFechaInicio(fi); setDraftInicio(fi);
+      setFechaFin(ff);    setDraftFin(ff);
+    } else {
+      setFechaInicio(DEFAULT_FI); setDraftInicio(DEFAULT_FI);
+      setFechaFin(DEFAULT_FF);    setDraftFin(DEFAULT_FF);
+    }
   }
 
   /** onChange: actualiza solo el draft (display inmediato).

@@ -66,11 +66,12 @@ export function useCargaRemovida(
         if (cancelled) return;
 
         // 1. Concentraciones por (fecha|turno) → {pulmon?, gem?}
+        //    Normalizar fecha a YYYY-MM-DD (la API puede devolver T00:00:00 si el campo es datetime)
         type FT = string;
         const conMap = new Map<FT, { pulmon?: number; gem?: number }>();
         for (const row of medRows) {
           const t   = TURNO_KEY[row.turno.toLowerCase()] ?? 'T1';
-          const key = `${row.fecha}|${t}`;
+          const key = `${(row.fecha as string).slice(0, 10)}|${t}`;
           if (!conMap.has(key)) conMap.set(key, {});
           const e = conMap.get(key)!;
           if (row.unidad_tratamiento === 'Tanque Homogeneizador') e.pulmon = row.valor;
@@ -123,7 +124,7 @@ export function useCargaRemovida(
           const kg  = Math.round(day.kgSum * 100) / 100;
           const ind = day.m3Sum > 0 ? Math.round((day.kgSum / day.m3Sum) * 100) / 100 : 0;
           total += kg;
-          const [, m, d] = fecha.split('-');
+          const [, m, d] = fecha.slice(0, 10).split('-');
           return { label: `${d}/${m}`, fecha, kgRemovidos: kg, indicadorKgM3: ind, sinDatos: false };
         });
 
@@ -132,7 +133,7 @@ export function useCargaRemovida(
         const realMap = new Map(realResult.map(r => [r.fecha, r]));
         const allResult: CargaRemovPoint[] = fechasCompletas.map(fecha => {
           if (realMap.has(fecha)) return realMap.get(fecha)!;
-          const [, m, d] = fecha.split('-');
+          const [, m, d] = fecha.slice(0, 10).split('-');
           return { label: `${d}/${m}`, fecha, kgRemovidos: 0, indicadorKgM3: 0, sinDatos: true };
         });
 

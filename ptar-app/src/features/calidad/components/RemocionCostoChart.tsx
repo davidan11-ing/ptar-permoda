@@ -162,7 +162,7 @@ export default function RemocionCostoChart({ fechaInicio, fechaFin, parametro: p
         const real = dataIdx.get(`${f}|${t}`);
         if (real) { rows.push(real); }
         else {
-          const [,m,d] = f.split('-');
+          const [,m,d] = f.slice(0, 10).split('-');
           rows.push({ label:`${d}/${m} ${t}`, fecha:f, turno:t, costoM3:0, remocion:0 });
         }
       });

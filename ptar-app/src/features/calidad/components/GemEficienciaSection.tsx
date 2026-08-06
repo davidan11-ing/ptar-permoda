@@ -22,7 +22,7 @@ const AXIS_TICK = { fill: '#8b949e', fontSize: 10 };
 
 // Formatea fecha YYYY-MM-DD → DD/MM para el eje X
 function formatFecha(f: string) {
-  const parts = f.split('-');
+  const parts = f.slice(0, 10).split('-');
   return parts.length >= 3 ? `${parts[2]}/${parts[1]}` : f;
 }
 

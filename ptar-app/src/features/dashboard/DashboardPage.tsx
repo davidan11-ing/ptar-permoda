@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../state/ThemeContext';
 import RealKpiSection from './RealKpiSection';
-import { getReporteDashboardHtmlUrl, getUltimaFechaConDatos } from '../../services/ptarClient';
+import { getReporteDashboardHtmlUrl } from '../../services/ptarClient';
 import { useAuth } from '../../state/AuthContext';
 import { ROUTES } from '../../lib/routes';
 import {
@@ -12,7 +12,7 @@ import {
 import BalanceConsumoWidget  from './widgets/BalanceConsumoWidget';
 import GemCostoWidget        from './widgets/GemCostoWidget';
 import RoCostoWidget         from './widgets/RoCostoWidget';
-import CalidadTendenciaWidget from './widgets/CalidadTendenciaWidget';
+import RemocionGemWidget from './widgets/RemocionGemWidget';
 
 interface Props { canEdit: boolean }
 
@@ -23,7 +23,7 @@ function renderWidget(id: WidgetId, fechaInicio: string, fechaFin: string): Reac
     case 'balance-consumo':   return <BalanceConsumoWidget  fechaInicio={fechaInicio} fechaFin={fechaFin} />;
     case 'gem-costo-m3':      return <GemCostoWidget        fechaInicio={fechaInicio} fechaFin={fechaFin} />;
     case 'ro-costo-m3':       return <RoCostoWidget         fechaInicio={fechaInicio} fechaFin={fechaFin} />;
-    case 'calidad-tendencia': return <CalidadTendenciaWidget fechaInicio={fechaInicio} fechaFin={fechaFin} />;
+    case 'calidad-tendencia': return <RemocionGemWidget      fechaInicio={fechaInicio} fechaFin={fechaFin} />;
   }
 }
 
@@ -32,17 +32,10 @@ export default function DashboardPage({ canEdit }: Props) {
   const navigate = useNavigate();
   const { theme } = useTheme();
 
-  // Fechas: se inicializan con los últimos 30 días y se ajustan al último mes con datos
-  const [FECHA_FIN,    setFechaFin]    = useState(() => new Date().toLocaleDateString('en-CA'));
-  const [FECHA_INICIO, setFechaInicio] = useState(() => { const d = new Date(); d.setDate(d.getDate() - 30); return d.toLocaleDateString('en-CA'); });
-  useEffect(() => {
-    getUltimaFechaConDatos().then(ultima => {
-      setFechaFin(ultima);
-      const d = new Date(ultima + 'T00:00:00');
-      d.setDate(d.getDate() - 30);
-      setFechaInicio(d.toLocaleDateString('en-CA'));
-    }).catch(() => {});
-  }, []);
+  // Fechas por defecto: mayo 1 → mayo 31 del año en curso (mes más completo en BD)
+  const _dashYear = new Date().getFullYear();
+  const [FECHA_FIN,    _setFechaFin]    = useState(`${_dashYear}-05-31`);
+  const [FECHA_INICIO, _setFechaInicio] = useState(`${_dashYear}-05-01`);
   const TODAY        = useMemo(() => new Date().toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }), []);
   const [ahora, setAhora] = useState(() => new Date().toLocaleTimeString('es-CO'));
   useEffect(() => {
@@ -214,7 +207,7 @@ export default function DashboardPage({ canEdit }: Props) {
       )}
 
       {/* Indicadores reales */}
-      <RealKpiSection />
+      <RealKpiSection fechaInicio={FECHA_INICIO} fechaFin={FECHA_FIN} />
 
       {/* Sección de widgets seleccionados */}
       {activeWidgets.length > 0 && (
