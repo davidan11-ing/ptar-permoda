@@ -24,7 +24,7 @@ export default function SegDiarioChart({ data, unidad_medida }: Props) {
 
   // Formateador de fecha: convierte YYYY-MM-DD a DD/MM
   const formatFecha = (f: string) => {
-    const [, m, d] = f.split('-');
+    const [, m, d] = f.slice(0, 10).split('-');
     return `${d}/${m}`;
   };
 

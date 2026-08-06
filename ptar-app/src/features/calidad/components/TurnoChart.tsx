@@ -21,7 +21,7 @@ export default function TurnoChart({ data, unidad_medida, unidad }: Props) {
   // Formateador de fecha: convierte YYYY-MM-DD a DD/MM
   const formatFecha = (f: string) => {
     if (!f) return '';
-    const [, m, d] = f.split('-');
+    const [, m, d] = f.slice(0, 10).split('-');
     return `${d}/${m}`;
   };
 

@@ -155,7 +155,7 @@ export function useKgQuimico(fechaInicio: string, fechaFin: string) {
         // Función auxiliar — convierte acumulado diario en punto con ratios
         const toPoint = (fecha: string, day: { kgRem:number; coagulante:number; decolorante:number; polAnionico:number; cationico:number }, sinDatos: boolean): KgQuimicoPoint => {
           const rem = day.kgRem;
-          const [, m, d] = fecha.split('-');
+          const [, m, d] = fecha.slice(0, 10).split('-');
           return {
             label:            `${d}/${m}`,
             fecha,

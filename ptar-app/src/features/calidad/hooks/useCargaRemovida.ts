@@ -123,7 +123,7 @@ export function useCargaRemovida(
           const kg  = Math.round(day.kgSum * 100) / 100;
           const ind = day.m3Sum > 0 ? Math.round((day.kgSum / day.m3Sum) * 100) / 100 : 0;
           total += kg;
-          const [, m, d] = fecha.split('-');
+          const [, m, d] = fecha.slice(0, 10).split('-');
           return { label: `${d}/${m}`, fecha, kgRemovidos: kg, indicadorKgM3: ind, sinDatos: false };
         });
 
@@ -132,7 +132,7 @@ export function useCargaRemovida(
         const realMap = new Map(realResult.map(r => [r.fecha, r]));
         const allResult: CargaRemovPoint[] = fechasCompletas.map(fecha => {
           if (realMap.has(fecha)) return realMap.get(fecha)!;
-          const [, m, d] = fecha.split('-');
+          const [, m, d] = fecha.slice(0, 10).split('-');
           return { label: `${d}/${m}`, fecha, kgRemovidos: 0, indicadorKgM3: 0, sinDatos: true };
         });
 

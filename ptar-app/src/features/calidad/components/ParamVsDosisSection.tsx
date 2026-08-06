@@ -164,7 +164,7 @@ export default function ParamVsDosisSection({ fechaInicio, fechaFin, granularida
         const real = realIdx.get(`${f}|${t}`);
         if (real) { rows.push(toRow(real)); }
         else {
-          const [,m,d] = f.split('-');
+          const [,m,d] = f.slice(0, 10).split('-');
           rows.push({ label:`${d}/${m} ${t}`, entrada:null, salida:null, ...NULL_PPM });
         }
       });
