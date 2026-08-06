@@ -62,10 +62,10 @@ interface Props { fechaInicio: string; fechaFin: string; granularidad?: Granular
 // ─── Componente ───────────────────────────────────────────────────────────
 // Gráfico combinado barras (parámetro) + líneas (PPM químicos) con multi-selección de reactivos
 export default function ParamVsDosisSection({ fechaInicio, fechaFin, granularidad }: Props) {
-  // Parámetro de calidad seleccionado
+  // Parámetro de calidad seleccionado (pH por defecto si está disponible)
   const [parametro,       setParametro]       = useState('');
-  // Químicos activos para mostrar como línea PPM
-  const [quimicosActivos, setQuimicosActivos] = useState<QuimicoKey[]>(['ppm_pol_cationico']);
+  // Químicos activos para mostrar como línea PPM (Ácido por defecto)
+  const [quimicosActivos, setQuimicosActivos] = useState<QuimicoKey[]>(['ppm_acido']);
   // Toggle para incluir turnos sin datos en el calendario
   const [mostrarVacios,   setMostrarVacios]   = useState(false);
 
@@ -75,7 +75,8 @@ export default function ParamVsDosisSection({ fechaInicio, fechaFin, granularida
     [...new Set(remData.map(r => r.parametro))].sort(),
   [remData]);
 
-  const param = parametro || parametros[0] || '';
+  // pH como parámetro por defecto si está disponible; si no, el primero de la lista
+  const param = parametro || (parametros.includes('pH') ? 'pH' : parametros[0]) || '';
 
   const { data: rawData, loading, error } = useParamVsDosis(fechaInicio, fechaFin, param);
 

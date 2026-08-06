@@ -52,6 +52,9 @@ const TURNO_KEY: Record<string, string> = {
 // Parámetro de contaminante removido (Sólidos Suspendidos Totales — igual que Excel)
 const PARAM_REMOVIDO = 'SST';
 
+// Fechas excluidas de la gráfica (días con operación atípica o carga química excepcional)
+const EXCLUDE_DATES = new Set(['2026-05-19', '2026-05-20']);
+
 // Hook principal — devuelve serie real y serie completa con días vacíos
 export function useKgQuimico(fechaInicio: string, fechaFin: string) {
   // Estados de carga, error, serie real y serie completa
@@ -151,7 +154,8 @@ export function useKgQuimico(fechaInicio: string, fechaFin: string) {
         // Solo incluir fechas con medición de concentración
         // (excluye días donde GEM dosificó pero no se midió SST)
         const conDates = new Set(Array.from(conMap.keys()).map(k => k.split('|')[0]));
-        const sorted = Array.from(dayMap.keys()).sort().filter(f => conDates.has(f));
+        const sorted = Array.from(dayMap.keys()).sort()
+          .filter(f => conDates.has(f) && !EXCLUDE_DATES.has(f));
 
         // Función auxiliar — convierte acumulado diario en punto con ratios
         const toPoint = (fecha: string, day: { kgRem:number; coagulante:number; decolorante:number; polAnionico:number; cationico:number }, sinDatos: boolean): KgQuimicoPoint => {
@@ -173,9 +177,11 @@ export function useKgQuimico(fechaInicio: string, fechaFin: string) {
         const EMPTY = { kgRem:0, coagulante:0, decolorante:0, polAnionico:0, cationico:0 };
         const result = sorted.map(f => toPoint(f, dayMap.get(f)!, false));
 
-        // allData: todas las fechas del rango (vacías con sinDatos=true)
+        // allData: todas las fechas del rango (vacías con sinDatos=true), excluye fechas atípicas
         const realSet = new Set(sorted);
-        const allResult = generarFechas(fechaInicio, fechaFin).map(f =>
+        const allResult = generarFechas(fechaInicio, fechaFin)
+          .filter(f => !EXCLUDE_DATES.has(f))
+          .map(f =>
           realSet.has(f) ? toPoint(f, dayMap.get(f)!, false) : toPoint(f, EMPTY, true)
         );
 
