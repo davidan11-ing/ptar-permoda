@@ -12,7 +12,7 @@ export const WIDGET_CATALOG: WidgetMeta[] = [
   { id: 'balance-consumo',   label: 'Balance Hídrico Global',  description: 'Fuentes de suministro por día: carrotanques, permeado RO, acueducto y PTAP', section: 'Balance', color: '#1f6feb' },
   { id: 'gem-costo-m3',      label: 'GEM $/m³',         description: 'Costo por m³ tratado en GEM por turno',   section: 'Costos',  color: '#3fb950' },
   { id: 'ro-costo-m3',       label: 'RO $/m³',          description: 'Costo por m³ tratado en Ósmosis Inversa', section: 'Costos',  color: '#d2a8ff' },
-  { id: 'calidad-tendencia', label: 'Calidad — pH/TDS', description: 'Tendencia pH y TDS en puntos clave',      section: 'Calidad', color: '#d29922' },
+  { id: 'calidad-tendencia', label: 'Remoción GEM',     description: 'Entrada/Salida GEM + % Remoción por día (selector de parámetro)', section: 'Calidad', color: '#3fb950' },
 ];
 
 export const DEFAULT_WIDGETS: WidgetId[] = ['balance-consumo', 'gem-costo-m3', 'ro-costo-m3', 'calidad-tendencia'];

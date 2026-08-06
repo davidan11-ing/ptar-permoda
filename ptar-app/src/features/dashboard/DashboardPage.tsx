@@ -12,7 +12,7 @@ import {
 import BalanceConsumoWidget  from './widgets/BalanceConsumoWidget';
 import GemCostoWidget        from './widgets/GemCostoWidget';
 import RoCostoWidget         from './widgets/RoCostoWidget';
-import CalidadTendenciaWidget from './widgets/CalidadTendenciaWidget';
+import RemocionGemWidget from './widgets/RemocionGemWidget';
 
 interface Props { canEdit: boolean }
 
@@ -23,7 +23,7 @@ function renderWidget(id: WidgetId, fechaInicio: string, fechaFin: string): Reac
     case 'balance-consumo':   return <BalanceConsumoWidget  fechaInicio={fechaInicio} fechaFin={fechaFin} />;
     case 'gem-costo-m3':      return <GemCostoWidget        fechaInicio={fechaInicio} fechaFin={fechaFin} />;
     case 'ro-costo-m3':       return <RoCostoWidget         fechaInicio={fechaInicio} fechaFin={fechaFin} />;
-    case 'calidad-tendencia': return <CalidadTendenciaWidget fechaInicio={fechaInicio} fechaFin={fechaFin} />;
+    case 'calidad-tendencia': return <RemocionGemWidget      fechaInicio={fechaInicio} fechaFin={fechaFin} />;
   }
 }
 
