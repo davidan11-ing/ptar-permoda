@@ -306,29 +306,48 @@ export default function SplashScreen() {
             <linearGradient id="sludgeG" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#6b4a18"/><stop offset="100%" stopColor="#2c1c08"/>
             </linearGradient>
+            {/* Gradiente radial de fondo — modo oscuro */}
+            <radialGradient id="bgG" cx="50%" cy="46%" r="72%" fx="50%" fy="40%">
+              <stop offset="0%"   stopColor="#0f2035"/>
+              <stop offset="60%"  stopColor="#091628"/>
+              <stop offset="100%" stopColor="#04090f"/>
+            </radialGradient>
+            {/* Gradiente radial de fondo — modo claro */}
+            <radialGradient id="bgGL" cx="50%" cy="46%" r="72%">
+              <stop offset="0%"   stopColor="#f0f6ff"/>
+              <stop offset="100%" stopColor="#dde8f4"/>
+            </radialGradient>
+            {/* Brillo + bloom: los elementos con color saturado emiten un halo */}
             <filter id="fBright" x="-5%" y="-5%" width="110%" height="110%">
-              <feComponentTransfer>
-                <feFuncR type="linear" slope="1.12"/>
-                <feFuncG type="linear" slope="1.12"/>
-                <feFuncB type="linear" slope="1.12"/>
+              <feComponentTransfer result="bright">
+                <feFuncR type="linear" slope="1.22"/>
+                <feFuncG type="linear" slope="1.22"/>
+                <feFuncB type="linear" slope="1.22"/>
+              </feComponentTransfer>
+              <feGaussianBlur in="bright" stdDeviation="2" result="bloom"/>
+              <feBlend in="bright" in2="bloom" mode="screen" result="bloomed"/>
+              <feComponentTransfer in="bloomed">
+                <feFuncR type="linear" slope="1.06" intercept="-0.03"/>
+                <feFuncG type="linear" slope="1.06" intercept="-0.03"/>
+                <feFuncB type="linear" slope="1.06" intercept="-0.03"/>
               </feComponentTransfer>
             </filter>
           </defs>
 
           <g filter="url(#fBright)">
-          <rect width="1800" height="700" fill={isDark ? "#070e16" : "#EAF0F7"}/>
+          <rect width="1800" height="700" fill={isDark ? "url(#bgG)" : "url(#bgGL)"}/>
 
           {/* ── Fila superior: PRELIMINAR (ampliada) + PRIMARIA ── */}
-          <rect x="10"  y="36" width="488"  height="315" rx="6" fill="#00c5e3" fillOpacity=".025" stroke="#00c5e3" strokeOpacity=".1"  strokeWidth="1"/>
-          <rect x="498" y="36" width="1292" height="315" rx="6" fill="#d29922" fillOpacity=".018" stroke="#d29922" strokeOpacity=".1"  strokeWidth="1"/>
+          <rect x="10"  y="36" width="488"  height="315" rx="6" fill="#00c5e3" fillOpacity=".055" stroke="#00c5e3" strokeOpacity=".28"  strokeWidth="1.2"/>
+          <rect x="498" y="36" width="1292" height="315" rx="6" fill="#d29922" fillOpacity=".045" stroke="#d29922" strokeOpacity=".28"  strokeWidth="1.2"/>
 
           <PhaseLabel x={10}   w={488}  label="FASE PRELIMINAR" color={cPhasePreli}/>
           <PhaseLabel x={498}  w={1292} label="FASE PRIMARIA"   color="#d29922"/>
 
           {/* ── Fila inferior: TERCIARIA (izq) + SECUNDARIA (der) ── */}
-          <rect x="10"   y="355" width="1170" height="313" rx="6" fill="#1f6feb" fillOpacity=".018" stroke="#1f6feb" strokeOpacity=".08" strokeWidth="1"/>
-          <rect x="1185" y="355" width="605"  height="313" rx="6" fill="#3fb950" fillOpacity=".018" stroke="#3fb950" strokeOpacity=".08" strokeWidth="1"/>
-          <line x1="1182" y1="355" x2="1182" y2="668" stroke="#ffffff" strokeWidth="1.5" opacity=".18"/>
+          <rect x="10"   y="355" width="1170" height="313" rx="6" fill="#1f6feb" fillOpacity=".045" stroke="#1f6feb" strokeOpacity=".22" strokeWidth="1.2"/>
+          <rect x="1185" y="355" width="605"  height="313" rx="6" fill="#3fb950" fillOpacity=".045" stroke="#3fb950" strokeOpacity=".22" strokeWidth="1.2"/>
+          <line x1="1182" y1="355" x2="1182" y2="668" stroke="#ffffff" strokeWidth="1.5" opacity=".35"/>
           <text x="590"  y="375" textAnchor="middle" fill="#1f6feb" fontSize="12" fontWeight="700" letterSpacing="3" fontFamily="monospace">FASE TERCIARIA · RECIRCULACIÓN</text>
           <text x="1487" y="375" textAnchor="middle" fill="#3fb950" fontSize="12" fontWeight="700" letterSpacing="3" fontFamily="monospace">FASE SECUNDARIA</text>
           {/* ── Phase click zones (detrás de los equipos) ── */}
