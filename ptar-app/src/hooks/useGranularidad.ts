@@ -24,7 +24,7 @@ function restar(dias: number) {
 // Fechas por defecto: marzo 1 → abril 30 del año en curso
 const _y = new Date().getFullYear();
 const DEFAULT_FI = `${_y}-03-01`;
-const DEFAULT_FF = `${_y}-04-30`;
+const DEFAULT_FF = `${_y}-04-01`;
 
 // ── Hook ──────────────────────────────────────────────────────────────────────
 // fechaInicio / fechaFin → valores COMPROMETIDOS (disparan fetch)
