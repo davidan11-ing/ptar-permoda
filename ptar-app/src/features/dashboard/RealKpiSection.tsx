@@ -210,7 +210,8 @@ export default function RealKpiSection({ fechaInicio, fechaFin }: Props) {
       </div>
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 280px))',
+        justifyContent: 'center',
         gap: 12,
       }}>
         {tiles.map(t => <KpiTile key={t.label} {...t} />)}

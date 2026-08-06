@@ -17,7 +17,7 @@ interface ChartRow {
 }
 
 function fmtFecha(iso: string): string {
-  const [, m, d] = iso.split('-');
+  const [, m, d] = iso.slice(0, 10).split('-');   // slice evita "T00:00:00" en el día
   return `${d}/${m}`;
 }
 
