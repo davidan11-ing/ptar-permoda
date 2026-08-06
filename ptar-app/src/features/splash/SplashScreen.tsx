@@ -71,7 +71,7 @@ const PHASES = [
 type PhaseKey = typeof PHASES[number]['key'];
 
 // Constantes de posición Y para las tuberías principales de la fase terciaria
-const mYA = 480;
+const mYA = 505;
 const mYB = 615;
 const wG = 'url(#waterG)', sG = 'url(#sludgeG)';
 
@@ -787,33 +787,33 @@ export default function SplashScreen() {
           <text x="673"  y={mYA-5} textAnchor="middle" fill="#1f6feb55" fontSize="5.5" fontStyle="italic" fontFamily="monospace">AH</text>
 
           {/* ── AG: RO1 E1 permeado ↓ collector ── */}
-          <line x1="740" y1={mYA} x2="740" y2="510" stroke="#3fb950" strokeWidth="1.5" opacity=".65" className="p-clean"/>
-          <circle cx="740" cy="510" r="2.5" fill="#3fb950" opacity=".7"/>
-          <text x="751" y="499" fill="#3fb95065" fontSize="5.5" fontStyle="italic" fontFamily="monospace">AG</text>
+          <line x1="740" y1={mYA} x2="740" y2="522" stroke="#3fb950" strokeWidth="1.5" opacity=".65" className="p-clean"/>
+          <circle cx="740" cy="522" r="2.5" fill="#3fb950" opacity=".7"/>
+          <text x="751" y="511" fill="#3fb95065" fontSize="5.5" fontStyle="italic" fontFamily="monospace">AG</text>
 
           {/* ── AL: RO1 E2 permeado ↓ collector ── */}
-          <line x1="575" y1={mYA} x2="575" y2="510" stroke="#3fb950" strokeWidth="1.5" opacity=".65" className="p-clean"/>
-          <circle cx="575" cy="510" r="2.5" fill="#3fb950" opacity=".7"/>
-          <text x="586" y="499" fill="#3fb95065" fontSize="5.5" fontStyle="italic" fontFamily="monospace">AL</text>
+          <line x1="575" y1={mYA} x2="575" y2="522" stroke="#3fb950" strokeWidth="1.5" opacity=".65" className="p-clean"/>
+          <circle cx="575" cy="522" r="2.5" fill="#3fb950" opacity=".7"/>
+          <text x="586" y="511" fill="#3fb95065" fontSize="5.5" fontStyle="italic" fontFamily="monospace">AL</text>
 
           {/* ── AJ: RO1 E2 reject ↓ TK RECH RO1 ── */}
           <line x1="530" y1={mYA} x2="530" y2="547" stroke="#f85149" strokeWidth="1.5" opacity=".6" className="p-reject"/>
           <polygon points="526,543 530,552 534,543" fill="#f85149" opacity=".65"/>
           <text x="514" y="518" fill="#f8514965" fontSize="5.5" fontStyle="italic" fontFamily="monospace">AJ</text>
 
-          {/* ── Permeado collector y=510 — FLOW right→left ── */}
-          <line x1="745" y1="510" x2="200"  y2="510" stroke={cShadowPipe} strokeWidth="5" strokeLinecap="round"/>
-          <line x1="745" y1="510" x2="200"  y2="510" stroke="#3fb950" strokeWidth="2.5" opacity=".75" className="p-clean"/>
-          <polygon points="203,507 195,510 203,513" fill="#3fb950" opacity=".85"/>
+          {/* ── Permeado collector y=522 — FLOW right→left ── */}
+          <line x1="745" y1="522" x2="200"  y2="522" stroke={cShadowPipe} strokeWidth="5" strokeLinecap="round"/>
+          <line x1="745" y1="522" x2="200"  y2="522" stroke="#3fb950" strokeWidth="2.5" opacity=".75" className="p-clean"/>
+          <polygon points="203,519 195,522 203,525" fill="#3fb950" opacity=".85"/>
 
           {/* ── AM: RO2 permeado ↑ collector (RO2 x=745) ── */}
-          <line x1="745" y1="565" x2="745" y2="510" stroke="#3fb950" strokeWidth="1.5" opacity=".65" className="p-clean"/>
-          <circle cx="745" cy="510" r="2.5" fill="#3fb950" opacity=".75"/>
-          <text x="757" y="537" fill="#3fb95065" fontSize="5.5" fontStyle="italic" fontFamily="monospace">AM</text>
+          <line x1="745" y1="565" x2="745" y2="522" stroke="#3fb950" strokeWidth="1.5" opacity=".65" className="p-clean"/>
+          <circle cx="745" cy="522" r="2.5" fill="#3fb950" opacity=".75"/>
+          <text x="757" y="543" fill="#3fb95065" fontSize="5.5" fontStyle="italic" fontFamily="monospace">AM</text>
 
           {/* ── Collector ↓ TK RECIR (entry x=200) ── */}
-          <line x1="200" y1="510" x2="200" y2="521" stroke="#3fb950" strokeWidth="2.5" opacity=".75" className="p-clean"/>
-          <polygon points="196,518 200,526 204,518" fill="#3fb950" opacity=".85"/>
+          <line x1="200" y1="522" x2="200" y2="533" stroke="#3fb950" strokeWidth="2.5" opacity=".75" className="p-clean"/>
+          <polygon points="196,530 200,538 204,530" fill="#3fb950" opacity=".85"/>
 
           {/* ── FILTRO INTERCAMBIO IÓNICO (x=1093, bottom=mYA) — recibe AE ── */}
           <g className="eq-h eq-g d17" transform={`translate(1093,${mYA})`} onDoubleClick={()=>openEquipRef.current('filtrosII')} onMouseEnter={()=>setTt({eq:eqLive.filtrosII,x:1093,y:mYA,flipY:true})} onMouseLeave={hideTt}>
@@ -839,11 +839,11 @@ export default function SplashScreen() {
           <line x1="1143" y1="455" x2="1148" y2="455" stroke="#c084fc" strokeWidth="1" opacity=".4"/>
 
           {/* ── 2× FILTRO 5µm EN PARALELO (junction x=920) ── */}
-          <line x1="920" y1={mYA} x2="920" y2="453" stroke="#3fb950" strokeWidth="1.5" opacity=".7" className="p-clean"/>
+          <line x1="920" y1={mYA} x2="920" y2="478" stroke="#3fb950" strokeWidth="1.5" opacity=".7" className="p-clean"/>
           <circle cx="920" cy={mYA} r="3" fill="#3fb950" opacity=".8"/>
           <text x="937" y={mYA-2} fill="#1f6feb50" fontSize="4.8" fontFamily="monospace">∥ PARALELO</text>
-          {/* FILTRO A — arriba del pipe (bottom=453) */}
-          <g className="eq-h eq-g d18" transform="translate(920,453)" onDoubleClick={()=>openEquipRef.current('filtro5')} onMouseEnter={()=>setTt({eq:eqLive.filtro5,x:920,y:453,flipY:true})} onMouseLeave={hideTt}>
+          {/* FILTRO A — arriba del pipe (bottom=478) */}
+          <g className="eq-h eq-g d18" transform="translate(920,478)" onDoubleClick={()=>openEquipRef.current('filtro5')} onMouseEnter={()=>setTt({eq:eqLive.filtro5,x:920,y:478,flipY:true})} onMouseLeave={hideTt}>
             <SD eq={eqLive.filtro5} cx={22} cy={-76}/>
             <rect x="-22" y="-78" width="44" height="78" rx="3" fill={tG} stroke={cStrkBlue60} strokeWidth="1.5" className="eq-b"/>
             <rect x="-20" y="-74" width="40" height="22" fill={wG} opacity=".3"/>
@@ -851,9 +851,9 @@ export default function SplashScreen() {
             <text y="12" textAnchor="middle" fill="#1f6feb" fontSize="8" fontWeight="700" fontFamily="monospace">5µm-A</text>
             {eqLive.filtro5.cost && <text y="22" textAnchor="middle" fill={cCostLabel} fontSize="8" fontFamily="monospace" className="eq-cost-float">{eqLive.filtro5.cost}</text>}
           </g>
-          {/* FILTRO B — debajo del pipe (bottom=563) */}
-          <line x1="920" y1={mYA} x2="920" y2="485" stroke="#3fb950" strokeWidth="1.5" opacity=".7" className="p-clean"/>
-          <g className="eq-h eq-g d18" transform="translate(920,563)" onDoubleClick={()=>openEquipRef.current('filtro5')} onMouseEnter={()=>setTt({eq:eqLive.filtro5,x:920,y:563,flipY:true})} onMouseLeave={hideTt}>
+          {/* FILTRO B — debajo del pipe (bottom=595) */}
+          <line x1="920" y1={mYA} x2="920" y2="517" stroke="#3fb950" strokeWidth="1.5" opacity=".7" className="p-clean"/>
+          <g className="eq-h eq-g d18" transform="translate(920,595)" onDoubleClick={()=>openEquipRef.current('filtro5')} onMouseEnter={()=>setTt({eq:eqLive.filtro5,x:920,y:595,flipY:true})} onMouseLeave={hideTt}>
             <SD eq={eqLive.filtro5} cx={22} cy={-76}/>
             <rect x="-22" y="-78" width="44" height="78" rx="3" fill={tG} stroke={cStrkBlue60} strokeWidth="1.5" className="eq-b"/>
             <rect x="-20" y="-74" width="40" height="22" fill={wG} opacity=".3"/>
@@ -954,8 +954,8 @@ export default function SplashScreen() {
           <text x="294" y={mYB-31} fill="#3fb95090" fontSize="9.5" fontFamily="monospace">PTAP</text>
           <text x="320" y={mYB-31} fill={cCyanText} fontSize="8" fontWeight="700" fontFamily="monospace">AS</text>
 
-          {/* ── PRODUCCIÓN / REÚSO (x=65, top=362) ── */}
-          <g className="eq-h eq-g d22" transform="translate(65,450)" onDoubleClick={()=>openEquipRef.current('produccion')} onMouseEnter={()=>setTt({eq:eqLive.produccion,x:65,y:450,flipY:true})} onMouseLeave={hideTt}>
+          {/* ── PRODUCCIÓN / REÚSO (x=65, top=394) ── */}
+          <g className="eq-h eq-g d22" transform="translate(65,482)" onDoubleClick={()=>openEquipRef.current('produccion')} onMouseEnter={()=>setTt({eq:eqLive.produccion,x:65,y:450,flipY:true})} onMouseLeave={hideTt}>
             <rect x="-50" y="-88" width="100" height="88" rx="5" fill={cProdBody} stroke={cStrkGreen60} strokeWidth="2" className="eq-b"/>
             <text x="0" y="-60" textAnchor="middle" fill="#3fb950" fontSize="10" fontWeight="800" fontFamily="monospace">PRODUCCIÓN</text>
             <path d="M-18,-44 L-28,-30 L-18,-26 L-18,-4 L18,-4 L18,-26 L28,-30 L18,-44 L10,-39 Q0,-35 -10,-39Z"
@@ -964,11 +964,11 @@ export default function SplashScreen() {
             {eqLive.produccion.cost && <text x="0" y="19" textAnchor="middle" fill={cCostLabel} fontSize="7.5" fontFamily="monospace" className="eq-cost-float">{eqLive.produccion.cost}</text>}
           </g>
 
-          {/* ── RECIR→PROD: sale izq TK RECIR (160,560) → sube a PROD bottom (65,450) ── */}
+          {/* ── RECIR→PROD: sale izq TK RECIR (160,560) → sube a PROD bottom (65,482) ── */}
           <line x1="172" y1="560" x2="65" y2="560" stroke="#3fb950" strokeWidth="2" opacity=".8" className="p-clean"/>
-          <line x1="65" y1="560" x2="65" y2="450" stroke="#3fb950" strokeWidth="2" opacity=".8" className="p-clean"/>
+          <line x1="65" y1="560" x2="65" y2="482" stroke="#3fb950" strokeWidth="2" opacity=".8" className="p-clean"/>
           <circle cx="65" cy="560" r="2.5" fill="#3fb950" opacity=".8"/>
-          <polygon points="61,454 65,446 69,454" fill="#3fb950" opacity=".9"/>
+          <polygon points="61,486 65,478 69,486" fill="#3fb950" opacity=".9"/>
 
           {/* ── Reject row pipes (y=mYB, FLOW left→right) ── */}
           {/* TK RECH RO1(530)→FILTRO AK(630) */}
