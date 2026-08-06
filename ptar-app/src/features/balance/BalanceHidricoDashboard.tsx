@@ -62,13 +62,55 @@ const fmtDec1 = (v: number | null) => v != null ? v.toFixed(1) : '—';
 
 // ── Sub-componentes ───────────────────────────────────────────────────────────
 
-function KpiCard({ label, value, unit, color }: { label: string; value: string; unit: string; color: string }) {
+// ── KPI Button Tile — tarjeta con identidad de color estilo botón ─────────────
+function KpiButtonTile({ titulo, color, rows }: {
+  titulo: string;
+  color: string;
+  rows: { label: string; value: string; key?: boolean }[];
+}) {
   const { theme } = useTheme();
   return (
-    <div className="dash-card" style={{ padding: '14px 18px', textAlign: 'center', borderTop: `3px solid ${color}` }}>
-      <div style={{ fontSize: 11, color: theme.muted, marginBottom: 4 }}>{label}</div>
-      <div style={{ fontSize: 22, fontWeight: 700, color }}>{value}</div>
-      <div style={{ fontSize: 10, color: theme.dim, marginTop: 2 }}>{unit}</div>
+    <div style={{
+      background: theme.surface,
+      border: `1px solid ${theme.border}`,
+      borderTop: `4px solid ${color}`,
+      borderRadius: '0 0 8px 8px',
+      overflow: 'hidden',
+      boxShadow: '0 2px 10px rgba(0,0,0,0.35)',
+      display: 'flex',
+      flexDirection: 'column',
+    }}>
+      {/* Cabecera coloreada */}
+      <div style={{
+        background: `${color}1A`,
+        borderBottom: `1px solid ${color}35`,
+        padding: '7px 14px 6px',
+      }}>
+        <span style={{
+          fontSize: 9, fontWeight: 800,
+          textTransform: 'uppercase', letterSpacing: '0.09em',
+          color,
+        }}>{titulo}</span>
+      </div>
+      {/* Filas de datos */}
+      <div style={{ padding: '2px 0 4px', flexGrow: 1 }}>
+        {rows.map((r, i) => (
+          <div key={i} style={{
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            padding: r.key ? '6px 14px' : '4px 14px',
+            background: r.key ? `${color}12` : 'transparent',
+            borderBottom: i < rows.length - 1 ? `1px solid ${theme.border}` : 'none',
+          }}>
+            <span style={{ fontSize: 10, color: theme.muted, fontWeight: r.key ? 600 : 400 }}>{r.label}</span>
+            <span style={{
+              fontSize: r.key ? 16 : 13, fontWeight: 700,
+              color: r.key ? color : theme.text1,
+              fontVariantNumeric: 'tabular-nums',
+              letterSpacing: r.key ? '-0.01em' : '0',
+            }}>{r.value}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -599,76 +641,45 @@ export default function BalanceHidricoDashboard() {
             kpis.totalSuministro > 0 ? `${(v / kpis.totalSuministro * 100).toFixed(1)}%` : '—';
           const pGem = (v: number) =>
             kpis.totalGem > 0 ? `${(v / kpis.totalGem * 100).toFixed(1)}%` : '—';
-          const f = (v: number) => fmtFull(Math.round(v));
+          const f  = (v: number) => fmtFull(Math.round(v));
           const f1 = (v: number) => v.toFixed(1);
-
-          const cellStyle: React.CSSProperties = {
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            padding: '3px 10px', fontSize: 10,
-          };
-          const labelStyle: React.CSSProperties = { color: '#8b949e', flexShrink: 0 };
-          const valueStyle: React.CSSProperties = {
-            fontWeight: 700, color: '#e6edf3', fontVariantNumeric: 'tabular-nums',
-          };
-          const headStyle = (bg: string): React.CSSProperties => ({
-            background: bg, color: '#1c2128', fontWeight: 700, fontSize: 9,
-            textTransform: 'uppercase', letterSpacing: '0.06em',
-            padding: '4px 10px', borderRadius: '4px 4px 0 0',
-          });
-          const card = (bg: string, titulo: string, rows: [string, string][]): React.ReactNode => (
-            <div className="dash-card" style={{ padding: 0, overflow: 'hidden' }}>
-              <div style={headStyle(bg)}>{titulo}</div>
-              <div style={{ padding: '2px 0 4px' }}>
-                {rows.map(([label, value], i) => (
-                  <div key={i} style={{
-                    ...cellStyle,
-                    borderBottom: i < rows.length - 1 ? '1px solid #21262d40' : 'none',
-                  }}>
-                    <span style={labelStyle}>{label}</span>
-                    <span style={valueStyle}>{value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
-
           return (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
-              {card('#DEEBF7', 'Consumo Diario (m³)', [
-                ['MÍNIMO',         f(kpis.minAgua)],
-                ['MÁXIMO',         f(kpis.maxAgua)],
-                ['PROMEDIO',       f1(kpis.avgAgua)],
-                ['DÍAS EFECTIVOS', String(kpis.diasEfectivos)],
-              ])}
-              {card('#DEEBF7', 'Abastecimiento Promedio Días Efectivos (m³)', [
-                ['CARROTANQUES', f1(kpis.avgCarrot)],
-                ['PTAP',         f1(kpis.avgPtap)],
-                ['ACUEDUCTO',    f1(kpis.avgAcu)],
-                ['RO',           f1(kpis.avgRo)],
-              ])}
-              {card('#DEEBF7', 'Salidas', [
-                ['VOLUMEN TRATADO (m³)',     f(kpis.totalGem)],
-                ['VOL RECIRCULADO (m³)',     f(kpis.totalRo)],
-                ['VOL VERTIMIENTO TOTAL',    f(kpis.totalVertTotal)],
-                ['VERTIMIENTO RECHAZO',      f(kpis.totalVertRechazo)],
-                ['VERTIMIENTO MBRS',         f(kpis.totalVertMbr)],
-                ['VERTIMIENTO GEM',          f(kpis.totalVertGem)],
-              ])}
-              {card('#E2EFDA', 'M³ Ingreso a RO / M³ Tratados PTAR', [
-                ['M³ PERMEADO RO',        f(kpis.totalRo)],
-                ['M³ TRATADOS PTAR',      f(kpis.totalGem)],
-                ['% RECIRCULACIÓN',       pGem(kpis.totalRo)],
-              ])}
-              {card('#E2EFDA', '% Recirculación Total (Autonomía Hídrica)', [
-                ['M³ PERMEADO RO',        f(kpis.totalRo)],
-                ['M³ EN PROCESO',         f(kpis.totalSuministro)],
-                ['% RECIRCULACIÓN',       pEnProceso(kpis.totalRo)],
-              ])}
-              {card('#FFF2CC', 'Dependencia de Fuente Externa', [
-                ['M³ ACUEDUCTO',         f(kpis.totalAcu)],
-                ['M³ EN PROCESO',        f(kpis.totalSuministro)],
-                ['% DEPENDENCIA EXT.',   pEnProceso(kpis.totalAcu)],
-              ])}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+              <KpiButtonTile color={C.acueducto} titulo="Consumo Diario (m³)" rows={[
+                { label: 'MÍNIMO',         value: f(kpis.minAgua) },
+                { label: 'MÁXIMO',         value: f(kpis.maxAgua) },
+                { label: 'PROMEDIO',       value: f1(kpis.avgAgua) },
+                { label: 'DÍAS EFECTIVOS', value: String(kpis.diasEfectivos), key: true },
+              ]} />
+              <KpiButtonTile color={C.ptap} titulo="Abastecimiento Promedio Días Efectivos (m³)" rows={[
+                { label: 'CARROTANQUES', value: f1(kpis.avgCarrot) },
+                { label: 'PTAP',         value: f1(kpis.avgPtap) },
+                { label: 'ACUEDUCTO',    value: f1(kpis.avgAcu) },
+                { label: 'RO',           value: f1(kpis.avgRo), key: true },
+              ]} />
+              <KpiButtonTile color={C.tintoreria} titulo="Salidas" rows={[
+                { label: 'VOLUMEN TRATADO (m³)',  value: f(kpis.totalGem) },
+                { label: 'VOL RECIRCULADO (m³)',  value: f(kpis.totalRo) },
+                { label: 'VERTIMIENTO TOTAL',     value: f(kpis.totalVertTotal), key: true },
+                { label: 'VERTIMIENTO RECHAZO',   value: f(kpis.totalVertRechazo) },
+                { label: 'VERTIMIENTO MBRS',      value: f(kpis.totalVertMbr) },
+                { label: 'VERTIMIENTO GEM',       value: f(kpis.totalVertGem) },
+              ]} />
+              <KpiButtonTile color={C.permeadoRO} titulo="M³ Ingreso a RO / M³ Tratados PTAR" rows={[
+                { label: 'M³ PERMEADO RO',    value: f(kpis.totalRo) },
+                { label: 'M³ TRATADOS PTAR',  value: f(kpis.totalGem) },
+                { label: '% RECIRCULACIÓN',   value: pGem(kpis.totalRo), key: true },
+              ]} />
+              <KpiButtonTile color={C.permeadoRO} titulo="% Recirculación Total (Autonomía Hídrica)" rows={[
+                { label: 'M³ PERMEADO RO',  value: f(kpis.totalRo) },
+                { label: 'M³ EN PROCESO',   value: f(kpis.totalSuministro) },
+                { label: '% RECIRCULACIÓN', value: pEnProceso(kpis.totalRo), key: true },
+              ]} />
+              <KpiButtonTile color={C.lavanderia} titulo="Dependencia de Fuente Externa" rows={[
+                { label: 'M³ ACUEDUCTO',       value: f(kpis.totalAcu) },
+                { label: 'M³ EN PROCESO',      value: f(kpis.totalSuministro) },
+                { label: '% DEPENDENCIA EXT.', value: pEnProceso(kpis.totalAcu), key: true },
+              ]} />
             </div>
           );
         })()}
