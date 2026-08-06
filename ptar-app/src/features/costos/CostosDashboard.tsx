@@ -215,29 +215,34 @@ export default function CostosDashboard() {
     [consumoDiario, granularidad],
   );
 
-  /* GEM — caudal + indicador $m³ + caudal_mh agrupado */
+  /* GEM — caudal + indicador $m³ + horas de operación acumuladas */
   const gemAgrupado = useMemo(() => {
-    type B = { sk: string; label: string; caudal: number; pesos: number[]; mh: number[] };
+    type B = { sk: string; label: string; caudal: number; pesos: number[]; mh: number[]; horasTotal: number };
     const map = new Map<string, B>();
     const TURNO_N: Record<string, number> = { noche: 1, 'mañana': 2, tarde: 3 };
     for (const r of gemEficiencia) {
       const t     = TURNO_N[r.turno ?? ''];
       const sk    = sortKey(r.fecha, t, granularidad);
       const label = xLabel(r.fecha, t, granularidad);
-      if (!map.has(sk)) map.set(sk, { sk, label, caudal: 0, pesos: [], mh: [] });
+      if (!map.has(sk)) map.set(sk, { sk, label, caudal: 0, pesos: [], mh: [], horasTotal: 0 });
       const b = map.get(sk)!;
       if (r.caudal_m3    != null) b.caudal += r.caudal_m3;
       if (r.pesos_por_m3 != null) b.pesos.push(r.pesos_por_m3);
       if (r.caudal_mh    != null) b.mh.push(r.caudal_mh);
+      // horas de operación por turno = volumen tratado / caudal
+      if (r.caudal_m3 != null && r.caudal_mh != null && r.caudal_mh > 0)
+        b.horasTotal += r.caudal_m3 / r.caudal_mh;
     }
     const avg = (arr: number[]) => arr.length ? +(arr.reduce((a, v) => a + v, 0) / arr.length).toFixed(1) : null;
     return Array.from(map.values())
       .sort((a, b) => a.sk.localeCompare(b.sk))
+      .filter(b => b.caudal > 0)          // excluir días sin operación GEM
       .map(b => ({
-        fecha: b.label,
+        fecha:        b.label,
         caudal_m3:    +b.caudal.toFixed(1),
         pesos_por_m3: avg(b.pesos),
         caudal_mh:    avg(b.mh),
+        horas_op:     b.horasTotal > 0 ? +b.horasTotal.toFixed(1) : null,
       }));
   }, [gemEficiencia, granularidad]);
 
@@ -261,6 +266,7 @@ export default function CostosDashboard() {
     const avg = (arr: number[]) => arr.length ? +(arr.reduce((a, v) => a + v, 0) / arr.length).toFixed(1) : null;
     return Array.from(map.values())
       .sort((a, b) => a.sk.localeCompare(b.sk))
+      .filter(b => b.caudal > 0)          // excluir días sin operación RO
       .map(b => ({
         fecha:        b.label,
         caudal_m3:    +b.caudal.toFixed(1),
@@ -544,24 +550,25 @@ export default function CostosDashboard() {
               </ResponsiveContainer>
             </ChartCard>
 
-            <ChartCard title="TIEMPO DE OPERACIÓN — SISTEMA GEM" subtitle="Barras: m³ tratados · Línea: caudal m³/h">
+            <ChartCard title="TIEMPO DE OPERACIÓN — SISTEMA GEM" subtitle="Barras: horas de operación · Línea: INDICADOR $/m³">
               <ResponsiveContainer width="100%" height={240}>
                 <ComposedChart data={gemAgrupado} margin={{ top: 6, right: 52, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#21262d" />
                   <XAxis dataKey="fecha" tick={AXIS_TICK_SM} interval="preserveStartEnd" />
                   <YAxis yAxisId="left" tick={AXIS_TICK_SM} width={46} domain={[0, 'auto']}
-                    label={{ value: 'm³', angle: -90, position: 'insideLeft', fill: '#484f58', fontSize: 9, dx: -4 }} />
-                  <YAxis yAxisId="right" orientation="right" tick={AXIS_TICK_SM} width={46}
-                    label={{ value: 'm³/h', angle: 90, position: 'insideRight', fill: '#484f58', fontSize: 9, dx: 10 }} />
+                    label={{ value: 'h', angle: -90, position: 'insideLeft', fill: '#484f58', fontSize: 9, dx: -4 }} />
+                  <YAxis yAxisId="right" orientation="right" tick={AXIS_TICK_SM} width={52}
+                    tickFormatter={fmtM3}
+                    label={{ value: '$/m³', angle: 90, position: 'insideRight', fill: '#484f58', fontSize: 9, dx: 10 }} />
                   <Tooltip {...TOOLTIP_STYLE}
                     formatter={(val: number, name: string) =>
-                      name === 'Caudal m³/h'
-                        ? [`${Number(val).toFixed(1)} m³/h`, name]
-                        : [`${Number(val).toFixed(0)} m³`, name]} />
+                      name === 'INDICADOR $/m³'
+                        ? [`$${Number(val).toLocaleString('es-CO')}/m³`, name]
+                        : [`${Number(val).toFixed(1)} h`, name]} />
                   <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
-                  <Bar yAxisId="left" dataKey="caudal_m3" name="VOLUMEN TRATADO GEM (m³)"
+                  <Bar yAxisId="left" dataKey="horas_op" name="HORAS DE OPERACIÓN GEM"
                     fill="#B4C6E7" radius={[3, 3, 0, 0]} />
-                  <Line yAxisId="right" type="monotone" dataKey="caudal_mh" name="Caudal m³/h"
+                  <Line yAxisId="right" type="monotone" dataKey="pesos_por_m3" name="INDICADOR $/m³"
                     stroke="#ED7D31" strokeWidth={2.25} dot={{ r: 3, fill: '#ED7D31' }} connectNulls />
                 </ComposedChart>
               </ResponsiveContainer>
@@ -600,25 +607,25 @@ export default function CostosDashboard() {
               </ResponsiveContainer>
             </ChartCard>
 
-            <ChartCard title="TIEMPO DE OPERACIÓN — SISTEMA OSMOSIS INVERSA" subtitle="Barras: m³ enviados · Línea: costo total COP">
+            <ChartCard title="TIEMPO DE OPERACIÓN — SISTEMA OSMOSIS INVERSA" subtitle="Barras: horas de operación · Línea: INDICADOR $/m³">
               <ResponsiveContainer width="100%" height={240}>
                 <ComposedChart data={roAgrupado} margin={{ top: 6, right: 52, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#21262d" />
                   <XAxis dataKey="fecha" tick={AXIS_TICK_SM} interval="preserveStartEnd" />
                   <YAxis yAxisId="left" tick={AXIS_TICK_SM} width={46} domain={[0, 'auto']}
-                    label={{ value: 'm³', angle: -90, position: 'insideLeft', fill: '#484f58', fontSize: 9, dx: -4 }} />
-                  <YAxis yAxisId="right" orientation="right" tick={AXIS_TICK_SM} width={60}
-                    tickFormatter={(v: number) => v >= 1_000_000 ? `${(v/1_000_000).toFixed(1)}M` : v >= 1000 ? `${(v/1000).toFixed(0)}k` : String(v)}
-                    label={{ value: 'COP', angle: 90, position: 'insideRight', fill: '#484f58', fontSize: 9, dx: 14 }} />
+                    label={{ value: 'h', angle: -90, position: 'insideLeft', fill: '#484f58', fontSize: 9, dx: -4 }} />
+                  <YAxis yAxisId="right" orientation="right" tick={AXIS_TICK_SM} width={52}
+                    tickFormatter={fmtM3}
+                    label={{ value: '$/m³', angle: 90, position: 'insideRight', fill: '#484f58', fontSize: 9, dx: 10 }} />
                   <Tooltip {...TOOLTIP_STYLE}
                     formatter={(val: number, name: string) =>
-                      name === 'Costo Químico RO'
-                        ? [`$${Number(val).toLocaleString('es-CO')}`, name]
-                        : [`${Number(val).toFixed(0)} m³`, name]} />
+                      name === 'INDICADOR $/m³'
+                        ? [`$${Number(val).toLocaleString('es-CO')}/m³`, name]
+                        : [`${Number(val).toFixed(1)} h`, name]} />
                   <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
-                  <Bar yAxisId="left" dataKey="caudal_m3" name="VOLUMEN ENVIADO A RO (m³)"
+                  <Bar yAxisId="left" dataKey="horas_op" name="HORAS DE OPERACIÓN RO"
                     fill="#B4C6E7" radius={[3, 3, 0, 0]} />
-                  <Line yAxisId="right" type="monotone" dataKey="costo_total" name="Costo Químico RO"
+                  <Line yAxisId="right" type="monotone" dataKey="pesos_por_m3" name="INDICADOR $/m³"
                     stroke="#ED7D31" strokeWidth={2.25} dot={{ r: 3, fill: '#ED7D31' }} connectNulls />
                 </ComposedChart>
               </ResponsiveContainer>
@@ -869,62 +876,6 @@ export default function CostosDashboard() {
           </div>
         </section>
       )}
-
-      {/* ── Tabla remoción GEM: DQO · SST · Color ── */}
-      <section className="dash-section">
-        <div className="section-title">Remoción GEM — DQO · SST · Color</div>
-        <div className="dash-card" style={{ padding: 0, overflow: 'hidden' }}>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr>
-                  <th style={thStyle}>Parámetro</th>
-                  <th style={{ ...thStyle, color: '#f85149' }}>Entrada Prom</th>
-                  <th style={{ ...thStyle, color: '#3fb950' }}>Salida Prom</th>
-                  <th style={{ ...thStyle, color: '#f85149' }}>Entrada P90</th>
-                  <th style={{ ...thStyle, color: '#3fb950' }}>Salida P90</th>
-                  <th style={{ ...thStyle, color: '#4472C4' }}>Carga Rem. KG/día</th>
-                  <th style={{ ...thStyle, color: '#d29922' }}>% Remoción</th>
-                  <th style={{ ...thStyle, color: '#9e7aff' }}>IE Entrada</th>
-                  <th style={{ ...thStyle, color: '#9e7aff' }}>IE Salida</th>
-                </tr>
-              </thead>
-              <tbody>
-                {tablaRemocion.map((row, idx) => (
-                  <tr key={row.label}
-                    style={{ background: idx % 2 === 0 ? 'transparent' : 'rgba(255,255,255,.02)' }}>
-                    <td style={{ ...tdStyle, fontWeight: 700, color: '#c9d1d9' }}>
-                      {row.label}
-                      <span style={{ fontSize: 9, color: '#484f58', marginLeft: 5 }}>{row.unidad}</span>
-                    </td>
-                    {row.noData ? (
-                      <td colSpan={8} style={{ ...tdStyle, color: '#484f58', fontStyle: 'italic' }}>
-                        Sin datos en el período
-                      </td>
-                    ) : (
-                      <>
-                        <td style={{ ...tdNum, color: '#f85149' }}>{fmtNum(row.ent_avg, 0)}</td>
-                        <td style={{ ...tdNum, color: '#3fb950' }}>{fmtNum(row.sal_avg, 0)}</td>
-                        <td style={{ ...tdNum, color: '#f85149' }}>{fmtNum(row.ent_p90, 0)}</td>
-                        <td style={{ ...tdNum, color: '#3fb950' }}>{fmtNum(row.sal_p90, 0)}</td>
-                        <td style={{ ...tdNum, color: '#4472C4' }}>{row.total_kg != null && kpis.n_dias > 0 ? (row.total_kg / kpis.n_dias).toFixed(0) : '—'}</td>
-                        <td style={{ ...tdNum, color: '#d29922', fontWeight: 700 }}>
-                          {row.pct_rem != null ? `${row.pct_rem.toFixed(1)}%` : '—'}
-                        </td>
-                        <td style={{ ...tdNum, color: '#9e7aff' }}>{fmtNum(row.ent_ie, 3)}</td>
-                        <td style={{ ...tdNum, color: '#9e7aff' }}>{fmtNum(row.sal_ie, 3)}</td>
-                      </>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-        <div style={{ fontSize: 10, color: theme.dim, marginTop: 6, paddingLeft: 2 }}>
-          IE = Índice de Estabilidad (σ/μ) · P90 = Percentil 90 · Fuente: /api/calidad/remociones
-        </div>
-      </section>
 
     </div>
 
