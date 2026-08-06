@@ -113,12 +113,12 @@ export default function RealKpiSection({ fechaInicio, fechaFin }: Props) {
       // GEM $/m³ — promedio del período
       const gemRows = gemR.status === 'fulfilled' ? gemR.value : [];
       const gemM3   = avg(gemRows.map(r => r.pesos_por_m3));
-      const gemFecha = gemRows.at(-1)?.fecha ?? null;
+      const gemFecha = gemRows[gemRows.length - 1]?.fecha ?? null;
 
       // RO $/m³ — promedio del período
       const roRows = roR.status === 'fulfilled' ? roR.value : [];
       const roM3   = avg(roRows.map(r => r.pesos_por_m3));
-      const roFecha = roRows.at(-1)?.fecha ?? null;
+      const roFecha = roRows[roRows.length - 1]?.fecha ?? null;
 
       // Balance — suma permeado RO1, total agua limpia y % recuperación del período
       const balRows = balR.status === 'fulfilled' ? balR.value : [];

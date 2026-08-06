@@ -291,16 +291,16 @@ export default function ResumenDashboard({ sections, fechaInicioFixed, fechaFinF
           {show('balance') && <SectionCard title="BALANCE HÍDRICO" color="#58a6ff" icon="💧" href={ROUTES.ENCARGADO_BALANCE}>
             <MetricRow
               label="Agua limpia total"
-              value={fmt(kpis?.aguaLimpiaTotal, 0, '', ' m³')}
+              value={fmt(kpis?.aguaLimpiaTotal ?? null, 0, '', ' m³')}
             />
             <MetricRow
               label="Promedio diario"
-              value={fmt(kpis?.avgDiarioM3, 1, '', ' m³/día')}
+              value={fmt(kpis?.avgDiarioM3 ?? null, 1, '', ' m³/día')}
               hint={kpis?.diasConDatos ? `${kpis.diasConDatos} días con registros` : undefined}
             />
             <MetricRow
               label="Caudal GEM prom."
-              value={fmt(kpis?.caudalGemAvg, 1, '', ' m³/turno')}
+              value={fmt(kpis?.caudalGemAvg ?? null, 1, '', ' m³/turno')}
             />
             <MetricRow
               label="Periodo analizado"
@@ -312,19 +312,19 @@ export default function ResumenDashboard({ sections, fechaInicioFixed, fechaFinF
           {show('calidad') && <SectionCard title="CALIDAD DEL AGUA" color="#d29922" icon="🧪" href={ROUTES.ENCARGADO_CALIDAD}>
             <MetricRow
               label="pH Vertimiento"
-              value={fmt(kpis?.pHVert, 2)}
+              value={fmt(kpis?.pHVert ?? null, 2)}
               sem={semPH}
               hint={kpis?.pHFecha ?? undefined}
             />
             <MetricRow
               label="Remoción DQO"
-              value={fmt(kpis?.dqoRemPct, 1, '', ' %')}
+              value={fmt(kpis?.dqoRemPct ?? null, 1, '', ' %')}
               sem={semDQO}
               hint="Afluente → Vertimiento"
             />
             <MetricRow
               label="SST Permeado MBR"
-              value={fmt(kpis?.sstMBR, 0, '', ' mg/L')}
+              value={fmt(kpis?.sstMBR ?? null, 0, '', ' mg/L')}
               sem={semSST}
             />
           </SectionCard>}
@@ -333,18 +333,18 @@ export default function ResumenDashboard({ sections, fechaInicioFixed, fechaFinF
           {show('costos') && <SectionCard title="COSTOS QUÍMICOS" color="#3fb950" icon="💰" href={ROUTES.ENCARGADO_COSTOS}>
             <MetricRow
               label="GEM $/m³ prom."
-              value={fmt(kpis?.gemPorM3, 0, '$')}
+              value={fmt(kpis?.gemPorM3 ?? null, 0, '$')}
               sem={semGEM}
               hint="Pesos colombianos"
             />
             <MetricRow
               label="RO $/m³ prom."
-              value={fmt(kpis?.roPorM3, 0, '$')}
+              value={fmt(kpis?.roPorM3 ?? null, 0, '$')}
               sem={semRO}
             />
             <MetricRow
               label="Costo total periodo"
-              value={fmtCOP(kpis?.costoTotal)}
+              value={fmtCOP(kpis?.costoTotal ?? null)}
             />
             {kpis?.topReactivo && (
               <MetricRow

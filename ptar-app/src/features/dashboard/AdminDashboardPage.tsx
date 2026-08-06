@@ -165,10 +165,7 @@ export default function AdminDashboardPage() {
           {config.balance?.enabled && config.balance.sections.length > 0 && (
             <>
               {sectionDivider('Balance Hídrico', '#4472C4')}
-              <BalanceHidricoDashboard vizConfig={{
-                sections: config.balance.sections,
-                filters: config.balance.filters,
-              }} />
+              <BalanceHidricoDashboard />
             </>
           )}
 
@@ -176,10 +173,7 @@ export default function AdminDashboardPage() {
           {config.costos?.enabled && config.costos.sections.length > 0 && (
             <>
               {sectionDivider('Costos Químicos', '#ED7D31')}
-              <CostosDashboard vizConfig={{
-                sections: config.costos.sections,
-                filters: config.costos.filters,
-              }} />
+              <CostosDashboard />
             </>
           )}
         </>
