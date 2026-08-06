@@ -45,7 +45,13 @@ function OtRow({ ot, spBaseUrl }: { ot: OtResumenItem; spBaseUrl: string }) {
   const { theme } = useTheme();
   const color = CRITICIDAD_COLOR[(ot.criticidad ?? '').toUpperCase()] ?? theme.muted;
   const spUrl = ot.sharepoint_id ? spBaseUrl + ot.sharepoint_id : null;
-  const label = ot.descripcion?.trim() || ot.objeto || 'Sin descripción';
+  const descripcion = ot.descripcion?.trim() || '';
+  const label = descripcion || ot.objeto || 'Sin descripción';
+  // objeto ya se usó como label si no había descripción — no repetirlo abajo
+  const secondary = [
+    descripcion && ot.objeto,
+    ot.pedido_de_trabajo && `PT ${ot.pedido_de_trabajo}`,
+  ].filter(Boolean).join(' · ');
 
   const inner = (
     <div style={{
@@ -68,8 +74,8 @@ function OtRow({ ot, spBaseUrl }: { ot: OtResumenItem; spBaseUrl: string }) {
         <div style={{ fontSize: 11, color: theme.text1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {label}
         </div>
-        {ot.objeto && (
-          <div style={{ fontSize: 9, color: theme.dim, marginTop: 1 }}>{ot.objeto}</div>
+        {secondary && (
+          <div style={{ fontSize: 9, color: theme.dim, marginTop: 1 }}>{secondary}</div>
         )}
       </div>
       {spUrl && (

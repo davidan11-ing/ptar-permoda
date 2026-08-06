@@ -874,6 +874,7 @@ export interface OtResumenItem {
   sharepoint_id: number | null;
   objeto: string | null;
   descripcion: string | null;
+  pedido_de_trabajo: string | null;
   criticidad: string | null;
   estado: string | null;
   responsable: string | null;

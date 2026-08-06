@@ -81,7 +81,7 @@ public class TurnoController(IDbConnectionFactory db) : ControllerBase
 
         var otsItems = (await conn.QueryAsync<OtResumenItem>(
             """
-            SELECT id, sharepoint_id, objeto, descripcion, criticidad, estado,
+            SELECT id, sharepoint_id, objeto, descripcion, pedido_de_trabajo, criticidad, estado,
                    COALESCE(asignado_a, responsable) AS responsable
             FROM mantenimientos_preventivos
             WHERE DATE(dia_programado) = CURDATE()
@@ -130,6 +130,7 @@ public class OtResumenItem
     public int     sharepoint_id { get; set; }
     public string? objeto       { get; set; }
     public string? descripcion  { get; set; }
+    public string? pedido_de_trabajo { get; set; }
     public string? criticidad   { get; set; }
     public string? estado       { get; set; }
     public string? responsable  { get; set; }
