@@ -207,7 +207,7 @@ export default function DashboardPage({ canEdit }: Props) {
       )}
 
       {/* Indicadores reales */}
-      <RealKpiSection />
+      <RealKpiSection fechaInicio={FECHA_INICIO} fechaFin={FECHA_FIN} />
 
       {/* Sección de widgets seleccionados */}
       {activeWidgets.length > 0 && (
