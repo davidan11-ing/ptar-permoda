@@ -138,7 +138,6 @@ export default function RealKpiSection() {
     let cancelled = false;
     const today = daysAgo(0);
     const d7    = daysAgo(7);
-    const d30   = daysAgo(30);
 
     Promise.allSettled([
       getGemEficiencia({ fecha_inicio: d7, fecha_fin: today }),
@@ -152,12 +151,12 @@ export default function RealKpiSection() {
       // GEM $/m³ — promedio últimos 7 días
       const gemRows = gemR.status === 'fulfilled' ? gemR.value : [];
       const gemM3   = avg(gemRows.map(r => r.pesos_por_m3));
-      const gemFecha = gemRows.at(-1)?.fecha ?? null;
+      const gemFecha = gemRows[gemRows.length - 1]?.fecha ?? null;
 
       // RO $/m³ — promedio últimos 7 días
       const roRows = roR.status === 'fulfilled' ? roR.value : [];
       const roM3   = avg(roRows.map(r => r.pesos_por_m3));
-      const roFecha = roRows.at(-1)?.fecha ?? null;
+      const roFecha = roRows[roRows.length - 1]?.fecha ?? null;
 
       // Recovery RO — última lectura caudales RO
       const roLect = roLectR.status === 'fulfilled' ? roLectR.value : { c12: null, c13: null };

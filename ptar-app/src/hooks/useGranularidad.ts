@@ -5,22 +5,6 @@ import { getUltimaFechaConDatos } from '../services/ptarClient';
 // ── Tipos ─────────────────────────────────────────────────────────────────────
 export type Granularidad = 'turno' | 'dia' | 'semana' | 'mes';
 
-// Ventana de días que carga cada preset de granularidad
-const DIAS: Record<Granularidad, number> = {
-  turno:  7,    // últimos 7 días
-  dia:    30,   // último mes
-  semana: 84,   // últimas 12 semanas
-  mes:    180,  // últimos 6 meses
-};
-
-// Fecha de hoy en formato YYYY-MM-DD (hora local — evita desfase UTC-5)
-function hoy() { return new Date().toLocaleDateString('en-CA'); }
-// Fecha N días atrás en formato YYYY-MM-DD (hora local)
-function restar(dias: number) {
-  const d = new Date();
-  d.setDate(d.getDate() - dias);
-  return d.toLocaleDateString('en-CA');
-}
 // Fechas por defecto: enero 1 → abril 1 del año en curso
 const _y = new Date().getFullYear();
 const DEFAULT_FI = `${_y}-01-01`;
