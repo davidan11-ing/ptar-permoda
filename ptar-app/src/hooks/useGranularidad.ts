@@ -71,9 +71,20 @@ export function useGranularidad(opts?: { initFi?: string; initFf?: string; autoI
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /** Click en botón preset: solo cambia granularidad, NO resetea fechas */
+  /** Click en botón preset: cambia granularidad y ajusta rango de fechas.
+   *  - mes  → año completo (enero 1 → diciembre 31)
+   *  - resto → rango por defecto (marzo 1 → abril 30) */
   function setGranularidad(g: Granularidad) {
     setGran(g);
+    if (g === 'mes') {
+      const fi = `${_y}-01-01`;
+      const ff = `${_y}-12-31`;
+      setFechaInicio(fi); setDraftInicio(fi);
+      setFechaFin(ff);    setDraftFin(ff);
+    } else {
+      setFechaInicio(DEFAULT_FI); setDraftInicio(DEFAULT_FI);
+      setFechaFin(DEFAULT_FF);    setDraftFin(DEFAULT_FF);
+    }
   }
 
   /** onChange: actualiza solo el draft (display inmediato).
