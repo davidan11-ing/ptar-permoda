@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
   getGemEficiencia, getRoEficiencia,
-  getUltimaLecturaRO,
   getBalanceHidrico,
 } from '../../services/ptarClient';
 
@@ -23,10 +22,6 @@ function fmtDate(iso: string | null): string {
   return `${d}/${m}/${y}`;
 }
 
-function recoveryStatus(v: number | null): Status {
-  if (v == null) return 'neutral';
-  return v >= 75 ? 'good' : v >= 60 ? 'warn' : 'bad';
-}
 
 function costoStatus(v: number | null, goodBelow: number, badAbove: number): Status {
   if (v == null) return 'neutral';
@@ -93,7 +88,7 @@ function KpiTile({ label, value, sub, hint, status, icon, accent }: TileProps) {
 interface KpiData {
   gemM3:         number | null;
   roM3:          number | null;
-  recoveryRO:    number | null;
+  permeadoRO:    number | null;  // m³ totales permeado RO1 en el período
   caudalPeriodo: number | null;
   gemFecha:      string | null;
   roFecha:       string | null;
@@ -112,9 +107,8 @@ export default function RealKpiSection({ fechaInicio, fechaFin }: Props) {
     Promise.allSettled([
       getGemEficiencia({ fecha_inicio: fechaInicio, fecha_fin: fechaFin }),
       getRoEficiencia({ fecha_inicio: fechaInicio, fecha_fin: fechaFin }),
-      getUltimaLecturaRO(),
       getBalanceHidrico({ fecha_inicio: fechaInicio, fecha_fin: fechaFin, limit: 2000 }),
-    ]).then(([gemR, roR, roLectR, balR]) => {
+    ]).then(([gemR, roR, balR]) => {
       // GEM $/m³ — promedio del período
       const gemRows = gemR.status === 'fulfilled' ? gemR.value : [];
       const gemM3   = avg(gemRows.map(r => r.pesos_por_m3));
@@ -125,13 +119,13 @@ export default function RealKpiSection({ fechaInicio, fechaFin }: Props) {
       const roM3   = avg(roRows.map(r => r.pesos_por_m3));
       const roFecha = roRows.at(-1)?.fecha ?? null;
 
-      // Recovery RO — última lectura de caudales RO
-      const roLect = roLectR.status === 'fulfilled' ? roLectR.value : { c12: null, c13: null };
-      const recoveryRO = (roLect.c12 && roLect.c13 && roLect.c12 > 0)
-        ? (roLect.c13 / roLect.c12) * 100 : null;
-
-      // Caudal período — suma total agua limpia
+      // Balance — suma permeado RO1 y total agua limpia del período
       const balRows = balR.status === 'fulfilled' ? balR.value : [];
+      const permeadoRO = balRows.reduce<number | null>((acc, r) => {
+        const v = r.permeado_ro1;
+        if (v == null) return acc;
+        return (acc ?? 0) + v;
+      }, null);
       const caudalPeriodo = balRows.reduce<number | null>((acc, r) => {
         const v = r.total_agua_limpia_m3;
         if (v == null) return acc;
@@ -139,7 +133,7 @@ export default function RealKpiSection({ fechaInicio, fechaFin }: Props) {
       }, null);
 
       if (cancelled) return;
-      setData({ gemM3, roM3, recoveryRO, caudalPeriodo, gemFecha, roFecha });
+      setData({ gemM3, roM3, permeadoRO, caudalPeriodo, gemFecha, roFecha });
       setLoading(false);
     });
     return () => { cancelled = true; };
@@ -179,12 +173,13 @@ export default function RealKpiSection({ fechaInicio, fechaFin }: Props) {
     },
     // ── Proceso ─────────────────────────────────────────────────────────────
     {
-      label: 'Recovery RO',
+      label: 'Permeado RO',
       icon: '♻️',
-      value: fmt(data.recoveryRO, 1, '', '%'),
-      sub: 'permeado / entrada',
-      hint: 'Última lectura caudales RO',
-      status: recoveryStatus(data.recoveryRO),
+      value: data.permeadoRO != null ? data.permeadoRO.toLocaleString('es-CO', { maximumFractionDigits: 0 }) : '—',
+      sub: data.permeadoRO != null ? 'm³ recuperados' : '',
+      hint: `Total permeado RO1 · ${periodoHint}`,
+      status: data.permeadoRO != null ? (data.permeadoRO > 500 ? 'good' : data.permeadoRO > 100 ? 'warn' : 'bad') : 'neutral',
+      accent: '#58a6ff',
     },
     // ── Volumen ─────────────────────────────────────────────────────────────
     {
