@@ -70,17 +70,17 @@ export default function BalanceConsumoWidget({ fechaInicio, fechaFin }: Props) {
   if (error)   return <div style={styles.center}>Error: {error}</div>;
   if (!data.length) return <div style={styles.center}>Sin datos</div>;
 
-  // Mostrar etiqueta cada N días para no saturar el eje X
-  const interval = data.length > 20 ? Math.floor(data.length / 10) : 0;
-
   return (
-    <ResponsiveContainer width="100%" height={230}>
-      <ComposedChart data={data} margin={{ top: 8, right: 12, bottom: 4, left: 0 }}>
+    <ResponsiveContainer width="100%" height={260}>
+      <ComposedChart data={data} margin={{ top: 8, right: 12, bottom: 44, left: 0 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#21262d" />
         <XAxis
           dataKey="fecha"
-          tick={{ fill: '#8b949e', fontSize: 10 }}
-          interval={interval}
+          tick={{ fill: '#8b949e', fontSize: 9 }}
+          interval={0}
+          angle={-45}
+          textAnchor="end"
+          height={58}
         />
         <YAxis tick={{ fill: '#8b949e', fontSize: 10 }} width={46} unit=" m³" />
         <Tooltip
