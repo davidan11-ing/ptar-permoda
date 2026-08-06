@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../state/ThemeContext';
 import RealKpiSection from './RealKpiSection';
-import { getReporteDashboardHtmlUrl, getUltimaFechaConDatos } from '../../services/ptarClient';
+import { getReporteDashboardHtmlUrl } from '../../services/ptarClient';
 import { useAuth } from '../../state/AuthContext';
 import { ROUTES } from '../../lib/routes';
 import {
@@ -32,17 +32,10 @@ export default function DashboardPage({ canEdit }: Props) {
   const navigate = useNavigate();
   const { theme } = useTheme();
 
-  // Fechas: se inicializan con los últimos 30 días y se ajustan al último mes con datos
-  const [FECHA_FIN,    setFechaFin]    = useState(() => new Date().toLocaleDateString('en-CA'));
-  const [FECHA_INICIO, setFechaInicio] = useState(() => { const d = new Date(); d.setDate(d.getDate() - 30); return d.toLocaleDateString('en-CA'); });
-  useEffect(() => {
-    getUltimaFechaConDatos().then(ultima => {
-      setFechaFin(ultima);
-      const d = new Date(ultima + 'T00:00:00');
-      d.setDate(d.getDate() - 30);
-      setFechaInicio(d.toLocaleDateString('en-CA'));
-    }).catch(() => {});
-  }, []);
+  // Fechas por defecto: marzo 1 → abril 1 del año en curso
+  const _dashYear = new Date().getFullYear();
+  const [FECHA_FIN,    setFechaFin]    = useState(`${_dashYear}-04-01`);
+  const [FECHA_INICIO, setFechaInicio] = useState(`${_dashYear}-03-01`);
   const TODAY        = useMemo(() => new Date().toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }), []);
   const [ahora, setAhora] = useState(() => new Date().toLocaleTimeString('es-CO'));
   useEffect(() => {
