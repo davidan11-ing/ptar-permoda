@@ -89,6 +89,7 @@ interface KpiData {
   gemM3:         number | null;
   roM3:          number | null;
   permeadoRO:    number | null;  // m³ totales permeado RO1 en el período
+  recoveryPct:   number | null;  // % recuperación RO (promedio eficiencia_ro_pct)
   caudalPeriodo: number | null;
   gemFecha:      string | null;
   roFecha:       string | null;
@@ -119,7 +120,7 @@ export default function RealKpiSection({ fechaInicio, fechaFin }: Props) {
       const roM3   = avg(roRows.map(r => r.pesos_por_m3));
       const roFecha = roRows.at(-1)?.fecha ?? null;
 
-      // Balance — suma permeado RO1 y total agua limpia del período
+      // Balance — suma permeado RO1, total agua limpia y % recuperación del período
       const balRows = balR.status === 'fulfilled' ? balR.value : [];
       const permeadoRO = balRows.reduce<number | null>((acc, r) => {
         const v = r.permeado_ro1;
@@ -131,9 +132,10 @@ export default function RealKpiSection({ fechaInicio, fechaFin }: Props) {
         if (v == null) return acc;
         return (acc ?? 0) + v;
       }, null);
+      const recoveryPct = avg(balRows.map(r => r.eficiencia_ro_pct));
 
       if (cancelled) return;
-      setData({ gemM3, roM3, permeadoRO, caudalPeriodo, gemFecha, roFecha });
+      setData({ gemM3, roM3, permeadoRO, recoveryPct, caudalPeriodo, gemFecha, roFecha });
       setLoading(false);
     });
     return () => { cancelled = true; };
@@ -179,6 +181,18 @@ export default function RealKpiSection({ fechaInicio, fechaFin }: Props) {
       sub: data.permeadoRO != null ? 'm³ recuperados' : '',
       hint: `Total permeado RO1 · ${periodoHint}`,
       status: data.permeadoRO != null ? (data.permeadoRO > 500 ? 'good' : data.permeadoRO > 100 ? 'warn' : 'bad') : 'neutral',
+      accent: '#58a6ff',
+    },
+    // ── Recovery RO ─────────────────────────────────────────────────────────
+    {
+      label: 'Recovery RO',
+      icon: '📊',
+      value: fmt(data.recoveryPct, 1, '', '%'),
+      sub: 'recuperación promedio',
+      hint: `Promedio eficiencia_ro_pct · ${periodoHint}`,
+      status: data.recoveryPct != null
+        ? (data.recoveryPct >= 70 ? 'good' : data.recoveryPct >= 50 ? 'warn' : 'bad')
+        : 'neutral',
       accent: '#58a6ff',
     },
     // ── Volumen ─────────────────────────────────────────────────────────────

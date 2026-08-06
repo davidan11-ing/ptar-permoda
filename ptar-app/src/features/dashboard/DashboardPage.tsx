@@ -32,10 +32,10 @@ export default function DashboardPage({ canEdit }: Props) {
   const navigate = useNavigate();
   const { theme } = useTheme();
 
-  // Fechas por defecto: marzo 1 → abril 1 del año en curso
+  // Fechas por defecto: mayo 1 → junio 1 del año en curso (mes más completo en BD)
   const _dashYear = new Date().getFullYear();
-  const [FECHA_FIN,    setFechaFin]    = useState(`${_dashYear}-04-01`);
-  const [FECHA_INICIO, setFechaInicio] = useState(`${_dashYear}-03-01`);
+  const [FECHA_FIN,    setFechaFin]    = useState(`${_dashYear}-06-01`);
+  const [FECHA_INICIO, setFechaInicio] = useState(`${_dashYear}-05-01`);
   const TODAY        = useMemo(() => new Date().toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }), []);
   const [ahora, setAhora] = useState(() => new Date().toLocaleTimeString('es-CO'));
   useEffect(() => {

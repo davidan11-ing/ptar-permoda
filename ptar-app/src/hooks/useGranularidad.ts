@@ -21,10 +21,10 @@ function restar(dias: number) {
   d.setDate(d.getDate() - dias);
   return d.toLocaleDateString('en-CA');
 }
-// Fechas por defecto: marzo 1 → abril 30 del año en curso
+// Fechas por defecto: mayo 1 → junio 1 del año en curso (mes más completo en BD)
 const _y = new Date().getFullYear();
-const DEFAULT_FI = `${_y}-03-01`;
-const DEFAULT_FF = `${_y}-04-01`;
+const DEFAULT_FI = `${_y}-05-01`;
+const DEFAULT_FF = `${_y}-06-01`;
 
 // ── Hook ──────────────────────────────────────────────────────────────────────
 // fechaInicio / fechaFin → valores COMPROMETIDOS (disparan fetch)
