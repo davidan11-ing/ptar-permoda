@@ -181,7 +181,7 @@ export default function CostosDashboard() {
   const { theme } = useTheme();
   const anioActual = new Date().getFullYear(); void anioActual;
 
-  const { granularidad, setGranularidad, fechaInicio, fechaFin, draftInicio, draftFin, handleFechaInicio, handleFechaFin, commitFechaInicio, commitFechaFin } = useGranularidad({ autoInit: true });
+  const { granularidad, setGranularidad, fechaInicio, fechaFin, draftInicio, draftFin, handleFechaInicio, handleFechaFin, commitFechaInicio, commitFechaFin } = useGranularidad({});
   const [sistema,        setSistema]        = useState('GEM');
   const [mesProyec,      setMesProyec]      = useState(String(new Date().getMonth() + 1));
   const [reactivosFiltro, setReactivosFiltro] = useState<string[]>([]);

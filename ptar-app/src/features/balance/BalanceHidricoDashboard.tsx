@@ -195,7 +195,7 @@ export default function BalanceHidricoDashboard() {
     fechaInicio, fechaFin,
     handleFechaInicio, handleFechaFin,
     draftInicio, draftFin, commitFechaInicio, commitFechaFin,
-  } = useGranularidad({ autoInit: true });
+  } = useGranularidad({});
 
   const [turnoFiltro,    setTurnoFiltro]    = useState('');
   const [quitarSinDatos, setQuitarSinDatos] = useState(true);
