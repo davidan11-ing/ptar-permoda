@@ -18,7 +18,7 @@ interface ChartRow {
 }
 
 function makeLabel(fecha: string, turno: string): string {
-  const [, m, d] = fecha.split('-');
+  const [, m, d] = fecha.slice(0, 10).split('-');
   const t = turno === 'mañana' ? 'M' : turno === 'tarde' ? 'T' : 'N';
   return `${d}/${m} ${t}`;
 }

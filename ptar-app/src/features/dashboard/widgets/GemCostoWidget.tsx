@@ -27,7 +27,7 @@ export default function GemCostoWidget({ fechaInicio, fechaFin }: Props) {
     getGemEficiencia({ fecha_inicio: fechaInicio, fecha_fin: fechaFin })
       .then((rows: GemEficienciaRow[]) => {
         const mapped: ChartRow[] = rows.map(r => {
-          const [, m, d] = r.fecha.split('-');
+          const [, m, d] = r.fecha.slice(0, 10).split('-');
           const turnoLabel = r.turno === 'mañana' ? 'M' : r.turno === 'tarde' ? 'T' : 'N';
           return {
             label: `${d}/${m} ${turnoLabel}`,
