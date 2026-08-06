@@ -36,17 +36,17 @@ const DATOS_CAMPOS: (keyof BalanceHidricoRow)[] = [
 ];
 
 // ── Paleta unificada ──────────────────────────────────────────────────────────
-// Cada proceso usa el mismo color en TODAS las secciones del balance
+// Colores aprobados — deben coincidir en TODAS las secciones del balance
 const C = {
-  acueducto:    '#70AD47',   // verde       — S1 barra Acueducto / S5 barra
-  permeadoRO:   '#5B9BD5',   // azul medio  — S1 barra Permeado RO
-  carrotanques: '#4472C4',   // azul oscuro — S1 barra Carrotanques
-  ptap:         '#ED7D31',   // naranja     — S1 barra PTAP / línea Total a Tratar
-  tintoreria:   '#5B9BD5',   // azul medio  — S2 barra / S5 barra
-  lavanderia:   '#FFC000',   // amarillo    — S3 barra / S5 barra
-  gem:          '#A9D18E',   // verde claro — Permeado RO (tratabilidad) / barra GEM
-  gemDark:      '#1F3864',   // azul marino — línea Consumo Total GEM
-  rechazoRO:    '#7B3F00',   // marrón      — Rechazo RO
+  acueducto:    '#4472C4',   // azul oscuro — S1/S5 barra Acueducto
+  permeadoRO:   '#70AD47',   // verde       — S1 barra Permeado RO / Vertimiento pie
+  carrotanques: '#A5A5A5',   // gris        — S1 barra Carrotanques
+  ptap:         '#5B9BD5',   // azul claro  — S1 barra PTAP
+  tintoreria:   '#ED7D31',   // naranja     — S2/S5 barra Tintorería
+  lavanderia:   '#FFC000',   // amarillo    — S3/S5 barra Lavandería
+  gem:          '#A9D18E',   // verde claro — Permeado RO tratabilidad / barra GEM
+  gemDark:      '#1F3864',   // azul marino — línea Total Procesado
+  rechazoRO:    '#7B3F00',   // café        — Rechazo RO
   vertGem:      '#9DC3E6',   // azul pálido — Vertimiento GEM (barras + pie)
   vertMBR:      '#FFE699',   // amarillo pálido — Vertimiento MBRs
   tinInd:       '#FFD966',   // amarillo indicador tintorería
@@ -252,8 +252,9 @@ function TablasTintoreria({ consumoM3, kgTela, indLKg }: {
 }
 
 // ── Tabla expandida Lavandería ────────────────────────────────────────────────
-// m³ no registrados en BD para mayo → usa balance manual (hardcoded)
-function TablasLavanderia({ undEfectivas }: { undEfectivas: number }) {
+function TablasLavanderia({ undEfectivas, consumoM3, indLUnd }: {
+  undEfectivas: number; consumoM3: number; indLUnd: number | null;
+}) {
   const { theme } = useTheme();
   const red = { color: '#e05252', fontWeight: 700 as const };
   const cell = (style?: React.CSSProperties) => ({
@@ -265,12 +266,9 @@ function TablasLavanderia({ undEfectivas }: { undEfectivas: number }) {
     borderBottom: `1px solid ${theme.border}`, whiteSpace: 'nowrap' as const };
   return (
     <div className="dash-card" style={{ padding: '8px 12px', overflow: 'auto' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8,
+      <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.05em',
         background: '#DAE3F3', color: '#1c2128', padding: '3px 8px', marginBottom: 6, borderRadius: 3 }}>
-        <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase' }}>Consolidado Lavandería</span>
-        <span style={{ fontSize: 9, background: '#f0883e22', color: '#f0883e', borderRadius: 3, padding: '1px 6px' }}>
-          ⚠ lavanderia_m3 sin registrar en BD — usando balance manual
-        </span>
+        Consolidado Lavandería
       </div>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10 }}>
         <thead>
@@ -282,9 +280,9 @@ function TablasLavanderia({ undEfectivas }: { undEfectivas: number }) {
         </thead>
         <tbody>
           <tr>
-            <td style={cell({ color: theme.muted, fontStyle: 'italic' })}>17.507 *</td>
+            <td style={cell(red)}>{fmtFull(consumoM3)}</td>
             <td style={cell()}>{fmtFull(undEfectivas)}</td>
-            <td style={cell(red)}>42,840</td>
+            <td style={cell(red)}>{indLUnd != null ? indLUnd.toFixed(3) : '—'}</td>
             <td style={cell({ color: theme.muted })}>17.272</td>
             <td style={cell({ color: theme.muted })}>508.000</td>
             <td style={cell({ color: theme.muted })}>34,0</td>
@@ -292,6 +290,31 @@ function TablasLavanderia({ undEfectivas }: { undEfectivas: number }) {
         </tbody>
       </table>
     </div>
+  );
+}
+
+// ── Etiqueta SVG para pie — dos líneas: valor + porcentaje ──────────────────
+function PieLabel(props: {
+  cx?: number; cy?: number; midAngle?: number;
+  outerRadius?: number; percent?: number; value?: number;
+}) {
+  const { cx = 0, cy = 0, midAngle = 0, outerRadius = 0, percent = 0, value = 0 } = props;
+  if (percent < 0.06) return null;
+  const RADIAN = Math.PI / 180;
+  const r = outerRadius * 0.67;
+  const x = cx + r * Math.cos(-midAngle * RADIAN);
+  const y = cy + r * Math.sin(-midAngle * RADIAN);
+  return (
+    <g>
+      <text x={x} y={y - 6} textAnchor="middle" dominantBaseline="central"
+        fill="#fff" fontSize={9} fontWeight={700}>
+        {fmtFull(value)}
+      </text>
+      <text x={x} y={y + 7} textAnchor="middle" dominantBaseline="central"
+        fill="#ffffffcc" fontSize={8}>
+        {(percent * 100).toFixed(1)}%
+      </text>
+    </g>
   );
 }
 
@@ -320,9 +343,7 @@ function PieCard({ titulo, total, slices }: {
             outerRadius={68}
             dataKey="value"
             labelLine={false}
-            label={({ percent, value }: { percent: number; value: number }) =>
-              percent > 0.05 ? `${fmtFull(value)}\n${(percent * 100).toFixed(1)}%` : ''
-            }
+            label={PieLabel}
           >
             {slices.map((entry, i) => (
               <Cell key={i} fill={entry.color} stroke="#1F3864" strokeWidth={1} />
@@ -392,12 +413,16 @@ export default function BalanceHidricoDashboard() {
     };
   }), [agrupado]);
 
-  // S5 Vertimiento — columnas derivadas (vertimiento = GEM - RO - MBR)
+  // S5 Vertimiento — balance: envio_th = permeadoRO + rechazoRO + vertMBR + vertGEM
+  // vertMBR = exceso de MBRs que no llega a RO (buffer TK Permeado)
+  // vertGEM = lo que sale de la planta que no vuelve a producción ni va a RO
   const agrupadoVert = useMemo(() => agrupado.map(r => {
     const n = (k: string) => (r as Record<string, unknown>)[k] as number || 0;
-    const mbr    = n('permeado_mbr1') + n('permeado_mbr2');
-    const vertGem = Math.max(0, n('consumo_gem_m3') - n('entrada_ro1') - mbr);
-    return { ...r, vertimiento_gem_calc: vertGem, vertimiento_mbr_calc: mbr };
+    const mbr     = n('permeado_mbr1') + n('permeado_mbr2');
+    const entRo   = n('entrada_ro1');
+    const vertMbr = Math.max(0, mbr - entRo);
+    const vertGem = Math.max(0, n('envio_th') - entRo - vertMbr);
+    return { ...r, vertimiento_gem_calc: vertGem, vertimiento_mbr_calc: vertMbr };
   }), [agrupado]);
 
   // S6 — permeado_mbr combinado + última semana
@@ -408,16 +433,21 @@ export default function BalanceHidricoDashboard() {
 
   const agrupadoS6semana = useMemo(() => agrupadoS6.slice(-7), [agrupadoS6]);
 
-  // Pie S6 — 4 slices: Vertimiento GEM / Permeado RO / Rechazo RO / Vertimiento MBRs
+  // Pie S6 — 4 slices: Permeado RO / Rechazo RO / Vert MBRs / Vert GEM
+  // (usando mismo balance que agrupadoVert: envio_th como base)
   const pieS6 = useMemo(() => {
     const sum = (k: string) => agrupado.reduce((acc, r) => acc + (Number((r as Record<string, unknown>)[k]) || 0), 0);
-    const mbrTotal = sum('permeado_mbr1') + sum('permeado_mbr2');
-    const vertGem  = Math.max(0, sum('consumo_gem_m3') - sum('entrada_ro1') - mbrTotal);
+    const mbrTotal  = sum('permeado_mbr1') + sum('permeado_mbr2');
+    const entRo     = sum('entrada_ro1');
+    const permRo    = sum('permeado_ro1');
+    const vertMbr   = Math.max(0, mbrTotal - entRo);
+    const vertGem   = Math.max(0, sum('envio_th') - entRo - vertMbr);
+    const rechazoRo = Math.max(0, entRo - permRo);
     return [
-      { name: 'Vertimiento GEM',  value: vertGem,              color: C.vertGem },
-      { name: 'Permeado RO',      value: sum('permeado_ro1'),  color: C.gem },
-      { name: 'Rechazo RO',       value: sum('rechazo_ro1'),   color: C.rechazoRO },
-      { name: 'Vertimiento MBRs', value: mbrTotal,             color: C.vertMBR },
+      { name: 'Permeado RO',      value: permRo,   color: C.permeadoRO },
+      { name: 'Rechazo RO',       value: rechazoRo, color: C.rechazoRO },
+      { name: 'Vertimiento MBRs', value: vertMbr,   color: C.vertMBR },
+      { name: 'Vertimiento GEM',  value: vertGem,   color: C.vertGem },
     ].filter(d => d.value > 0);
   }, [agrupado]);
 
@@ -435,15 +465,31 @@ export default function BalanceHidricoDashboard() {
     const totalPtap   = sum('potable_ptap');
     const totalSuministro = totalAcu + totalRo + totalCarrot + totalPtap;
     const dailyAgua   = agrupado.map(r => (r.total_agua_limpia_m3 as number) || 0).filter(v => v > 0);
+    const diasEfectivos = dailyAgua.length;
+
+    // Vertimiento (mismo balance que agrupadoVert)
+    const totalTH     = sum('envio_th');
+    const totalRoIn   = sum('entrada_ro1');
+    const totalMbr    = sum('permeado_mbr1') + sum('permeado_mbr2');
+    const totalVertMbr    = Math.max(0, totalMbr - totalRoIn);
+    const totalVertRechazo= Math.max(0, totalRoIn - totalRo);
+    const totalVertGem    = Math.max(0, totalTH - totalRoIn - totalVertMbr);
+    const totalVertTotal  = Math.max(0, totalTH - totalRo);
+
     return {
-      totalAgua: sum('total_agua_limpia_m3'), totalTH: sum('envio_th'),
+      totalAgua: sum('total_agua_limpia_m3'), totalTH,
       totalAcu, eficRo: avgField('eficiencia_ro_pct'),
-      totalGem: sum('consumo_gem_m3'), totalRoIn: sum('entrada_ro1'),
-      totalRo, totalCarrot, totalPtap, totalSuministro,
+      totalGem: sum('consumo_gem_m3'), totalRoIn,
+      totalRo, totalCarrot, totalPtap, totalSuministro, totalMbr,
+      totalVertMbr, totalVertRechazo, totalVertGem, totalVertTotal,
       minAgua:  dailyAgua.length ? Math.min(...dailyAgua) : 0,
       maxAgua:  dailyAgua.length ? Math.max(...dailyAgua) : 0,
       avgAgua:  dailyAgua.length ? dailyAgua.reduce((a, b) => a + b, 0) / dailyAgua.length : 0,
-      diasEfectivos: dailyAgua.length,
+      diasEfectivos,
+      avgCarrot: diasEfectivos ? totalCarrot / diasEfectivos : 0,
+      avgPtap:   diasEfectivos ? totalPtap   / diasEfectivos : 0,
+      avgAcu:    diasEfectivos ? totalAcu    / diasEfectivos : 0,
+      avgRo:     diasEfectivos ? totalRo     / diasEfectivos : 0,
       totalTin: sum('tintoreria_m3'), totalKgTela: sum('kg_tela'), avgIndTin: avgField('indicador_tin_l_kg'),
       totalLav: sum('lavanderia_m3'), totalUndEf:  sum('und_efectivas'), avgIndLav: avgField('indicador_lav_l_und'),
     };
@@ -545,17 +591,87 @@ export default function BalanceHidricoDashboard() {
         </div>
       )}
 
-      {/* ════════════════ S8 — KPIS ════════════════ */}
+      {/* ════════════════ S8 — RESUMEN DEL PERÍODO ════════════════ */}
       <section className="dash-section">
-        <SeccionHeader numero={8} titulo="KPIs — Resumen del Período" color="#DEEBF7" />
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 12 }}>
-          <KpiCard label="Agua limpia total"    value={fmtM3(kpis.totalAgua)}  unit="m³"              color="#3fb950" />
-          <KpiCard label="Enviado a producción" value={fmtM3(kpis.totalTH)}    unit="m³"              color="#00c5e3" />
-          <KpiCard label="Acueducto consumido"  value={fmtM3(kpis.totalAcu)}   unit="m³"              color="#d29922" />
-          <KpiCard label="Eficiencia RO prom."  value={kpis.eficRo != null ? kpis.eficRo.toFixed(1) + '%' : '—'} unit="% recuperación" color="#9e7aff" />
-          <KpiCard label="Caudal GEM tratado"   value={fmtM3(kpis.totalGem)}   unit="m³"              color="#f85149" />
-          <KpiCard label="Entrada a RO"         value={fmtM3(kpis.totalRoIn)}  unit="m³"              color="#58a6ff" />
-        </div>
+        <SeccionHeader numero={8} titulo="Resumen del Período" color="#DEEBF7" />
+        {(() => {
+          const pEnProceso = (v: number) =>
+            kpis.totalSuministro > 0 ? `${(v / kpis.totalSuministro * 100).toFixed(1)}%` : '—';
+          const pGem = (v: number) =>
+            kpis.totalGem > 0 ? `${(v / kpis.totalGem * 100).toFixed(1)}%` : '—';
+          const f = (v: number) => fmtFull(Math.round(v));
+          const f1 = (v: number) => v.toFixed(1);
+
+          const cellStyle: React.CSSProperties = {
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            padding: '3px 10px', fontSize: 10,
+          };
+          const labelStyle: React.CSSProperties = { color: '#8b949e', flexShrink: 0 };
+          const valueStyle: React.CSSProperties = {
+            fontWeight: 700, color: '#e6edf3', fontVariantNumeric: 'tabular-nums',
+          };
+          const headStyle = (bg: string): React.CSSProperties => ({
+            background: bg, color: '#1c2128', fontWeight: 700, fontSize: 9,
+            textTransform: 'uppercase', letterSpacing: '0.06em',
+            padding: '4px 10px', borderRadius: '4px 4px 0 0',
+          });
+          const card = (bg: string, titulo: string, rows: [string, string][]): React.ReactNode => (
+            <div className="dash-card" style={{ padding: 0, overflow: 'hidden' }}>
+              <div style={headStyle(bg)}>{titulo}</div>
+              <div style={{ padding: '2px 0 4px' }}>
+                {rows.map(([label, value], i) => (
+                  <div key={i} style={{
+                    ...cellStyle,
+                    borderBottom: i < rows.length - 1 ? '1px solid #21262d40' : 'none',
+                  }}>
+                    <span style={labelStyle}>{label}</span>
+                    <span style={valueStyle}>{value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+
+          return (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+              {card('#DEEBF7', 'Consumo Diario (m³)', [
+                ['MÍNIMO',         f(kpis.minAgua)],
+                ['MÁXIMO',         f(kpis.maxAgua)],
+                ['PROMEDIO',       f1(kpis.avgAgua)],
+                ['DÍAS EFECTIVOS', String(kpis.diasEfectivos)],
+              ])}
+              {card('#DEEBF7', 'Abastecimiento Promedio Días Efectivos (m³)', [
+                ['CARROTANQUES', f1(kpis.avgCarrot)],
+                ['PTAP',         f1(kpis.avgPtap)],
+                ['ACUEDUCTO',    f1(kpis.avgAcu)],
+                ['RO',           f1(kpis.avgRo)],
+              ])}
+              {card('#DEEBF7', 'Salidas', [
+                ['VOLUMEN TRATADO (m³)',     f(kpis.totalGem)],
+                ['VOL RECIRCULADO (m³)',     f(kpis.totalRo)],
+                ['VOL VERTIMIENTO TOTAL',    f(kpis.totalVertTotal)],
+                ['VERTIMIENTO RECHAZO',      f(kpis.totalVertRechazo)],
+                ['VERTIMIENTO MBRS',         f(kpis.totalVertMbr)],
+                ['VERTIMIENTO GEM',          f(kpis.totalVertGem)],
+              ])}
+              {card('#E2EFDA', 'M³ Ingreso a RO / M³ Tratados PTAR', [
+                ['M³ PERMEADO RO',        f(kpis.totalRo)],
+                ['M³ TRATADOS PTAR',      f(kpis.totalGem)],
+                ['% RECIRCULACIÓN',       pGem(kpis.totalRo)],
+              ])}
+              {card('#E2EFDA', '% Recirculación Total (Autonomía Hídrica)', [
+                ['M³ PERMEADO RO',        f(kpis.totalRo)],
+                ['M³ EN PROCESO',         f(kpis.totalSuministro)],
+                ['% RECIRCULACIÓN',       pEnProceso(kpis.totalRo)],
+              ])}
+              {card('#FFF2CC', 'Dependencia de Fuente Externa', [
+                ['M³ ACUEDUCTO',         f(kpis.totalAcu)],
+                ['M³ EN PROCESO',        f(kpis.totalSuministro)],
+                ['% DEPENDENCIA EXT.',   pEnProceso(kpis.totalAcu)],
+              ])}
+            </div>
+          );
+        })()}
       </section>
 
       {/* ════════════════ S1 — BALANCE HÍDRICO ════════════════ */}
@@ -579,16 +695,16 @@ export default function BalanceHidricoDashboard() {
                   formatter={(val: number, name: string) => [`${val.toFixed(1)} m³`, name]} />
                 <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
                 <Bar dataKey="carrotanques_m3" name="Carrotanques"  fill={C.carrotanques} stackId="s">
-                  <LabelList dataKey="carrotanques_m3" position="insideTop" style={{ fill: '#fff', fontSize: 8 }} formatter={(v: number) => v > 20 ? v.toFixed(0) : ''} />
+                  <LabelList dataKey="carrotanques_m3" position="insideTop" style={{ fill: '#1c2128', fontSize: 8, fontWeight: 700 }} formatter={(v: number) => v > 20 ? v.toFixed(0) : ''} />
                 </Bar>
                 <Bar dataKey="permeado_ro1"    name="Permeado RO"  fill={C.permeadoRO}  stackId="s">
-                  <LabelList dataKey="permeado_ro1" position="insideTop" style={{ fill: '#fff', fontSize: 8 }} formatter={(v: number) => v > 20 ? v.toFixed(0) : ''} />
+                  <LabelList dataKey="permeado_ro1" position="insideTop" style={{ fill: '#1c2128', fontSize: 8, fontWeight: 700 }} formatter={(v: number) => v > 20 ? v.toFixed(0) : ''} />
                 </Bar>
                 <Bar dataKey="acueducto_m3"    name="Acueducto"    fill={C.acueducto}   stackId="s">
-                  <LabelList dataKey="acueducto_m3" position="insideTop" style={{ fill: '#fff', fontSize: 8 }} formatter={(v: number) => v > 20 ? v.toFixed(0) : ''} />
+                  <LabelList dataKey="acueducto_m3" position="insideTop" style={{ fill: '#fff', fontSize: 8, fontWeight: 700 }} formatter={(v: number) => v > 20 ? v.toFixed(0) : ''} />
                 </Bar>
                 <Bar dataKey="potable_ptap"    name="PTAP Potable" fill={C.ptap}        stackId="s" radius={[3,3,0,0]}>
-                  <LabelList dataKey="potable_ptap" position="insideTop" style={{ fill: '#fff', fontSize: 8 }} formatter={(v: number) => v > 20 ? v.toFixed(0) : ''} />
+                  <LabelList dataKey="potable_ptap" position="insideTop" style={{ fill: '#fff', fontSize: 8, fontWeight: 700 }} formatter={(v: number) => v > 20 ? v.toFixed(0) : ''} />
                 </Bar>
                 <Line dataKey="total_agua_limpia_m3" name="Total Agua Limpia"
                   stroke={C.white} strokeWidth={2.5}
@@ -722,7 +838,7 @@ export default function BalanceHidricoDashboard() {
           </div>
         </div>
 
-        <TablasLavanderia undEfectivas={kpis.totalUndEf} />
+        <TablasLavanderia undEfectivas={kpis.totalUndEf} consumoM3={kpis.totalLav} indLUnd={kpis.avgIndLav} />
       </section>
 
       {/* ════════════════ S5 — BALANCE DE TRATABILIDAD ════════════════ */}
@@ -746,13 +862,13 @@ export default function BalanceHidricoDashboard() {
                   formatter={(val: number, name: string) => [`${val.toFixed(1)} m³`, name]} />
                 <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
                 <Bar dataKey="acueducto_m3"  name="Acueducto"  fill={C.acueducto}  stackId="t">
-                  <LabelList dataKey="acueducto_m3"  position="insideTop" style={{ fill: '#fff', fontSize: 8 }} formatter={(v: number) => v > 20 ? v.toFixed(0) : ''} />
+                  <LabelList dataKey="acueducto_m3"  position="insideTop" style={{ fill: '#fff', fontSize: 8, fontWeight: 700 }} formatter={(v: number) => v > 20 ? v.toFixed(0) : ''} />
                 </Bar>
                 <Bar dataKey="tintoreria_m3" name="Tintorería" fill={C.tintoreria} stackId="t">
-                  <LabelList dataKey="tintoreria_m3" position="insideTop" style={{ fill: '#fff', fontSize: 8 }} formatter={(v: number) => v > 20 ? v.toFixed(0) : ''} />
+                  <LabelList dataKey="tintoreria_m3" position="insideTop" style={{ fill: '#fff', fontSize: 8, fontWeight: 700 }} formatter={(v: number) => v > 20 ? v.toFixed(0) : ''} />
                 </Bar>
                 <Bar dataKey="lavanderia_m3" name="Lavandería" fill={C.lavanderia} stackId="t" radius={[3,3,0,0]}>
-                  <LabelList dataKey="lavanderia_m3" position="insideTop" style={{ fill: '#1c2128', fontSize: 8 }} formatter={(v: number) => v > 20 ? v.toFixed(0) : ''} />
+                  <LabelList dataKey="lavanderia_m3" position="insideTop" style={{ fill: '#1c2128', fontSize: 8, fontWeight: 700 }} formatter={(v: number) => v > 20 ? v.toFixed(0) : ''} />
                 </Bar>
                 <Line dataKey="total_tratado_osmosis" name="Total Tratado Osmosis"
                   stroke={C.gem} strokeWidth={2}
@@ -777,19 +893,19 @@ export default function BalanceHidricoDashboard() {
                 <Tooltip {...TOOLTIP_STYLE} labelFormatter={(v: string) => `Fecha: ${v}`}
                   formatter={(val: number, name: string) => [`${val.toFixed(1)} m³`, name]} />
                 <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
-                <Bar dataKey="permeado_ro1"         name="Permeado RO"      fill={C.gem}       stackId="v">
-                  <LabelList dataKey="permeado_ro1"         position="insideTop" style={{ fill: '#fff', fontSize: 7 }} formatter={(v: number) => v > 50 ? v.toFixed(0) : ''} />
+                <Bar dataKey="permeado_ro1"         name="Permeado RO"      fill={C.permeadoRO} stackId="v">
+                  <LabelList dataKey="permeado_ro1"         position="insideTop" style={{ fill: '#1c2128', fontSize: 7, fontWeight: 700 }} formatter={(v: number) => v > 50 ? v.toFixed(0) : ''} />
                 </Bar>
                 <Bar dataKey="rechazo_ro1"          name="Rechazo RO"       fill={C.rechazoRO}  stackId="v">
-                  <LabelList dataKey="rechazo_ro1"          position="insideTop" style={{ fill: '#fff', fontSize: 7 }} formatter={(v: number) => v > 30 ? v.toFixed(0) : ''} />
+                  <LabelList dataKey="rechazo_ro1"          position="insideTop" style={{ fill: '#fff', fontSize: 7, fontWeight: 700 }} formatter={(v: number) => v > 30 ? v.toFixed(0) : ''} />
                 </Bar>
                 <Bar dataKey="vertimiento_gem_calc" name="Vertimiento GEM"  fill={C.vertGem}    stackId="v">
-                  <LabelList dataKey="vertimiento_gem_calc" position="insideTop" style={{ fill: '#1c2128', fontSize: 7 }} formatter={(v: number) => v > 50 ? v.toFixed(0) : ''} />
+                  <LabelList dataKey="vertimiento_gem_calc" position="insideTop" style={{ fill: '#1c2128', fontSize: 7, fontWeight: 700 }} formatter={(v: number) => v > 50 ? v.toFixed(0) : ''} />
                 </Bar>
                 <Bar dataKey="vertimiento_mbr_calc" name="Vertimiento MBRs" fill={C.vertMBR}    stackId="v" radius={[3,3,0,0]}>
-                  <LabelList dataKey="vertimiento_mbr_calc" position="insideTop" style={{ fill: '#1c2128', fontSize: 7 }} formatter={(v: number) => v > 30 ? v.toFixed(0) : ''} />
+                  <LabelList dataKey="vertimiento_mbr_calc" position="insideTop" style={{ fill: '#1c2128', fontSize: 7, fontWeight: 700 }} formatter={(v: number) => v > 30 ? v.toFixed(0) : ''} />
                 </Bar>
-                <Line dataKey="consumo_gem_m3" name="Consumo Total GEM"
+                <Line dataKey="envio_th" name="Total Procesado"
                   stroke={C.gemDark} strokeWidth={2.5}
                   dot={DOT_GEM_L} activeDot={{ r: 5, fill: C.gemDark }} connectNulls />
               </ComposedChart>
@@ -843,12 +959,11 @@ export default function BalanceHidricoDashboard() {
                 <Tooltip {...TOOLTIP_STYLE} labelFormatter={(v: string) => `Fecha: ${v}`}
                   formatter={(val: number, name: string) => [`${val.toFixed(1)} m³`, name]} />
                 <Legend wrapperStyle={{ color: '#8b949e', fontSize: 10 }} />
-                <Bar dataKey="total_a_tratar"       name="Total a Tratar"  fill="#1F3864"    radius={[3,3,0,0]} maxBarSize={24} />
-                <Bar dataKey="total_agua_limpia_m3" name="Agua Limpia"     fill={C.acueducto} radius={[3,3,0,0]} maxBarSize={24} />
-                <Bar dataKey="envio_th"             name="Envío TH"        fill={C.permeadoRO} radius={[3,3,0,0]} maxBarSize={24} />
-                <Bar dataKey="consumo_gem_m3"       name="Tratado GEM"     fill={C.gem}       radius={[3,3,0,0]} maxBarSize={24} />
+                <Bar dataKey="envio_th"             name="Enviado TH"      fill="#1F3864"     radius={[3,3,0,0]} maxBarSize={24} />
+                <Bar dataKey="consumo_gem_m3"       name="Tratado GEM"     fill={C.ptap}      radius={[3,3,0,0]} maxBarSize={24} />
                 <Bar dataKey="permeado_mbr"         name="Permeado MBRs"   fill={C.vertMBR}   radius={[3,3,0,0]} maxBarSize={24} />
-                <Bar dataKey="entrada_ro1"          name="Enviado a RO"    fill={C.tinInd}    radius={[3,3,0,0]} maxBarSize={24} />
+                <Bar dataKey="permeado_ro1"         name="Permeado RO"     fill={C.permeadoRO} radius={[3,3,0,0]} maxBarSize={24} />
+                <Bar dataKey="rechazo_ro1"          name="Rechazo RO"      fill={C.rechazoRO} radius={[3,3,0,0]} maxBarSize={24} />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
