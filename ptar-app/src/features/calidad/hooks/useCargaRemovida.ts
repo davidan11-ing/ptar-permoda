@@ -66,11 +66,12 @@ export function useCargaRemovida(
         if (cancelled) return;
 
         // 1. Concentraciones por (fecha|turno) → {pulmon?, gem?}
+        //    Normalizar fecha a YYYY-MM-DD (la API puede devolver T00:00:00 si el campo es datetime)
         type FT = string;
         const conMap = new Map<FT, { pulmon?: number; gem?: number }>();
         for (const row of medRows) {
           const t   = TURNO_KEY[row.turno.toLowerCase()] ?? 'T1';
-          const key = `${row.fecha}|${t}`;
+          const key = `${(row.fecha as string).slice(0, 10)}|${t}`;
           if (!conMap.has(key)) conMap.set(key, {});
           const e = conMap.get(key)!;
           if (row.unidad_tratamiento === 'Tanque Homogeneizador') e.pulmon = row.valor;
