@@ -29,6 +29,9 @@ const TOOLTIP_STYLE = {
 const AXIS_TICK_SM = { fill: '#6e7681', fontSize: 9 };
 const MESES = ['', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
+/* Días excluidos de TODAS las vistas de costos (operación atípica / datos incompletos) */
+const COSTOS_EXCLUIR = new Set(['2026-05-31']);
+
 const PRECIOS_COP_KG: Record<string, number> = {
   'Ácido / Acidificante': 830,
   'Coagulante':           2900,
@@ -209,10 +212,24 @@ export default function CostosDashboard() {
       .catch(() => setRoEficiencia([]));
   }, [fechaInicio, fechaFin]);
 
+  /* ── Excluir fechas atípicas de todas las fuentes ── */
+  const consumoDiarioFilt = useMemo(
+    () => consumoDiario.filter(r => !COSTOS_EXCLUIR.has((r.fecha ?? '').slice(0, 10))),
+    [consumoDiario],
+  );
+  const gemEficienciaFilt = useMemo(
+    () => gemEficiencia.filter(r => !COSTOS_EXCLUIR.has((r.fecha ?? '').slice(0, 10))),
+    [gemEficiencia],
+  );
+  const roEficienciaFilt = useMemo(
+    () => roEficiencia.filter(r => !COSTOS_EXCLUIR.has((r.fecha ?? '').slice(0, 10))),
+    [roEficiencia],
+  );
+
   /* agrupación temporal */
   const { result: datosFecha, productos } = useMemo(
-    () => byGranularidad(consumoDiario, granularidad),
-    [consumoDiario, granularidad],
+    () => byGranularidad(consumoDiarioFilt, granularidad),
+    [consumoDiarioFilt, granularidad],
   );
 
   /* GEM — caudal + indicador $m³ + horas de operación acumuladas */
@@ -220,7 +237,7 @@ export default function CostosDashboard() {
     type B = { sk: string; label: string; caudal: number; pesos: number[]; mh: number[]; horasTotal: number };
     const map = new Map<string, B>();
     const TURNO_N: Record<string, number> = { noche: 1, 'mañana': 2, tarde: 3 };
-    for (const r of gemEficiencia) {
+    for (const r of gemEficienciaFilt) {
       const t     = TURNO_N[r.turno ?? ''];
       const sk    = sortKey(r.fecha, t, granularidad);
       const label = xLabel(r.fecha, t, granularidad);
@@ -244,7 +261,7 @@ export default function CostosDashboard() {
         caudal_mh:    avg(b.mh),
         horas_op:     b.horasTotal > 0 ? +b.horasTotal.toFixed(1) : null,
       }));
-  }, [gemEficiencia, granularidad]);
+  }, [gemEficienciaFilt, granularidad]);
 
   /* RO — agrupado desde operacion_ro_turno */
   const roAgrupado = useMemo(() => {
@@ -252,7 +269,7 @@ export default function CostosDashboard() {
     type B = { sk: string; label: string; caudal: number; pesos: number[]; horas: number[]; costo: number };
     const map = new Map<string, B>();
     const TURNO_N: Record<string, number> = { noche: 1, 'mañana': 2, tarde: 3 };
-    for (const r of roEficiencia) {
+    for (const r of roEficienciaFilt) {
       const t     = TURNO_N[r.turno ?? ''];
       const sk    = sortKey(r.fecha, t, granularidad);
       const label = xLabel(r.fecha, t, granularidad);
@@ -274,12 +291,12 @@ export default function CostosDashboard() {
         horas_op:     avg(b.horas),
         costo_total:  +b.costo.toFixed(0),
       }));
-  }, [roEficiencia, granularidad]);
+  }, [roEficienciaFilt, granularidad]);
 
   /* estadísticas L/día por producto */
   const lDiaStats = useMemo(() => {
     const map = new Map<string, number[]>();
-    for (const r of consumoDiario) {
+    for (const r of consumoDiarioFilt) {
       if (r.L_dia != null && r.L_dia > 0) {
         if (!map.has(r.producto_nombre)) map.set(r.producto_nombre, []);
         map.get(r.producto_nombre)!.push(r.L_dia);
@@ -296,7 +313,7 @@ export default function CostosDashboard() {
       };
     }
     return result;
-  }, [consumoDiario]);
+  }, [consumoDiarioFilt]);
 
   /* reactivos filtrados para gráficas */
   const productosFiltrados = reactivosFiltro.length > 0
@@ -305,13 +322,13 @@ export default function CostosDashboard() {
 
   /* KPIs */
   const kpis = useMemo(() => {
-    const total_kg    = consumoDiario.reduce((s, r) => s + (r.kg_dia ?? 0), 0);
-    const total_costo = consumoDiario.reduce((s, r) => s + (r.costo_dia ?? 0), 0);
-    const pesosM3     = gemEficiencia.filter(r => r.pesos_por_m3 != null).map(r => r.pesos_por_m3 as number);
+    const total_kg    = consumoDiarioFilt.reduce((s, r) => s + (r.kg_dia ?? 0), 0);
+    const total_costo = consumoDiarioFilt.reduce((s, r) => s + (r.costo_dia ?? 0), 0);
+    const pesosM3     = gemEficienciaFilt.filter(r => r.pesos_por_m3 != null).map(r => r.pesos_por_m3 as number);
     const promPesosM3 = pesosM3.length ? pesosM3.reduce((a, b) => a + b, 0) / pesosM3.length : null;
-    const diasSet     = new Set(consumoDiario.map(r => r.fecha));
+    const diasSet     = new Set(consumoDiarioFilt.map(r => r.fecha));
     return { total_kg, total_costo, promPesosM3, n_dias: diasSet.size };
-  }, [consumoDiario, gemEficiencia]);
+  }, [consumoDiarioFilt, gemEficienciaFilt]);
 
   /* tabla resumen por reactivo: estadisticas + proyeccion */
   const tablaReactivos = useMemo(() => {
