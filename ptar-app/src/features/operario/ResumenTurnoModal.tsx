@@ -41,68 +41,115 @@ function FormCard({ f }: { f: FormularioResumen }) {
   );
 }
 
-function OtRow({ ot, spBaseUrl }: { ot: OtResumenItem; spBaseUrl: string }) {
+function OtRow({ ot, expanded, onToggle }: { ot: OtResumenItem; expanded: boolean; onToggle: () => void }) {
   const { theme } = useTheme();
   const color = CRITICIDAD_COLOR[(ot.criticidad ?? '').toUpperCase()] ?? theme.muted;
-  const spUrl = ot.sharepoint_id ? spBaseUrl + ot.sharepoint_id : null;
   const descripcion = ot.descripcion?.trim() || '';
   const label = descripcion || ot.objeto || 'Sin descripción';
-  // objeto ya se usó como label si no había descripción — no repetirlo abajo
-  const secondary = [
-    descripcion && ot.objeto,
-    ot.pedido_de_trabajo && `PT ${ot.pedido_de_trabajo}`,
-  ].filter(Boolean).join(' · ');
 
-  const inner = (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 10,
-      padding: '7px 10px', borderRadius: 5,
-      background: theme.surface, border: `1px solid ${theme.border}`,
-      marginBottom: 4,
-      cursor: spUrl ? 'pointer' : 'default',
-      transition: 'border-color .15s',
-    }}
-      onMouseEnter={e => spUrl && ((e.currentTarget as HTMLDivElement).style.borderColor = '#1f6feb88')}
-      onMouseLeave={e => spUrl && ((e.currentTarget as HTMLDivElement).style.borderColor = theme.border)}
-    >
-      <span style={{
-        fontSize: 9, fontWeight: 700, color, background: color + '18',
-        border: `1px solid ${color}44`, borderRadius: 3,
-        padding: '2px 6px', whiteSpace: 'nowrap', flexShrink: 0,
-      }}>{ot.criticidad ?? '—'}</span>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 11, color: theme.text1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {label}
+  return (
+    <div style={{ marginBottom: 4 }}>
+      {/* Fila principal — clic expande/colapsa */}
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={onToggle}
+        onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && onToggle()}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          padding: '7px 10px', borderRadius: expanded ? '5px 5px 0 0' : 5,
+          background: theme.surface,
+          border: `1px solid ${expanded ? color + '66' : theme.border}`,
+          borderBottom: expanded ? 'none' : undefined,
+          cursor: 'pointer', transition: 'border-color .15s',
+        }}
+        onMouseEnter={e => !expanded && ((e.currentTarget as HTMLDivElement).style.borderColor = theme.border2)}
+        onMouseLeave={e => !expanded && ((e.currentTarget as HTMLDivElement).style.borderColor = theme.border)}
+      >
+        <span style={{
+          fontSize: 9, fontWeight: 700, color, background: color + '18',
+          border: `1px solid ${color}44`, borderRadius: 3,
+          padding: '2px 6px', whiteSpace: 'nowrap', flexShrink: 0,
+        }}>{ot.criticidad ?? '—'}</span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 11, color: theme.text1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {label}
+          </div>
+          {ot.objeto && label !== ot.objeto && (
+            <div style={{ fontSize: 9, color: theme.dim, marginTop: 1 }}>{ot.objeto}</div>
+          )}
         </div>
-        {secondary && (
-          <div style={{ fontSize: 9, color: theme.dim, marginTop: 1 }}>{secondary}</div>
-        )}
-      </div>
-      {spUrl && (
-        <span style={{ fontSize: 9, color: '#58a6ff', whiteSpace: 'nowrap', flexShrink: 0 }}>
-          Ver ↗
+        <span style={{ fontSize: 10, color: theme.muted, flexShrink: 0, transition: 'transform .15s',
+          display: 'inline-block', transform: expanded ? 'rotate(180deg)' : 'none' }}>
+          ▾
         </span>
+      </div>
+
+      {/* Panel de detalle — visible solo cuando expanded */}
+      {expanded && (
+        <div style={{
+          background: theme.bg,
+          border: `1px solid ${color}66`,
+          borderTop: `1px solid ${color}33`,
+          borderRadius: '0 0 5px 5px',
+          padding: '10px 12px',
+        }}>
+          {ot.descripcion?.trim() && (
+            <div style={{ marginBottom: 8 }}>
+              <div style={{ fontSize: 9, fontWeight: 700, color: theme.muted, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 3 }}>
+                Descripción
+              </div>
+              <div style={{ fontSize: 11, color: theme.text1, lineHeight: 1.5 }}>
+                {ot.descripcion}
+              </div>
+            </div>
+          )}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 16px' }}>
+            {ot.objeto && (
+              <div>
+                <div style={{ fontSize: 9, fontWeight: 700, color: theme.muted, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Equipo / Objeto</div>
+                <div style={{ fontSize: 11, color: theme.text2 }}>{ot.objeto}</div>
+              </div>
+            )}
+            {ot.pedido_de_trabajo && (
+              <div>
+                <div style={{ fontSize: 9, fontWeight: 700, color: theme.muted, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Pedido de Trabajo</div>
+                <div style={{ fontSize: 11, color: theme.text2 }}>{ot.pedido_de_trabajo}</div>
+              </div>
+            )}
+            {ot.responsable && (
+              <div>
+                <div style={{ fontSize: 9, fontWeight: 700, color: theme.muted, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Responsable</div>
+                <div style={{ fontSize: 11, color: theme.text2 }}>{ot.responsable}</div>
+              </div>
+            )}
+            {ot.estado && (
+              <div>
+                <div style={{ fontSize: 9, fontWeight: 700, color: theme.muted, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Estado</div>
+                <div style={{ fontSize: 11, color: theme.text2 }}>{ot.estado}</div>
+              </div>
+            )}
+            {ot.criticidad && (
+              <div>
+                <div style={{ fontSize: 9, fontWeight: 700, color: theme.muted, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Criticidad</div>
+                <div style={{ fontSize: 11, color }}>{ot.criticidad}</div>
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );
-
-  if (spUrl) {
-    return (
-      <a href={spUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'none', display: 'block' }}>
-        {inner}
-      </a>
-    );
-  }
-  return inner;
 }
 
 export default function ResumenTurnoModal({ onClose }: Props) {
   const { logout } = useAuth();
   const { theme } = useTheme();
-  const [data, setData]       = useState<TurnoResumen | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState(false);
+  const [data, setData]         = useState<TurnoResumen | null>(null);
+  const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState(false);
   const [saliendo, setSaliendo] = useState(false);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
 
   useEffect(() => {
     getTurnoResumen()
@@ -242,7 +289,12 @@ export default function ResumenTurnoModal({ onClose }: Props) {
               {data.ots.items_pendientes.length > 0 ? (
                 <div>
                   {data.ots.items_pendientes.map(ot => (
-                    <OtRow key={ot.id} ot={ot} spBaseUrl={data.ots.sp_base_url} />
+                    <OtRow
+                      key={ot.id}
+                      ot={ot}
+                      expanded={expandedId === ot.id}
+                      onToggle={() => setExpandedId(prev => prev === ot.id ? null : ot.id)}
+                    />
                   ))}
                   {data.ots.total_pendientes > data.ots.items_pendientes.length && (
                     <div style={{ fontSize: 10, color: theme.dim, textAlign: 'center', marginTop: 6 }}>

@@ -28,3 +28,7 @@ ptar-app/.vercel/
 Thumbs.db
 .DS_Store
 dist/
+
+# ── Backups base de datos MySQL ────────────────────────────────────────────────
+*.sql
+*.dump
