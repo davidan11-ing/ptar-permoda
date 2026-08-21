@@ -362,7 +362,7 @@ select.form-input { cursor: pointer; }
 .btn-secondary:hover { border-color: #8b949e; color: #e6edf3; }
 .btn-primary {
   padding: 9px 24px; border-radius: 6px; font-size: 13px; font-weight: 600;
-  color: white; border: none; transition: all 0.2s;
+  background: #0091B0; color: white; border: none; transition: all 0.2s;
   box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
 .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }

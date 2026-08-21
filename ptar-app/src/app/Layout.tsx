@@ -1,11 +1,22 @@
 // Estructura base de la aplicación: navbar, notificaciones, toasts y área de contenido
-import { Outlet } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
+import { Outlet, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Navbar from '../components/layout/Navbar';
 import { NotificationManager } from '../components/notifications/NotificationManager';
 
 // Contenedor principal con navbar, sistema de alertas y slot de página activa
 export default function Layout() {
+  const location = useLocation();
+  const mainRef  = useRef<HTMLElement>(null);
+
+  // Al cambiar de ruta, volver arriba — .main-content tiene su propio scroll (overflow-y: auto),
+  // así que no basta con window.scrollTo
+  useEffect(() => {
+    mainRef.current?.scrollTo({ top: 0 });
+    window.scrollTo({ top: 0 });
+  }, [location.pathname]);
+
   return (
     <div className="app-shell">
       <Navbar />
@@ -36,7 +47,7 @@ export default function Layout() {
       />
 
       {/* Área de contenido donde se renderiza la ruta activa */}
-      <main className="main-content">
+      <main className="main-content" ref={mainRef}>
         <Outlet />
       </main>
     </div>
