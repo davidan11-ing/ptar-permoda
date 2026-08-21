@@ -1,5 +1,5 @@
 # MEMORIA COMPLETA — App PTAR (PETAR PERMODA)
-> Generada: 2026-05-06 | Usar en cualquier chat de Claude para retomar el proyecto sin perder contexto.
+> Generada: 2026-05-06 | Actualizada: 2026-08-20 (migración Supabase→MySQL/.NET y deploy local reflejados) | Usar en cualquier chat de Claude para retomar el proyecto sin perder contexto.
 
 ---
 
@@ -10,7 +10,7 @@
 | **Nombre app** | ptar-app |
 | **Empresa** | PERMODA LTDA |
 | **Propósito** | Sistema de gestión operativa de la Planta de Tratamiento de Aguas Residuales (PTAR) de la fábrica textil |
-| **URL producción** | https://ptar-app.vercel.app |
+| **Despliegue** | Local — red interna PERMODA (sin nube, sin Vercel) |
 | **Dev server** | http://localhost:5174 |
 | **Email usuario** | davidan@permoda.com.co |
 
@@ -24,14 +24,16 @@ Routing:    React Router DOM 6.28
 Forms:      React Hook Form 7.53 + Zod 3.23 (validación)
 Charts:     Recharts 2.14
 Toasts:     react-hot-toast 2.4
-Backend:    Supabase (PostgreSQL + Auth + Storage)
-Deploy:     Vercel CLI (sin git, directo CLI)
+Backend:    .NET 10 (ASP.NET Core) + MySQL — ver ptar-backend-dotnet/
+Deploy:     Local — red interna PERMODA (sin Vercel, sin nube)
 ```
 
 ### Dependencias exactas (package.json)
 ```json
+"@fortune-sheet/react": "^1.0.4",
 "@hookform/resolvers": "^3.9.0",
-"@supabase/supabase-js": "^2.105.0",
+"chartmix": "^0.2.0",
+"hyperformula": "^3.3.0",
 "react": "^19.0.0",
 "react-dom": "^19.0.0",
 "react-error-boundary": "^5.0.0",
@@ -41,181 +43,127 @@ Deploy:     Vercel CLI (sin git, directo CLI)
 "recharts": "^2.14.0",
 "zod": "^3.23.8"
 ```
+No hay dependencia de Supabase — se retiró junto con la migración al backend .NET.
 
 ---
 
 ## 3. ESTRUCTURA DE ARCHIVOS
 
 ```
-App_PTAR/
-├── CLAUDE.md                          ← memoria de deploy (NO modificar)
+App_PTAR_SQL/                          ← raíz del repo git (origin: davidan11-ing/ptar-permoda)
+├── CLAUDE.md                          ← instrucciones de proyecto para Claude Code
 ├── PROYECTO_MEMORIA.md                ← ESTE ARCHIVO
-└── ptar-app/
-    ├── package.json
-    ├── vite.config.ts
-    ├── tsconfig.json
-    ├── .vercel/
-    │   └── project.json               ← vínculo Vercel CLI
-    └── src/
-        ├── main.tsx                   ← entry point
-        ├── App.tsx                    ← AuthProvider + AppRouter
-        ├── app/
-        │   ├── Router.tsx             ← todas las rutas (lazy loaded)
-        │   ├── Layout.tsx             ← Navbar + NotificationManager + Outlet
-        │   └── guards/
-        │       └── RoleGuard.tsx      ← protección por rol
-        ├── state/
-        │   └── AuthContext.tsx        ← ⚠️ AUTH MOCK — usuarios hardcodeados
-        ├── models/
-        │   └── index.ts               ← tipos TypeScript del dominio
-        ├── lib/
-        │   ├── supabase.ts            ← cliente Supabase + interfaces DB
-        │   ├── routes.ts              ← constantes de rutas
-        │   ├── audio.ts               ← playPing() para notificaciones
-        │   └── constants/
-        │       ├── contadores.ts      ← 35 contadores de agua con metadatos
-        │       ├── quimicos.ts        ← 5 reactivos químicos con precios
-        │       └── incidencias.ts     ← parámetros calidad + unidades tratamiento
-        ├── hooks/
-        │   └── useRegistrosPolling.ts ← polling HTTP 15s (sin WebSockets — Zscaler)
-        ├── components/
-        │   ├── layout/
-        │   │   └── Navbar.tsx
-        │   └── notifications/
-        │       └── NotificationManager.tsx ← toasts para encargado/admin
-        └── features/
-            ├── splash/
-            │   └── SplashScreen.tsx   ← diagrama SVG animado del proceso PTAR
-            ├── auth/
-            │   └── LoginPage.tsx
-            ├── dashboard/
-            │   ├── DashboardPage.tsx  ← ⚠️ usa mockData, no datos reales
-            │   ├── KpiGauge.tsx
-            │   └── mockData.ts        ← KPIs y series de tiempo FICTICIAS
-            └── operario/
-                ├── OperarioHome.tsx   ← selección de formato (F-01, F-02, F-03)
-                ├── FormatoCaudales.tsx    ← F-01: lecturas contadores m³
-                ├── FormatoReactivos.tsx   ← F-02: niveles y consumo reactivos
-                ├── FormatoIncidencias.tsx ← F-03: parámetros físico-químicos
-                └── components/
-                    └── ContadorCard.tsx
+├── ptar-app/                          ← Frontend (React + Vite)
+│   ├── package.json
+│   ├── vite.config.ts
+│   ├── tsconfig.json
+│   └── src/
+│       ├── main.tsx                   ← entry point
+│       ├── App.tsx                    ← AuthProvider + AppRouter
+│       ├── app/
+│       │   ├── Router.tsx             ← todas las rutas (lazy loaded)
+│       │   ├── Layout.tsx             ← Navbar + NotificationManager + Outlet
+│       │   └── guards/RoleGuard.tsx   ← protección por rol
+│       ├── state/
+│       │   ├── AuthContext.tsx        ← sesión real vía JWT en cookie httpOnly (NO es mock)
+│       │   └── ThemeContext.tsx       ← tema claro/oscuro
+│       ├── models/index.ts            ← tipos TypeScript del dominio (Role, AppUser, KpiMetric...)
+│       ├── services/
+│       │   └── ptarClient.ts          ← ⭐ único cliente HTTP hacia el backend .NET (fetch + cookies + refresh 401)
+│       ├── lib/
+│       │   ├── supabase.ts            ← ⚠️ CÓDIGO MUERTO — nada lo importa, queda de la época Supabase, se puede borrar
+│       │   ├── routes.ts              ← constantes de rutas (ROUTES, ROLE_HOME)
+│       │   ├── theme.ts, audio.ts
+│       │   └── constants/
+│       │       ├── contadores.ts      ← contadores de agua con metadatos
+│       │       ├── quimicos.ts        ← reactivos químicos con precios
+│       │       └── incidencias.ts     ← parámetros calidad + unidades tratamiento
+│       ├── hooks/
+│       │   ├── useRegistrosPolling.ts ← polling HTTP 15s (sin WebSockets — Zscaler)
+│       │   └── useGranularidad.ts
+│       ├── components/{layout,notifications,shared}/
+│       └── features/
+│           ├── splash/SplashScreen.tsx        ← diagrama SVG animado del proceso PTAR
+│           ├── auth/LoginPage.tsx
+│           ├── operario/                      ← formularios de turno (ver sección 8)
+│           ├── dashboard/                      ← KPIs reales (RealKpiSection + widgets/); mockData.ts solo lo usa AdminDashboardPage.tsx
+│           ├── calidad/, balance/, costos/     ← dashboards e informes por dominio
+│           ├── encargado/                      ← panel de registros del turno
+│           ├── mantenimientos/                 ← OTs sincronizadas desde SharePoint
+│           └── analista/                       ← vista de análisis cruzado
+│
+├── ptar-backend-dotnet/                ← Backend activo (.NET 10 / ASP.NET Core)
+│   └── PtarApi/
+│       ├── PtarApi.csproj              ← TargetFramework net10.0
+│       ├── Program.cs                  ← startup + DI + middleware
+│       ├── appsettings.json            ← config base (CORS, JWT, connection string, SharePoint)
+│       ├── appsettings.Development.json / .Local.json  ← credenciales locales (gitignored)
+│       ├── Data/PtarDbContext.cs       ← DbContext mínimo + IDbConnectionFactory (Dapper hace las queries reales)
+│       ├── Services/
+│       │   ├── JwtService.cs
+│       │   ├── SharePointService.cs        ← MSAL + REST API SharePoint
+│       │   └── SharePointSyncService.cs    ← BackgroundService, sync cada 1h
+│       └── Features/
+│           ├── Auth/                   ← login, /me, refresh, change-password
+│           ├── Caudales/, Reactivos/, Calidad/, Condiciones/
+│           ├── Turno/                  ← cierre de turno, OTs con detalle expandible
+│           ├── Equipos/, Mantenimientos/, Dashboard/, Analisis/, Reportes/  ← PDF (QuestPDF) + HTML
+│
+└── ptar-backend/                       ← Backend Python (FastAPI) — OBSOLETO, reemplazado por el .NET. Puede ignorarse.
 ```
 
 ---
 
-## 4. DEPLOY — VERCEL CLI
+## 4. DEPLOY — LOCAL (red interna PERMODA)
 
-> **IMPORTANTE:** No hay repositorio git en `ptar-app/`. El deploy es 100% CLI.
+> **IMPORTANTE:** No se usa Vercel ni ningún hosting en la nube. Todo corre en la red interna de PERMODA.
 
-```bash
-# Desplegar a producción
-cd "C:\Users\davidan\OneDrive - PERMODA LTDA\Documents\Claude\App_PTAR\ptar-app"
-vercel --prod
-
-# Ver deploys recientes
-vercel ls
-```
-
-### Credenciales Vercel
-| Campo | Valor |
-|---|---|
-| projectId | prj_6ALodWSTKZHAOhe8sA11V7mTqSoW |
-| orgId | team_DQHmdbk33W0cDYRolzVLYD4i |
-| projectName | ptar-app |
-| equipo | confiabilidad |
-| usuario | davidan11-ing |
-| Vercel CLI versión | 51.x |
-
-El archivo `.vercel/project.json` tiene el vínculo. Tarda ~15-20s. Genera URL tipo `https://ptar-XXXXXXXX-confiabilidad.vercel.app`.
+- **Frontend:** `ptar-app/` — se sirve localmente (`npm run dev` para desarrollo). El repo sí tiene git (raíz `App_PTAR_SQL/`), a diferencia de lo que decía una versión anterior de esta nota.
+- **Backend:** `ptar-backend-dotnet/PtarApi/` — ASP.NET Core corriendo en `http://localhost:8001` (o el host que corresponda dentro de la red interna), ver `start-backend.ps1` y `ptar-backend-dotnet/SETUP.txt`.
+- **Pendiente de documentar:** el mecanismo exacto de cómo se sirve el frontend en producción dentro de la red interna (¿build estático servido por el propio backend .NET? ¿IIS? ¿otro proceso?) y el hostname/puerto real (se ha visto la referencia `wserver.permoda.com.co` en otros archivos, pero no está confirmado el puerto del frontend). Confirmar y actualizar esta sección cuando se defina.
 
 ---
 
-## 5. SUPABASE
+## 5. BACKEND — .NET 10 + MySQL
 
-### Conexión (src/lib/supabase.ts)
-```typescript
-import { createClient } from '@supabase/supabase-js';
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
-export const supabase = createClient(supabaseUrl, supabaseKey);
-```
-Variables en `.env` (no commitear, no en git).
+**Ya no existe Supabase en este proyecto.** `ptar-app/src/lib/supabase.ts` sigue en el repo pero es código muerto (nada lo importa) — candidato a borrar.
 
-### Tablas existentes en producción
-| Tabla | Descripción |
-|---|---|
-| `ptar_registro_contadores` | Lecturas de contadores de agua por turno |
-| `ptar_registro_costos` | Consumo y costo de reactivos por turno |
-| `ptar_registro_calidad` | Parámetros físico-químicos (interfaz definida, tabla a confirmar) |
+### Conexión (ptar-backend-dotnet/PtarApi)
+- Base de datos: **MySQL** (`ptar_permoda`), acceso vía `Pomelo.EntityFrameworkCore.MySql` (DbContext mínimo) + **Dapper** para las queries reales (la mayoría contra vistas MySQL, no entidades mapeadas).
+- Connection string y JWT secret viven en `appsettings.Development.json` / `appsettings.Local.json` (gitignored) — en producción se recomienda `dotnet user-secrets` o variables de entorno.
+- El frontend habla con el backend exclusivamente a través de `src/services/ptarClient.ts` (fetch con `credentials: 'include'`, sin SDK de terceros).
 
-### Interfaces TypeScript (src/lib/supabase.ts)
+### Módulos del backend (`Features/`)
+Auth · Caudales · Reactivos · Calidad · Condiciones · Turno (cierre de turno + OTs) · Equipos · Mantenimientos (sync SharePoint) · Dashboard · Analisis · Reportes (PDF/HTML)
 
-```typescript
-interface RegistroContador {
-  id?: string; created_at?: string;
-  turno: 'mañana' | 'tarde' | 'noche';
-  usuario: string;
-  id_contador: string; nombre_contador: string;
-  ubicacion: string; tipo_agua: string;
-  lectura_anterior_m3: number; lectura_actual_m3: number;
-  delta_m3?: number;        // columna generada — solo lectura
-  observaciones?: string;
-}
+38 endpoints en total — lista completa en `ptar-backend-dotnet/SETUP.txt`.
 
-interface RegistroCosto {
-  id?: string; created_at?: string;
-  turno: 'mañana' | 'tarde' | 'noche';
-  usuario: string;
-  id_quimico: string; nombre_quimico: string;
-  unidad: string; densidad_kg: number;
-  nivel_inicial: number; nivel_final: number;
-  consumo?: number;          // generada
-  kg_consumidos: number; precio_kg: number;
-  ppm?: number;              // generada
-  costo_operativo?: number;  // generada
-  horometro_inicial: number;
-  caudal_tratado_gem: number; horas_operacion: number;
-  observaciones?: string;
-}
+### Integración SharePoint
+`SharePointService.cs` + `SharePointSyncService.cs` (BackgroundService) sincronizan mantenimientos/OTs cada 1 hora vía MSAL, usando el token cacheado en `ptar-backend/.sharepoint_token_cache.json` (ruta configurada en `appsettings.json → SharePoint.TokenCacheFile`). Ese token lo genera originalmente `auth_sharepoint.py` del backend Python legado.
 
-interface RegistroCalidad {
-  id?: string; created_at?: string;
-  turno: 'mañana' | 'tarde' | 'noche';
-  usuario: string;
-  unidad_tratamiento: string; parametro: string;
-  unidad_medida: string; valor?: number;
-  metodo?: string; no_aplica: boolean;
-  observaciones?: string;
-}
-```
-
-### MCP disponibles en Claude Code
-- `mcp__supabase-ptar__` — proyecto PTAR (usar este)
-- `mcp__supabase__` — proyecto alternativo
+### MCP de Claude Code
+`mcp__supabase-ptar__` **ya no aplica a este proyecto** — no hay nada en Supabase que consultar. Si necesitas leer datos de producción, es contra el MySQL local/interno, no vía ese MCP.
 
 ---
 
-## 6. AUTENTICACIÓN — ESTADO ACTUAL ⚠️
+## 6. AUTENTICACIÓN — ESTADO ACTUAL
 
-**AuthContext.tsx usa usuarios mock hardcodeados.** No hay Supabase Auth activo.
+**Ya no es mock.** El login es real contra el backend .NET:
 
-```typescript
-// src/state/AuthContext.tsx — MOCK (debe reemplazarse)
-const MOCK_USERS: AppUser[] = [
-  { id: 'op1',    nombre: 'Carlos Mendoza',  roles: ['operario'],                    activeRole: 'operario'      },
-  { id: 'op2',    nombre: 'Ana Suárez',       roles: ['operario'],                    activeRole: 'operario'      },
-  { id: 'enc1',   nombre: 'Jorge Rivera',     roles: ['encargado'],                   activeRole: 'encargado'     },
-  { id: 'adm1',   nombre: 'Laura Gómez',      roles: ['administrador'],               activeRole: 'administrador' },
-  { id: 'multi1', nombre: 'Director PTAR',    roles: ['encargado','administrador'],   activeRole: 'encargado'     },
-];
-```
+- `POST /api/auth/login` (email + password) → el backend valida contra MySQL y devuelve el JWT como **cookie httpOnly** (no se maneja el token en JS).
+- `AuthContext.tsx` (`ptar-app/src/state/AuthContext.tsx`) guarda en `localStorage` (`ptar_session`) solo los datos de sesión no sensibles (id, nombre, rol) para hidratar la UI — la autenticación real la valida la cookie en cada request.
+- `GET /api/auth/me` valida la cookie al montar la app; un 401 en cualquier llamada (evento `ptar:unauthorized`) limpia la sesión y fuerza reintento único vía `POST /api/auth/refresh` (`ptarClient.ts`, refresh singleton para no duplicar llamadas concurrentes).
+- `POST /api/auth/change-password` y `POST /api/auth/logout` también existen.
+- Passwords con BCrypt (`BCrypt.Net-Next`) en el backend.
+- Rate limiting por endpoint (`AspNetCoreRateLimit`), p.ej. login limitado a 10/min.
 
-Login usa `localStorage` con clave `ptar_session`. No hay JWT ni sesión real.
+No confundir con `OPERARIOS_LISTA` en `AuthContext.tsx` — es solo la lista de nombres para el checklist de "equipo en turno" (quién más está trabajando ese turno), no tiene relación con las credenciales de login.
 
 ### Roles del sistema
 ```typescript
 type Role = 'operario' | 'encargado' | 'administrador';
 ```
+`rolesForBackendRole()` expande jerárquicamente: administrador ve los 3 roles, encargado ve operario+encargado, operario solo el suyo — permite cambiar de "sombrero" sin volver a loguearse.
 
 ---
 
@@ -223,13 +171,25 @@ type Role = 'operario' | 'encargado' | 'administrador';
 
 ```typescript
 ROUTES = {
-  LOGIN:               '/login',
-  OPERARIO_HOME:       '/operario',
-  FORMATO_CAUDALES:    '/operario/formato/caudales',
-  FORMATO_REACTIVOS:   '/operario/formato/reactivos',
+  LOGIN: '/login',
+  // Operario
+  OPERARIO_HOME: '/operario',
+  FORMATO_CAUDALES: '/operario/formato/caudales',
+  FORMATO_REACTIVOS: '/operario/formato/reactivos',
+  FORMATO_CALIDAD: '/operario/formato/calidad',
   FORMATO_INCIDENCIAS: '/operario/formato/incidencias',
-  ENCARGADO_DASHBOARD: '/encargado/dashboard',
-  ADMIN_DASHBOARD:     '/admin/dashboard',
+  FORMATO_CONDICIONES_OP: '/operario/formato/condiciones',
+  // Encargado
+  ENCARGADO_DASHBOARD:  '/encargado/dashboard',
+  ENCARGADO_CALIDAD:    '/encargado/calidad',
+  ENCARGADO_BALANCE:    '/encargado/balance',
+  ENCARGADO_COSTOS:     '/encargado/costos',
+  ENCARGADO_REGISTROS:  '/encargado/registros',
+  ENCARGADO_ANALISIS:   '/encargado/analisis',
+  // Administrador
+  ADMIN_DASHBOARD: '/admin/dashboard',
+  // Mantenimientos (SharePoint)
+  MANTENIMIENTOS: '/mantenimientos',
 }
 ```
 
@@ -240,29 +200,35 @@ ROUTES = {
 | `/operario` | OperarioHome | operario |
 | `/operario/formato/caudales` | FormatoCaudales | operario |
 | `/operario/formato/reactivos` | FormatoReactivos | operario |
+| `/operario/formato/calidad` | FormatoCalidad | operario |
 | `/operario/formato/incidencias` | FormatoIncidencias | operario |
+| `/operario/formato/condiciones` | FormatoCondicionesOp | operario |
 | `/encargado/dashboard` | DashboardPage (canEdit=true) | encargado |
-| `/admin/dashboard` | DashboardPage (canEdit=false) | administrador |
+| `/encargado/calidad` | CalidadDashboardPage | encargado |
+| `/encargado/balance` | BalanceHidricoDashboard | encargado |
+| `/encargado/costos` | CostosDashboard | encargado |
+| `/encargado/registros` | RegistrosPanel | encargado |
+| `/encargado/analisis` | AnalistaPage | encargado, administrador |
+| `/mantenimientos` | MantenimientosDashboard | encargado, administrador |
+| `/admin/dashboard` | AdminDashboardPage | administrador |
+| `/informe/calidad`, `/informe/balance`, `/informe/costos` | Informe*Page (standalone, sin navbar) | encargado, administrador |
 
 ---
 
-## 8. FORMATOS OPERATIVOS
+## 8. FORMATOS OPERATIVOS Y DASHBOARDS
 
-### F-01 — Registro de Caudales (FormatoCaudales.tsx)
-- Graba en: `ptar_registro_contadores`
-- Selección de contador de la lista CONTADORES (35 contadores)
-- Calcula delta_m3 automáticamente (columna generada en DB)
-- Valida que lectura actual ≥ lectura anterior
+El frontend ya no llama tablas de Supabase directamente — todo pasa por `services/ptarClient.ts` contra los endpoints REST del backend .NET (ver sección 5). Los formularios del operario:
 
-### F-02 — Registro de Reactivos (FormatoReactivos.tsx)
-- Graba en: `ptar_registro_costos`
-- Calcula consumo, kg_consumidos, ppm, costo_operativo (columnas generadas)
-- 5 productos: Ácido, Coagulante, Decolorante, Polímero Aniónico, Polímero Catiónico
+- **FormatoCaudales** — lecturas de contadores de agua (m³)
+- **FormatoReactivos** / **FormatoReactivosRO** — niveles y consumo de reactivos químicos (GEM / RO)
+- **FormatoCalidad** — parámetros físico-químicos del agua
+- **FormatoIncidencias** — incidencias de equipos/proceso
+- **FormatoCondicionesOp** — condiciones de operación
+- **ResumenTurnoModal** — resumen/cierre del turno (incluye OTs de mantenimiento con detalle expandible, ver `CERRAR_TURNO_OTs.md` en `ptar-backend-dotnet/`)
 
-### F-03 — Registro de Incidencias / Calidad (FormatoIncidencias.tsx)
-- Graba en: `ptar_registro_calidad`
-- Parámetros diarios: Temperatura, pH, TDS, SST, SolidosSediment, Conductividad, Color, Turbidez
-- Parámetros ocasionales: DQO, Hierro, SST Gravimétrico, Cloruros, Fósforo, Nitrógeno, Sulfatos, Alcalinidad, Dureza Cálcica, Dureza Total, Sílice, ORP, Cloro Residual
+Dashboards del encargado/admin (`features/{calidad,balance,costos,dashboard,analista,mantenimientos}/`) consumen los mismos endpoints para KPIs, tendencias e informes exportables a HTML/PDF (`Features/Reportes` con QuestPDF).
+
+> Los nombres de tablas/columnas exactos en MySQL no se documentan aquí para evitar que queden desactualizados — ver `sql/schema.sql` y los `sql/alter_*.sql` como fuente de verdad del esquema real.
 
 ---
 
@@ -366,103 +332,110 @@ TK RECH RO1 (x=530) → FILTRO AK (x=630) → RO2 (x=745) → TK RECH RO2 (x=850
 | Componente | Estado | Detalle |
 |---|---|---|
 | SplashScreen SVG | ✅ Producción | Diagrama animado del proceso completo |
-| Login / Auth | ⚠️ Mock | Usuarios hardcodeados, sin Supabase Auth |
-| F-01 Caudales | ✅ Funcional | Graba en `ptar_registro_contadores` |
-| F-02 Reactivos | ✅ Funcional | Graba en `ptar_registro_costos` |
-| F-03 Incidencias/Calidad | ✅ UI lista | Graba en `ptar_registro_calidad` |
-| Dashboard KPIs | ❌ Mock | `mockData.ts` con datos ficticios |
-| Notificaciones | ✅ Funcional | Polling 15s, toasts para encargado/admin |
-| RLS (seguridad DB) | ❓ Pendiente | Probablemente abierta con anon key |
-| Exportación PDF | ❌ No existe | Pendiente implementar |
-| Conexión PLC | ❌ No existe | Futuro — requiere Python en red de planta |
+| Login / Auth | ✅ Real | JWT en cookie httpOnly contra MySQL, refresh automático (sección 6) |
+| Formularios operario (Caudales/Reactivos/Calidad/Incidencias/Condiciones) | ✅ Funcional | Graban vía API .NET (sección 8) |
+| Dashboard KPIs (encargado, `DashboardPage.tsx`) | ✅ Real | `RealKpiSection` + widgets reales, ya no usa `mockData.ts` |
+| Dashboard admin (`AdminDashboardPage.tsx`) | ⚠️ Parcial | Todavía importa `mockData.ts` — pendiente de pasar a datos reales |
+| Notificaciones | ✅ Funcional | Polling 15s, toasts para encargado/admin (Zscaler bloquea WebSockets) |
+| Mantenimientos / OTs | ✅ Funcional | Sync automático desde SharePoint cada 1h + detalle expandible en cierre de turno |
+| Exportación PDF/HTML | ✅ Existe | `Features/Reportes` (QuestPDF) — calidad, balance, costos, dashboard |
+| Rate limiting / seguridad API | ✅ Existe | `AspNetCoreRateLimit` por endpoint, BCrypt para passwords |
+| Conexión PLC | ❌ No existe | Futuro — requiere integración en la red de planta |
+| Modo offline / PWA | ❌ No existe | No confirmado si sigue en roadmap |
 
 ---
 
-## 13. ROADMAP TÉCNICO PENDIENTE
+## 13. PENDIENTES CONOCIDOS
 
-### Prioridad Alta (sin esto el sistema no es seguro en producción)
-1. **Auth real con Supabase Auth** — reemplazar `MOCK_USERS` y `localStorage` por `supabase.auth.signInWithPassword()`. Agregar tabla `ptar_perfiles(id, nombre, rol)` vinculada a `auth.users`.
-2. **Row-Level Security (RLS)** — Políticas por rol:
-   - Operario: INSERT propio + SELECT propio últimas 24h
-   - Encargado: SELECT todo su turno
-   - Admin: SELECT/UPDATE todo
+> Esta sección listaba antes un roadmap "Auth real / RLS / KPIs reales" que **ya se implementó** con la migración a .NET + MySQL. Lo que queda abierto, hasta donde se pudo confirmar revisando el código:
 
-### Prioridad Media (el dashboard no sirve sin esto)
-3. **Vistas SQL para KPIs reales** — reemplazar `mockData.ts`
-4. **Tabla `ptar_incidencias`** para incidencias de equipos (diferente de F-03 calidad):
-   ```sql
-   CREATE TABLE ptar_incidencias (
-     id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-     created_at timestamptz DEFAULT now(),
-     usuario text, turno text,
-     equipo_afectado text, descripcion text,
-     accion_tomada text, tiempo_paro_min int,
-     prioridad text CHECK (prioridad IN ('baja','media','alta','critica')),
-     estado text DEFAULT 'abierta'
-   );
-   ```
+1. **`AdminDashboardPage.tsx` sigue en `mockData.ts`** — homologarlo al mismo patrón que `DashboardPage.tsx` (RealKpiSection + widgets).
+2. **`ptar-app/src/lib/supabase.ts` es código muerto** — nada lo importa, se puede eliminar junto con cualquier resto de configuración de Supabase.
+3. **Backend Python (`ptar-backend/`)** — declarado obsoleto en `NOTAS_PENDIENTES.md`, pero sigue en el repo. Confirmar si ya se puede borrar o si algo todavía depende de él (p. ej. el token de SharePoint se genera con `auth_sharepoint.py` de ahí).
+4. **Conexión PLC** — sigue sin implementar, es la única pieza de "futuro" que se mantiene igual desde la versión anterior de esta memoria.
+5. **Hostname/puerto real de producción en la red interna** — no confirmado (ver sección 4).
 
-### Prioridad Baja (valor operativo futuro)
-5. **Generación de PDFs por turno** — Render (gratis) + FastAPI + reportlab/weasyprint
-6. **Alertas automáticas** — pg_cron + Edge Function cuando pH/turbidez superan límites
-7. **Modo offline PWA** — Service Worker + IndexedDB para zonas sin señal
-8. **Integración PLC** — Python (pymodbus) en PC de sala de control → escribe en Supabase
+Para roadmap de producto (qué feature sigue, prioridades del negocio) usar `NOTAS_PENDIENTES.md` y los commits recientes, no esta sección — no se pudo verificar contra un backlog vivo.
 
 ---
 
-## 14. ARQUITECTURA OBJETIVO (FUTURA)
+## 14. ARQUITECTURA ACTUAL
 
 ```
-Planta física (red local)
-  [PLC ModBus/OPC-UA]
-       ↓ pymodbus
-  [Python en PC sala de control]
-       ↓ HTTPS supabase-py
-       ↓
-  [SUPABASE]  ←→  [React App — Vercel]
-  Auth + DB        Dashboard tiempo real
-  RLS + Storage    Formularios operarios
-       ↓
-  [FastAPI en Render (gratis)]
-  Generación PDFs reportes
-  Alertas por parámetros
+[MySQL "ptar_permoda"]  ←── Dapper / EF Core ──  [ASP.NET Core "PtarApi" — .NET 10]
+        ▲                                            │  JWT (cookie httpOnly) · Rate limiting
+        │                                            │  Reportes PDF/HTML (QuestPDF)
+        │                                            ▼
+        │                                   [React App — Vite, servida en local]
+        │                                   Dashboard tiempo real · Formularios operario
+        │
+        └── sync horaria ──  [SharePoint — Mantenimientos/OTs]  (MSAL, token cacheado)
+
+Todo corre en la red interna PERMODA — sin nube, sin Vercel, sin Supabase.
 ```
 
-**Lenguajes por capa:**
-- Frontend: TypeScript (React) — ya implementado
-- Base de datos: SQL (PostgreSQL) — Supabase
-- Lógica servidor: TypeScript (Edge Functions) o Python (FastAPI)
-- Integración PLC: Python (pymodbus, opcua)
+**Pendiente / futuro:**
+- Integración PLC (Modbus/OPC-UA) — no implementada, requeriría un puente en la red de planta.
+- Confirmar el mecanismo exacto de despliegue del frontend en producción dentro de la red interna (sección 4).
 
 ---
 
 ## 15. COMANDOS FRECUENTES
 
-```bash
-# Dev local
-cd "C:\Users\davidan\OneDrive - PERMODA LTDA\Documents\Claude\App_PTAR\ptar-app"
-npm run dev
-# → http://localhost:5174
+> Rutas absolutas de esta instalación (perfil de Windows `TUF`). Si cambia el perfil/PC, ajustar la raíz.
 
-# Build verificación TypeScript
-npm run build
+### Levantar todo local (2 terminales)
 
-# Deploy producción
-vercel --prod
-
-# Ver deploys
-vercel ls
+**Terminal 1 — Backend (.NET)**
+```powershell
+cd "C:\Users\TUF\OneDrive - PERMODA LTDA\Documents\Claude\App_PTAR_SQL\ptar-backend-dotnet\PtarApi"
+dotnet run
 ```
+→ `http://localhost:8001` (Swagger en `/swagger`)
+
+**Terminal 2 — Frontend (Vite)**
+```powershell
+cd "C:\Users\TUF\OneDrive - PERMODA LTDA\Documents\Claude\App_PTAR_SQL\ptar-app"
+npm run dev
+```
+→ `http://localhost:5174`
+
+### Build de verificación TypeScript
+```powershell
+cd "C:\Users\TUF\OneDrive - PERMODA LTDA\Documents\Claude\App_PTAR_SQL\ptar-app"
+npm run build
+```
+
+### Base de datos MySQL — recrear usuario/permisos de `ptar_app`
+Correr en MySQL Workbench conectado como `root` (la password de `ptar_app` real está en `ptar-backend-dotnet/PtarApi/appsettings.Local.json`, gitignored):
+```sql
+CREATE DATABASE IF NOT EXISTS ptar_permoda CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER IF NOT EXISTS 'ptar_app'@'localhost' IDENTIFIED BY 'LA_PASSWORD_DEL_ARCHIVO';
+ALTER USER 'ptar_app'@'localhost' IDENTIFIED BY 'LA_PASSWORD_DEL_ARCHIVO'; -- si el usuario ya existía, CREATE USER IF NOT EXISTS no actualiza el password
+GRANT ALL PRIVILEGES ON ptar_permoda.* TO 'ptar_app'@'localhost';
+FLUSH PRIVILEGES;
+```
+Luego cargar el dump (schema + datos) — **File → Run SQL Script...** en Workbench, seleccionar `ptar_permoda_dump.sql` (raíz del repo). Es el archivo oficial de restauración según `INSTRUCTIVO_BASE_DATOS_PTAR.txt` sección 7 — trae 18 tablas + 9 vistas. Ojo: los datos del dump están congelados a la fecha en que se generó (revisar el comentario `-- Dump completed on` al inicio del archivo), no son necesariamente de hoy.
+
+### Renovar token de SharePoint (cuando el backend loguea "grant inválido" / "token expiró")
+Requiere Python 3.x instalado (`winget install --id Python.Python.3.12`, o el que ya tengas — no está fijado a una versión exacta).
+```powershell
+cd "C:\Users\TUF\OneDrive - PERMODA LTDA\Documents\Claude\App_PTAR_SQL\ptar-backend"
+python -m venv .venv --clear
+.venv\Scripts\python.exe -m pip install -r requirements.txt
+.venv\Scripts\python.exe auth_sharepoint.py
+```
+El script imprime una URL + código corto — se abre en cualquier navegador, se completa el login (MFA incluido) con la cuenta `davidan@permoda.com.co`, y guarda el token en `.sharepoint_token_cache.json`. Reiniciar el backend después para que tome el token nuevo. Se repite cada ~90 días (cuando expira el refresh token).
 
 ---
 
 ## 16. NOTAS IMPORTANTES PARA CLAUDE
 
-- **No hay git** en `ptar-app/` — nunca intentar `git commit` ahí
-- **Deploy = `vercel --prod`** desde el directorio `ptar-app/`
+- **Deploy es local** — red interna PERMODA, sin Vercel ni nube. Ver sección 4.
 - **El archivo más grande** es `SplashScreen.tsx` (~1000 líneas) — leerlo siempre antes de editar
-- **Zscaler** bloquea WebSockets en la red corporativa — por eso el polling HTTP en lugar de Supabase Realtime
+- **Zscaler** bloquea WebSockets en la red corporativa — por eso el polling HTTP en lugar de WebSockets/Realtime
 - **TypeScript strict** — siempre verificar con `tsc -b` antes de hacer deploy
 - **Puerto dev:** 5174 (no 5173, porque 5173 puede estar ocupado)
-- **MCP Supabase:** usar `mcp__supabase-ptar__` para el proyecto PTAR
+- **Backend .NET requiere SDK 10** — `PtarApi.csproj` usa `net10.0`; verificar `dotnet --list-sdks` antes de compilar
+- **Sin Supabase** — no usar el MCP `mcp__supabase-ptar__` para este proyecto, no aplica
 - Al editar SVG: las constantes `mYA=480` y `mYB=615` son el ancla de todo el layout de TERCIARIA
