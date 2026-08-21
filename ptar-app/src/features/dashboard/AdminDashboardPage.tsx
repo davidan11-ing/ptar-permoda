@@ -12,6 +12,7 @@ import CalidadDashboardPage from '../calidad/CalidadDashboardPage';
 import BalanceHidricoDashboard from '../balance/BalanceHidricoDashboard';
 import CostosDashboard from '../costos/CostosDashboard';
 import ResumenDashboard from '../analista/ResumenDashboard';
+import DashboardPage from './DashboardPage';
 
 // Fecha de hoy formateada en español colombiano
 const TODAY = new Date().toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
@@ -68,6 +69,17 @@ export default function AdminDashboardPage() {
       .catch(() => setConfig(null))
       .finally(() => setLoadingCfg(false));
   }, []);
+
+  // Sin secciones de Calidad/Balance/Costos configuradas por el Analista → mostrar
+  // el mismo dashboard del Analista (solo lectura) en vez de dejar la pantalla vacía
+  const hasCustomSections =
+    !!(config?.calidad?.enabled && config.calidad.sections.length > 0) ||
+    !!(config?.balance?.enabled && config.balance.sections.length > 0) ||
+    !!(config?.costos?.enabled  && config.costos.sections.length  > 0);
+
+  if (!loadingCfg && !hasCustomSections) {
+    return <DashboardPage canEdit={false} />;
+  }
 
   // Divider visual con color de acento para separar secciones del panel
   const sectionDivider = (label: string, color: string) => (

@@ -50,33 +50,13 @@ const labelStyle: React.CSSProperties = {
 
 // ── Componentes de filtros definidos FUERA del componente principal ──
 // Si se definen adentro React los desmonta en cada render y el input pierde foco.
+// Las fechas ya NO se configuran aquí — hay un único rango compartido arriba de las pestañas.
 
-const FiltersResumen = ({ fi, ff, onFilter }: { fi: string; ff: string; onFilter: (k: string, v: string) => void }) => (
-  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
-    <div>
-      <label style={labelStyle}>Fecha inicio</label>
-      <input type="date" value={fi} onChange={e => onFilter('fechaInicio', e.target.value)} style={{ ...inputStyle, width: '100%' }} />
-    </div>
-    <div>
-      <label style={labelStyle}>Fecha fin</label>
-      <input type="date" value={ff} onChange={e => onFilter('fechaFin', e.target.value)} style={{ ...inputStyle, width: '100%' }} />
-    </div>
-  </div>
-);
-
-const FiltersCalidad = ({ f, onFilter }: { f: { parametro: string; fechaInicio: string; fechaFin: string; turno: string; granularidad: string }; onFilter: (k: string, v: string) => void }) => (
-  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr', gap: 10, marginBottom: 14 }}>
+const FiltersCalidad = ({ f, onFilter }: { f: { parametro: string; turno: string; granularidad: string }; onFilter: (k: string, v: string) => void }) => (
+  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 14 }}>
     <div>
       <label style={labelStyle}>Parámetro</label>
       <input value={f.parametro} onChange={e => onFilter('parametro', e.target.value)} style={{ ...inputStyle, width: '100%' }} placeholder="pH" />
-    </div>
-    <div>
-      <label style={labelStyle}>Fecha inicio</label>
-      <input type="date" value={f.fechaInicio} onChange={e => onFilter('fechaInicio', e.target.value)} style={{ ...inputStyle, width: '100%' }} />
-    </div>
-    <div>
-      <label style={labelStyle}>Fecha fin</label>
-      <input type="date" value={f.fechaFin} onChange={e => onFilter('fechaFin', e.target.value)} style={{ ...inputStyle, width: '100%' }} />
     </div>
     <div>
       <label style={labelStyle}>Turno</label>
@@ -94,16 +74,8 @@ const FiltersCalidad = ({ f, onFilter }: { f: { parametro: string; fechaInicio: 
   </div>
 );
 
-const FiltersBalance = ({ f, onFilter }: { f: { fechaInicio: string; fechaFin: string; turno: string; granularidad: string }; onFilter: (k: string, v: string) => void }) => (
-  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 10, marginBottom: 14 }}>
-    <div>
-      <label style={labelStyle}>Fecha inicio</label>
-      <input type="date" value={f.fechaInicio} onChange={e => onFilter('fechaInicio', e.target.value)} style={{ ...inputStyle, width: '100%' }} />
-    </div>
-    <div>
-      <label style={labelStyle}>Fecha fin</label>
-      <input type="date" value={f.fechaFin} onChange={e => onFilter('fechaFin', e.target.value)} style={{ ...inputStyle, width: '100%' }} />
-    </div>
+const FiltersBalance = ({ f, onFilter }: { f: { turno: string; granularidad: string }; onFilter: (k: string, v: string) => void }) => (
+  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
     <div>
       <label style={labelStyle}>Turno</label>
       <select value={f.turno} onChange={e => onFilter('turno', e.target.value)} style={{ ...inputStyle, width: '100%' }}>
@@ -120,16 +92,8 @@ const FiltersBalance = ({ f, onFilter }: { f: { fechaInicio: string; fechaFin: s
   </div>
 );
 
-const FiltersCostos = ({ f, onFilter }: { f: { fechaInicio: string; fechaFin: string; sistema: string; granularidad: string }; onFilter: (k: string, v: string) => void }) => (
-  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 10, marginBottom: 14 }}>
-    <div>
-      <label style={labelStyle}>Fecha inicio</label>
-      <input type="date" value={f.fechaInicio} onChange={e => onFilter('fechaInicio', e.target.value)} style={{ ...inputStyle, width: '100%' }} />
-    </div>
-    <div>
-      <label style={labelStyle}>Fecha fin</label>
-      <input type="date" value={f.fechaFin} onChange={e => onFilter('fechaFin', e.target.value)} style={{ ...inputStyle, width: '100%' }} />
-    </div>
+const FiltersCostos = ({ f, onFilter }: { f: { sistema: string; granularidad: string }; onFilter: (k: string, v: string) => void }) => (
+  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
     <div>
       <label style={labelStyle}>Sistema</label>
       <select value={f.sistema} onChange={e => onFilter('sistema', e.target.value)} style={{ ...inputStyle, width: '100%' }}>
@@ -208,6 +172,16 @@ export default function VisualizadorConfigModal({ onClose }: Props) {
       [dash]: { ...prev[dash]!, filters: { ...prev[dash]!.filters, [key]: val } },
     }));
 
+  // Actualiza fechaInicio/fechaFin en las 4 pestañas a la vez — un solo rango compartido
+  const setSharedDate = (key: 'fechaInicio' | 'fechaFin', val: string) =>
+    setConfig(prev => ({
+      ...prev,
+      resumen: { ...prev.resumen!, filters: { ...prev.resumen!.filters, [key]: val } },
+      calidad: { ...prev.calidad,  filters: { ...prev.calidad.filters,  [key]: val } },
+      balance: { ...prev.balance,  filters: { ...prev.balance.filters,  [key]: val } },
+      costos:  { ...prev.costos,   filters: { ...prev.costos.filters,   [key]: val } },
+    }));
+
   // Persiste la configuración y cierra el modal tras confirmación visual
   const handleSave = async () => {
     setSaving(true);
@@ -258,6 +232,25 @@ export default function VisualizadorConfigModal({ onClose }: Props) {
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#8b949e', fontSize: 18, cursor: 'pointer', lineHeight: 1 }}>✕</button>
         </div>
 
+        {/* Rango de fechas compartido — aplica a las 4 pestañas a la vez */}
+        {!loading && (
+          <div style={{ padding: '14px 24px', borderBottom: '1px solid #21262d', background: '#0d1117' }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: '#58a6ff', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              Rango de fechas — aplica a Resumen, Calidad, Balance y Costos
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, maxWidth: 420 }}>
+              <div>
+                <label style={labelStyle}>Fecha inicio</label>
+                <input type="date" value={config.resumen!.filters.fechaInicio} onChange={e => setSharedDate('fechaInicio', e.target.value)} style={{ ...inputStyle, width: '100%' }} />
+              </div>
+              <div>
+                <label style={labelStyle}>Fecha fin</label>
+                <input type="date" value={config.resumen!.filters.fechaFin} onChange={e => setSharedDate('fechaFin', e.target.value)} style={{ ...inputStyle, width: '100%' }} />
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Pestanas de módulo con color de acento activo */}
         <div style={{ display: 'flex', borderBottom: '1px solid #21262d', padding: '0 24px' }}>
           {(['resumen', 'calidad', 'balance', 'costos'] as Tab[]).map(t => (
@@ -300,19 +293,20 @@ export default function VisualizadorConfigModal({ onClose }: Props) {
 
               {block.enabled && (
                 <>
-                  {/* Panel de filtros del módulo activo */}
-                  <div style={{
-                    background: '#0d1117', border: '1px solid #21262d', borderRadius: 6,
-                    padding: '12px 14px', marginBottom: 16,
-                  }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: tabColor[tab], marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                      Filtros a aplicar
+                  {/* Panel de filtros del módulo activo — resumen ya no tiene filtros propios, solo usa el rango compartido de arriba */}
+                  {tab !== 'resumen' && (
+                    <div style={{
+                      background: '#0d1117', border: '1px solid #21262d', borderRadius: 6,
+                      padding: '12px 14px', marginBottom: 16,
+                    }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: tabColor[tab], marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                        Filtros a aplicar
+                      </div>
+                      {tab === 'calidad' && <FiltersCalidad f={config.calidad.filters} onFilter={(k, v) => setFilter('calidad', k, v)} />}
+                      {tab === 'balance' && <FiltersBalance f={config.balance.filters} onFilter={(k, v) => setFilter('balance', k, v)} />}
+                      {tab === 'costos'  && <FiltersCostos  f={config.costos.filters}  onFilter={(k, v) => setFilter('costos',  k, v)} />}
                     </div>
-                    {tab === 'resumen' && <FiltersResumen fi={config.resumen!.filters.fechaInicio} ff={config.resumen!.filters.fechaFin} onFilter={(k, v) => setFilter('resumen', k, v)} />}
-                    {tab === 'calidad' && <FiltersCalidad f={config.calidad.filters} onFilter={(k, v) => setFilter('calidad', k, v)} />}
-                    {tab === 'balance' && <FiltersBalance f={config.balance.filters} onFilter={(k, v) => setFilter('balance', k, v)} />}
-                    {tab === 'costos'  && <FiltersCostos  f={config.costos.filters}  onFilter={(k, v) => setFilter('costos',  k, v)} />}
-                  </div>
+                  )}
 
                   {/* Checklist de secciones visibles para el módulo activo */}
                   <div style={{ fontSize: 10, fontWeight: 700, color: '#8b949e', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
