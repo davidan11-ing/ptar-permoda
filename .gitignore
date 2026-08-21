@@ -33,3 +33,4 @@ dist/
 # ── Backups base de datos MySQL ────────────────────────────────────────────────
 *.sql
 *.dump
+!ptar_permoda_backup.sql
